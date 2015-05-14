@@ -4,10 +4,10 @@
 all: copy push
 
 copy-dev:
-	cp -R ../mne-python/doc/build/html/* dev/
+	cp -R ../mne-python/doc/build/html_dev/* dev/
 
 copy-stable:
-	cp -R ../mne-python/doc/build/html/* stable/
+	cp -R ../mne-python/doc/build/html_stable/* stable/
 
 push:
 	git commit -am 'ENH: Update'
