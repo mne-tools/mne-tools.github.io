@@ -1,0 +1,320 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Time-frequency on simulated data (Multitaper vs. Morlet) &mdash; MNE 0.9.0 documentation</title>
+    
+    <link rel="stylesheet" href="../../_static/navy.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    '../../',
+        VERSION:     '0.9.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true
+      };
+    </script>
+    <script type="text/javascript" src="../../_static/jquery.js"></script>
+    <script type="text/javascript" src="../../_static/underscore.js"></script>
+    <script type="text/javascript" src="../../_static/doctools.js"></script>
+    <link rel="top" title="MNE 0.9.0 documentation" href="../../index.html" />
+    <link rel="up" title="Examples" href="../index.html" />
+    <link rel="next" title="Plot SSP projections topographies" href="../visualization/plot_ssp_projs_topomaps.html" />
+    <link rel="prev" title="Compute power and phase lock in label of the source space" href="plot_source_label_time_frequency.html" />
+
+<link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,700italic,400,700' rel='stylesheet' type='text/css'>
+
+
+    <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-37225609-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+    </script>
+
+
+
+    <script type="text/javascript">
+    !function(d,s,id){var js,fjs=d.getElementsByTagName(s)[0];if(!d.getElementById(id)){js=d.createElement(s);
+    js.id=id;js.src="http://platform.twitter.com/widgets.js";
+    fjs.parentNode.insertBefore(js,fjs);}}(document,"script","twitter-wjs");
+    </script>
+
+
+
+    <script type="text/javascript">
+    (function() {
+    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+    po.src = 'https://apis.google.com/js/plusone.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+    })();
+    </script>
+
+
+  </head>
+  <body role="document">
+
+<div style="background-color: white; text-align: left; padding: 10px 7px 15px 15px; min-width: 910px">
+<div style="float: left">
+<a href="../../index.html"><img src="../../_static/mne_logo.png" border="0" alt="py4sci"/></a>
+</div>
+
+<div style="float: right">
+<a href="../../index.html"><img src="../../_static/institutions.png" border="0" alt="py4sci"/></a>
+</div>
+<br style="clear:both"/>
+</div>
+
+    <div class="related" role="navigation" aria-label="related navigation">
+      <h3>Navigation</h3>
+      <ul>
+        <li class="right" style="margin-right: 10px">
+          <a href="../../np-modindex.html" title="Python Module Index"
+             >modules</a></li>
+        <li class="right" >
+          <a href="../visualization/plot_ssp_projs_topomaps.html" title="Plot SSP projections topographies"
+             accesskey="N">next</a> |</li>
+        <li class="right" >
+          <a href="plot_source_label_time_frequency.html" title="Compute power and phase lock in label of the source space"
+             accesskey="P">previous</a> |</li>
+        <li><a href="../../index.html">Home</a>&nbsp;|&nbsp;</li>
+        <li><a href="../../manual.html">Manual</a>&nbsp;|&nbsp;</li>
+        <li><a href="../../mne-python.html">Python</a>&nbsp;|&nbsp;</li>
+        <li><a href="../../cite.html">Cite MNE</a>&nbsp;|&nbsp;</li>
+        <!-- <li><a href="../../search.html">Search</a></li> -->
+
+          <li class="nav-item nav-item-1"><a href="../../mne-python.html" >MNE with Python</a> &raquo;</li>
+          <li class="nav-item nav-item-2"><a href="../index.html" accesskey="U">Examples</a> &raquo;</li> 
+      </ul>
+    </div>
+
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h3><a href="../../index.html">Table Of Contents</a></h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../manual.html">Manual</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mne-python.html">MNE with Python</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../mne-cpp.html">MNE with CPP</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cite.html">Cite MNE and MNE-Python</a></li>
+</ul>
+
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="../../search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    <p class="searchtip" style="font-size: 90%">
+    Enter search terms or a module, class or function name.
+    </p>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script><h3>Versions</h3>
+<ul class="current">
+    <li class="toctree-l1"><a href=http://martinos.org/mne/stable>Stable</a></li>
+    <li class="toctree-l1"><a href=http://martinos.org/mne/dev>Development</a></li>
+</ul>
+        </div>
+      </div>
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="time-frequency-on-simulated-data-multitaper-vs-morlet">
+<span id="example-time-frequency-plot-time-frequency-simulated-py"></span><h1>Time-frequency on simulated data (Multitaper vs. Morlet)<a class="headerlink" href="#time-frequency-on-simulated-data-multitaper-vs-morlet" title="Permalink to this headline">¶</a></h1>
+<p>This examples demonstrates on simulated data the different time-frequency
+estimation methods. It shows the time-frequency resolution trade-off
+and the problem of estimation variance.</p>
+<ul class="horizontal">
+<li><a class="first reference internal image-reference" href="../../_images/plot_time_frequency_simulated_001.png"><img alt="../../_images/plot_time_frequency_simulated_001.png" src="../../_images/plot_time_frequency_simulated_001.png" style="width: 376.0px; height: 282.0px;" /></a>
+</li>
+<li><a class="first reference internal image-reference" href="../../_images/plot_time_frequency_simulated_002.png"><img alt="../../_images/plot_time_frequency_simulated_002.png" src="../../_images/plot_time_frequency_simulated_002.png" style="width: 376.0px; height: 282.0px;" /></a>
+</li>
+<li><a class="first reference internal image-reference" href="../../_images/plot_time_frequency_simulated_003.png"><img alt="../../_images/plot_time_frequency_simulated_003.png" src="../../_images/plot_time_frequency_simulated_003.png" style="width: 376.0px; height: 282.0px;" /></a>
+</li>
+<li><a class="first reference internal image-reference" href="../../_images/plot_time_frequency_simulated_004.png"><img alt="../../_images/plot_time_frequency_simulated_004.png" src="../../_images/plot_time_frequency_simulated_004.png" style="width: 376.0px; height: 282.0px;" /></a>
+</li>
+<li><a class="first reference internal image-reference" href="../../_images/plot_time_frequency_simulated_005.png"><img alt="../../_images/plot_time_frequency_simulated_005.png" src="../../_images/plot_time_frequency_simulated_005.png" style="width: 376.0px; height: 282.0px;" /></a>
+</li>
+<li><a class="first reference internal image-reference" href="../../_images/plot_time_frequency_simulated_006.png"><img alt="../../_images/plot_time_frequency_simulated_006.png" src="../../_images/plot_time_frequency_simulated_006.png" style="width: 376.0px; height: 282.0px;" /></a>
+</li>
+</ul>
+<p><strong>Script output</strong>:</p>
+<div class="highlight-python"><div class="highlight"><pre>Data is 40 trials and 2 channels
+Multitaper time-frequency analysis for 32 frequencies
+Using 1 tapers
+Applying baseline correction &#39;mean&#39; during (0.0, 0.1)
+Applying baseline correction ... (mode: mean)
+Data is 40 trials and 2 channels
+Multitaper time-frequency analysis for 32 frequencies
+Using 3 tapers
+Applying baseline correction &#39;mean&#39; during (0.0, 0.1)
+Applying baseline correction ... (mode: mean)
+Data is 40 trials and 2 channels
+Multitaper time-frequency analysis for 32 frequencies
+Using 7 tapers
+Applying baseline correction &#39;mean&#39; during (0.0, 0.1)
+Applying baseline correction ... (mode: mean)
+The input signal is shorter (1000) than &quot;n_fft&quot; (1024). Applying zero padding.
+Applying baseline correction &#39;mean&#39; during (0.0, 0.1)
+Applying baseline correction ... (mode: mean)
+The input signal is shorter (1000) than &quot;n_fft&quot; (1024). Applying zero padding.
+Applying baseline correction &#39;mean&#39; during (0.0, 0.1)
+...
+</pre></div>
+</div>
+<p><strong>Python source code:</strong> <a class="reference download internal" href="../../_downloads/plot_time_frequency_simulated.py"><code class="xref download docutils literal"><span class="pre">plot_time_frequency_simulated.py</span></code></a></p>
+<div class="highlight-python"><div class="highlight"><pre><span class="c"># Authors: Hari Bharadwaj &lt;hari@nmr.mgh.harvard.edu&gt;</span>
+<span class="c">#          Denis Engemann &lt;denis.engemann@gmail.com&gt;</span>
+<span class="c">#</span>
+<span class="c"># License: BSD (3-clause)</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">mne</span> <span class="kn">import</span> <a href="../../generated/mne.create_info.html#mne.create_info"><span class="n">create_info</span></a><span class="p">,</span> <a href="../../generated/mne.EpochsArray.html#mne.EpochsArray"><span class="n">EpochsArray</span></a>
+<span class="kn">from</span> <span class="nn">mne.time_frequency</span> <span class="kn">import</span> <a href="../../generated/mne.time_frequency.tfr_multitaper.html#mne.time_frequency.tfr_multitaper"><span class="n">tfr_multitaper</span></a><span class="p">,</span> <a href="../../generated/mne.time_frequency.tfr_stockwell.html#mne.time_frequency.tfr_stockwell"><span class="n">tfr_stockwell</span></a><span class="p">,</span> <a href="../../generated/mne.time_frequency.tfr_morlet.html#mne.time_frequency.tfr_morlet"><span class="n">tfr_morlet</span></a>
+
+<span class="k">print</span><span class="p">(</span><span class="n">__doc__</span><span class="p">)</span>
+
+<span class="c">###############################################################################</span>
+<span class="c"># Simulate data</span>
+
+<span class="n">sfreq</span> <span class="o">=</span> <span class="mf">1000.0</span>
+<span class="n">ch_names</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;SIM0001&#39;</span><span class="p">,</span> <span class="s">&#39;SIM0002&#39;</span><span class="p">]</span>
+<span class="n">ch_types</span> <span class="o">=</span> <span class="p">[</span><span class="s">&#39;grad&#39;</span><span class="p">,</span> <span class="s">&#39;grad&#39;</span><span class="p">]</span>
+<span class="n">info</span> <span class="o">=</span> <a href="../../generated/mne.create_info.html#mne.create_info"><span class="n">create_info</span></a><span class="p">(</span><span class="n">ch_names</span><span class="o">=</span><span class="n">ch_names</span><span class="p">,</span> <span class="n">sfreq</span><span class="o">=</span><span class="n">sfreq</span><span class="p">,</span> <span class="n">ch_types</span><span class="o">=</span><span class="n">ch_types</span><span class="p">)</span>
+
+<span class="n">n_times</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">sfreq</span><span class="p">)</span>  <span class="c"># 1 second long epochs</span>
+<span class="n">n_epochs</span> <span class="o">=</span> <span class="mi">40</span>
+<span class="n">seed</span> <span class="o">=</span> <span class="mi">42</span>
+<span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">RandomState</span><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+<span class="n">noise</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">n_epochs</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">ch_names</span><span class="p">),</span> <span class="n">n_times</span><span class="p">)</span>
+
+<span class="c"># Add a 50 Hz sinusoidal burst to the noise and ramp it.</span>
+<span class="n">t</span> <span class="o">=</span> <a href="http://docs.scipy.org/doc/numpy-1.6.0/reference/generated/numpy.arange.html#numpy.arange"><span class="n">np</span><span class="o">.</span><span class="n">arange</span></a><span class="p">(</span><span class="n">n_times</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">)</span> <span class="o">/</span> <span class="n">sfreq</span>
+<span class="n">signal</span> <span class="o">=</span> <a href="http://docs.scipy.org/doc/numpy-1.6.0/reference/generated/numpy.sin.html#numpy.sin"><span class="n">np</span><span class="o">.</span><span class="n">sin</span></a><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="mf">2.</span> <span class="o">*</span> <span class="mf">50.</span> <span class="o">*</span> <span class="n">t</span><span class="p">)</span>  <span class="c"># 50 Hz sinusoid signal</span>
+<span class="n">signal</span><span class="p">[</span><a href="http://docs.scipy.org/doc/numpy-1.6.0/reference/generated/numpy.logical_or.html#numpy.logical_or"><span class="n">np</span><span class="o">.</span><span class="n">logical_or</span></a><span class="p">(</span><span class="n">t</span> <span class="o">&lt;</span> <span class="mf">0.45</span><span class="p">,</span> <span class="n">t</span> <span class="o">&gt;</span> <span class="mf">0.55</span><span class="p">)]</span> <span class="o">=</span> <span class="mf">0.</span>  <span class="c"># Hard windowing</span>
+<span class="n">on_time</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logical_and</span><span class="p">(</span><span class="n">t</span> <span class="o">&gt;=</span> <span class="mf">0.45</span><span class="p">,</span> <span class="n">t</span> <span class="o">&lt;=</span> <span class="mf">0.55</span><span class="p">)</span>
+<span class="n">signal</span><span class="p">[</span><span class="n">on_time</span><span class="p">]</span> <span class="o">*=</span> <a href="http://docs.scipy.org/doc/numpy-1.6.0/reference/generated/numpy.hanning.html#numpy.hanning"><span class="n">np</span><span class="o">.</span><span class="n">hanning</span></a><span class="p">(</span><span class="n">on_time</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>  <span class="c"># Ramping</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">noise</span> <span class="o">+</span> <span class="n">signal</span>
+
+<span class="n">reject</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">grad</span><span class="o">=</span><span class="mi">4000</span><span class="p">)</span>
+<span class="n">events</span> <span class="o">=</span> <a href="http://docs.scipy.org/doc/numpy-1.6.0/reference/generated/numpy.empty.html#numpy.empty"><span class="n">np</span><span class="o">.</span><span class="n">empty</span></a><span class="p">((</span><span class="n">n_epochs</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
+<span class="n">first_event_sample</span> <span class="o">=</span> <span class="mi">100</span>
+<span class="n">event_id</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">sin50hz</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_epochs</span><span class="p">):</span>
+    <span class="n">events</span><span class="p">[</span><span class="n">k</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">first_event_sample</span> <span class="o">+</span> <span class="n">k</span> <span class="o">*</span> <span class="n">n_times</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">event_id</span><span class="p">[</span><span class="s">&#39;sin50hz&#39;</span><span class="p">]</span>
+
+<span class="n">epochs</span> <span class="o">=</span> <a href="../../generated/mne.EpochsArray.html#mne.EpochsArray"><span class="n">EpochsArray</span></a><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">info</span><span class="o">=</span><span class="n">info</span><span class="p">,</span> <span class="n">events</span><span class="o">=</span><span class="n">events</span><span class="p">,</span> <span class="n">event_id</span><span class="o">=</span><span class="n">event_id</span><span class="p">,</span>
+                     <span class="n">reject</span><span class="o">=</span><span class="n">reject</span><span class="p">)</span>
+
+
+<span class="c">###############################################################################</span>
+<span class="c"># Consider different parameter possibilities for multitaper convolution</span>
+<span class="n">freqs</span> <span class="o">=</span> <a href="http://docs.scipy.org/doc/numpy-1.6.0/reference/generated/numpy.arange.html#numpy.arange"><span class="n">np</span><span class="o">.</span><span class="n">arange</span></a><span class="p">(</span><span class="mf">5.</span><span class="p">,</span> <span class="mf">100.</span><span class="p">,</span> <span class="mf">3.</span><span class="p">)</span>
+
+<span class="c"># You can trade time resolution or frequency resolution or both</span>
+<span class="c"># in order to get a reduction in variance</span>
+
+<span class="c"># (1) Least smoothing (most variance/background fluctuations).</span>
+<span class="n">n_cycles</span> <span class="o">=</span> <span class="n">freqs</span> <span class="o">/</span> <span class="mf">2.</span>
+<span class="n">time_bandwidth</span> <span class="o">=</span> <span class="mf">2.0</span>  <span class="c"># Least possible frequency-smoothing (1 taper)</span>
+<span class="n">power</span> <span class="o">=</span> <a href="../../generated/mne.time_frequency.tfr_multitaper.html#mne.time_frequency.tfr_multitaper"><span class="n">tfr_multitaper</span></a><span class="p">(</span><span class="n">epochs</span><span class="p">,</span> <span class="n">freqs</span><span class="o">=</span><span class="n">freqs</span><span class="p">,</span> <span class="n">n_cycles</span><span class="o">=</span><span class="n">n_cycles</span><span class="p">,</span>
+                       <span class="n">time_bandwidth</span><span class="o">=</span><span class="n">time_bandwidth</span><span class="p">,</span> <span class="n">return_itc</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="c"># Plot results. Baseline correct based on first 100 ms.</span>
+<span class="n">power</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="mi">0</span><span class="p">],</span> <span class="n">baseline</span><span class="o">=</span><span class="p">(</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">),</span> <span class="n">mode</span><span class="o">=</span><span class="s">&#39;mean&#39;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=-</span><span class="mf">1.</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mf">3.</span><span class="p">,</span>
+           <span class="n">title</span><span class="o">=</span><span class="s">&#39;Sim: Least smoothing, most variance&#39;</span><span class="p">)</span>
+
+
+<span class="c"># (2) Less frequency smoothing, more time smoothing.</span>
+<span class="n">n_cycles</span> <span class="o">=</span> <span class="n">freqs</span>  <span class="c"># Increase time-window length to 1 second.</span>
+<span class="n">time_bandwidth</span> <span class="o">=</span> <span class="mf">4.0</span>  <span class="c"># Same frequency-smoothing as (1) 3 tapers.</span>
+<span class="n">power</span> <span class="o">=</span> <a href="../../generated/mne.time_frequency.tfr_multitaper.html#mne.time_frequency.tfr_multitaper"><span class="n">tfr_multitaper</span></a><span class="p">(</span><span class="n">epochs</span><span class="p">,</span> <span class="n">freqs</span><span class="o">=</span><span class="n">freqs</span><span class="p">,</span> <span class="n">n_cycles</span><span class="o">=</span><span class="n">n_cycles</span><span class="p">,</span>
+                       <span class="n">time_bandwidth</span><span class="o">=</span><span class="n">time_bandwidth</span><span class="p">,</span> <span class="n">return_itc</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="c"># Plot results. Baseline correct based on first 100 ms.</span>
+<span class="n">power</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="mi">0</span><span class="p">],</span> <span class="n">baseline</span><span class="o">=</span><span class="p">(</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">),</span> <span class="n">mode</span><span class="o">=</span><span class="s">&#39;mean&#39;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=-</span><span class="mf">1.</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mf">3.</span><span class="p">,</span>
+           <span class="n">title</span><span class="o">=</span><span class="s">&#39;Sim: Less frequency smoothing, more time smoothing&#39;</span><span class="p">)</span>
+
+
+<span class="c"># (3) Less time smoothing, more frequency smoothing.</span>
+<span class="n">n_cycles</span> <span class="o">=</span> <span class="n">freqs</span> <span class="o">/</span> <span class="mf">2.</span>
+<span class="n">time_bandwidth</span> <span class="o">=</span> <span class="mf">8.0</span>  <span class="c"># Same time-smoothing as (1), 7 tapers.</span>
+<span class="n">power</span> <span class="o">=</span> <a href="../../generated/mne.time_frequency.tfr_multitaper.html#mne.time_frequency.tfr_multitaper"><span class="n">tfr_multitaper</span></a><span class="p">(</span><span class="n">epochs</span><span class="p">,</span> <span class="n">freqs</span><span class="o">=</span><span class="n">freqs</span><span class="p">,</span> <span class="n">n_cycles</span><span class="o">=</span><span class="n">n_cycles</span><span class="p">,</span>
+                       <span class="n">time_bandwidth</span><span class="o">=</span><span class="n">time_bandwidth</span><span class="p">,</span> <span class="n">return_itc</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="c"># Plot results. Baseline correct based on first 100 ms.</span>
+<span class="n">power</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="mi">0</span><span class="p">],</span> <span class="n">baseline</span><span class="o">=</span><span class="p">(</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">),</span> <span class="n">mode</span><span class="o">=</span><span class="s">&#39;mean&#39;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=-</span><span class="mf">1.</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mf">3.</span><span class="p">,</span>
+           <span class="n">title</span><span class="o">=</span><span class="s">&#39;Sim: Less time smoothing, more frequency smoothing&#39;</span><span class="p">)</span>
+
+<span class="c"># #############################################################################</span>
+<span class="c"># Stockwell (S) transform</span>
+
+<span class="c"># S uses a Gaussian window to balance temporal and spectral resolution</span>
+<span class="c"># Importantly, frequency bands are phase-normalized, hence strictly comparable</span>
+<span class="c"># with regard to timing, and, the input signal can be recoverd from the</span>
+<span class="c"># transform in a lossless way if we disregard numerical errors.</span>
+
+<span class="n">fmin</span><span class="p">,</span> <span class="n">fmax</span> <span class="o">=</span> <span class="n">freqs</span><span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]]</span>
+<span class="k">for</span> <span class="n">width</span> <span class="ow">in</span> <span class="p">(</span><span class="mf">0.7</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">):</span>
+    <span class="n">power</span> <span class="o">=</span> <a href="../../generated/mne.time_frequency.tfr_stockwell.html#mne.time_frequency.tfr_stockwell"><span class="n">tfr_stockwell</span></a><span class="p">(</span><span class="n">epochs</span><span class="p">,</span> <span class="n">fmin</span><span class="o">=</span><span class="n">fmin</span><span class="p">,</span> <span class="n">fmax</span><span class="o">=</span><span class="n">fmax</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="n">width</span><span class="p">)</span>
+    <span class="n">power</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="mi">0</span><span class="p">],</span> <span class="n">baseline</span><span class="o">=</span><span class="p">(</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">),</span> <span class="n">mode</span><span class="o">=</span><span class="s">&#39;mean&#39;</span><span class="p">,</span>
+               <span class="n">title</span><span class="o">=</span><span class="s">&#39;Sim: Using S transform, width &#39;</span>
+                     <span class="s">&#39;= {:0.1f}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">width</span><span class="p">),</span> <span class="n">show</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+
+<span class="c"># #############################################################################</span>
+<span class="c"># Finally, compare to morlet wavelet</span>
+
+<span class="n">n_cycles</span> <span class="o">=</span> <span class="n">freqs</span> <span class="o">/</span> <span class="mf">2.</span>
+<span class="n">power</span> <span class="o">=</span> <a href="../../generated/mne.time_frequency.tfr_morlet.html#mne.time_frequency.tfr_morlet"><span class="n">tfr_morlet</span></a><span class="p">(</span><span class="n">epochs</span><span class="p">,</span> <span class="n">freqs</span><span class="o">=</span><span class="n">freqs</span><span class="p">,</span> <span class="n">n_cycles</span><span class="o">=</span><span class="n">n_cycles</span><span class="p">,</span> <span class="n">return_itc</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="n">power</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="mi">0</span><span class="p">],</span> <span class="n">baseline</span><span class="o">=</span><span class="p">(</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">),</span> <span class="n">mode</span><span class="o">=</span><span class="s">&#39;mean&#39;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=-</span><span class="mf">1.</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mf">3.</span><span class="p">,</span>
+           <span class="n">title</span><span class="o">=</span><span class="s">&#39;Sim: Using Morlet wavelet&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>Total running time of the example:</strong>   14 seconds</p>
+<div class="social-button-container">
+    <div class="social-button">
+        <a href="https://twitter.com/share" class="twitter-share-button">Tweet</a>
+    </div>
+    <div class="social-button">
+        <g:plusone annotation="inline" width="120" size="medium"></g:plusone>
+    </div>
+    <div class="social-button">
+        <div id="fb-root"></div>
+        <script>(function(d, s, id) {
+            var js, fjs = d.getElementsByTagName(s)[0];
+            if (d.getElementById(id)) return;
+            js = d.createElement(s); js.id = id;
+            js.src = "//connect.facebook.net/en_US/all.js#xfbml=1";
+            fjs.parentNode.insertBefore(js, fjs);
+            }(document, 'script', 'facebook-jssdk'));
+        </script>
+        <div class="fb-like" data-send="false" data-width="450" data-show-faces="false"></div>
+    </div>
+</div></div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer" role="contentinfo">
+        &copy; Copyright 2012-2015, MNE Developers.
+      Last updated on May 22, 2015.
+      Created using <a href="http://sphinx-doc.org/">Sphinx</a> 1.4a0+.
+    </div>
+  </body>
+</html>
