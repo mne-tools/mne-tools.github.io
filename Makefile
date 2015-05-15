@@ -1,11 +1,15 @@
 # This script assumes mne-tools.github.io lives in the same
 # directory as mne-python
 
-copy-dev:
+copy-dev: pull
 	cp -R ../mne-python/doc/build/html_dev/* dev/
 
-copy-stable:
+copy-stable: pull
 	cp -R ../mne-python/doc/build/html_stable/* stable/
+
+pull:
+	git fetch origin
+	git reset --hard origin/master
 
 push:
 	git commit -am 'ENH: Update'
