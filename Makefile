@@ -2,7 +2,7 @@
 # directory as mne-python
 
 copy-dev: pull
-	cp -R ../mne-python/doc/build/html_dev/* dev/
+	cp -R ../mne-python/doc/build/html/* dev/
 
 copy-stable: pull
 	cp -R ../mne-python/doc/build/html_stable/* stable/
@@ -14,4 +14,8 @@ pull:
 push:
 	git commit -am 'ENH: Update'
 	git push origin master
+
+dev: pull copy-dev push
+
+stable: pull copy-stable push
 
