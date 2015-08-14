@@ -4,6 +4,7 @@
 copy-dev: pull
 	rm -rf dev
 	cp -R ../mne-python/doc/_build/html dev
+	git add dev
 
 copy-stable: pull
 	cp -R ../mne-python/doc/build/html_stable/* stable/
