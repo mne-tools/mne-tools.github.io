@@ -1,6 +1,6 @@
 
 
-.. _example_visualization_plot_topo_compare_conditions.py:
+.. _sphx_glr_auto_examples_visualization_plot_topo_compare_conditions.py:
 
 
 =================================================
@@ -15,64 +15,117 @@ evoked responses.
 
 
 
+.. code-block:: python
 
-.. image:: images/plot_topo_compare_conditions_001.png
+
+    # Authors: Denis Engemann <denis.engemann@gmail.com>
+    #          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
+
+    # License: BSD (3-clause)
+
+
+    import matplotlib.pyplot as plt
+    import mne
+
+    from mne.io import Raw
+    from mne.viz import plot_evoked_topo
+    from mne.datasets import sample
+
+    print(__doc__)
+
+    data_path = sample.data_path()
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+**Script output**:
+
+.. rst-class:: sphx-glr-script-out
+
+  ::
+
+    Built-in functions, exceptions, and other objects.
+
+    Noteworthy: None is the `nil' object; Ellipsis represents `...' in slices.
+
+
+Set parameters
+
+
+.. code-block:: python
+
+    raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
+    event_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw-eve.fif'
+    event_id = 1
+    tmin = -0.2
+    tmax = 0.5
+
+    #   Setup for reading the raw data
+    raw = Raw(raw_fname)
+    events = mne.read_events(event_fname)
+
+    #   Set up pick list: MEG + STI 014 - bad channels (modify to your needs)
+    include = []  # or stim channels ['STI 014']
+    # bad channels in raw.info['bads'] will be automatically excluded
+
+    #   Set up amplitude-peak rejection values for MEG channels
+    reject = dict(grad=4000e-13, mag=4e-12)
+
+    # pick MEG channels
+    picks = mne.pick_types(raw.info, meg=True, eeg=False, stim=False, eog=True,
+                           include=include, exclude='bads')
+
+    # Create epochs including different events
+    event_id = {'audio/left': 1, 'audio/right': 2,
+                'visual/left': 3, 'visual/right': 4}
+    epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
+                        picks=picks, baseline=(None, 0), reject=reject)
+
+    # Generate list of evoked objects from conditions names
+    evokeds = [epochs[name].average() for name in ('left', 'right')]
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+
+
+Show topography for two different conditions
+
+
+.. code-block:: python
+
+
+    colors = 'yellow', 'green'
+    title = 'MNE sample data - left vs right (A/V combined)'
+
+    plot_evoked_topo(evokeds, color=colors, title=title)
+
+    conditions = [e.comment for e in evokeds]
+    for cond, col, pos in zip(conditions, colors, (0.025, 0.07)):
+        plt.figtext(0.99, pos, cond, color=col, fontsize=12,
+                    horizontalalignment='right')
+
+    plt.show()
+
+
+
+.. image:: /auto_examples/visualization/images/sphx_glr_plot_topo_compare_conditions_001.png
     :align: center
 
 
-**Script output**::
 
-  Opening raw data file /data1/agramfort/work/src/mne-python/examples/MNE-sample-data/MEG/sample/sample_audvis_filt-0-40_raw.fif...
-      Read a total of 4 projection items:
-          PCA-v1 (1 x 102)  idle
-          PCA-v2 (1 x 102)  idle
-          PCA-v3 (1 x 102)  idle
-          Average EEG reference (1 x 60)  idle
-  Current compensation grade : 0
-      Range : 6450 ... 48149 =     42.956 ...   320.665 secs
-  Ready.
-  Created an SSP operator (subspace dimension = 3)
-  4 projection items activated
-  288 matching events found
-  Reading 606 ... 711  =      4.036 ...     4.735 secs...
-  [done]
-  Applying baseline correction ... (mode: mean)
-  Reading 712 ... 817  =      4.742 ...     5.441 secs...
-  [done]
-  Applying baseline correction ... (mode: mean)
-  Reading 1026 ... 1131  =      6.833 ...     7.532 secs...
-  [done]
-  ...
+
+**Total running time of the script:**
+(0 minutes 20.726 seconds)
 
 
 
-**Python source code:** :download:`plot_topo_compare_conditions.py <plot_topo_compare_conditions.py>`
-
-.. literalinclude:: plot_topo_compare_conditions.py
-    :lines: 13-
-
-**Total running time of the example:**   30 seconds
-
-.. raw:: html
-
-    <div class="social-button-container">
-        <div class="social-button">
-            <a href="https://twitter.com/share" class="twitter-share-button">Tweet</a>
-        </div>
-        <div class="social-button">
-            <g:plusone annotation="inline" width="120" size="medium"></g:plusone>
-        </div>
-        <div class="social-button">
-            <div id="fb-root"></div>
-            <script>(function(d, s, id) {
-                var js, fjs = d.getElementsByTagName(s)[0];
-                if (d.getElementById(id)) return;
-                js = d.createElement(s); js.id = id;
-                js.src = "//connect.facebook.net/en_US/all.js#xfbml=1";
-                fjs.parentNode.insertBefore(js, fjs);
-                }(document, 'script', 'facebook-jssdk'));
-            </script>
-            <div class="fb-like" data-send="false" data-width="450" data-show-faces="false"></div>
-        </div>
-    </div>
-    
+**Download Python source code:** :download:`plot_topo_compare_conditions.py <plot_topo_compare_conditions.py>`

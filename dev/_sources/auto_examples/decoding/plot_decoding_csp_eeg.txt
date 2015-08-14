@@ -1,6 +1,6 @@
 
 
-.. _example_decoding_plot_decoding_csp_eeg.py:
+.. _sphx_glr_auto_examples_decoding_plot_decoding_csp_eeg.py:
 
 
 ===========================================================================
@@ -29,74 +29,187 @@ The data set is available at PhysioNet [3]
     Complex Physiologic Signals. Circulation 101(23):e215-e220
 
 
+.. code-block:: python
 
-.. rst-class:: horizontal
+    # Authors: Martin Billinger <martin.billinger@tugraz.at>
+    #
+    # License: BSD (3-clause)
+
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    from mne import Epochs, pick_types
+    from mne.io import concatenate_raws
+    from mne.io.edf import read_raw_edf
+    from mne.datasets import eegbci
+    from mne.event import find_events
+    from mne.decoding import CSP
+    from mne.channels import read_layout
+
+    print(__doc__)
+
+    # #############################################################################
+    # # Set parameters and read data
+
+    # avoid classification of evoked responses by using epochs that start 1s after
+    # cue onset.
+    tmin, tmax = -1., 4.
+    event_id = dict(hands=2, feet=3)
+    subject = 1
+    runs = [6, 10, 14]  # motor imagery: hands vs feet
+
+    raw_fnames = eegbci.load_data(subject, runs)
+    raw_files = [read_raw_edf(f, preload=True) for f in raw_fnames]
+    raw = concatenate_raws(raw_files)
+
+    # strip channel names
+    raw.info['ch_names'] = [chn.strip('.') for chn in raw.info['ch_names']]
+
+    # Apply band-pass filter
+    raw.filter(7., 30., method='iir')
+
+    events = find_events(raw, shortest_event=0, stim_channel='STI 014')
+
+    picks = pick_types(raw.info, meg=False, eeg=True, stim=False, eog=False,
+                       exclude='bads')
+
+    # Read epochs (train will be done only between 1 and 2s)
+    # Testing will be done with a running classifier
+    epochs = Epochs(raw, events, event_id, tmin, tmax, proj=True, picks=picks,
+                    baseline=None, preload=True, add_eeg_ref=False)
+    epochs_train = epochs.crop(tmin=1., tmax=2., copy=True)
+    labels = epochs.events[:, -1] - 2
 
 
-    *
-
-      .. image:: images/plot_decoding_csp_eeg_001.png
-            :scale: 47
-
-    *
-
-      .. image:: images/plot_decoding_csp_eeg_002.png
-            :scale: 47
 
 
-**Script output**::
-
-  Extracting edf Parameters from /data1/agramfort/work/src/mne-python/examples/MNE-eegbci-data/physiobank/database/eegmmidb/S001/S001R06.edf...
-  Setting channel info structure...
-  Creating Raw.info structure...
-  Reading 0 ... 19999  =      0.000 ...   124.994 secs...
-  [done]
-  Ready.
-  Extracting edf Parameters from /data1/agramfort/work/src/mne-python/examples/MNE-eegbci-data/physiobank/database/eegmmidb/S001/S001R10.edf...
-  Setting channel info structure...
-  Creating Raw.info structure...
-  Reading 0 ... 19999  =      0.000 ...   124.994 secs...
-  [done]
-  Ready.
-  Extracting edf Parameters from /data1/agramfort/work/src/mne-python/examples/MNE-eegbci-data/physiobank/database/eegmmidb/S001/S001R14.edf...
-  Setting channel info structure...
-  Creating Raw.info structure...
-  Reading 0 ... 19999  =      0.000 ...   124.994 secs...
-  [done]
-  Ready.
-  Band-pass filtering from 7 - 30 Hz
-  Removing orphaned offset at the beginning of the file.
-  ...
+.. rst-class:: sphx-glr-horizontal
 
 
 
-**Python source code:** :download:`plot_decoding_csp_eeg.py <plot_decoding_csp_eeg.py>`
+**Script output**:
 
-.. literalinclude:: plot_decoding_csp_eeg.py
-    :lines: 27-
+.. rst-class:: sphx-glr-script-out
 
-**Total running time of the example:**    3 seconds
+  ::
 
-.. raw:: html
+    Built-in functions, exceptions, and other objects.
 
-    <div class="social-button-container">
-        <div class="social-button">
-            <a href="https://twitter.com/share" class="twitter-share-button">Tweet</a>
-        </div>
-        <div class="social-button">
-            <g:plusone annotation="inline" width="120" size="medium"></g:plusone>
-        </div>
-        <div class="social-button">
-            <div id="fb-root"></div>
-            <script>(function(d, s, id) {
-                var js, fjs = d.getElementsByTagName(s)[0];
-                if (d.getElementById(id)) return;
-                js = d.createElement(s); js.id = id;
-                js.src = "//connect.facebook.net/en_US/all.js#xfbml=1";
-                fjs.parentNode.insertBefore(js, fjs);
-                }(document, 'script', 'facebook-jssdk'));
-            </script>
-            <div class="fb-like" data-send="false" data-width="450" data-show-faces="false"></div>
-        </div>
-    </div>
-    
+    Noteworthy: None is the `nil' object; Ellipsis represents `...' in slices.
+
+
+Classification with linear discrimant analysis
+
+
+.. code-block:: python
+
+
+    from sklearn.lda import LDA  # noqa
+    from sklearn.cross_validation import ShuffleSplit  # noqa
+
+    # Assemble a classifier
+    svc = LDA()
+    csp = CSP(n_components=4, reg=None, log=True)
+
+    # Define a monte-carlo cross-validation generator (reduce variance):
+    cv = ShuffleSplit(len(labels), 10, test_size=0.2, random_state=42)
+    scores = []
+    epochs_data = epochs.get_data()
+    epochs_data_train = epochs_train.get_data()
+
+    # Use scikit-learn Pipeline with cross_val_score function
+    from sklearn.pipeline import Pipeline  # noqa
+    from sklearn.cross_validation import cross_val_score  # noqa
+    clf = Pipeline([('CSP', csp), ('SVC', svc)])
+    scores = cross_val_score(clf, epochs_data_train, labels, cv=cv, n_jobs=1)
+
+    # Printing the results
+    class_balance = np.mean(labels == labels[0])
+    class_balance = max(class_balance, 1. - class_balance)
+    print("Classification accuracy: %f / Chance level: %f" % (np.mean(scores),
+                                                              class_balance))
+
+    # plot CSP patterns estimated on full data for visualization
+    csp.fit_transform(epochs_data, labels)
+
+    evoked = epochs.average()
+    evoked.data = csp.patterns_.T
+    evoked.times = np.arange(evoked.data.shape[0])
+
+    layout = read_layout('EEG1005')
+    evoked.plot_topomap(times=[0, 1, 2, 61, 62, 63], ch_type='eeg', layout=layout,
+                        scale_time=1, time_format='%i', scale=1,
+                        unit='Patterns (AU)', size=1.5)
+
+
+
+
+.. image:: /auto_examples/decoding/images/sphx_glr_plot_decoding_csp_eeg_001.png
+    :align: center
+
+
+**Script output**:
+
+.. rst-class:: sphx-glr-script-out
+
+  ::
+
+    Classification accuracy: 0.966667 / Chance level: 0.533333
+
+
+Look at performance over time
+
+
+.. code-block:: python
+
+
+    sfreq = raw.info['sfreq']
+    w_length = int(sfreq * 0.5)   # running classifier: window length
+    w_step = int(sfreq * 0.1)  # running classifier: window step size
+    w_start = np.arange(0, epochs_data.shape[2] - w_length, w_step)
+
+    scores_windows = []
+
+    for train_idx, test_idx in cv:
+        y_train, y_test = labels[train_idx], labels[test_idx]
+
+        X_train = csp.fit_transform(epochs_data_train[train_idx], y_train)
+        X_test = csp.transform(epochs_data_train[test_idx])
+
+        # fit classifier
+        svc.fit(X_train, y_train)
+
+        # running classifier: test classifier on sliding window
+        score_this_window = []
+        for n in w_start:
+            X_test = csp.transform(epochs_data[test_idx][:, :, n:(n + w_length)])
+            score_this_window.append(svc.score(X_test, y_test))
+        scores_windows.append(score_this_window)
+
+    # Plot scores over time
+    w_times = (w_start + w_length / 2.) / sfreq + epochs.tmin
+
+    plt.figure()
+    plt.plot(w_times, np.mean(scores_windows, 0), label='Score')
+    plt.axvline(0, linestyle='--', color='k', label='Onset')
+    plt.axhline(0.5, linestyle='-', color='k', label='Chance')
+    plt.xlabel('time (s)')
+    plt.ylabel('classification accuracy')
+    plt.title('Classification score over time')
+    plt.legend(loc='lower right')
+    plt.show()
+
+
+
+.. image:: /auto_examples/decoding/images/sphx_glr_plot_decoding_csp_eeg_002.png
+    :align: center
+
+
+
+
+**Total running time of the script:**
+(0 minutes 3.672 seconds)
+
+
+
+**Download Python source code:** :download:`plot_decoding_csp_eeg.py <plot_decoding_csp_eeg.py>`

@@ -1,6 +1,6 @@
 
 
-.. _example_stats_plot_fdr_stats_evoked.py:
+.. _sphx_glr_auto_examples_stats_plot_fdr_stats_evoked.py:
 
 
 =======================================
@@ -13,64 +13,148 @@ False Discovery Rate (FDR) correction.
 
 
 
+.. code-block:: python
 
-.. image:: images/plot_fdr_stats_evoked_001.png
+    # Authors: Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
+    #
+    # License: BSD (3-clause)
+
+    import numpy as np
+    from scipy import stats
+    import matplotlib.pyplot as plt
+
+    import mne
+    from mne import io
+    from mne.datasets import sample
+    from mne.stats import bonferroni_correction, fdr_correction
+
+    print(__doc__)
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+**Script output**:
+
+.. rst-class:: sphx-glr-script-out
+
+  ::
+
+    Built-in functions, exceptions, and other objects.
+
+    Noteworthy: None is the `nil' object; Ellipsis represents `...' in slices.
+
+
+Set parameters
+
+
+.. code-block:: python
+
+    data_path = sample.data_path()
+    raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
+    event_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw-eve.fif'
+    event_id, tmin, tmax = 1, -0.2, 0.5
+
+    #   Setup for reading the raw data
+    raw = io.Raw(raw_fname)
+    events = mne.read_events(event_fname)[:30]
+
+    channel = 'MEG 1332'  # include only this channel in analysis
+    include = [channel]
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+
+
+Read epochs for the channel of interest
+
+
+.. code-block:: python
+
+    picks = mne.pick_types(raw.info, meg=False, eog=True, include=include,
+                           exclude='bads')
+    event_id = 1
+    reject = dict(grad=4000e-13, eog=150e-6)
+    epochs = mne.Epochs(raw, events, event_id, tmin, tmax, picks=picks,
+                        baseline=(None, 0), reject=reject)
+    X = epochs.get_data()  # as 3D matrix
+    X = X[:, 0, :]  # take only one channel to get a 2D array
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+
+
+Compute statistic
+
+
+.. code-block:: python
+
+    T, pval = stats.ttest_1samp(X, 0)
+    alpha = 0.05
+
+    n_samples, n_tests = X.shape
+    threshold_uncorrected = stats.t.ppf(1.0 - alpha, n_samples - 1)
+
+    reject_bonferroni, pval_bonferroni = bonferroni_correction(pval, alpha=alpha)
+    threshold_bonferroni = stats.t.ppf(1.0 - alpha / n_tests, n_samples - 1)
+
+    reject_fdr, pval_fdr = fdr_correction(pval, alpha=alpha, method='indep')
+    threshold_fdr = np.min(np.abs(T)[reject_fdr])
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+
+
+Plot
+
+
+.. code-block:: python
+
+    times = 1e3 * epochs.times
+
+    plt.close('all')
+    plt.plot(times, T, 'k', label='T-stat')
+    xmin, xmax = plt.xlim()
+    plt.hlines(threshold_uncorrected, xmin, xmax, linestyle='--', colors='k',
+               label='p=0.05 (uncorrected)', linewidth=2)
+    plt.hlines(threshold_bonferroni, xmin, xmax, linestyle='--', colors='r',
+               label='p=0.05 (Bonferroni)', linewidth=2)
+    plt.hlines(threshold_fdr, xmin, xmax, linestyle='--', colors='b',
+               label='p=0.05 (FDR)', linewidth=2)
+    plt.legend()
+    plt.xlabel("Time (ms)")
+    plt.ylabel("T-stat")
+    plt.show()
+
+
+
+.. image:: /auto_examples/stats/images/sphx_glr_plot_fdr_stats_evoked_001.png
     :align: center
 
 
-**Script output**::
 
-  Opening raw data file /data1/agramfort/work/src/mne-python/examples/MNE-sample-data/MEG/sample/sample_audvis_filt-0-40_raw.fif...
-      Read a total of 4 projection items:
-          PCA-v1 (1 x 102)  idle
-          PCA-v2 (1 x 102)  idle
-          PCA-v3 (1 x 102)  idle
-          Average EEG reference (1 x 60)  idle
-  Current compensation grade : 0
-      Range : 6450 ... 48149 =     42.956 ...   320.665 secs
-  Ready.
-  4 projection items activated
-  7 matching events found
-  Reading 712 ... 817  =      4.742 ...     5.441 secs...
-  [done]
-  Applying baseline correction ... (mode: mean)
-  Reading 1132 ... 1237  =      7.539 ...     8.238 secs...
-  [done]
-  Applying baseline correction ... (mode: mean)
-  Reading 1545 ... 1650  =     10.289 ...    10.989 secs...
-  [done]
-  Applying baseline correction ... (mode: mean)
-  ...
+
+**Total running time of the script:**
+(0 minutes 0.137 seconds)
 
 
 
-**Python source code:** :download:`plot_fdr_stats_evoked.py <plot_fdr_stats_evoked.py>`
-
-.. literalinclude:: plot_fdr_stats_evoked.py
-    :lines: 11-
-
-**Total running time of the example:**    0 seconds
-
-.. raw:: html
-
-    <div class="social-button-container">
-        <div class="social-button">
-            <a href="https://twitter.com/share" class="twitter-share-button">Tweet</a>
-        </div>
-        <div class="social-button">
-            <g:plusone annotation="inline" width="120" size="medium"></g:plusone>
-        </div>
-        <div class="social-button">
-            <div id="fb-root"></div>
-            <script>(function(d, s, id) {
-                var js, fjs = d.getElementsByTagName(s)[0];
-                if (d.getElementById(id)) return;
-                js = d.createElement(s); js.id = id;
-                js.src = "//connect.facebook.net/en_US/all.js#xfbml=1";
-                fjs.parentNode.insertBefore(js, fjs);
-                }(document, 'script', 'facebook-jssdk'));
-            </script>
-            <div class="fb-like" data-send="false" data-width="450" data-show-faces="false"></div>
-        </div>
-    </div>
-    
+**Download Python source code:** :download:`plot_fdr_stats_evoked.py <plot_fdr_stats_evoked.py>`

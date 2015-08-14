@@ -1,6 +1,6 @@
 
 
-.. _example_time_frequency_plot_compute_raw_data_spectrum.py:
+.. _sphx_glr_auto_examples_time_frequency_plot_compute_raw_data_spectrum.py:
 
 
 ==================================================
@@ -12,74 +12,114 @@ of measurements on a raw dataset. It also show the effect of applying SSP
 to the data to reduce ECG and EOG artifacts.
 
 
+.. code-block:: python
 
-.. rst-class:: horizontal
+    # Authors: Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
+    #          Martin Luessi <mluessi@nmr.mgh.harvard.edu>
+    #          Eric Larson <larson.eric.d@gmail.com>
+    # License: BSD (3-clause)
+
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    import mne
+    from mne import io, read_proj, read_selection
+    from mne.datasets import sample
+
+    print(__doc__)
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+**Script output**:
+
+.. rst-class:: sphx-glr-script-out
+
+  ::
+
+    Built-in functions, exceptions, and other objects.
+
+    Noteworthy: None is the `nil' object; Ellipsis represents `...' in slices.
+
+
+Set parameters
+
+
+.. code-block:: python
+
+    data_path = sample.data_path()
+    raw_fname = data_path + '/MEG/sample/sample_audvis_raw.fif'
+    proj_fname = data_path + '/MEG/sample/sample_audvis_eog_proj.fif'
+
+    # Setup for reading the raw data
+    raw = io.Raw(raw_fname, preload=True)
+    raw.info['bads'] += ['MEG 2443', 'EEG 053']  # bads + 2 more
+
+    # Add SSP projection vectors to reduce EOG and ECG artifacts
+    projs = read_proj(proj_fname)
+    raw.add_proj(projs, remove_existing=True)
+
+
+    tmin, tmax = 0, 60  # use the first 60s of data
+    fmin, fmax = 2, 300  # look at frequencies between 2 and 300Hz
+    n_fft = 2048  # the FFT size (n_fft). Ideally a power of 2
+
+    plt.ion()
+
+    # Let's first check out all channel types
+    raw.plot_psd(area_mode='range', tmax=10.0)
+
+    # Now let's focus on a smaller subset:
+    # Pick MEG magnetometers in the Left-temporal region
+    selection = read_selection('Left-temporal')
+    picks = mne.pick_types(raw.info, meg='mag', eeg=False, eog=False,
+                           stim=False, exclude='bads', selection=selection)
+
+    # Let's just look at the first few channels for demonstration purposes
+    picks = picks[:4]
+
+    plt.figure()
+    ax = plt.axes()
+    raw.plot_psd(tmin=tmin, tmax=tmax, fmin=fmin, fmax=fmax, n_fft=n_fft,
+                 n_jobs=1, proj=False, ax=ax, color=(0, 0, 1),  picks=picks)
+
+    # And now do the same with SSP applied
+    raw.plot_psd(tmin=tmin, tmax=tmax, fmin=fmin, fmax=fmax, n_fft=n_fft,
+                 n_jobs=1, proj=True, ax=ax, color=(0, 1, 0), picks=picks)
+
+    # And now do the same with SSP + notch filtering
+    raw.notch_filter(np.arange(60, 241, 60), picks=picks, n_jobs=1)
+    raw.plot_psd(tmin=tmin, tmax=tmax, fmin=fmin, fmax=fmax, n_fft=n_fft,
+                 n_jobs=1, proj=True, ax=ax, color=(1, 0, 0), picks=picks)
+
+    ax.set_title('Four left-temporal magnetometers')
+    plt.legend(['Without SSP', 'With SSP', 'SSP + Notch'])
+
+
+
+.. rst-class:: sphx-glr-horizontal
 
 
     *
 
-      .. image:: images/plot_compute_raw_data_spectrum_001.png
+      .. image:: /auto_examples/time_frequency/images/sphx_glr_plot_compute_raw_data_spectrum_001.png
             :scale: 47
 
     *
 
-      .. image:: images/plot_compute_raw_data_spectrum_002.png
+      .. image:: /auto_examples/time_frequency/images/sphx_glr_plot_compute_raw_data_spectrum_002.png
             :scale: 47
 
 
-**Script output**::
 
-  Opening raw data file /data1/agramfort/work/src/mne-python/examples/MNE-sample-data/MEG/sample/sample_audvis_raw.fif...
-      Read a total of 3 projection items:
-          PCA-v1 (1 x 102)  idle
-          PCA-v2 (1 x 102)  idle
-          PCA-v3 (1 x 102)  idle
-  Current compensation grade : 0
-      Range : 25800 ... 192599 =     42.956 ...   320.670 secs
-  Ready.
-  Adding average EEG reference projection.
-  1 projection items deactivated
-  Reading 0 ... 166799  =      0.000 ...   277.714 secs...
-  [done]
-      Read a total of 16 projection items:
-          PCA-v1 (1 x 102)  idle
-          PCA-v2 (1 x 102)  idle
-          PCA-v3 (1 x 102)  idle
-          Average EEG reference (1 x 59)  idle
-          ECG-planar-999--0.200-0.400-PCA-01 (1 x 203)  idle
-          ECG-planar-999--0.200-0.400-PCA-02 (1 x 203)  idle
-          ECG-axial-999--0.200-0.400-PCA-01 (1 x 102)  idle
-  ...
+
+**Total running time of the script:**
+(0 minutes 2.260 seconds)
 
 
 
-**Python source code:** :download:`plot_compute_raw_data_spectrum.py <plot_compute_raw_data_spectrum.py>`
-
-.. literalinclude:: plot_compute_raw_data_spectrum.py
-    :lines: 10-
-
-**Total running time of the example:**    6 seconds
-
-.. raw:: html
-
-    <div class="social-button-container">
-        <div class="social-button">
-            <a href="https://twitter.com/share" class="twitter-share-button">Tweet</a>
-        </div>
-        <div class="social-button">
-            <g:plusone annotation="inline" width="120" size="medium"></g:plusone>
-        </div>
-        <div class="social-button">
-            <div id="fb-root"></div>
-            <script>(function(d, s, id) {
-                var js, fjs = d.getElementsByTagName(s)[0];
-                if (d.getElementById(id)) return;
-                js = d.createElement(s); js.id = id;
-                js.src = "//connect.facebook.net/en_US/all.js#xfbml=1";
-                fjs.parentNode.insertBefore(js, fjs);
-                }(document, 'script', 'facebook-jssdk'));
-            </script>
-            <div class="fb-like" data-send="false" data-width="450" data-show-faces="false"></div>
-        </div>
-    </div>
-    
+**Download Python source code:** :download:`plot_compute_raw_data_spectrum.py <plot_compute_raw_data_spectrum.py>`

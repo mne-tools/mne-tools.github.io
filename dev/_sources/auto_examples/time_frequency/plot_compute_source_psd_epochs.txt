@@ -1,6 +1,6 @@
 
 
-.. _example_time_frequency_plot_compute_source_psd_epochs.py:
+.. _sphx_glr_auto_examples_time_frequency_plot_compute_source_psd_epochs.py:
 
 
 =====================================================================
@@ -14,63 +14,106 @@ Discrete Prolate Spheroidal Sequence (DPSS) windows.
 
 
 
-.. image:: images/plot_compute_source_psd_epochs_001.png
+.. image:: /auto_examples/time_frequency/images/sphx_glr_plot_compute_source_psd_epochs_001.png
     :align: center
 
 
-**Script output**::
+**Script output**:
 
-  Reading inverse operator decomposition from /data1/agramfort/work/src/mne-python/examples/MNE-sample-data/MEG/sample/sample_audvis-meg-oct-6-meg-inv.fif...
-      Reading inverse operator info...
-      [done]
-      Reading inverse operator decomposition...
-      [done]
-      305 x 305 full covariance (kind = 1) found.
-      Read a total of 4 projection items:
-          PCA-v1 (1 x 102) active
-          PCA-v2 (1 x 102) active
-          PCA-v3 (1 x 102) active
-          Average EEG reference (1 x 60) active
-      Noise covariance matrix read.
-      22494 x 22494 diagonal covariance (kind = 2) found.
-      Source covariance matrix read.
-      22494 x 22494 diagonal covariance (kind = 6) found.
-      Orientation priors read.
-      22494 x 22494 diagonal covariance (kind = 5) found.
-      Depth priors read.
-      Did not find the desired covariance matrix (kind = 3)
-      Reading a source space...
-  ...
+.. rst-class:: sphx-glr-script-out
+
+  ::
+
+    Built-in functions, exceptions, and other objects.
+
+    Noteworthy: None is the `nil' object; Ellipsis represents `...' in slices.
 
 
 
-**Python source code:** :download:`plot_compute_source_psd_epochs.py <plot_compute_source_psd_epochs.py>`
+.. code-block:: python
 
-.. literalinclude:: plot_compute_source_psd_epochs.py
-    :lines: 11-
+    # Author: Martin Luessi <mluessi@nmr.mgh.harvard.edu>
+    #
+    # License: BSD (3-clause)
 
-**Total running time of the example:**    1 seconds
+    import numpy as np
+    import matplotlib.pyplot as plt
 
-.. raw:: html
+    import mne
+    from mne.datasets import sample
+    from mne.io import Raw
+    from mne.minimum_norm import read_inverse_operator, compute_source_psd_epochs
 
-    <div class="social-button-container">
-        <div class="social-button">
-            <a href="https://twitter.com/share" class="twitter-share-button">Tweet</a>
-        </div>
-        <div class="social-button">
-            <g:plusone annotation="inline" width="120" size="medium"></g:plusone>
-        </div>
-        <div class="social-button">
-            <div id="fb-root"></div>
-            <script>(function(d, s, id) {
-                var js, fjs = d.getElementsByTagName(s)[0];
-                if (d.getElementById(id)) return;
-                js = d.createElement(s); js.id = id;
-                js.src = "//connect.facebook.net/en_US/all.js#xfbml=1";
-                fjs.parentNode.insertBefore(js, fjs);
-                }(document, 'script', 'facebook-jssdk'));
-            </script>
-            <div class="fb-like" data-send="false" data-width="450" data-show-faces="false"></div>
-        </div>
-    </div>
-    
+    print(__doc__)
+
+    data_path = sample.data_path()
+    fname_inv = data_path + '/MEG/sample/sample_audvis-meg-oct-6-meg-inv.fif'
+    fname_raw = data_path + '/MEG/sample/sample_audvis_raw.fif'
+    fname_event = data_path + '/MEG/sample/sample_audvis_raw-eve.fif'
+    label_name = 'Aud-lh'
+    fname_label = data_path + '/MEG/sample/labels/%s.label' % label_name
+
+    event_id, tmin, tmax = 1, -0.2, 0.5
+    snr = 1.0  # use smaller SNR for raw data
+    lambda2 = 1.0 / snr ** 2
+    method = "dSPM"  # use dSPM method (could also be MNE or sLORETA)
+
+    # Load data
+    inverse_operator = read_inverse_operator(fname_inv)
+    label = mne.read_label(fname_label)
+    raw = Raw(fname_raw)
+    events = mne.read_events(fname_event)
+
+    # Set up pick list
+    include = []
+    raw.info['bads'] += ['EEG 053']  # bads + 1 more
+
+    # pick MEG channels
+    picks = mne.pick_types(raw.info, meg=True, eeg=False, stim=False, eog=True,
+                           include=include, exclude='bads')
+    # Read epochs
+    epochs = mne.Epochs(raw, events, event_id, tmin, tmax, picks=picks,
+                        baseline=(None, 0), reject=dict(mag=4e-12, grad=4000e-13,
+                                                        eog=150e-6))
+
+    # define frequencies of interest
+    fmin, fmax = 0., 70.
+    bandwidth = 4.  # bandwidth of the windows in Hz
+
+    # compute source space psd in label
+
+    # Note: By using "return_generator=True" stcs will be a generator object
+    # instead of a list. This allows us so to iterate without having to
+    # keep everything in memory.
+
+    stcs = compute_source_psd_epochs(epochs, inverse_operator, lambda2=lambda2,
+                                     method=method, fmin=fmin, fmax=fmax,
+                                     bandwidth=bandwidth, label=label,
+                                     return_generator=True)
+
+    # compute average PSD over the first 10 epochs
+    n_epochs = 10
+    for i, stc in enumerate(stcs):
+        if i >= n_epochs:
+            break
+
+        if i == 0:
+            psd_avg = np.mean(stc.data, axis=0)
+        else:
+            psd_avg += np.mean(stc.data, axis=0)
+
+    psd_avg /= n_epochs
+    freqs = stc.times  # the frequencies are stored here
+
+    plt.figure()
+    plt.plot(freqs, psd_avg)
+    plt.xlabel('Freq (Hz)')
+    plt.ylabel('Power Spectral Density')
+    plt.show()
+
+**Total running time of the script:**
+(0 minutes 1.710 seconds)
+
+
+
+**Download Python source code:** :download:`plot_compute_source_psd_epochs.py <plot_compute_source_psd_epochs.py>`

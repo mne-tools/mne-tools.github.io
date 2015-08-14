@@ -1,6 +1,6 @@
 
 
-.. _example_visualization_plot_evoked_whitening.py:
+.. _sphx_glr_auto_examples_visualization_plot_evoked_whitening.py:
 
 
 =============================================
@@ -21,74 +21,199 @@ References
 
 
 
+.. code-block:: python
 
-.. rst-class:: horizontal
+    # Authors: Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
+    #          Denis A. Engemann <denis.engemann@gmail.com>
+    #
+    # License: BSD (3-clause)
+
+    import mne
+
+    from mne import io
+    from mne.datasets import sample
+    from mne.cov import compute_covariance
+
+    print(__doc__)
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+**Script output**:
+
+.. rst-class:: sphx-glr-script-out
+
+  ::
+
+    Built-in functions, exceptions, and other objects.
+
+    Noteworthy: None is the `nil' object; Ellipsis represents `...' in slices.
+
+
+Set parameters
+
+
+.. code-block:: python
+
+
+    data_path = sample.data_path()
+    raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
+    event_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw-eve.fif'
+
+    raw = io.Raw(raw_fname, preload=True)
+    raw.filter(1, 40, method='iir', n_jobs=1)
+    raw.info['bads'] += ['MEG 2443']  # bads + 1 more
+    events = mne.read_events(event_fname)
+
+    # let's look at rare events, button presses
+    event_id, tmin, tmax = 2, -0.2, 0.5
+    picks = mne.pick_types(raw.info, meg=True, eeg=True, eog=True, exclude='bads')
+    reject = dict(mag=4e-12, grad=4000e-13, eeg=80e-6)
+
+    epochs = mne.Epochs(raw, events, event_id, tmin, tmax, picks=picks,
+                        baseline=None, reject=reject, preload=True)
+
+    # Uncomment next line to use fewer samples and study regularization effects
+    # epochs = epochs[:20]  # For your data, use as many samples as you can!
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+
+
+Compute covariance using automated regularization
+
+
+.. code-block:: python
+
+    noise_covs = compute_covariance(epochs, tmin=None, tmax=0, method='auto',
+                                    return_estimators=True, verbose=True, n_jobs=1,
+                                    projs=None)
+
+    # With "return_estimator=True" all estimated covariances sorted
+    # by log-likelihood are returned.
+
+    print('Covariance estimates sorted from best to worst')
+    for c in noise_covs:
+        print("%s : %s" % (c['method'], c['loglik']))
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+**Script output**:
+
+.. rst-class:: sphx-glr-script-out
+
+  ::
+
+    Estimating covariance using SHRUNK
+    Done.
+    Estimating covariance using DIAGONAL_FIXED
+        EEG regularization : None
+        MAG regularization : 0.01
+        GRAD regularization : 0.01
+    Done.
+    Estimating covariance using EMPIRICAL
+    Done.
+    Estimating covariance using FACTOR_ANALYSIS
+    ... rank: 5 - loglik: -1801.587
+    ... rank: 10 - loglik: -1749.706
+    ... rank: 15 - loglik: -1703.215
+    ... rank: 20 - loglik: -1675.987
+    ... rank: 25 - loglik: -1656.535
+    ... rank: 30 - loglik: -1642.556
+    ... rank: 35 - loglik: -1634.068
+    ... rank: 40 - loglik: -1628.518
+    ... rank: 45 - loglik: -1624.140
+    ... rank: 50 - loglik: -1622.486
+    ... rank: 55 - loglik: -1621.697
+    ... rank: 60 - loglik: -1621.290
+    ... rank: 65 - loglik: -1621.628
+    ... rank: 70 - loglik: -1622.674
+    ... rank: 75 - loglik: -1623.352
+    early stopping parameter search.
+    ... best model at rank = 60
+    Done.
+    Using cross-validation to select the best estimator.
+        EEG regularization : None
+        MAG regularization : 0.01
+        GRAD regularization : 0.01
+        EEG regularization : None
+        MAG regularization : 0.01
+        GRAD regularization : 0.01
+        EEG regularization : None
+        MAG regularization : 0.01
+        GRAD regularization : 0.01
+    Number of samples used : 1922
+    [done]
+    Number of samples used : 1922
+    [done]
+    Number of samples used : 1922
+    [done]
+    Number of samples used : 1922
+    [done]
+    log-likelihood on unseen data (descending order):
+       shrunk: -1604.635
+       factor_analysis: -1621.290
+       diagonal_fixed: -1694.495
+       empirical: -1832.286
+    Covariance estimates sorted from best to worst
+    shrunk : -1604.63546572
+    factor_analysis : -1621.28967158
+    diagonal_fixed : -1694.49483046
+    empirical : -1832.28577498
+
+
+Show whitening
+
+
+.. code-block:: python
+
+
+    evoked = epochs.average()
+
+    evoked.plot()  # plot evoked response
+
+    # plot the whitened evoked data for to see if baseline signals match the
+    # assumption of Gaussian white noise from which we expect values around
+    # 0 with less than 2 standard deviations. For the Global field power we expect
+    # a value of 1.
+
+    evoked.plot_white(noise_covs)
+
+
+
+.. rst-class:: sphx-glr-horizontal
 
 
     *
 
-      .. image:: images/plot_evoked_whitening_001.png
+      .. image:: /auto_examples/visualization/images/sphx_glr_plot_evoked_whitening_001.png
             :scale: 47
 
     *
 
-      .. image:: images/plot_evoked_whitening_002.png
+      .. image:: /auto_examples/visualization/images/sphx_glr_plot_evoked_whitening_002.png
             :scale: 47
 
 
-**Script output**::
 
-  Opening raw data file /data1/agramfort/work/src/mne-python/examples/MNE-sample-data/MEG/sample/sample_audvis_filt-0-40_raw.fif...
-      Read a total of 4 projection items:
-          PCA-v1 (1 x 102)  idle
-          PCA-v2 (1 x 102)  idle
-          PCA-v3 (1 x 102)  idle
-          Average EEG reference (1 x 60)  idle
-  Current compensation grade : 0
-      Range : 6450 ... 48149 =     42.956 ...   320.665 secs
-  Ready.
-  Reading 0 ... 41699  =      0.000 ...   277.709 secs...
-  [done]
-  Band-pass filtering from 1 - 40 Hz
-  Created an SSP operator (subspace dimension = 4)
-  4 projection items activated
-  73 matching events found
-  No baseline correction applied...
-      Rejecting  epoch based on EEG : ['EEG 002', 'EEG 003', 'EEG 007']
-  No baseline correction applied...
-  No baseline correction applied...
-  No baseline correction applied...
-  ...
+
+**Total running time of the script:**
+(0 minutes 31.755 seconds)
 
 
 
-**Python source code:** :download:`plot_evoked_whitening.py <plot_evoked_whitening.py>`
-
-.. literalinclude:: plot_evoked_whitening.py
-    :lines: 19-
-
-**Total running time of the example:**   54 seconds
-
-.. raw:: html
-
-    <div class="social-button-container">
-        <div class="social-button">
-            <a href="https://twitter.com/share" class="twitter-share-button">Tweet</a>
-        </div>
-        <div class="social-button">
-            <g:plusone annotation="inline" width="120" size="medium"></g:plusone>
-        </div>
-        <div class="social-button">
-            <div id="fb-root"></div>
-            <script>(function(d, s, id) {
-                var js, fjs = d.getElementsByTagName(s)[0];
-                if (d.getElementById(id)) return;
-                js = d.createElement(s); js.id = id;
-                js.src = "//connect.facebook.net/en_US/all.js#xfbml=1";
-                fjs.parentNode.insertBefore(js, fjs);
-                }(document, 'script', 'facebook-jssdk'));
-            </script>
-            <div class="fb-like" data-send="false" data-width="450" data-show-faces="false"></div>
-        </div>
-    </div>
-    
+**Download Python source code:** :download:`plot_evoked_whitening.py <plot_evoked_whitening.py>`

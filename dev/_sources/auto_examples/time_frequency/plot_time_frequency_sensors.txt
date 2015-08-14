@@ -1,6 +1,6 @@
 
 
-.. _example_time_frequency_plot_time_frequency_sensors.py:
+.. _sphx_glr_auto_examples_time_frequency_plot_time_frequency_sensors.py:
 
 
 ==============================================================
@@ -10,84 +10,132 @@ Time-frequency representations on topographies for MEG sensors
 Both average power and intertrial coherence are displayed.
 
 
+.. code-block:: python
 
-.. rst-class:: horizontal
+    # Authors: Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
+    #          Denis Engemann <denis.engemann@gmail.com>
+    #
+    # License: BSD (3-clause)
+
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    import mne
+    from mne import io
+    from mne.time_frequency import tfr_morlet
+    from mne.datasets import somato
+
+    print(__doc__)
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+**Script output**:
+
+.. rst-class:: sphx-glr-script-out
+
+  ::
+
+    Built-in functions, exceptions, and other objects.
+
+    Noteworthy: None is the `nil' object; Ellipsis represents `...' in slices.
+
+
+Set parameters
+
+
+.. code-block:: python
+
+    data_path = somato.data_path()
+    raw_fname = data_path + '/MEG/somato/sef_raw_sss.fif'
+    event_id, tmin, tmax = 1, -1., 3.
+
+    # Setup for reading the raw data
+    raw = io.Raw(raw_fname)
+    baseline = (None, 0)
+    events = mne.find_events(raw, stim_channel='STI 014')
+
+    # picks MEG gradiometers
+    picks = mne.pick_types(raw.info, meg='grad', eeg=False, eog=True, stim=False)
+
+    epochs = mne.Epochs(raw, events, event_id, tmin, tmax, picks=picks,
+                        baseline=baseline, reject=dict(grad=4000e-13, eog=350e-6))
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+
+
+Calculate power and intertrial coherence
+
+
+.. code-block:: python
+
+
+    freqs = np.arange(6, 30, 3)  # define frequencies of interest
+    n_cycles = freqs / 2.  # different number of cycle per frequency
+    power, itc = tfr_morlet(epochs, freqs=freqs, n_cycles=n_cycles, use_fft=True,
+                            return_itc=True, decim=3, n_jobs=1)
+
+    # Baseline correction can be applied to power or done in plots
+    # To illustrate the baseline correction in plots the next line is commented
+    # power.apply_baseline(baseline=(-0.5, 0), mode='logratio')
+
+    # Inspect power
+    power.plot_topo(baseline=(-0.5, 0), mode='logratio', title='Average power')
+    power.plot([82], baseline=(-0.5, 0), mode='logratio')
+
+    fig, axis = plt.subplots(1, 2, figsize=(7, 4))
+    power.plot_topomap(ch_type='grad', tmin=0.5, tmax=1.5, fmin=8, fmax=12,
+                       baseline=(-0.5, 0), mode='logratio', axes=axis[0],
+                       title='Alpha', vmax=0.45)
+    power.plot_topomap(ch_type='grad', tmin=0.5, tmax=1.5, fmin=13, fmax=25,
+                       baseline=(-0.5, 0), mode='logratio', axes=axis[1],
+                       title='Beta', vmax=0.45)
+    mne.viz.tight_layout()
+
+    # Inspect ITC
+    itc.plot_topo(title='Inter-Trial coherence', vmin=0., vmax=1., cmap='Reds')
+
+
+
+.. rst-class:: sphx-glr-horizontal
 
 
     *
 
-      .. image:: images/plot_time_frequency_sensors_001.png
+      .. image:: /auto_examples/time_frequency/images/sphx_glr_plot_time_frequency_sensors_001.png
             :scale: 47
 
     *
 
-      .. image:: images/plot_time_frequency_sensors_002.png
+      .. image:: /auto_examples/time_frequency/images/sphx_glr_plot_time_frequency_sensors_002.png
             :scale: 47
 
     *
 
-      .. image:: images/plot_time_frequency_sensors_003.png
+      .. image:: /auto_examples/time_frequency/images/sphx_glr_plot_time_frequency_sensors_003.png
             :scale: 47
 
     *
 
-      .. image:: images/plot_time_frequency_sensors_004.png
+      .. image:: /auto_examples/time_frequency/images/sphx_glr_plot_time_frequency_sensors_004.png
             :scale: 47
 
 
-**Script output**::
 
-  Opening raw data file /data1/agramfort/work/src/mne-python/examples/MNE-somato-data/MEG/somato/sef_raw_sss.fif...
-  Current compensation grade : 0
-      Range : 237600 ... 506999 =    791.189 ...  1688.266 secs
-  Ready.
-  Reading 0 ... 269399  =      0.000 ...   897.077 secs...
-  [done]
-  111 events found
-  Events id: [1]
-  0 projection items activated
-  111 matching events found
-  Reading 1747 ... 2948  =      5.817 ...     9.817 secs...
-  [done]
-  Applying baseline correction ... (mode: mean)
-      Rejecting  epoch based on EOG : ['EOG 061']
-  Reading 4215 ... 5416  =     14.036 ...    18.035 secs...
-  [done]
-  Applying baseline correction ... (mode: mean)
-      Rejecting  epoch based on EOG : ['EOG 061']
-  Reading 6425 ... 7626  =     21.395 ...    25.394 secs...
-  [done]
-  ...
+
+**Total running time of the script:**
+(0 minutes 47.169 seconds)
 
 
 
-**Python source code:** :download:`plot_time_frequency_sensors.py <plot_time_frequency_sensors.py>`
-
-.. literalinclude:: plot_time_frequency_sensors.py
-    :lines: 8-
-
-**Total running time of the example:**   66 seconds
-
-.. raw:: html
-
-    <div class="social-button-container">
-        <div class="social-button">
-            <a href="https://twitter.com/share" class="twitter-share-button">Tweet</a>
-        </div>
-        <div class="social-button">
-            <g:plusone annotation="inline" width="120" size="medium"></g:plusone>
-        </div>
-        <div class="social-button">
-            <div id="fb-root"></div>
-            <script>(function(d, s, id) {
-                var js, fjs = d.getElementsByTagName(s)[0];
-                if (d.getElementById(id)) return;
-                js = d.createElement(s); js.id = id;
-                js.src = "//connect.facebook.net/en_US/all.js#xfbml=1";
-                fjs.parentNode.insertBefore(js, fjs);
-                }(document, 'script', 'facebook-jssdk'));
-            </script>
-            <div class="fb-like" data-send="false" data-width="450" data-show-faces="false"></div>
-        </div>
-    </div>
-    
+**Download Python source code:** :download:`plot_time_frequency_sensors.py <plot_time_frequency_sensors.py>`

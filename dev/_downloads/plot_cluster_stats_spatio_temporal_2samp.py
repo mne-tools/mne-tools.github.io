@@ -1,4 +1,6 @@
 """
+.. _tut_stats_cluster_source_2samp:
+
 =========================================================================
 2 samples permutation test on source data with spatio-temporal clustering
 =========================================================================
@@ -97,8 +99,8 @@ stc_all_cluster_vis = summarize_clusters_stc(clu, tstep=tstep,
 #    shows all the clusters, weighted by duration
 subjects_dir = op.join(data_path, 'subjects')
 # blue blobs are for condition A != condition B
-brain = stc_all_cluster_vis.plot('fsaverage', 'inflated', 'both',
-                                 subjects_dir=subjects_dir, clim='auto',
+brain = stc_all_cluster_vis.plot('fsaverage', hemi='both', colormap='mne',
+                                 subjects_dir=subjects_dir,
                                  time_label='Duration significant (ms)')
 brain.set_data_time_index(0)
 brain.show_view('lateral')

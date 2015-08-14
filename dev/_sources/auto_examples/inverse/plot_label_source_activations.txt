@@ -1,6 +1,6 @@
 
 
-.. _example_inverse_plot_label_source_activations.py:
+.. _sphx_glr_auto_examples_inverse_plot_label_source_activations.py:
 
 
 ====================================================
@@ -16,63 +16,81 @@ also using a sign flip.
 
 
 
-.. image:: images/plot_label_source_activations_001.png
+.. image:: /auto_examples/inverse/images/sphx_glr_plot_label_source_activations_001.png
     :align: center
 
 
-**Script output**::
+**Script output**:
 
-  Reading /data1/agramfort/work/src/mne-python/examples/MNE-sample-data/MEG/sample/sample_audvis-ave.fif ...
-      Read a total of 4 projection items:
-          PCA-v1 (1 x 102) active
-          PCA-v2 (1 x 102) active
-          PCA-v3 (1 x 102) active
-          Average EEG reference (1 x 60) active
-      Found the data of interest:
-          t =    -199.80 ...     499.49 ms (Left Auditory)
-          0 CTF compensation matrices available
-          nave = 55 - aspect type = 100
-  Projections have already been applied. Setting proj attribute to True.
-  Applying baseline correction ... (mode: mean)
-  Reading inverse operator decomposition from /data1/agramfort/work/src/mne-python/examples/MNE-sample-data/MEG/sample/sample_audvis-meg-oct-6-meg-inv.fif...
-      Reading inverse operator info...
-      [done]
-      Reading inverse operator decomposition...
-      [done]
-      305 x 305 full covariance (kind = 1) found.
-      Read a total of 4 projection items:
-          PCA-v1 (1 x 102) active
-  ...
+.. rst-class:: sphx-glr-script-out
+
+  ::
+
+    Built-in functions, exceptions, and other objects.
+
+    Noteworthy: None is the `nil' object; Ellipsis represents `...' in slices.
+    Number of vertices : 33
 
 
 
-**Python source code:** :download:`plot_label_source_activations.py <plot_label_source_activations.py>`
+.. code-block:: python
 
-.. literalinclude:: plot_label_source_activations.py
-    :lines: 13-
+    # Author: Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
+    #
+    # License: BSD (3-clause)
 
-**Total running time of the example:**    1 seconds
+    import matplotlib.pyplot as plt
 
-.. raw:: html
+    import mne
+    from mne.datasets import sample
+    from mne.minimum_norm import read_inverse_operator, apply_inverse
 
-    <div class="social-button-container">
-        <div class="social-button">
-            <a href="https://twitter.com/share" class="twitter-share-button">Tweet</a>
-        </div>
-        <div class="social-button">
-            <g:plusone annotation="inline" width="120" size="medium"></g:plusone>
-        </div>
-        <div class="social-button">
-            <div id="fb-root"></div>
-            <script>(function(d, s, id) {
-                var js, fjs = d.getElementsByTagName(s)[0];
-                if (d.getElementById(id)) return;
-                js = d.createElement(s); js.id = id;
-                js.src = "//connect.facebook.net/en_US/all.js#xfbml=1";
-                fjs.parentNode.insertBefore(js, fjs);
-                }(document, 'script', 'facebook-jssdk'));
-            </script>
-            <div class="fb-like" data-send="false" data-width="450" data-show-faces="false"></div>
-        </div>
-    </div>
-    
+    print(__doc__)
+
+    data_path = sample.data_path()
+    label = 'Aud-lh'
+    label_fname = data_path + '/MEG/sample/labels/%s.label' % label
+    fname_inv = data_path + '/MEG/sample/sample_audvis-meg-oct-6-meg-inv.fif'
+    fname_evoked = data_path + '/MEG/sample/sample_audvis-ave.fif'
+
+    snr = 3.0
+    lambda2 = 1.0 / snr ** 2
+    method = "dSPM"  # use dSPM method (could also be MNE or sLORETA)
+
+    # Load data
+    evoked = mne.read_evokeds(fname_evoked, condition=0, baseline=(None, 0))
+    inverse_operator = read_inverse_operator(fname_inv)
+    src = inverse_operator['src']
+
+    # Compute inverse solution
+    pick_ori = "normal"  # Get signed values to see the effect of sign filp
+    stc = apply_inverse(evoked, inverse_operator, lambda2, method,
+                        pick_ori=pick_ori)
+
+    label = mne.read_label(label_fname)
+
+    stc_label = stc.in_label(label)
+    mean = stc.extract_label_time_course(label, src, mode='mean')
+    mean_flip = stc.extract_label_time_course(label, src, mode='mean_flip')
+    pca = stc.extract_label_time_course(label, src, mode='pca_flip')
+
+    print("Number of vertices : %d" % len(stc_label.data))
+
+    # View source activations
+    plt.figure()
+    plt.plot(1e3 * stc_label.times, stc_label.data.T, 'k', linewidth=0.5)
+    h0, = plt.plot(1e3 * stc_label.times, mean.T, 'r', linewidth=3)
+    h1, = plt.plot(1e3 * stc_label.times, mean_flip.T, 'g', linewidth=3)
+    h2, = plt.plot(1e3 * stc_label.times, pca.T, 'b', linewidth=3)
+    plt.legend([h0, h1, h2], ['mean', 'mean flip', 'PCA flip'])
+    plt.xlabel('Time (ms)')
+    plt.ylabel('Source amplitude')
+    plt.title('Activations in Label : %s' % label)
+    plt.show()
+
+**Total running time of the script:**
+(0 minutes 1.093 seconds)
+
+
+
+**Download Python source code:** :download:`plot_label_source_activations.py <plot_label_source_activations.py>`

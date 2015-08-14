@@ -1,6 +1,6 @@
 
 
-.. _example_decoding_plot_decoding_time_generalization_conditions.py:
+.. _sphx_glr_auto_examples_decoding_plot_decoding_time_generalization_conditions.py:
 
 
 =========================================================================
@@ -24,55 +24,84 @@ can predict accurately over time and on a second set of conditions.
 
 
 
-.. image:: images/plot_decoding_time_generalization_conditions_001.png
+.. image:: /auto_examples/decoding/images/sphx_glr_plot_decoding_time_generalization_conditions_001.png
     :align: center
 
 
-**Script output**::
+**Script output**:
 
-  Opening raw data file /data1/agramfort/work/src/mne-python/examples/MNE-sample-data/MEG/sample/sample_audvis_filt-0-40_raw.fif...
-      Read a total of 4 projection items:
-          PCA-v1 (1 x 102)  idle
-          PCA-v2 (1 x 102)  idle
-          PCA-v3 (1 x 102)  idle
-          Average EEG reference (1 x 60)  idle
-  Current compensation grade : 0
-      Range : 6450 ... 48149 =     42.956 ...   320.665 secs
-  Ready.
-  Reading 0 ... 41699  =      0.000 ...   277.709 secs...
-  [done]
-  Band-pass filtering from 1 - 30 Hz
-  The unique classes' labels are: [0 1]
+.. rst-class:: sphx-glr-script-out
+
+  ::
+
+    Built-in functions, exceptions, and other objects.
+
+    Noteworthy: None is the `nil' object; Ellipsis represents `...' in slices.
+    The unique classes' labels are: [0 1]
 
 
 
-**Python source code:** :download:`plot_decoding_time_generalization_conditions.py <plot_decoding_time_generalization_conditions.py>`
+.. code-block:: python
 
-.. literalinclude:: plot_decoding_time_generalization_conditions.py
-    :lines: 21-
+    # Authors: Jean-Remi King <jeanremi.king@gmail.com>
+    #          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
+    #          Denis Engemann <denis.engemann@gmail.com>
+    #
+    # License: BSD (3-clause)
 
-**Total running time of the example:**   11 seconds
+    import numpy as np
 
-.. raw:: html
+    import mne
+    from mne.datasets import sample
+    from mne.decoding import GeneralizationAcrossTime
 
-    <div class="social-button-container">
-        <div class="social-button">
-            <a href="https://twitter.com/share" class="twitter-share-button">Tweet</a>
-        </div>
-        <div class="social-button">
-            <g:plusone annotation="inline" width="120" size="medium"></g:plusone>
-        </div>
-        <div class="social-button">
-            <div id="fb-root"></div>
-            <script>(function(d, s, id) {
-                var js, fjs = d.getElementsByTagName(s)[0];
-                if (d.getElementById(id)) return;
-                js = d.createElement(s); js.id = id;
-                js.src = "//connect.facebook.net/en_US/all.js#xfbml=1";
-                fjs.parentNode.insertBefore(js, fjs);
-                }(document, 'script', 'facebook-jssdk'));
-            </script>
-            <div class="fb-like" data-send="false" data-width="450" data-show-faces="false"></div>
-        </div>
-    </div>
-    
+    print(__doc__)
+
+    # Preprocess data
+    data_path = sample.data_path()
+    # Load and filter data, set up epochs
+    raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
+    events_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw-eve.fif'
+    raw = mne.io.Raw(raw_fname, preload=True)
+    picks = mne.pick_types(raw.info, meg=True, exclude='bads')  # Pick MEG channels
+    raw.filter(1, 30, method='fft')  # Band pass filtering signals
+    events = mne.read_events(events_fname)
+    event_id = {'AudL': 1, 'AudR': 2, 'VisL': 3, 'VisR': 4}
+    decim = 2  # decimate to make the example faster to run
+    epochs = mne.Epochs(raw, events, event_id, -0.050, 0.400, proj=True,
+                        picks=picks, baseline=None, preload=True,
+                        reject=dict(mag=5e-12), decim=decim, verbose=False)
+
+    # We will train the classifier on all left visual vs auditory trials
+    # and test on all right visual vs auditory trials.
+
+    # In this case, because the test data is independent from the train data,
+    # we test the classifier of each fold and average the respective predictions.
+
+    # Define events of interest
+    triggers = epochs.events[:, 2]
+    viz_vs_auditory = np.in1d(triggers, (1, 2)).astype(int)
+
+    gat = GeneralizationAcrossTime(predict_mode='mean-prediction', n_jobs=1)
+
+    # For our left events, which ones are visual?
+    viz_vs_auditory_l = (triggers[np.in1d(triggers, (1, 3))] == 3).astype(int)
+    # To make scikit-learn happy, we converted the bool array to integers
+    # in the same line. This results in an array of zeros and ones:
+    print("The unique classes' labels are: %s" % np.unique(viz_vs_auditory_l))
+
+    gat.fit(epochs[('AudL', 'VisL')], y=viz_vs_auditory_l)
+
+    # For our right events, which ones are visual?
+    viz_vs_auditory_r = (triggers[np.in1d(triggers, (2, 4))] == 4).astype(int)
+
+    gat.score(epochs[('AudR', 'VisR')], y=viz_vs_auditory_r)
+    gat.plot(
+        title="Generalization Across Time (visual vs auditory): left to right")
+
+**Total running time of the script:**
+(0 minutes 7.170 seconds)
+
+
+
+**Download Python source code:** :download:`plot_decoding_time_generalization_conditions.py <plot_decoding_time_generalization_conditions.py>`

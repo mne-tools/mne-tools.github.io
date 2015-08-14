@@ -1,6 +1,6 @@
 
 
-.. _example_visualization_plot_topo_customized.py:
+.. _sphx_glr_auto_examples_visualization_plot_topo_customized.py:
 
 
 ========================================
@@ -15,55 +15,79 @@ layout.
 
 
 
-.. image:: images/plot_topo_customized_001.png
+.. image:: /auto_examples/visualization/images/sphx_glr_plot_topo_customized_001.png
     :align: center
 
 
-**Script output**::
+**Script output**:
 
-  Opening raw data file /data1/agramfort/work/src/mne-python/examples/MNE-sample-data/MEG/sample/sample_audvis_filt-0-40_raw.fif...
-      Read a total of 4 projection items:
-          PCA-v1 (1 x 102)  idle
-          PCA-v2 (1 x 102)  idle
-          PCA-v3 (1 x 102)  idle
-          Average EEG reference (1 x 60)  idle
-  Current compensation grade : 0
-      Range : 6450 ... 48149 =     42.956 ...   320.665 secs
-  Ready.
-  Reading 0 ... 41699  =      0.000 ...   277.709 secs...
-  [done]
-  Band-pass filtering from 1 - 20 Hz
-  Effective window size : 13.639 (s)
+.. rst-class:: sphx-glr-script-out
+
+  ::
+
+    Built-in functions, exceptions, and other objects.
+
+    Noteworthy: None is the `nil' object; Ellipsis represents `...' in slices.
 
 
 
-**Python source code:** :download:`plot_topo_customized.py <plot_topo_customized.py>`
+.. code-block:: python
 
-.. literalinclude:: plot_topo_customized.py
-    :lines: 12-
 
-**Total running time of the example:**   31 seconds
+    # Author: Denis A. Engemann <denis.engemann@gmail.com>
+    #
+    # License: BSD (3-clause)
 
-.. raw:: html
 
-    <div class="social-button-container">
-        <div class="social-button">
-            <a href="https://twitter.com/share" class="twitter-share-button">Tweet</a>
-        </div>
-        <div class="social-button">
-            <g:plusone annotation="inline" width="120" size="medium"></g:plusone>
-        </div>
-        <div class="social-button">
-            <div id="fb-root"></div>
-            <script>(function(d, s, id) {
-                var js, fjs = d.getElementsByTagName(s)[0];
-                if (d.getElementById(id)) return;
-                js = d.createElement(s); js.id = id;
-                js.src = "//connect.facebook.net/en_US/all.js#xfbml=1";
-                fjs.parentNode.insertBefore(js, fjs);
-                }(document, 'script', 'facebook-jssdk'));
-            </script>
-            <div class="fb-like" data-send="false" data-width="450" data-show-faces="false"></div>
-        </div>
-    </div>
-    
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    import mne
+    from mne.viz import iter_topography
+    from mne import io
+    from mne.time_frequency import compute_raw_psd
+    from mne.datasets import sample
+
+    print(__doc__)
+
+    data_path = sample.data_path()
+    raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
+
+    raw = io.Raw(raw_fname, preload=True)
+    raw.filter(1, 20)
+
+    picks = mne.pick_types(raw.info, meg=True, exclude=[])
+    tmin, tmax = 0, 120  # use the first 120s of data
+    fmin, fmax = 2, 20  # look at frequencies between 2 and 20Hz
+    n_fft = 2048  # the FFT size (n_fft). Ideally a power of 2
+    psds, freqs = compute_raw_psd(raw, picks=picks, tmin=tmin, tmax=tmax,
+                                  fmin=fmin, fmax=fmax)
+    psds = 20 * np.log10(psds)  # scale to dB
+
+
+    def my_callback(ax, ch_idx):
+        """
+        This block of code is executed once you click on one of the channel axes
+        in the plot. To work with the viz internals, this function should only take
+        two parameters, the axis and the channel or data index.
+        """
+        ax.plot(freqs, psds[ch_idx], color='red')
+        ax.set_xlabel = 'Frequency (Hz)'
+        ax.set_ylabel = 'Power (dB)'
+
+    for ax, idx in iter_topography(raw.info,
+                                   fig_facecolor='white',
+                                   axis_facecolor='white',
+                                   axis_spinecolor='white',
+                                   on_pick=my_callback):
+        ax.plot(psds[idx], color='red')
+
+    plt.gcf().suptitle('Power spectral densities')
+    plt.show()
+
+**Total running time of the script:**
+(0 minutes 20.757 seconds)
+
+
+
+**Download Python source code:** :download:`plot_topo_customized.py <plot_topo_customized.py>`
