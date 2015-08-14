@@ -1,0 +1,2941 @@
+
+
+.. _sphx_glr_auto_tutorials_plot_introduction.py:
+
+
+.. _intro_tutorial:
+
+Basic MEG and EEG data processing
+=================================
+
+MNE-Python reimplements most of MNE-C's (the original MNE command line utils)
+functionality and offers transparent scripting.
+On top of that it extends MNE-C's functionality considerably (customize events,
+compute
+contrasts, group statistics, time-frequency analysis, EEG-sensor space analyses
+, etc.) It uses the same files as standard MNE unix commands:
+no need to convert your files to a new system or database.
+
+What you can do with MNE Python
+-------------------------------
+
+   - **Raw data visualization** to visualize recordings, can also use
+   *mne_browse_raw* for extended functionality (see :ref:`ch_browse`)
+   - **Epoching**: Define epochs, baseline correction, handle conditions etc.
+   - **Averaging** to get Evoked data
+   - **Compute SSP pojectors** to remove ECG and EOG artifacts
+   - **Compute ICA** to remove artifacts or select latent sources.
+   - **Boundary Element Modeling**: single and three-layer BEM model
+     creation and solution computation.
+   - **Forward modeling**: BEM computation and mesh creation
+   (see :ref:`ch_forward`)
+   - **Linear inverse solvers** (dSPM, sLORETA, MNE, LCMV, DICS)
+   - **Sparse inverse solvers** (L1/L2 mixed norm MxNE, Gamma Map,
+   Time-Frequency MxNE)
+   - **Connectivity estimation** in sensor and source space
+   - **Visualization of sensor and source space data**
+   - **Time-frequency** analysis with Morlet wavelets (induced power,
+   intertrial coherence, phase lock value) also in the source space
+   - **Spectrum estimation** using multi-taper method
+   - **Mixed Source Models** combining cortical and subcortical structures
+   - **Dipole Fitting**
+   - **Decoding** multivariate pattern analyis of M/EEG topographies
+   - **Compute contrasts** between conditions, between sensors, across
+   subjects etc.
+   - **Non-parametric statistics** in time, space and frequency
+   (including cluster-level)
+   - **Scripting** (batch and parallel computing)
+
+What you're not supposed to do with MNE Python
+----------------------------------------------
+
+    - **Brain and head surface segmentation** for use with BEM models -- use Freesurfer.
+
+
+.. note:: Package based on the FIF file format from Neuromag. It can read and
+          convert CTF, BTI/4D, KIT and various EEG formats to FIF.
+
+
+Installation of the required materials
+---------------------------------------
+
+See :ref:`getting_started` with Python.
+
+.. note:: The expected location for the MNE-sample data is
+    my-path-to/mne-python/examples. If you downloaded data and an example asks
+    you whether to download it again, make sure
+    the data reside in the examples directory and you run the script from its
+    current directory.
+
+    From IPython e.g. say::
+
+        cd examples/preprocessing
+
+
+    %run plot_find_ecg_artifacts.py
+
+From raw data to evoked data
+----------------------------
+
+.. _ipython: http://ipython.scipy.org/
+
+Now, launch `ipython`_ (Advanced Python shell) using the QT backend which best
+supported across systems::
+
+  $ ipython --pylab -qt
+
+First, load the mne package:
+
+
+.. code-block:: python
+
+
+    import mne
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+
+
+If you'd like to turn information status messages off:
+
+
+.. code-block:: python
+
+
+    mne.set_log_level('WARNING')
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+
+
+But it's generally a good idea to leave them on:
+
+
+.. code-block:: python
+
+
+    mne.set_log_level('INFO')
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+
+
+You can set the default level by setting the environment variable
+"MNE_LOGGING_LEVEL", or by having mne-python write preferences to a file:
+
+
+.. code-block:: python
+
+
+    mne.set_config('MNE_LOGGING_LEVEL','WARNING')
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+
+
+Note that the location of the mne-python preferences file (for easier manual
+editing) can be found using:
+
+
+.. code-block:: python
+
+
+    mne.get_config_path()
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+
+
+By default logging messages print to the console, but look at
+mne.set_log_file() to save output to a file.
+
+Access raw data
+^^^^^^^^^^^^^^^
+
+
+.. code-block:: python
+
+
+    from mne.datasets import sample
+    data_path = sample.data_path()
+    raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
+    print(raw_fname)
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+**Script output**:
+
+.. rst-class:: sphx-glr-script-out
+
+  ::
+
+    /Users/alex/work/src/mne-python/examples/MNE-sample-data/MEG/sample/sample_audvis_filt-0-40_raw.fif
+
+
+.. note:: The MNE sample dataset should be downloaded automatically but be
+          patient (approx. 2GB)
+
+Read data from file:
+
+
+.. code-block:: python
+
+
+    raw = mne.io.Raw(raw_fname)
+    print(raw)
+    print(raw.info)
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+**Script output**:
+
+.. rst-class:: sphx-glr-script-out
+
+  ::
+
+    Opening raw data file /Users/alex/work/data/mne-scripts/sample-data/MEG/sample/sample_audvis_filt-0-40_raw.fif...
+        Read a total of 4 projection items:
+            PCA-v1 (1 x 102)  idle
+            PCA-v2 (1 x 102)  idle
+            PCA-v3 (1 x 102)  idle
+            Average EEG reference (1 x 60)  idle
+    Current compensation grade : 0
+        Range : 6450 ... 48149 =     42.956 ...   320.665 secs
+    Ready.
+    <RawFIF  |  n_channels x n_times : 376 x 41700>
+    <Info | 20 non-empty fields
+        bads : list | MEG 2443, EEG 053
+        buffer_size_sec : numpy.float64 | 13.3196808772
+        ch_names : list | MEG 0113, MEG 0112, MEG 0111, MEG 0122, MEG 0123, ...
+        chs : list | 376 items (EOG: 1, EEG: 60, STIM: 9, GRAD: 204, MAG: 102)
+        comps : list | 0 items
+        custom_ref_applied : bool | False
+        dev_head_t : dict | 3 items
+        dig : list | 146 items
+        events : list | 0 items
+        file_id : dict | 4 items
+        filename : unicode | /Users/ale.../sample_audvis_filt-0-40_raw.fif
+        highpass : float | 0.10000000149
+        hpi_meas : list | 1 items
+        hpi_results : list | 1 items
+        lowpass : float | 40.0
+        meas_date : numpy.ndarray | 2002-12-03 20:01:10
+        meas_id : dict | 4 items
+        nchan : int | 376
+        projs : list | PCA-v1: off, PCA-v2: off, PCA-v3: off, ...
+        sfreq : float | 150.153747559
+        acq_pars : NoneType
+        acq_stim : NoneType
+        ctf_head_t : NoneType
+        description : NoneType
+        dev_ctf_t : NoneType
+        experimenter : NoneType
+        hpi_subsystem : NoneType
+        line_freq : NoneType
+        proj_id : NoneType
+        proj_name : NoneType
+        subject_info : NoneType
+    >
+
+
+Look at the channels in raw:
+
+
+.. code-block:: python
+
+
+    print(raw.ch_names)
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+**Script output**:
+
+.. rst-class:: sphx-glr-script-out
+
+  ::
+
+    ['MEG 0113', 'MEG 0112', 'MEG 0111', 'MEG 0122', 'MEG 0123', 'MEG 0121', 'MEG 0132', 'MEG 0133', 'MEG 0131', 'MEG 0143', 'MEG 0142', 'MEG 0141', 'MEG 0213', 'MEG 0212', 'MEG 0211', 'MEG 0222', 'MEG 0223', 'MEG 0221', 'MEG 0232', 'MEG 0233', 'MEG 0231', 'MEG 0243', 'MEG 0242', 'MEG 0241', 'MEG 0313', 'MEG 0312', 'MEG 0311', 'MEG 0322', 'MEG 0323', 'MEG 0321', 'MEG 0333', 'MEG 0332', 'MEG 0331', 'MEG 0343', 'MEG 0342', 'MEG 0341', 'MEG 0413', 'MEG 0412', 'MEG 0411', 'MEG 0422', 'MEG 0423', 'MEG 0421', 'MEG 0432', 'MEG 0433', 'MEG 0431', 'MEG 0443', 'MEG 0442', 'MEG 0441', 'MEG 0513', 'MEG 0512', 'MEG 0511', 'MEG 0523', 'MEG 0522', 'MEG 0521', 'MEG 0532', 'MEG 0533', 'MEG 0531', 'MEG 0542', 'MEG 0543', 'MEG 0541', 'MEG 0613', 'MEG 0612', 'MEG 0611', 'MEG 0622', 'MEG 0623', 'MEG 0621', 'MEG 0633', 'MEG 0632', 'MEG 0631', 'MEG 0642', 'MEG 0643', 'MEG 0641', 'MEG 0713', 'MEG 0712', 'MEG 0711', 'MEG 0723', 'MEG 0722', 'MEG 0721', 'MEG 0733', 'MEG 0732', 'MEG 0731', 'MEG 0743', 'MEG 0742', 'MEG 0741', 'MEG 0813', 'MEG 0812', 'MEG 0811', 'MEG 0822', 'MEG 0823', 'MEG 0821', 'MEG 0913', 'MEG 0912', 'MEG 0911', 'MEG 0923', 'MEG 0922', 'MEG 0921', 'MEG 0932', 'MEG 0933', 'MEG 0931', 'MEG 0942', 'MEG 0943', 'MEG 0941', 'MEG 1013', 'MEG 1012', 'MEG 1011', 'MEG 1023', 'MEG 1022', 'MEG 1021', 'MEG 1032', 'MEG 1033', 'MEG 1031', 'MEG 1043', 'MEG 1042', 'MEG 1041', 'MEG 1112', 'MEG 1113', 'MEG 1111', 'MEG 1123', 'MEG 1122', 'MEG 1121', 'MEG 1133', 'MEG 1132', 'MEG 1131', 'MEG 1142', 'MEG 1143', 'MEG 1141', 'MEG 1213', 'MEG 1212', 'MEG 1211', 'MEG 1223', 'MEG 1222', 'MEG 1221', 'MEG 1232', 'MEG 1233', 'MEG 1231', 'MEG 1243', 'MEG 1242', 'MEG 1241', 'MEG 1312', 'MEG 1313', 'MEG 1311', 'MEG 1323', 'MEG 1322', 'MEG 1321', 'MEG 1333', 'MEG 1332', 'MEG 1331', 'MEG 1342', 'MEG 1343', 'MEG 1341', 'MEG 1412', 'MEG 1413', 'MEG 1411', 'MEG 1423', 'MEG 1422', 'MEG 1421', 'MEG 1433', 'MEG 1432', 'MEG 1431', 'MEG 1442', 'MEG 1443', 'MEG 1441', 'MEG 1512', 'MEG 1513', 'MEG 1511', 'MEG 1522', 'MEG 1523', 'MEG 1521', 'MEG 1533', 'MEG 1532', 'MEG 1531', 'MEG 1543', 'MEG 1542', 'MEG 1541', 'MEG 1613', 'MEG 1612', 'MEG 1611', 'MEG 1622', 'MEG 1623', 'MEG 1621', 'MEG 1632', 'MEG 1633', 'MEG 1631', 'MEG 1643', 'MEG 1642', 'MEG 1641', 'MEG 1713', 'MEG 1712', 'MEG 1711', 'MEG 1722', 'MEG 1723', 'MEG 1721', 'MEG 1732', 'MEG 1733', 'MEG 1731', 'MEG 1743', 'MEG 1742', 'MEG 1741', 'MEG 1813', 'MEG 1812', 'MEG 1811', 'MEG 1822', 'MEG 1823', 'MEG 1821', 'MEG 1832', 'MEG 1833', 'MEG 1831', 'MEG 1843', 'MEG 1842', 'MEG 1841', 'MEG 1912', 'MEG 1913', 'MEG 1911', 'MEG 1923', 'MEG 1922', 'MEG 1921', 'MEG 1932', 'MEG 1933', 'MEG 1931', 'MEG 1943', 'MEG 1942', 'MEG 1941', 'MEG 2013', 'MEG 2012', 'MEG 2011', 'MEG 2023', 'MEG 2022', 'MEG 2021', 'MEG 2032', 'MEG 2033', 'MEG 2031', 'MEG 2042', 'MEG 2043', 'MEG 2041', 'MEG 2113', 'MEG 2112', 'MEG 2111', 'MEG 2122', 'MEG 2123', 'MEG 2121', 'MEG 2133', 'MEG 2132', 'MEG 2131', 'MEG 2143', 'MEG 2142', 'MEG 2141', 'MEG 2212', 'MEG 2213', 'MEG 2211', 'MEG 2223', 'MEG 2222', 'MEG 2221', 'MEG 2233', 'MEG 2232', 'MEG 2231', 'MEG 2242', 'MEG 2243', 'MEG 2241', 'MEG 2312', 'MEG 2313', 'MEG 2311', 'MEG 2323', 'MEG 2322', 'MEG 2321', 'MEG 2332', 'MEG 2333', 'MEG 2331', 'MEG 2343', 'MEG 2342', 'MEG 2341', 'MEG 2412', 'MEG 2413', 'MEG 2411', 'MEG 2423', 'MEG 2422', 'MEG 2421', 'MEG 2433', 'MEG 2432', 'MEG 2431', 'MEG 2442', 'MEG 2443', 'MEG 2441', 'MEG 2512', 'MEG 2513', 'MEG 2511', 'MEG 2522', 'MEG 2523', 'MEG 2521', 'MEG 2533', 'MEG 2532', 'MEG 2531', 'MEG 2543', 'MEG 2542', 'MEG 2541', 'MEG 2612', 'MEG 2613', 'MEG 2611', 'MEG 2623', 'MEG 2622', 'MEG 2621', 'MEG 2633', 'MEG 2632', 'MEG 2631', 'MEG 2642', 'MEG 2643', 'MEG 2641', 'STI 001', 'STI 002', 'STI 003', 'STI 004', 'STI 005', 'STI 006', 'STI 014', 'STI 015', 'STI 016', 'EEG 001', 'EEG 002', 'EEG 003', 'EEG 004', 'EEG 005', 'EEG 006', 'EEG 007', 'EEG 008', 'EEG 009', 'EEG 010', 'EEG 011', 'EEG 012', 'EEG 013', 'EEG 014', 'EEG 015', 'EEG 016', 'EEG 017', 'EEG 018', 'EEG 019', 'EEG 020', 'EEG 021', 'EEG 022', 'EEG 023', 'EEG 024', 'EEG 025', 'EEG 026', 'EEG 027', 'EEG 028', 'EEG 029', 'EEG 030', 'EEG 031', 'EEG 032', 'EEG 033', 'EEG 034', 'EEG 035', 'EEG 036', 'EEG 037', 'EEG 038', 'EEG 039', 'EEG 040', 'EEG 041', 'EEG 042', 'EEG 043', 'EEG 044', 'EEG 045', 'EEG 046', 'EEG 047', 'EEG 048', 'EEG 049', 'EEG 050', 'EEG 051', 'EEG 052', 'EEG 053', 'EEG 054', 'EEG 055', 'EEG 056', 'EEG 057', 'EEG 058', 'EEG 059', 'EEG 060', 'EOG 061']
+
+
+Read and plot a segment of raw data
+
+
+.. code-block:: python
+
+
+    start, stop = raw.time_as_index([100, 115])  # 100 s to 115 s data segment
+    data, times = raw[:, start:stop]
+    print(data.shape)
+    print(times.shape)
+    data, times = raw[2:20:3, start:stop]  # access underlying data
+    raw.plot()
+
+
+
+
+.. image:: /auto_tutorials/images/sphx_glr_plot_introduction_001.png
+    :align: center
+
+
+**Script output**:
+
+.. rst-class:: sphx-glr-script-out
+
+  ::
+
+    Reading 15015 ... 17266  =     99.998 ...   114.989 secs...
+    [done]
+    (376, 2252)
+    (2252,)
+    Reading 15015 ... 17266  =     99.998 ...   114.989 secs...
+    [done]
+    Reading 0 ... 1500  =      0.000 ...     9.990 secs...
+    [done]
+
+
+Save a segment of 150s of raw data (MEG only):
+
+
+.. code-block:: python
+
+
+    picks = mne.pick_types(raw.info, meg=True, eeg=False, stim=True,
+                           exclude='bads')
+    raw.save('sample_audvis_meg_raw.fif', tmin=0, tmax=150, picks=picks,
+             overwrite=True)
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+**Script output**:
+
+.. rst-class:: sphx-glr-script-out
+
+  ::
+
+    Reading 0 ... 0  =      0.000 ...     0.000 secs...
+    [done]
+    Overwriting existing file.
+    Writing /Users/alex/work/src/mne-python/tutorials/sample_audvis_meg_raw.fif
+    Reading 0 ... 1501  =      0.000 ...     9.996 secs...
+    [done]
+    Writing ...
+    Reading 1502 ... 3003  =     10.003 ...    20.000 secs...
+    [done]
+    Writing ...
+    Reading 3004 ... 4505  =     20.006 ...    30.003 secs...
+    [done]
+    Writing ...
+    Reading 4506 ... 6007  =     30.009 ...    40.006 secs...
+    [done]
+    Writing ...
+    Reading 6008 ... 7509  =     40.012 ...    50.009 secs...
+    [done]
+    Writing ...
+    Reading 7510 ... 9011  =     50.015 ...    60.012 secs...
+    [done]
+    Writing ...
+    Reading 9012 ... 10513  =     60.018 ...    70.015 secs...
+    [done]
+    Writing ...
+    Reading 10514 ... 12015  =     70.022 ...    80.018 secs...
+    [done]
+    Writing ...
+    Reading 12016 ... 13517  =     80.025 ...    90.021 secs...
+    [done]
+    Writing ...
+    Reading 13518 ... 15019  =     90.028 ...   100.024 secs...
+    [done]
+    Writing ...
+    Reading 15020 ... 16521  =    100.031 ...   110.027 secs...
+    [done]
+    Writing ...
+    Reading 16522 ... 18023  =    110.034 ...   120.030 secs...
+    [done]
+    Writing ...
+    Reading 18024 ... 19525  =    120.037 ...   130.033 secs...
+    [done]
+    Writing ...
+    Reading 19526 ... 21027  =    130.040 ...   140.036 secs...
+    [done]
+    Writing ...
+    Reading 21028 ... 22523  =    140.043 ...   150.000 secs...
+    [done]
+    Writing ...
+    Closing /Users/alex/work/src/mne-python/tutorials/sample_audvis_meg_raw.fif [done]
+
+
+Define and read epochs
+^^^^^^^^^^^^^^^^^^^^^^
+
+First extract events:
+
+
+.. code-block:: python
+
+
+    events = mne.find_events(raw, stim_channel='STI 014')
+    print(events[:5])
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+**Script output**:
+
+.. rst-class:: sphx-glr-script-out
+
+  ::
+
+    Reading 0 ... 41699  =      0.000 ...   277.709 secs...
+    [done]
+    319 events found
+    Events id: [ 1  2  3  4  5 32]
+    [[6994    0    2]
+     [7086    0    3]
+     [7192    0    1]
+     [7304    0    4]
+     [7413    0    2]]
+
+
+Note that, by default, we use stim_channel='STI 014'. If you have a different
+system (e.g., a newer system that uses channel 'STI101' by default), you can
+use the following to set the default stim channel to use for finding events:
+
+
+.. code-block:: python
+
+
+    mne.set_config('MNE_STIM_CHANNEL', 'STI101')
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+
+
+Events are stored as 2D numpy array where the first column is the time
+instant and the last one is the event number. It is therefore easy to
+manipulate.
+
+Define epochs parameters:
+
+
+.. code-block:: python
+
+
+    event_id = dict(aud_l=1, aud_r=2)  # event trigger and conditions
+    tmin = -0.2  # start of each epoch (200ms before the trigger)
+    tmax = 0.5  # end of each epoch (500ms after the trigger)
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+
+
+Exclude some channels (original bads + 2 more):
+
+
+.. code-block:: python
+
+
+    raw.info['bads'] += ['MEG 2443', 'EEG 053']
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+
+
+The variable raw.info['bads'] is just a python list.
+
+Pick the good channels, excluding raw.info['bads']:
+
+
+.. code-block:: python
+
+
+    picks = mne.pick_types(raw.info, meg=True, eeg=True, eog=True, stim=False,
+                           exclude='bads')
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+
+
+Alternatively one can restrict to magnetometers or gradiometers with:
+
+
+.. code-block:: python
+
+
+    mag_picks = mne.pick_types(raw.info, meg='mag', eog=True, exclude='bads')
+    grad_picks = mne.pick_types(raw.info, meg='grad', eog=True, exclude='bads')
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+
+
+Define the baseline period:
+
+
+.. code-block:: python
+
+
+    baseline = (None, 0)  # means from the first instant to t = 0
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+
+
+Define peak-to-peak rejection parameters for gradiometers, magnetometers and EOG:
+
+
+.. code-block:: python
+
+
+    reject = dict(grad=4000e-13, mag=4e-12, eog=150e-6)
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+
+
+Read epochs:
+
+
+.. code-block:: python
+
+
+    epochs = mne.Epochs(raw, events, event_id, tmin, tmax, proj=True, picks=picks,
+                        baseline=baseline, preload=False, reject=reject)
+    print(epochs)
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+**Script output**:
+
+.. rst-class:: sphx-glr-script-out
+
+  ::
+
+    145 matching events found
+    Created an SSP operator (subspace dimension = 4)
+    4 projection items activated
+    <Epochs  |  n_events : 145 (good & bad), tmin : -0.2 (s), tmax : 0.5 (s), baseline : (None, 0),
+     'aud_l': 72, 'aud_r': 73>
+
+
+Get single epochs for one condition:
+
+
+.. code-block:: python
+
+
+    epochs_data = epochs['aud_l'].get_data()
+    print(epochs_data.shape)
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+**Script output**:
+
+.. rst-class:: sphx-glr-script-out
+
+  ::
+
+    Reading 712 ... 817  =      4.742 ...     5.441 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 1132 ... 1237  =      7.539 ...     8.238 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 1545 ... 1650  =     10.289 ...    10.989 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 1948 ... 2053  =     12.973 ...    13.673 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 2377 ... 2482  =     15.830 ...    16.530 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 2771 ... 2876  =     18.454 ...    19.154 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 3197 ... 3302  =     21.292 ...    21.991 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 3621 ... 3726  =     24.115 ...    24.815 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 4051 ... 4156  =     26.979 ...    27.678 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 4465 ... 4570  =     29.736 ...    30.435 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 4891 ... 4996  =     32.573 ...    33.273 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : ['EOG 061']
+    Reading 5293 ... 5398  =     35.251 ...    35.950 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 5700 ... 5805  =     37.961 ...    38.660 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 6087 ... 6192  =     40.538 ...    41.238 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 6490 ... 6595  =     43.222 ...    43.922 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : ['EOG 061']
+    Reading 6893 ... 6998  =     45.906 ...    46.606 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : ['EOG 061']
+    Reading 7295 ... 7400  =     48.584 ...    49.283 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 7699 ... 7804  =     51.274 ...    51.973 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 8132 ... 8237  =     54.158 ...    54.857 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 8552 ... 8657  =     56.955 ...    57.654 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 8987 ... 9092  =     59.852 ...    60.551 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : ['EOG 061']
+    Reading 9403 ... 9508  =     62.622 ...    63.322 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 9815 ... 9920  =     65.366 ...    66.066 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 10261 ... 10366  =     68.337 ...    69.036 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 10686 ... 10791  =     71.167 ...    71.866 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : ['EOG 061']
+    Reading 11084 ... 11189  =     73.818 ...    74.517 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 11517 ... 11622  =     76.701 ...    77.401 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 11949 ... 12054  =     79.578 ...    80.278 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 12743 ... 12848  =     84.866 ...    85.566 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on MAG : ['MEG 1711']
+    Reading 13154 ... 13259  =     87.604 ...    88.303 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 13572 ... 13677  =     90.387 ...    91.087 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 13997 ... 14102  =     93.218 ...    93.917 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 14412 ... 14517  =     95.982 ...    96.681 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 14844 ... 14949  =     98.859 ...    99.558 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 15262 ... 15367  =    101.642 ...   102.342 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : ['EOG 061']
+    Reading 15668 ... 15773  =    104.346 ...   105.046 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 16124 ... 16229  =    107.383 ...   108.083 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 16529 ... 16634  =    110.081 ...   110.780 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 16937 ... 17042  =    112.798 ...   113.497 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : ['EOG 061']
+    Reading 17378 ... 17483  =    115.735 ...   116.434 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 17828 ... 17933  =    118.732 ...   119.431 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 18245 ... 18350  =    121.509 ...   122.208 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : ['EOG 061']
+    Reading 18675 ... 18780  =    124.373 ...   125.072 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 19092 ... 19197  =    127.150 ...   127.849 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 19528 ... 19633  =    130.053 ...   130.753 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : ['EOG 061']
+    Reading 19960 ... 20065  =    132.930 ...   133.630 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : ['EOG 061']
+    Reading 20358 ... 20463  =    135.581 ...   136.280 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 21163 ... 21268  =    140.942 ...   141.641 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : ['EOG 061']
+    Reading 21593 ... 21698  =    143.806 ...   144.505 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : ['EOG 061']
+    Reading 22008 ... 22113  =    146.570 ...   147.269 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 22424 ... 22529  =    149.340 ...   150.040 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 22846 ... 22951  =    152.151 ...   152.850 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 23239 ... 23344  =    154.768 ...   155.467 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 23654 ... 23759  =    157.532 ...   158.231 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 24074 ... 24179  =    160.329 ...   161.028 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 24502 ... 24607  =    163.179 ...   163.879 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 24947 ... 25052  =    166.143 ...   166.842 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 25352 ... 25457  =    168.840 ...   169.540 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : ['EOG 061']
+    Reading 25751 ... 25856  =    171.498 ...   172.197 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 26143 ... 26248  =    174.108 ...   174.807 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : ['EOG 061']
+    Reading 26540 ... 26645  =    176.752 ...   177.451 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 27403 ... 27508  =    182.500 ...   183.199 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 27803 ... 27908  =    185.164 ...   185.863 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 28229 ... 28334  =    188.001 ...   188.700 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : ['EOG 061']
+    Reading 28673 ... 28778  =    190.958 ...   191.657 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : ['EOG 061']
+    Reading 29537 ... 29642  =    196.712 ...   197.411 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 29936 ... 30041  =    199.369 ...   200.068 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 30384 ... 30489  =    202.353 ...   203.052 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 30810 ... 30915  =    205.190 ...   205.889 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 31238 ... 31343  =    208.040 ...   208.739 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 31626 ... 31731  =    210.624 ...   211.323 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 32040 ... 32145  =    213.381 ...   214.081 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    17 bad epochs dropped
+    (55, 365, 106)
+
+
+epochs_data is a 3D array of dimension (55 epochs, 365 channels, 106 time
+instants).
+
+Scipy supports read and write of matlab files. You can save your single
+trials with:
+
+
+.. code-block:: python
+
+
+    from scipy import io
+    io.savemat('epochs_data.mat', dict(epochs_data=epochs_data), oned_as='row')
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+
+
+or if you want to keep all the information about the data you can save your
+epochs in a fif file:
+
+
+.. code-block:: python
+
+
+    epochs.save('sample-epo.fif')
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+**Script output**:
+
+.. rst-class:: sphx-glr-script-out
+
+  ::
+
+    Reading 514 ... 619  =      3.423 ...     4.122 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : ['EOG 061']
+    Reading 712 ... 817  =      4.742 ...     5.441 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 933 ... 1038  =      6.214 ...     6.913 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 1132 ... 1237  =      7.539 ...     8.238 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 1330 ... 1435  =      8.858 ...     9.557 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 1545 ... 1650  =     10.289 ...    10.989 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 1753 ... 1858  =     11.675 ...    12.374 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 1948 ... 2053  =     12.973 ...    13.673 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 2153 ... 2258  =     14.339 ...    15.038 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : ['EOG 061']
+    Reading 2377 ... 2482  =     15.830 ...    16.530 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 2572 ... 2677  =     17.129 ...    17.828 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 2771 ... 2876  =     18.454 ...    19.154 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 2997 ... 3102  =     19.960 ...    20.659 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 3197 ... 3302  =     21.292 ...    21.991 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 3410 ... 3515  =     22.710 ...    23.409 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 3621 ... 3726  =     24.115 ...    24.815 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 3835 ... 3940  =     25.540 ...    26.240 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 4051 ... 4156  =     26.979 ...    27.678 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 4260 ... 4365  =     28.371 ...    29.070 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 4465 ... 4570  =     29.736 ...    30.435 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 4682 ... 4787  =     31.181 ...    31.881 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 4891 ... 4996  =     32.573 ...    33.273 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : ['EOG 061']
+    Reading 5080 ... 5185  =     33.832 ...    34.531 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 5293 ... 5398  =     35.251 ...    35.950 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 5493 ... 5598  =     36.583 ...    37.282 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 5700 ... 5805  =     37.961 ...    38.660 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 5887 ... 5992  =     39.206 ...    39.906 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 6087 ... 6192  =     40.538 ...    41.238 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 6281 ... 6386  =     41.830 ...    42.530 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 6490 ... 6595  =     43.222 ...    43.922 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : ['EOG 061']
+    Reading 6688 ... 6793  =     44.541 ...    45.240 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 6893 ... 6998  =     45.906 ...    46.606 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : ['EOG 061']
+    Reading 7100 ... 7205  =     47.285 ...    47.984 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 7295 ... 7400  =     48.584 ...    49.283 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 7489 ... 7594  =     49.876 ...    50.575 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 7699 ... 7804  =     51.274 ...    51.973 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 7923 ... 8028  =     52.766 ...    53.465 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 8132 ... 8237  =     54.158 ...    54.857 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 8552 ... 8657  =     56.955 ...    57.654 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 8778 ... 8883  =     58.460 ...    59.159 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : ['EOG 061']
+    Reading 8987 ... 9092  =     59.852 ...    60.551 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : ['EOG 061']
+    Reading 9190 ... 9295  =     61.204 ...    61.903 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 9403 ... 9508  =     62.622 ...    63.322 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 9616 ... 9721  =     64.041 ...    64.740 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 9815 ... 9920  =     65.366 ...    66.066 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 10037 ... 10142  =     66.845 ...    67.544 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 10261 ... 10366  =     68.337 ...    69.036 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 10472 ... 10577  =     69.742 ...    70.441 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 10686 ... 10791  =     71.167 ...    71.866 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : ['EOG 061']
+    Reading 10884 ... 10989  =     72.486 ...    73.185 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 11084 ... 11189  =     73.818 ...    74.517 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 11302 ... 11407  =     75.270 ...    75.969 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 11517 ... 11622  =     76.701 ...    77.401 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 11726 ... 11831  =     78.093 ...    78.793 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 11949 ... 12054  =     79.578 ...    80.278 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 12155 ... 12260  =     80.950 ...    81.650 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 12541 ... 12646  =     83.521 ...    84.220 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 12743 ... 12848  =     84.866 ...    85.566 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on MAG : ['MEG 1711']
+    Reading 12940 ... 13045  =     86.178 ...    86.878 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 13154 ... 13259  =     87.604 ...    88.303 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 13360 ... 13465  =     88.975 ...    89.675 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 13572 ... 13677  =     90.387 ...    91.087 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 13774 ... 13879  =     91.733 ...    92.432 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 13997 ... 14102  =     93.218 ...    93.917 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 14198 ... 14303  =     94.556 ...    95.256 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 14412 ... 14517  =     95.982 ...    96.681 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 14631 ... 14736  =     97.440 ...    98.139 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 14844 ... 14949  =     98.859 ...    99.558 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 15046 ... 15151  =    100.204 ...   100.903 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : ['EOG 061']
+    Reading 15262 ... 15367  =    101.642 ...   102.342 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : ['EOG 061']
+    Reading 15451 ... 15556  =    102.901 ...   103.600 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 15668 ... 15773  =    104.346 ...   105.046 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 15894 ... 15999  =    105.852 ...   106.551 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 16124 ... 16229  =    107.383 ...   108.083 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 16318 ... 16423  =    108.675 ...   109.375 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 16529 ... 16634  =    110.081 ...   110.780 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 16937 ... 17042  =    112.798 ...   113.497 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : ['EOG 061']
+    Reading 17155 ... 17260  =    114.250 ...   114.949 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 17378 ... 17483  =    115.735 ...   116.434 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 17602 ... 17707  =    117.227 ...   117.926 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on MAG : ['MEG 1711']
+    Reading 17828 ... 17933  =    118.732 ...   119.431 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 18048 ... 18153  =    120.197 ...   120.896 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 18245 ... 18350  =    121.509 ...   122.208 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : ['EOG 061']
+    Reading 18468 ... 18573  =    122.994 ...   123.693 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : ['EOG 061']
+    Reading 18675 ... 18780  =    124.373 ...   125.072 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 18887 ... 18992  =    125.784 ...   126.484 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 19092 ... 19197  =    127.150 ...   127.849 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 19318 ... 19423  =    128.655 ...   129.354 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 19528 ... 19633  =    130.053 ...   130.753 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : ['EOG 061']
+    Reading 19747 ... 19852  =    131.512 ...   132.211 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 19960 ... 20065  =    132.930 ...   133.630 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : ['EOG 061']
+    Reading 20175 ... 20280  =    134.362 ...   135.062 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : ['EOG 061']
+    Reading 20358 ... 20463  =    135.581 ...   136.280 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 20562 ... 20667  =    136.940 ...   137.639 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : ['EOG 061']
+    Reading 20955 ... 21060  =    139.557 ...   140.256 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : ['EOG 061']
+    Reading 21163 ... 21268  =    140.942 ...   141.641 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : ['EOG 061']
+    Reading 21380 ... 21485  =    142.387 ...   143.087 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : ['EOG 061']
+    Reading 21593 ... 21698  =    143.806 ...   144.505 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : ['EOG 061']
+    Reading 21805 ... 21910  =    145.218 ...   145.917 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 22008 ... 22113  =    146.570 ...   147.269 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 22205 ... 22310  =    147.882 ...   148.581 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 22424 ... 22529  =    149.340 ...   150.040 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 22651 ... 22756  =    150.852 ...   151.551 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 22846 ... 22951  =    152.151 ...   152.850 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 23239 ... 23344  =    154.768 ...   155.467 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 23444 ... 23549  =    156.133 ...   156.833 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 23654 ... 23759  =    157.532 ...   158.231 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 23868 ... 23973  =    158.957 ...   159.656 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 24074 ... 24179  =    160.329 ...   161.028 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 24286 ... 24391  =    161.741 ...   162.440 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 24502 ... 24607  =    163.179 ...   163.879 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 24727 ... 24832  =    164.678 ...   165.377 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 24947 ... 25052  =    166.143 ...   166.842 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 25156 ... 25261  =    167.535 ...   168.234 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 25352 ... 25457  =    168.840 ...   169.540 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : ['EOG 061']
+    Reading 25538 ... 25643  =    170.079 ...   170.778 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 25751 ... 25856  =    171.498 ...   172.197 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 25953 ... 26058  =    172.843 ...   173.542 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 26143 ... 26248  =    174.108 ...   174.807 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : ['EOG 061']
+    Reading 26333 ... 26438  =    175.374 ...   176.073 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : ['EOG 061']
+    Reading 26540 ... 26645  =    176.752 ...   177.451 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 26763 ... 26868  =    178.237 ...   178.937 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 27202 ... 27307  =    181.161 ...   181.860 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 27403 ... 27508  =    182.500 ...   183.199 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 27591 ... 27696  =    183.752 ...   184.451 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 27803 ... 27908  =    185.164 ...   185.863 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 28018 ... 28123  =    186.595 ...   187.295 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 28229 ... 28334  =    188.001 ...   188.700 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : ['EOG 061']
+    Reading 28454 ... 28559  =    189.499 ...   190.198 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 28673 ... 28778  =    190.958 ...   191.657 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : ['EOG 061']
+    Reading 28910 ... 29015  =    192.536 ...   193.235 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 29324 ... 29429  =    195.293 ...   195.992 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 29537 ... 29642  =    196.712 ...   197.411 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 29749 ... 29854  =    198.124 ...   198.823 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 29936 ... 30041  =    199.369 ...   200.068 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 30156 ... 30261  =    200.834 ...   201.533 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 30384 ... 30489  =    202.353 ...   203.052 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 30596 ... 30701  =    203.764 ...   204.464 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 30810 ... 30915  =    205.190 ...   205.889 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 31017 ... 31122  =    206.568 ...   207.268 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 31238 ... 31343  =    208.040 ...   208.739 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 31426 ... 31531  =    209.292 ...   209.991 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 31626 ... 31731  =    210.624 ...   211.323 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 31822 ... 31927  =    211.929 ...   212.629 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : ['EOG 061']
+    Reading 32040 ... 32145  =    213.381 ...   214.081 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    29 bad epochs dropped
+    Reading 712 ... 817  =      4.742 ...     5.441 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 712 ... 817  =      4.742 ...     5.441 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 933 ... 1038  =      6.214 ...     6.913 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 1132 ... 1237  =      7.539 ...     8.238 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 1330 ... 1435  =      8.858 ...     9.557 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 1545 ... 1650  =     10.289 ...    10.989 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 1753 ... 1858  =     11.675 ...    12.374 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 1948 ... 2053  =     12.973 ...    13.673 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 2377 ... 2482  =     15.830 ...    16.530 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 2572 ... 2677  =     17.129 ...    17.828 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 2771 ... 2876  =     18.454 ...    19.154 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 2997 ... 3102  =     19.960 ...    20.659 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 3197 ... 3302  =     21.292 ...    21.991 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 3410 ... 3515  =     22.710 ...    23.409 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 3621 ... 3726  =     24.115 ...    24.815 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 3835 ... 3940  =     25.540 ...    26.240 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 4051 ... 4156  =     26.979 ...    27.678 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 4260 ... 4365  =     28.371 ...    29.070 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 4465 ... 4570  =     29.736 ...    30.435 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 4682 ... 4787  =     31.181 ...    31.881 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 5080 ... 5185  =     33.832 ...    34.531 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 5293 ... 5398  =     35.251 ...    35.950 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 5493 ... 5598  =     36.583 ...    37.282 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 5700 ... 5805  =     37.961 ...    38.660 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 5887 ... 5992  =     39.206 ...    39.906 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 6087 ... 6192  =     40.538 ...    41.238 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 6281 ... 6386  =     41.830 ...    42.530 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 6688 ... 6793  =     44.541 ...    45.240 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 7100 ... 7205  =     47.285 ...    47.984 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 7295 ... 7400  =     48.584 ...    49.283 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 7489 ... 7594  =     49.876 ...    50.575 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 7699 ... 7804  =     51.274 ...    51.973 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 7923 ... 8028  =     52.766 ...    53.465 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 8132 ... 8237  =     54.158 ...    54.857 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 8552 ... 8657  =     56.955 ...    57.654 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 9190 ... 9295  =     61.204 ...    61.903 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 9403 ... 9508  =     62.622 ...    63.322 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 9616 ... 9721  =     64.041 ...    64.740 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 9815 ... 9920  =     65.366 ...    66.066 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 10037 ... 10142  =     66.845 ...    67.544 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 10261 ... 10366  =     68.337 ...    69.036 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 10472 ... 10577  =     69.742 ...    70.441 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 10884 ... 10989  =     72.486 ...    73.185 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 11084 ... 11189  =     73.818 ...    74.517 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 11302 ... 11407  =     75.270 ...    75.969 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 11517 ... 11622  =     76.701 ...    77.401 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 11726 ... 11831  =     78.093 ...    78.793 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 11949 ... 12054  =     79.578 ...    80.278 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 12155 ... 12260  =     80.950 ...    81.650 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 12541 ... 12646  =     83.521 ...    84.220 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 12940 ... 13045  =     86.178 ...    86.878 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 13154 ... 13259  =     87.604 ...    88.303 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 13360 ... 13465  =     88.975 ...    89.675 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 13572 ... 13677  =     90.387 ...    91.087 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 13774 ... 13879  =     91.733 ...    92.432 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 13997 ... 14102  =     93.218 ...    93.917 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 14198 ... 14303  =     94.556 ...    95.256 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 14412 ... 14517  =     95.982 ...    96.681 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 14631 ... 14736  =     97.440 ...    98.139 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 14844 ... 14949  =     98.859 ...    99.558 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 15451 ... 15556  =    102.901 ...   103.600 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 15668 ... 15773  =    104.346 ...   105.046 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 15894 ... 15999  =    105.852 ...   106.551 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 16124 ... 16229  =    107.383 ...   108.083 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 16318 ... 16423  =    108.675 ...   109.375 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 16529 ... 16634  =    110.081 ...   110.780 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 17155 ... 17260  =    114.250 ...   114.949 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 17378 ... 17483  =    115.735 ...   116.434 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 17828 ... 17933  =    118.732 ...   119.431 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 18048 ... 18153  =    120.197 ...   120.896 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 18675 ... 18780  =    124.373 ...   125.072 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 18887 ... 18992  =    125.784 ...   126.484 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 19092 ... 19197  =    127.150 ...   127.849 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 19318 ... 19423  =    128.655 ...   129.354 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 19747 ... 19852  =    131.512 ...   132.211 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 20358 ... 20463  =    135.581 ...   136.280 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 21805 ... 21910  =    145.218 ...   145.917 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 22008 ... 22113  =    146.570 ...   147.269 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 22205 ... 22310  =    147.882 ...   148.581 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 22424 ... 22529  =    149.340 ...   150.040 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 22651 ... 22756  =    150.852 ...   151.551 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 22846 ... 22951  =    152.151 ...   152.850 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 23239 ... 23344  =    154.768 ...   155.467 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 23444 ... 23549  =    156.133 ...   156.833 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 23654 ... 23759  =    157.532 ...   158.231 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 23868 ... 23973  =    158.957 ...   159.656 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 24074 ... 24179  =    160.329 ...   161.028 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 24286 ... 24391  =    161.741 ...   162.440 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 24502 ... 24607  =    163.179 ...   163.879 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 24727 ... 24832  =    164.678 ...   165.377 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 24947 ... 25052  =    166.143 ...   166.842 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 25156 ... 25261  =    167.535 ...   168.234 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 25538 ... 25643  =    170.079 ...   170.778 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 25751 ... 25856  =    171.498 ...   172.197 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 25953 ... 26058  =    172.843 ...   173.542 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 26540 ... 26645  =    176.752 ...   177.451 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 26763 ... 26868  =    178.237 ...   178.937 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 27202 ... 27307  =    181.161 ...   181.860 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 27403 ... 27508  =    182.500 ...   183.199 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 27591 ... 27696  =    183.752 ...   184.451 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 27803 ... 27908  =    185.164 ...   185.863 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 28018 ... 28123  =    186.595 ...   187.295 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 28454 ... 28559  =    189.499 ...   190.198 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 28910 ... 29015  =    192.536 ...   193.235 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 29324 ... 29429  =    195.293 ...   195.992 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 29537 ... 29642  =    196.712 ...   197.411 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 29749 ... 29854  =    198.124 ...   198.823 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 29936 ... 30041  =    199.369 ...   200.068 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 30156 ... 30261  =    200.834 ...   201.533 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 30384 ... 30489  =    202.353 ...   203.052 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 30596 ... 30701  =    203.764 ...   204.464 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 30810 ... 30915  =    205.190 ...   205.889 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 31017 ... 31122  =    206.568 ...   207.268 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 31238 ... 31343  =    208.040 ...   208.739 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 31426 ... 31531  =    209.292 ...   209.991 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 31626 ... 31731  =    210.624 ...   211.323 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 32040 ... 32145  =    213.381 ...   214.081 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+
+
+and read them later with:
+
+
+.. code-block:: python
+
+
+    saved_epochs = mne.read_epochs('sample-epo.fif')
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+**Script output**:
+
+.. rst-class:: sphx-glr-script-out
+
+  ::
+
+    Reading sample-epo.fif ...
+        Read a total of 4 projection items:
+            PCA-v1 (1 x 102) active
+            PCA-v2 (1 x 102) active
+            PCA-v3 (1 x 102) active
+            Average EEG reference (1 x 60) active
+        Found the data of interest:
+            t =    -199.80 ...     499.49 ms (None)
+            0 CTF compensation matrices available
+    116 matching events found
+    Created an SSP operator (subspace dimension = 4)
+    4 projection items activated
+    Created an SSP operator (subspace dimension = 4)
+    4 projection items activated
+    116 matching events found
+    Created an SSP operator (subspace dimension = 4)
+    0 bad epochs dropped
+
+
+Compute evoked responses for auditory responses by averaging and plot it:
+
+
+.. code-block:: python
+
+
+    evoked = epochs['aud_l'].average()
+    print(evoked)
+    evoked.plot()
+
+
+
+
+.. image:: /auto_tutorials/images/sphx_glr_plot_introduction_002.png
+    :align: center
+
+
+**Script output**:
+
+.. rst-class:: sphx-glr-script-out
+
+  ::
+
+    Reading 712 ... 817  =      4.742 ...     5.441 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 1132 ... 1237  =      7.539 ...     8.238 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 1545 ... 1650  =     10.289 ...    10.989 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 1948 ... 2053  =     12.973 ...    13.673 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 2377 ... 2482  =     15.830 ...    16.530 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 2771 ... 2876  =     18.454 ...    19.154 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 3197 ... 3302  =     21.292 ...    21.991 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 3621 ... 3726  =     24.115 ...    24.815 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 4051 ... 4156  =     26.979 ...    27.678 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 4465 ... 4570  =     29.736 ...    30.435 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 5293 ... 5398  =     35.251 ...    35.950 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 5700 ... 5805  =     37.961 ...    38.660 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 6087 ... 6192  =     40.538 ...    41.238 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 7295 ... 7400  =     48.584 ...    49.283 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 7699 ... 7804  =     51.274 ...    51.973 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 8132 ... 8237  =     54.158 ...    54.857 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 8552 ... 8657  =     56.955 ...    57.654 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 9403 ... 9508  =     62.622 ...    63.322 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 9815 ... 9920  =     65.366 ...    66.066 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 10261 ... 10366  =     68.337 ...    69.036 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 11084 ... 11189  =     73.818 ...    74.517 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 11517 ... 11622  =     76.701 ...    77.401 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 11949 ... 12054  =     79.578 ...    80.278 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 13154 ... 13259  =     87.604 ...    88.303 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 13572 ... 13677  =     90.387 ...    91.087 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 13997 ... 14102  =     93.218 ...    93.917 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 14412 ... 14517  =     95.982 ...    96.681 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 14844 ... 14949  =     98.859 ...    99.558 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 15668 ... 15773  =    104.346 ...   105.046 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 16124 ... 16229  =    107.383 ...   108.083 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 16529 ... 16634  =    110.081 ...   110.780 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 17378 ... 17483  =    115.735 ...   116.434 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 17828 ... 17933  =    118.732 ...   119.431 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 18675 ... 18780  =    124.373 ...   125.072 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 19092 ... 19197  =    127.150 ...   127.849 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 20358 ... 20463  =    135.581 ...   136.280 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 22008 ... 22113  =    146.570 ...   147.269 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 22424 ... 22529  =    149.340 ...   150.040 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 22846 ... 22951  =    152.151 ...   152.850 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 23239 ... 23344  =    154.768 ...   155.467 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 23654 ... 23759  =    157.532 ...   158.231 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 24074 ... 24179  =    160.329 ...   161.028 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 24502 ... 24607  =    163.179 ...   163.879 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 24947 ... 25052  =    166.143 ...   166.842 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 25751 ... 25856  =    171.498 ...   172.197 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 26540 ... 26645  =    176.752 ...   177.451 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 27403 ... 27508  =    182.500 ...   183.199 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 27803 ... 27908  =    185.164 ...   185.863 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 29537 ... 29642  =    196.712 ...   197.411 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 29936 ... 30041  =    199.369 ...   200.068 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 30384 ... 30489  =    202.353 ...   203.052 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 30810 ... 30915  =    205.190 ...   205.889 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 31238 ... 31343  =    208.040 ...   208.739 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 31626 ... 31731  =    210.624 ...   211.323 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 32040 ... 32145  =    213.381 ...   214.081 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    <Evoked  |  comment : 'aud_l', time : [-0.199795, 0.499488], n_epochs : 55, n_channels x n_times : 364 x 106>
+
+
+.. topic:: Exercise
+
+  1. Extract the max value of each epoch
+
+
+.. code-block:: python
+
+
+    max_in_each_epoch = [e.max() for e in epochs['aud_l']] # doctest:+ELLIPSIS
+    print(max_in_each_epoch[:4]) # doctest:+ELLIPSIS
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+**Script output**:
+
+.. rst-class:: sphx-glr-script-out
+
+  ::
+
+    Reading 712 ... 817  =      4.742 ...     5.441 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 1132 ... 1237  =      7.539 ...     8.238 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 1545 ... 1650  =     10.289 ...    10.989 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 1948 ... 2053  =     12.973 ...    13.673 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 2377 ... 2482  =     15.830 ...    16.530 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 2771 ... 2876  =     18.454 ...    19.154 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 3197 ... 3302  =     21.292 ...    21.991 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 3621 ... 3726  =     24.115 ...    24.815 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 4051 ... 4156  =     26.979 ...    27.678 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 4465 ... 4570  =     29.736 ...    30.435 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 5293 ... 5398  =     35.251 ...    35.950 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 5700 ... 5805  =     37.961 ...    38.660 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 6087 ... 6192  =     40.538 ...    41.238 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 7295 ... 7400  =     48.584 ...    49.283 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 7699 ... 7804  =     51.274 ...    51.973 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 8132 ... 8237  =     54.158 ...    54.857 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 8552 ... 8657  =     56.955 ...    57.654 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 9403 ... 9508  =     62.622 ...    63.322 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 9815 ... 9920  =     65.366 ...    66.066 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 10261 ... 10366  =     68.337 ...    69.036 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 11084 ... 11189  =     73.818 ...    74.517 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 11517 ... 11622  =     76.701 ...    77.401 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 11949 ... 12054  =     79.578 ...    80.278 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 13154 ... 13259  =     87.604 ...    88.303 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 13572 ... 13677  =     90.387 ...    91.087 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 13997 ... 14102  =     93.218 ...    93.917 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 14412 ... 14517  =     95.982 ...    96.681 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 14844 ... 14949  =     98.859 ...    99.558 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 15668 ... 15773  =    104.346 ...   105.046 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 16124 ... 16229  =    107.383 ...   108.083 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 16529 ... 16634  =    110.081 ...   110.780 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 17378 ... 17483  =    115.735 ...   116.434 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 17828 ... 17933  =    118.732 ...   119.431 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 18675 ... 18780  =    124.373 ...   125.072 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 19092 ... 19197  =    127.150 ...   127.849 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 20358 ... 20463  =    135.581 ...   136.280 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 22008 ... 22113  =    146.570 ...   147.269 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 22424 ... 22529  =    149.340 ...   150.040 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 22846 ... 22951  =    152.151 ...   152.850 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 23239 ... 23344  =    154.768 ...   155.467 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 23654 ... 23759  =    157.532 ...   158.231 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 24074 ... 24179  =    160.329 ...   161.028 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 24502 ... 24607  =    163.179 ...   163.879 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 24947 ... 25052  =    166.143 ...   166.842 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 25751 ... 25856  =    171.498 ...   172.197 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 26540 ... 26645  =    176.752 ...   177.451 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 27403 ... 27508  =    182.500 ...   183.199 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 27803 ... 27908  =    185.164 ...   185.863 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 29537 ... 29642  =    196.712 ...   197.411 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 29936 ... 30041  =    199.369 ...   200.068 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 30384 ... 30489  =    202.353 ...   203.052 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 30810 ... 30915  =    205.190 ...   205.889 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 31238 ... 31343  =    208.040 ...   208.739 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 31626 ... 31731  =    210.624 ...   211.323 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 32040 ... 32145  =    213.381 ...   214.081 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    [1.9375167201631338e-05, 1.6405516986429127e-05, 1.8545377810380121e-05, 2.0412807568093327e-05]
+
+
+It is also possible to read evoked data stored in a fif file:
+
+
+.. code-block:: python
+
+
+    evoked_fname = data_path + '/MEG/sample/sample_audvis-ave.fif'
+    evoked1 = mne.read_evokeds(
+        evoked_fname, condition='Left Auditory', baseline=(None, 0), proj=True)
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+**Script output**:
+
+.. rst-class:: sphx-glr-script-out
+
+  ::
+
+    Reading /Users/alex/work/src/mne-python/examples/MNE-sample-data/MEG/sample/sample_audvis-ave.fif ...
+        Read a total of 4 projection items:
+            PCA-v1 (1 x 102) active
+            PCA-v2 (1 x 102) active
+            PCA-v3 (1 x 102) active
+            Average EEG reference (1 x 60) active
+        Found the data of interest:
+            t =    -199.80 ...     499.49 ms (Left Auditory)
+            0 CTF compensation matrices available
+            nave = 55 - aspect type = 100
+    Projections have already been applied. Setting proj attribute to True.
+    Applying baseline correction ... (mode: mean)
+
+
+Or another one stored in the same file:
+
+
+.. code-block:: python
+
+
+    evoked2 = mne.read_evokeds(
+        evoked_fname, condition='Right Auditory', baseline=(None, 0), proj=True)
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+**Script output**:
+
+.. rst-class:: sphx-glr-script-out
+
+  ::
+
+    Reading /Users/alex/work/src/mne-python/examples/MNE-sample-data/MEG/sample/sample_audvis-ave.fif ...
+        Read a total of 4 projection items:
+            PCA-v1 (1 x 102) active
+            PCA-v2 (1 x 102) active
+            PCA-v3 (1 x 102) active
+            Average EEG reference (1 x 60) active
+        Found the data of interest:
+            t =    -199.80 ...     499.49 ms (Right Auditory)
+            0 CTF compensation matrices available
+            nave = 61 - aspect type = 100
+    Projections have already been applied. Setting proj attribute to True.
+    Applying baseline correction ... (mode: mean)
+
+
+Compute a contrast:
+
+
+.. code-block:: python
+
+
+    contrast = evoked1 - evoked2
+    print(contrast)
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+**Script output**:
+
+.. rst-class:: sphx-glr-script-out
+
+  ::
+
+    <Evoked  |  comment : 'Left Auditory - Right Auditory', time : [-0.199795, 0.499488], n_epochs : 116, n_channels x n_times : 376 x 421>
+
+
+Time-Frequency: Induced power and inter trial coherence
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Define parameters:
+
+
+.. code-block:: python
+
+
+    import numpy as np
+    n_cycles = 2  # number of cycles in Morlet wavelet
+    freqs = np.arange(7, 30, 3)  # frequencies of interest
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+
+
+Compute induced power and phase-locking values and plot gradiometers:
+
+
+.. code-block:: python
+
+
+    from mne.time_frequency import tfr_morlet
+    power, itc = tfr_morlet(epochs, freqs=freqs, n_cycles=n_cycles,
+                            return_itc=True, decim=3, n_jobs=1)
+    # power.plot()
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+**Script output**:
+
+.. rst-class:: sphx-glr-script-out
+
+  ::
+
+    Reading 712 ... 817  =      4.742 ...     5.441 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 933 ... 1038  =      6.214 ...     6.913 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 1132 ... 1237  =      7.539 ...     8.238 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 1330 ... 1435  =      8.858 ...     9.557 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 1545 ... 1650  =     10.289 ...    10.989 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 1753 ... 1858  =     11.675 ...    12.374 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 1948 ... 2053  =     12.973 ...    13.673 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 2377 ... 2482  =     15.830 ...    16.530 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 2572 ... 2677  =     17.129 ...    17.828 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 2771 ... 2876  =     18.454 ...    19.154 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 2997 ... 3102  =     19.960 ...    20.659 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 3197 ... 3302  =     21.292 ...    21.991 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 3410 ... 3515  =     22.710 ...    23.409 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 3621 ... 3726  =     24.115 ...    24.815 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 3835 ... 3940  =     25.540 ...    26.240 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 4051 ... 4156  =     26.979 ...    27.678 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 4260 ... 4365  =     28.371 ...    29.070 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 4465 ... 4570  =     29.736 ...    30.435 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 4682 ... 4787  =     31.181 ...    31.881 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 5080 ... 5185  =     33.832 ...    34.531 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 5293 ... 5398  =     35.251 ...    35.950 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 5493 ... 5598  =     36.583 ...    37.282 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 5700 ... 5805  =     37.961 ...    38.660 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 5887 ... 5992  =     39.206 ...    39.906 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 6087 ... 6192  =     40.538 ...    41.238 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 6281 ... 6386  =     41.830 ...    42.530 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 6688 ... 6793  =     44.541 ...    45.240 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 7100 ... 7205  =     47.285 ...    47.984 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 7295 ... 7400  =     48.584 ...    49.283 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 7489 ... 7594  =     49.876 ...    50.575 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 7699 ... 7804  =     51.274 ...    51.973 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 7923 ... 8028  =     52.766 ...    53.465 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 8132 ... 8237  =     54.158 ...    54.857 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 8552 ... 8657  =     56.955 ...    57.654 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 9190 ... 9295  =     61.204 ...    61.903 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 9403 ... 9508  =     62.622 ...    63.322 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 9616 ... 9721  =     64.041 ...    64.740 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 9815 ... 9920  =     65.366 ...    66.066 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 10037 ... 10142  =     66.845 ...    67.544 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 10261 ... 10366  =     68.337 ...    69.036 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 10472 ... 10577  =     69.742 ...    70.441 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 10884 ... 10989  =     72.486 ...    73.185 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 11084 ... 11189  =     73.818 ...    74.517 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 11302 ... 11407  =     75.270 ...    75.969 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 11517 ... 11622  =     76.701 ...    77.401 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 11726 ... 11831  =     78.093 ...    78.793 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 11949 ... 12054  =     79.578 ...    80.278 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 12155 ... 12260  =     80.950 ...    81.650 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 12541 ... 12646  =     83.521 ...    84.220 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 12940 ... 13045  =     86.178 ...    86.878 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 13154 ... 13259  =     87.604 ...    88.303 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 13360 ... 13465  =     88.975 ...    89.675 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 13572 ... 13677  =     90.387 ...    91.087 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 13774 ... 13879  =     91.733 ...    92.432 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 13997 ... 14102  =     93.218 ...    93.917 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 14198 ... 14303  =     94.556 ...    95.256 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 14412 ... 14517  =     95.982 ...    96.681 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 14631 ... 14736  =     97.440 ...    98.139 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 14844 ... 14949  =     98.859 ...    99.558 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 15451 ... 15556  =    102.901 ...   103.600 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 15668 ... 15773  =    104.346 ...   105.046 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 15894 ... 15999  =    105.852 ...   106.551 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 16124 ... 16229  =    107.383 ...   108.083 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 16318 ... 16423  =    108.675 ...   109.375 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 16529 ... 16634  =    110.081 ...   110.780 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 17155 ... 17260  =    114.250 ...   114.949 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 17378 ... 17483  =    115.735 ...   116.434 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 17828 ... 17933  =    118.732 ...   119.431 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 18048 ... 18153  =    120.197 ...   120.896 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 18675 ... 18780  =    124.373 ...   125.072 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 18887 ... 18992  =    125.784 ...   126.484 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 19092 ... 19197  =    127.150 ...   127.849 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 19318 ... 19423  =    128.655 ...   129.354 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 19747 ... 19852  =    131.512 ...   132.211 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 20358 ... 20463  =    135.581 ...   136.280 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 21805 ... 21910  =    145.218 ...   145.917 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 22008 ... 22113  =    146.570 ...   147.269 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 22205 ... 22310  =    147.882 ...   148.581 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 22424 ... 22529  =    149.340 ...   150.040 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 22651 ... 22756  =    150.852 ...   151.551 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 22846 ... 22951  =    152.151 ...   152.850 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 23239 ... 23344  =    154.768 ...   155.467 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 23444 ... 23549  =    156.133 ...   156.833 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 23654 ... 23759  =    157.532 ...   158.231 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 23868 ... 23973  =    158.957 ...   159.656 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 24074 ... 24179  =    160.329 ...   161.028 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 24286 ... 24391  =    161.741 ...   162.440 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 24502 ... 24607  =    163.179 ...   163.879 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 24727 ... 24832  =    164.678 ...   165.377 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 24947 ... 25052  =    166.143 ...   166.842 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 25156 ... 25261  =    167.535 ...   168.234 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 25538 ... 25643  =    170.079 ...   170.778 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 25751 ... 25856  =    171.498 ...   172.197 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 25953 ... 26058  =    172.843 ...   173.542 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 26540 ... 26645  =    176.752 ...   177.451 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 26763 ... 26868  =    178.237 ...   178.937 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 27202 ... 27307  =    181.161 ...   181.860 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 27403 ... 27508  =    182.500 ...   183.199 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 27591 ... 27696  =    183.752 ...   184.451 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 27803 ... 27908  =    185.164 ...   185.863 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 28018 ... 28123  =    186.595 ...   187.295 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 28454 ... 28559  =    189.499 ...   190.198 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 28910 ... 29015  =    192.536 ...   193.235 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 29324 ... 29429  =    195.293 ...   195.992 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 29537 ... 29642  =    196.712 ...   197.411 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 29749 ... 29854  =    198.124 ...   198.823 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 29936 ... 30041  =    199.369 ...   200.068 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 30156 ... 30261  =    200.834 ...   201.533 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 30384 ... 30489  =    202.353 ...   203.052 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 30596 ... 30701  =    203.764 ...   204.464 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 30810 ... 30915  =    205.190 ...   205.889 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 31017 ... 31122  =    206.568 ...   207.268 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 31238 ... 31343  =    208.040 ...   208.739 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 31426 ... 31531  =    209.292 ...   209.991 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 31626 ... 31731  =    210.624 ...   211.323 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 32040 ... 32145  =    213.381 ...   214.081 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+
+
+Inverse modeling: MNE and dSPM on evoked and raw data
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+Import the required functions:
+
+
+.. code-block:: python
+
+
+    from mne.minimum_norm import apply_inverse, read_inverse_operator
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+
+
+Read the inverse operator:
+
+
+.. code-block:: python
+
+
+    fname_inv = data_path + '/MEG/sample/sample_audvis-meg-oct-6-meg-inv.fif'
+    inverse_operator = read_inverse_operator(fname_inv)
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+**Script output**:
+
+.. rst-class:: sphx-glr-script-out
+
+  ::
+
+    Reading inverse operator decomposition from /Users/alex/work/src/mne-python/examples/MNE-sample-data/MEG/sample/sample_audvis-meg-oct-6-meg-inv.fif...
+        Reading inverse operator info...
+        [done]
+        Reading inverse operator decomposition...
+        [done]
+        305 x 305 full covariance (kind = 1) found.
+        Read a total of 4 projection items:
+            PCA-v1 (1 x 102) active
+            PCA-v2 (1 x 102) active
+            PCA-v3 (1 x 102) active
+            Average EEG reference (1 x 60) active
+        Noise covariance matrix read.
+        22494 x 22494 diagonal covariance (kind = 2) found.
+        Source covariance matrix read.
+        22494 x 22494 diagonal covariance (kind = 6) found.
+        Orientation priors read.
+        22494 x 22494 diagonal covariance (kind = 5) found.
+        Depth priors read.
+        Did not find the desired covariance matrix (kind = 3)
+        Reading a source space...
+        Computing patch statistics...
+        Patch information added...
+        Distance information added...
+        [done]
+        Reading a source space...
+        Computing patch statistics...
+        Patch information added...
+        Distance information added...
+        [done]
+        2 source spaces read
+        Read a total of 4 projection items:
+            PCA-v1 (1 x 102) active
+            PCA-v2 (1 x 102) active
+            PCA-v3 (1 x 102) active
+            Average EEG reference (1 x 60) active
+        Source spaces transformed to the inverse solution coordinate frame
+
+
+Define the inverse parameters:
+
+
+.. code-block:: python
+
+
+    snr = 3.0
+    lambda2 = 1.0 / snr ** 2
+    method = "dSPM"
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+
+
+Compute the inverse solution:
+
+
+.. code-block:: python
+
+
+    stc = apply_inverse(evoked, inverse_operator, lambda2, method)
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+**Script output**:
+
+.. rst-class:: sphx-glr-script-out
+
+  ::
+
+    Preparing the inverse operator for use...
+        Scaled noise and source covariance from nave = 1 to nave = 55
+        Created the regularized inverter
+        Created an SSP operator (subspace dimension = 3)
+        Created the whitener using a full noise covariance matrix (3 small eigenvalues omitted)
+        Computing noise-normalization factors (dSPM)...
+    [done]
+    Picked 305 channels from the data
+    Computing inverse...
+    (eigenleads need to be weighted)...
+    combining the current components...
+    (dSPM)...
+    [done]
+
+
+Save the source time courses to disk:
+
+
+.. code-block:: python
+
+
+    stc.save('mne_dSPM_inverse')
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+**Script output**:
+
+.. rst-class:: sphx-glr-script-out
+
+  ::
+
+    Writing STC to disk...
+    [done]
+
+
+Now, let's compute dSPM on a raw file within a label:
+
+
+.. code-block:: python
+
+
+    fname_label = data_path + '/MEG/sample/labels/Aud-lh.label'
+    label = mne.read_label(fname_label)
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+
+
+Compute inverse solution during the first 15s:
+
+
+.. code-block:: python
+
+
+    from mne.minimum_norm import apply_inverse_raw
+    start, stop = raw.time_as_index([0, 15])  # read the first 15s of data
+    stc = apply_inverse_raw(raw, inverse_operator, lambda2, method, label,
+                            start, stop)
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+**Script output**:
+
+.. rst-class:: sphx-glr-script-out
+
+  ::
+
+    Preparing the inverse operator for use...
+        Scaled noise and source covariance from nave = 1 to nave = 1
+        Created the regularized inverter
+        Created an SSP operator (subspace dimension = 3)
+        Created the whitener using a full noise covariance matrix (3 small eigenvalues omitted)
+        Computing noise-normalization factors (dSPM)...
+    [done]
+    Picked 305 channels from the data
+    Computing inverse...
+    Reading 0 ... 2251  =      0.000 ...    14.991 secs...
+    [done]
+    (eigenleads need to be weighted)...
+    combining the current components...
+    [done]
+
+
+Save result in stc files:
+
+
+.. code-block:: python
+
+
+    stc.save('mne_dSPM_raw_inverse_Aud')
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+**Script output**:
+
+.. rst-class:: sphx-glr-script-out
+
+  ::
+
+    Writing STC to disk...
+    [done]
+
+
+What else can you do?
+^^^^^^^^^^^^^^^^^^^^^
+
+    - detect heart beat QRS component
+    - detect eye blinks and EOG artifacts
+    - compute SSP projections to remove ECG or EOG artifacts
+    - compute Independent Component Analysis (ICA) to remove artifacts or
+      select latent sources
+    - estimate noise covariance matrix from Raw and Epochs
+    - visualize cross-trial response dynamics using epochs images
+    - compute forward solutions
+    - estimate power in the source space
+    - estimate connectivity in sensor and source space
+    - morph stc from one brain to another for group studies
+    - compute mass univariate statistics base on custom contrasts
+    - visualize source estimates
+    - export raw, epochs, and evoked data to other python data analysis
+      libraries e.g. pandas
+    - and many more things ...
+
+Want to know more ?
+^^^^^^^^^^^^^^^^^^^
+
+Browse :ref:`examples-index` gallery.
+
+
+.. code-block:: python
+
+
+    print("Done!")
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+**Script output**:
+
+.. rst-class:: sphx-glr-script-out
+
+  ::
+
+    Done!
+
+
+**Total running time of the script:**
+(0 minutes 15.013 seconds)
+
+
+
+**Download Python source code:** :download:`plot_introduction.py <plot_introduction.py>`
