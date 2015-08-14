@@ -1,6 +1,6 @@
 
 
-.. _example_forward_plot_left_cerebellum_volume_source.py:
+.. _sphx_glr_auto_examples_forward_plot_left_cerebellum_volume_source.py:
 
 
 ==============================================
@@ -13,64 +13,142 @@ segmentation file.
 
 
 
+.. code-block:: python
 
-.. image:: images/plot_left_cerebellum_volume_source_001.png
+
+    # Author: Alan Leggitt <alan.leggitt@ucsf.edu>
+    #
+    # License: BSD (3-clause)
+
+    import numpy as np
+    from scipy.spatial import ConvexHull
+    from mayavi import mlab
+    from mne import setup_source_space, setup_volume_source_space
+    from mne.datasets import sample
+
+    print(__doc__)
+
+    data_path = sample.data_path()
+    subjects_dir = data_path + '/subjects'
+    subj = 'sample'
+    aseg_fname = subjects_dir + '/sample/mri/aseg.mgz'
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+
+
+Setup the source spaces
+
+
+.. code-block:: python
+
+
+    # setup a cortical surface source space and extract left hemisphere
+    surf = setup_source_space(subj, subjects_dir=subjects_dir,
+                              add_dist=False, overwrite=True)
+    lh_surf = surf[0]
+
+    # setup a volume source space of the left cerebellum cortex
+    volume_label = 'Left-Cerebellum-Cortex'
+    sphere = (0, 0, 0, 120)
+    lh_cereb = setup_volume_source_space(subj, mri=aseg_fname, sphere=sphere,
+                                         volume_label=volume_label,
+                                         subjects_dir=subjects_dir)
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+
+
+Plot the positions of each source space
+
+
+.. code-block:: python
+
+
+    # extract left cortical surface vertices, triangle faces, and surface normals
+    x1, y1, z1 = lh_surf['rr'].T
+    faces = lh_surf['use_tris']
+    normals = lh_surf['nn']
+    # normalize for mayavi
+    normals /= np.sum(normals * normals, axis=1)[:, np.newaxis]
+
+    # extract left cerebellum cortex source positions
+    x2, y2, z2 = lh_cereb[0]['rr'][lh_cereb[0]['inuse'].astype(bool)].T
+
+    # open a 3d figure in mayavi
+    mlab.figure(1, bgcolor=(0, 0, 0))
+
+    # plot the left cortical surface
+    mesh = mlab.pipeline.triangular_mesh_source(x1, y1, z1, faces)
+    mesh.data.point_data.normals = normals
+    mlab.pipeline.surface(mesh, color=3 * (0.7,))
+
+    # plot the convex hull bounding the left cerebellum
+    hull = ConvexHull(np.c_[x2, y2, z2])
+    mlab.triangular_mesh(x2, y2, z2, hull.simplices, color=3 * (0.5,), opacity=0.3)
+
+    # plot the left cerebellum sources
+    mlab.points3d(x2, y2, z2, color=(1, 1, 0), scale_factor=0.001)
+
+    # adjust view parameters
+    mlab.view(173.78, 101.75, 0.30, np.array([-0.03, -0.01,  0.03]))
+    mlab.roll(85)
+
+
+
+
+.. image:: /auto_examples/forward/images/sphx_glr_plot_left_cerebellum_volume_source_000.png
     :align: center
 
 
-**Script output**::
-
-  Setting up the source space with the following parameters:
-  
-  SUBJECTS_DIR = /data1/agramfort/work/src/mne-python/examples/MNE-sample-data/subjects
-  Subject      = sample
-  Surface      = white
-  Octahedron subdivision grade 6
-  
-  >>> 1. Creating the source space file /data1/agramfort/work/src/mne-python/examples/MNE-sample-data/subjects/sample/bem/sample-oct-6-src.fif...
-  Doing the octahedral vertex picking...
-  Loading /data1/agramfort/work/src/mne-python/examples/MNE-sample-data/subjects/sample/surf/lh.white...
-  Triangle file: created by gramfort on Thu Sep 15 19:44:31 2011 nvert = 155407 ntri = 310810
-      Triangle neighbors and vertex normals...
-  Loading geometry from /data1/agramfort/work/src/mne-python/examples/MNE-sample-data/subjects/sample/surf/lh.sphere...
-  Triangle file: created by gramfort on Thu Sep 15 20:42:21 2011 nvert = 155407 ntri = 310810
-  Mapping lh sample -> oct (6) ...
-  Setting up the triangulation for the decimated surface...
-  loaded lh.white 4098/155407 selected to source space (oct = 6)
-  
-  Loading /data1/agramfort/work/src/mne-python/examples/MNE-sample-data/subjects/sample/surf/rh.white...
-  Triangle file: created by gramfort on Thu Sep 15 22:04:14 2011 nvert = 156866 ntri = 313728
-  ...
 
 
+Compare volume source locations to segmentation file in freeview
 
-**Python source code:** :download:`plot_left_cerebellum_volume_source.py <plot_left_cerebellum_volume_source.py>`
 
-.. literalinclude:: plot_left_cerebellum_volume_source.py
-    :lines: 11-
+.. code-block:: python
 
-**Total running time of the example:**   33 seconds
 
-.. raw:: html
+    # Export source positions to nift file
+    nii_fname = data_path + '/MEG/sample/mne_sample_lh-cerebellum-cortex.nii'
 
-    <div class="social-button-container">
-        <div class="social-button">
-            <a href="https://twitter.com/share" class="twitter-share-button">Tweet</a>
-        </div>
-        <div class="social-button">
-            <g:plusone annotation="inline" width="120" size="medium"></g:plusone>
-        </div>
-        <div class="social-button">
-            <div id="fb-root"></div>
-            <script>(function(d, s, id) {
-                var js, fjs = d.getElementsByTagName(s)[0];
-                if (d.getElementById(id)) return;
-                js = d.createElement(s); js.id = id;
-                js.src = "//connect.facebook.net/en_US/all.js#xfbml=1";
-                fjs.parentNode.insertBefore(js, fjs);
-                }(document, 'script', 'facebook-jssdk'));
-            </script>
-            <div class="fb-like" data-send="false" data-width="450" data-show-faces="false"></div>
-        </div>
-    </div>
-    
+    # Combine the source spaces
+    src = surf + lh_cereb
+
+    src.export_volume(nii_fname, mri_resolution=True)
+
+    # Uncomment the following lines to display source positions in freeview.
+    '''
+    # display image in freeview
+    from mne.utils import run_subprocess
+    mri_fname = subjects_dir + '/sample/mri/brain.mgz'
+    run_subprocess(['freeview', '-v', mri_fname, '-v',
+                    '%s:colormap=lut:opacity=0.5' % aseg_fname, '-v',
+                    '%s:colormap=jet:colorscale=0,2' % nii_fname, '-slice',
+                    '157 75 105'])
+    '''
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+
+
+**Total running time of the script:**
+(0 minutes 29.739 seconds)
+
+
+
+**Download Python source code:** :download:`plot_left_cerebellum_volume_source.py <plot_left_cerebellum_volume_source.py>`

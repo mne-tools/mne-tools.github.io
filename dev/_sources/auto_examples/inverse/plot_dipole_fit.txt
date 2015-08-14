@@ -1,6 +1,6 @@
 
 
-.. _example_inverse_plot_dipole_fit.py:
+.. _sphx_glr_auto_examples_inverse_plot_dipole_fit.py:
 
 
 ===============
@@ -16,63 +16,49 @@ For a comparison of fits between MNE-C and mne-python, see:
 
 
 
-.. image:: images/plot_dipole_fit_001.png
+.. image:: /auto_examples/inverse/images/sphx_glr_plot_dipole_fit_000.png
     :align: center
 
 
-**Script output**::
-
-  Reading /data1/agramfort/work/src/mne-python/examples/MNE-sample-data/MEG/sample/sample_audvis-ave.fif ...
-      Read a total of 4 projection items:
-          PCA-v1 (1 x 102) active
-          PCA-v2 (1 x 102) active
-          PCA-v3 (1 x 102) active
-          Average EEG reference (1 x 60) active
-      Found the data of interest:
-          t =    -199.80 ...     499.49 ms (Right Auditory)
-          0 CTF compensation matrices available
-          nave = 61 - aspect type = 100
-  Projections have already been applied. Setting proj attribute to True.
-  Applying baseline correction ... (mode: mean)
-  BEM              : /data1/agramfort/work/src/mne-python/examples/MNE-sample-data/subjects/sample/bem/sample-5120-bem-sol.fif
-  MRI transform    : /data1/agramfort/work/src/mne-python/examples/MNE-sample-data/MEG/sample/sample_audvis_raw-trans.fif
-  
-  Setting up the BEM model using /data1/agramfort/work/src/mne-python/examples/MNE-sample-data/subjects/sample/bem/sample-5120-bem-sol.fif...
-  
-  Loading surfaces...
-  Homogeneous model surface loaded.
-  
-  ...
 
 
 
-**Python source code:** :download:`plot_dipole_fit.py <plot_dipole_fit.py>`
+.. code-block:: python
 
-.. literalinclude:: plot_dipole_fit.py
-    :lines: 14-
+    # Author: Eric Larson <larson.eric.d@gmail.com>
+    #
+    # License: BSD (3-clause)
 
-**Total running time of the example:**   13 seconds
+    from os import path as op
 
-.. raw:: html
+    import mne
 
-    <div class="social-button-container">
-        <div class="social-button">
-            <a href="https://twitter.com/share" class="twitter-share-button">Tweet</a>
-        </div>
-        <div class="social-button">
-            <g:plusone annotation="inline" width="120" size="medium"></g:plusone>
-        </div>
-        <div class="social-button">
-            <div id="fb-root"></div>
-            <script>(function(d, s, id) {
-                var js, fjs = d.getElementsByTagName(s)[0];
-                if (d.getElementById(id)) return;
-                js = d.createElement(s); js.id = id;
-                js.src = "//connect.facebook.net/en_US/all.js#xfbml=1";
-                fjs.parentNode.insertBefore(js, fjs);
-                }(document, 'script', 'facebook-jssdk'));
-            </script>
-            <div class="fb-like" data-send="false" data-width="450" data-show-faces="false"></div>
-        </div>
-    </div>
-    
+    print(__doc__)
+
+    data_path = mne.datasets.sample.data_path()
+    subjects_dir = op.join(data_path, 'subjects')
+    fname_ave = op.join(data_path, 'MEG', 'sample', 'sample_audvis-ave.fif')
+    fname_cov = op.join(data_path, 'MEG', 'sample', 'sample_audvis-cov.fif')
+    fname_bem = op.join(subjects_dir, 'sample', 'bem', 'sample-5120-bem-sol.fif')
+    fname_trans = op.join(data_path, 'MEG', 'sample',
+                          'sample_audvis_raw-trans.fif')
+    fname_surf_lh = op.join(subjects_dir, 'sample', 'surf', 'lh.white')
+
+    # Let's localize the N100m (using MEG only)
+    evoked = mne.read_evokeds(fname_ave, condition='Right Auditory',
+                              baseline=(None, 0))
+    evoked.pick_types(meg=True, eeg=False)
+    evoked.crop(0.07, 0.08)
+
+    # Fit a dipole
+    dip = mne.fit_dipole(evoked, fname_cov, fname_bem, fname_trans)[0]
+
+    # Plot the result
+    dip.plot_locations(fname_trans, 'sample', subjects_dir)
+
+**Total running time of the script:**
+(0 minutes 11.737 seconds)
+
+
+
+**Download Python source code:** :download:`plot_dipole_fit.py <plot_dipole_fit.py>`

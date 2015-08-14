@@ -94,7 +94,7 @@ scores = cross_val_score(clf, epochs_data, labels, cv=cv, n_jobs=1)
 print(scores.mean())  # should match results above
 
 # And using reuglarized csp with Ledoit-Wolf estimator
-csp = CSP(n_components=n_components, reg='lws')
+csp = CSP(n_components=n_components, reg='ledoit_wolf')
 clf = Pipeline([('CSP', csp), ('SVC', svc)])
 scores = cross_val_score(clf, epochs_data, labels, cv=cv, n_jobs=1)
 print(scores.mean())  # should get better results than above
@@ -103,5 +103,5 @@ print(scores.mean())  # should get better results than above
 csp.fit_transform(epochs_data, labels)
 evoked.data = csp.patterns_.T
 evoked.times = np.arange(evoked.data.shape[0])
-evoked.plot_topomap(times=[0, 1, 201, 202], ch_type='grad',
+evoked.plot_topomap(times=[0, 1, 2, 3], ch_type='grad',
                     colorbar=False, size=1.5)

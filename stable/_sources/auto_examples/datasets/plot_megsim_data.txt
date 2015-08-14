@@ -1,6 +1,6 @@
 
 
-.. _example_datasets_plot_megsim_data.py:
+.. _sphx_glr_auto_examples_datasets_plot_megsim_data.py:
 
 
 ===========================================
@@ -20,78 +20,77 @@ Realistic Simulated and Empirical Data. Neuroinformatics 10:141-158
 
 
 
-.. rst-class:: horizontal
+.. rst-class:: sphx-glr-horizontal
 
 
     *
 
-      .. image:: images/plot_megsim_data_001.png
+      .. image:: /auto_examples/datasets/images/sphx_glr_plot_megsim_data_001.png
             :scale: 47
 
     *
 
-      .. image:: images/plot_megsim_data_002.png
+      .. image:: /auto_examples/datasets/images/sphx_glr_plot_megsim_data_002.png
             :scale: 47
 
     *
 
-      .. image:: images/plot_megsim_data_003.png
+      .. image:: /auto_examples/datasets/images/sphx_glr_plot_megsim_data_003.png
             :scale: 47
 
 
-**Script output**::
-
-  Opening raw data file /data1/agramfort/work/src/mne-python/examples/MEGSIM/megsim/empdata/neuromag/visual/subject1_day1_vis_raw.fif...
-      Read a total of 3 projection items:
-          PCA-v1 (1 x 102)  idle
-          PCA-v2 (1 x 102)  idle
-          PCA-v3 (1 x 102)  idle
-  Current compensation grade : 0
-      Range : 434320 ... 2381639 =    242.246 ...  1328.383 secs
-  Ready.
-  Reading 0 ... 1947319  =      0.000 ...  1086.137 secs...
-  [done]
-  851 events found
-  Events id: [ 2  3  5  9 17]
-  Reading 0 ... 17927  =      0.000 ...     9.999 secs...
-  [done]
-  Created an SSP operator (subspace dimension = 3)
-  3 projection items activated
-  218 matching events found
-  Reading 17856 ... 19111  =      9.959 ...    10.659 secs...
-  [done]
-  Applying baseline correction ... (mode: mean)
-  ...
 
 
 
-**Python source code:** :download:`plot_megsim_data.py <plot_megsim_data.py>`
+.. code-block:: python
 
-.. literalinclude:: plot_megsim_data.py
-    :lines: 17-
 
-**Total running time of the example:**   20 seconds
+    from mne import find_events, Epochs, pick_types, read_evokeds
+    from mne.io import Raw
+    from mne.datasets.megsim import load_data
 
-.. raw:: html
+    print(__doc__)
 
-    <div class="social-button-container">
-        <div class="social-button">
-            <a href="https://twitter.com/share" class="twitter-share-button">Tweet</a>
-        </div>
-        <div class="social-button">
-            <g:plusone annotation="inline" width="120" size="medium"></g:plusone>
-        </div>
-        <div class="social-button">
-            <div id="fb-root"></div>
-            <script>(function(d, s, id) {
-                var js, fjs = d.getElementsByTagName(s)[0];
-                if (d.getElementById(id)) return;
-                js = d.createElement(s); js.id = id;
-                js.src = "//connect.facebook.net/en_US/all.js#xfbml=1";
-                fjs.parentNode.insertBefore(js, fjs);
-                }(document, 'script', 'facebook-jssdk'));
-            </script>
-            <div class="fb-like" data-send="false" data-width="450" data-show-faces="false"></div>
-        </div>
-    </div>
-    
+    condition = 'visual'  # or 'auditory' or 'somatosensory'
+
+    # Load experimental RAW files for the visual condition
+    raw_fnames = load_data(condition=condition, data_format='raw',
+                           data_type='experimental', verbose=True)
+
+    # Load simulation evoked files for the visual condition
+    evoked_fnames = load_data(condition=condition, data_format='evoked',
+                              data_type='simulation', verbose=True)
+
+    raw = Raw(raw_fnames[0])
+    events = find_events(raw, stim_channel="STI 014", shortest_event=1)
+
+    # Visualize raw file
+    raw.plot()
+
+    # Make an evoked file from the experimental data
+    picks = pick_types(raw.info, meg=True, eog=True, exclude='bads')
+
+    # Read epochs
+    event_id, tmin, tmax = 9, -0.2, 0.5
+    epochs = Epochs(raw, events, event_id, tmin, tmax, baseline=(None, 0),
+                    picks=picks, reject=dict(grad=4000e-13, mag=4e-12, eog=150e-6))
+    evoked = epochs.average()  # average epochs and get an Evoked dataset.
+    evoked.plot()
+
+    # Compare to the simulated data
+    evoked_sim = read_evokeds(evoked_fnames[0], condition=0)
+    evoked_sim.plot()
+
+**Total running time of the script:**
+(0 minutes 15.107 seconds)
+
+
+
+.. container:: sphx-glr-download
+
+    **Download Python source code:** :download:`plot_megsim_data.py <plot_megsim_data.py>`
+
+
+.. container:: sphx-glr-download
+
+    **Download IPython notebook:** :download:`plot_megsim_data.ipynb <plot_megsim_data.ipynb>`

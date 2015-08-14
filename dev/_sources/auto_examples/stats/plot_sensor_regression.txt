@@ -1,6 +1,6 @@
 
 
-.. _example_stats_plot_sensor_regression.py:
+.. _sphx_glr_auto_examples_stats_plot_sensor_regression.py:
 
 
 =====================================
@@ -21,84 +21,122 @@ here do not contain any significant effect.
 revealed by linear regression analysis of ERP data. Neuroimage.)
 
 
+.. code-block:: python
 
-.. rst-class:: horizontal
+    # Authors: Tal Linzen <linzen@nyu.edu>
+    #          Denis A. Engemann <denis.engemann@gmail.com>
+    #
+    # License: BSD (3-clause)
+
+    import numpy as np
+
+    import mne
+    from mne.datasets import sample
+    from mne.stats.regression import linear_regression
+
+    print(__doc__)
+
+    data_path = sample.data_path()
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+
+
+Set parameters and read data
+
+
+.. code-block:: python
+
+    raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
+    event_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw-eve.fif'
+    tmin, tmax = -0.2, 0.5
+    event_id = dict(aud_l=1, aud_r=2)
+
+    # Setup for reading the raw data
+    raw = mne.io.Raw(raw_fname)
+    events = mne.read_events(event_fname)
+
+    picks = mne.pick_types(raw.info, meg='mag', eeg=False, stim=False,
+                           eog=False, exclude='bads')
+
+    # Reject some epochs based on amplitude
+    reject = dict(mag=5e-12)
+    epochs = mne.Epochs(raw, events, event_id, tmin, tmax, proj=True,
+                        picks=picks, baseline=(None, 0), preload=True,
+                        reject=reject)
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+
+
+Run regression
+
+
+.. code-block:: python
+
+
+    names = ['intercept', 'trial-count']
+
+    intercept = np.ones((len(epochs),), dtype=np.float)
+    design_matrix = np.column_stack([intercept,  # intercept
+                                     np.linspace(0, 1, len(intercept))])
+
+    # also accepts source estimates
+    lm = linear_regression(epochs, design_matrix, names)
+
+
+    def plot_topomap(x, unit):
+        x.plot_topomap(ch_type='mag', scale=1, size=1.5, vmax=np.max,
+                       unit=unit, times=np.linspace(0.1, 0.2, 5))
+
+    trial_count = lm['trial-count']
+
+    plot_topomap(trial_count.beta, unit='z (beta)')
+    plot_topomap(trial_count.t_val, unit='t')
+    plot_topomap(trial_count.mlog10_p_val, unit='-log10 p')
+    plot_topomap(trial_count.stderr, unit='z (error)')
+
+
+
+.. rst-class:: sphx-glr-horizontal
 
 
     *
 
-      .. image:: images/plot_sensor_regression_001.png
+      .. image:: /auto_examples/stats/images/sphx_glr_plot_sensor_regression_001.png
             :scale: 47
 
     *
 
-      .. image:: images/plot_sensor_regression_002.png
+      .. image:: /auto_examples/stats/images/sphx_glr_plot_sensor_regression_002.png
             :scale: 47
 
     *
 
-      .. image:: images/plot_sensor_regression_003.png
+      .. image:: /auto_examples/stats/images/sphx_glr_plot_sensor_regression_003.png
             :scale: 47
 
     *
 
-      .. image:: images/plot_sensor_regression_004.png
+      .. image:: /auto_examples/stats/images/sphx_glr_plot_sensor_regression_004.png
             :scale: 47
 
 
-**Script output**::
 
-  Opening raw data file /data1/agramfort/work/src/mne-python/examples/MNE-sample-data/MEG/sample/sample_audvis_filt-0-40_raw.fif...
-      Read a total of 4 projection items:
-          PCA-v1 (1 x 102)  idle
-          PCA-v2 (1 x 102)  idle
-          PCA-v3 (1 x 102)  idle
-          Average EEG reference (1 x 60)  idle
-  Current compensation grade : 0
-      Range : 6450 ... 48149 =     42.956 ...   320.665 secs
-  Ready.
-  Created an SSP operator (subspace dimension = 3)
-  4 projection items activated
-  145 matching events found
-  Reading 514 ... 619  =      3.423 ...     4.122 secs...
-  [done]
-  Applying baseline correction ... (mode: mean)
-  Reading 712 ... 817  =      4.742 ...     5.441 secs...
-  [done]
-  Applying baseline correction ... (mode: mean)
-  Reading 933 ... 1038  =      6.214 ...     6.913 secs...
-  [done]
-  ...
+
+**Total running time of the script:**
+(0 minutes 6.407 seconds)
 
 
 
-**Python source code:** :download:`plot_sensor_regression.py <plot_sensor_regression.py>`
-
-.. literalinclude:: plot_sensor_regression.py
-    :lines: 19-
-
-**Total running time of the example:**    8 seconds
-
-.. raw:: html
-
-    <div class="social-button-container">
-        <div class="social-button">
-            <a href="https://twitter.com/share" class="twitter-share-button">Tweet</a>
-        </div>
-        <div class="social-button">
-            <g:plusone annotation="inline" width="120" size="medium"></g:plusone>
-        </div>
-        <div class="social-button">
-            <div id="fb-root"></div>
-            <script>(function(d, s, id) {
-                var js, fjs = d.getElementsByTagName(s)[0];
-                if (d.getElementById(id)) return;
-                js = d.createElement(s); js.id = id;
-                js.src = "//connect.facebook.net/en_US/all.js#xfbml=1";
-                fjs.parentNode.insertBefore(js, fjs);
-                }(document, 'script', 'facebook-jssdk'));
-            </script>
-            <div class="fb-like" data-send="false" data-width="450" data-show-faces="false"></div>
-        </div>
-    </div>
-    
+**Download Python source code:** :download:`plot_sensor_regression.py <plot_sensor_regression.py>`

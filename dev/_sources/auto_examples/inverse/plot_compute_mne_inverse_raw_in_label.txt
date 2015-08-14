@@ -1,6 +1,6 @@
 
 
-.. _example_inverse_plot_compute_mne_inverse_raw_in_label.py:
+.. _sphx_glr_auto_examples_inverse_plot_compute_mne_inverse_raw_in_label.py:
 
 
 =============================================
@@ -13,64 +13,75 @@ visualisation.
 
 
 
+.. code-block:: python
 
-.. image:: images/plot_compute_mne_inverse_raw_in_label_001.png
+    # Author: Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
+    #
+    # License: BSD (3-clause)
+
+    import matplotlib.pyplot as plt
+
+    import mne
+    from mne.datasets import sample
+    from mne.io import Raw
+    from mne.minimum_norm import apply_inverse_raw, read_inverse_operator
+
+    print(__doc__)
+
+    data_path = sample.data_path()
+    fname_inv = data_path + '/MEG/sample/sample_audvis-meg-oct-6-meg-inv.fif'
+    fname_raw = data_path + '/MEG/sample/sample_audvis_raw.fif'
+    label_name = 'Aud-lh'
+    fname_label = data_path + '/MEG/sample/labels/%s.label' % label_name
+
+    snr = 1.0  # use smaller SNR for raw data
+    lambda2 = 1.0 / snr ** 2
+    method = "sLORETA"  # use sLORETA method (could also be MNE or dSPM)
+
+    # Load data
+    raw = Raw(fname_raw)
+    inverse_operator = read_inverse_operator(fname_inv)
+    label = mne.read_label(fname_label)
+
+    start, stop = raw.time_as_index([0, 15])  # read the first 15s of data
+
+    # Compute inverse solution
+    stc = apply_inverse_raw(raw, inverse_operator, lambda2, method, label,
+                            start, stop, pick_ori=None)
+
+    # Save result in stc files
+    stc.save('mne_%s_raw_inverse_%s' % (method, label_name))
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+
+
+View activation time-series
+
+
+.. code-block:: python
+
+    plt.plot(1e3 * stc.times, stc.data[::100, :].T)
+    plt.xlabel('time (ms)')
+    plt.ylabel('%s value' % method)
+    plt.show()
+
+
+
+.. image:: /auto_examples/inverse/images/sphx_glr_plot_compute_mne_inverse_raw_in_label_001.png
     :align: center
 
 
-**Script output**::
 
-  Opening raw data file /data1/agramfort/work/src/mne-python/examples/MNE-sample-data/MEG/sample/sample_audvis_raw.fif...
-      Read a total of 3 projection items:
-          PCA-v1 (1 x 102)  idle
-          PCA-v2 (1 x 102)  idle
-          PCA-v3 (1 x 102)  idle
-  Current compensation grade : 0
-      Range : 25800 ... 192599 =     42.956 ...   320.670 secs
-  Ready.
-  Adding average EEG reference projection.
-  1 projection items deactivated
-  Reading inverse operator decomposition from /data1/agramfort/work/src/mne-python/examples/MNE-sample-data/MEG/sample/sample_audvis-meg-oct-6-meg-inv.fif...
-      Reading inverse operator info...
-      [done]
-      Reading inverse operator decomposition...
-      [done]
-      305 x 305 full covariance (kind = 1) found.
-      Read a total of 4 projection items:
-          PCA-v1 (1 x 102) active
-          PCA-v2 (1 x 102) active
-          PCA-v3 (1 x 102) active
-  ...
+
+**Total running time of the script:**
+(0 minutes 0.732 seconds)
 
 
 
-**Python source code:** :download:`plot_compute_mne_inverse_raw_in_label.py <plot_compute_mne_inverse_raw_in_label.py>`
-
-.. literalinclude:: plot_compute_mne_inverse_raw_in_label.py
-    :lines: 11-
-
-**Total running time of the example:**    1 seconds
-
-.. raw:: html
-
-    <div class="social-button-container">
-        <div class="social-button">
-            <a href="https://twitter.com/share" class="twitter-share-button">Tweet</a>
-        </div>
-        <div class="social-button">
-            <g:plusone annotation="inline" width="120" size="medium"></g:plusone>
-        </div>
-        <div class="social-button">
-            <div id="fb-root"></div>
-            <script>(function(d, s, id) {
-                var js, fjs = d.getElementsByTagName(s)[0];
-                if (d.getElementById(id)) return;
-                js = d.createElement(s); js.id = id;
-                js.src = "//connect.facebook.net/en_US/all.js#xfbml=1";
-                fjs.parentNode.insertBefore(js, fjs);
-                }(document, 'script', 'facebook-jssdk'));
-            </script>
-            <div class="fb-like" data-send="false" data-width="450" data-show-faces="false"></div>
-        </div>
-    </div>
-    
+**Download Python source code:** :download:`plot_compute_mne_inverse_raw_in_label.py <plot_compute_mne_inverse_raw_in_label.py>`

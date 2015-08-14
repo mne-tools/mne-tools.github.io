@@ -1,6 +1,6 @@
 
 
-.. _example_inverse_plot_time_frequency_mixed_norm_inverse.py:
+.. _sphx_glr_auto_examples_inverse_plot_time_frequency_mixed_norm_inverse.py:
 
 
 =============================================
@@ -37,84 +37,155 @@ Lecture Notes in Computer Science, 2011, Volume 6801/2011,
 http://dx.doi.org/10.1007/978-3-642-22092-0_49
 
 
+.. code-block:: python
 
-.. rst-class:: horizontal
+    # Author: Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
+    #
+    # License: BSD (3-clause)
+
+    import mne
+    from mne.datasets import sample
+    from mne.minimum_norm import make_inverse_operator, apply_inverse
+    from mne.inverse_sparse import tf_mixed_norm
+    from mne.viz import plot_sparse_source_estimates
+
+    print(__doc__)
+
+    data_path = sample.data_path()
+    subjects_dir = data_path + '/subjects'
+    fwd_fname = data_path + '/MEG/sample/sample_audvis-meg-eeg-oct-6-fwd.fif'
+    ave_fname = data_path + '/MEG/sample/sample_audvis-no-filter-ave.fif'
+    cov_fname = data_path + '/MEG/sample/sample_audvis-shrunk-cov.fif'
+
+    # Read noise covariance matrix
+    cov = mne.read_cov(cov_fname)
+
+    # Handling average file
+    condition = 'Left visual'
+    evoked = mne.read_evokeds(ave_fname, condition=condition, baseline=(None, 0))
+    evoked = mne.pick_channels_evoked(evoked)
+    # We make the window slightly larger than what you'll eventually be interested
+    # in ([-0.05, 0.3]) to avoid edge effects.
+    evoked.crop(tmin=-0.1, tmax=0.4)
+
+    # Handling forward solution
+    forward = mne.read_forward_solution(fwd_fname, force_fixed=False,
+                                        surf_ori=True)
+
+
+
+
+
+
+
+Run solver
+
+
+.. code-block:: python
+
+
+    # alpha_space regularization parameter is between 0 and 100 (100 is high)
+    alpha_space = 50.  # spatial regularization parameter
+    # alpha_time parameter promotes temporal smoothness
+    # (0 means no temporal regularization)
+    alpha_time = 1.  # temporal regularization parameter
+
+    loose, depth = 0.2, 0.9  # loose orientation & depth weighting
+
+    # Compute dSPM solution to be used as weights in MxNE
+    inverse_operator = make_inverse_operator(evoked.info, forward, cov,
+                                             loose=loose, depth=depth)
+    stc_dspm = apply_inverse(evoked, inverse_operator, lambda2=1. / 9.,
+                             method='dSPM')
+
+    # Compute TF-MxNE inverse solution
+    stc, residual = tf_mixed_norm(evoked, forward, cov, alpha_space, alpha_time,
+                                  loose=loose, depth=depth, maxit=200, tol=1e-4,
+                                  weights=stc_dspm, weights_min=8., debias=True,
+                                  wsize=16, tstep=4, window=0.05,
+                                  return_residual=True)
+
+    # Crop to remove edges
+    stc.crop(tmin=-0.05, tmax=0.3)
+    evoked.crop(tmin=-0.05, tmax=0.3)
+    residual.crop(tmin=-0.05, tmax=0.3)
+
+    # Show the evoked response and the residual for gradiometers
+    ylim = dict(grad=[-120, 120])
+    evoked.pick_types(meg='grad', exclude='bads')
+    evoked.plot(titles=dict(grad='Evoked Response: Gradiometers'), ylim=ylim,
+                proj=True)
+
+    residual.pick_types(meg='grad', exclude='bads')
+    residual.plot(titles=dict(grad='Residuals: Gradiometers'), ylim=ylim,
+                  proj=True)
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
 
 
     *
 
-      .. image:: images/plot_time_frequency_mixed_norm_inverse_001.png
+      .. image:: /auto_examples/inverse/images/sphx_glr_plot_time_frequency_mixed_norm_inverse_001.png
             :scale: 47
 
     *
 
-      .. image:: images/plot_time_frequency_mixed_norm_inverse_002.png
-            :scale: 47
-
-    *
-
-      .. image:: images/plot_time_frequency_mixed_norm_inverse_003.png
-            :scale: 47
-
-    *
-
-      .. image:: images/plot_time_frequency_mixed_norm_inverse_004.png
+      .. image:: /auto_examples/inverse/images/sphx_glr_plot_time_frequency_mixed_norm_inverse_002.png
             :scale: 47
 
 
-**Script output**::
 
-  365 x 365 full covariance (kind = 1) found.
-      Read a total of 4 projection items:
-          PCA-v1 (1 x 102) active
-          PCA-v2 (1 x 102) active
-          PCA-v3 (1 x 102) active
-          Average EEG reference (1 x 59) active
-  Reading /data1/agramfort/work/src/mne-python/examples/MNE-sample-data/MEG/sample/sample_audvis-no-filter-ave.fif ...
-      Read a total of 4 projection items:
-          PCA-v1 (1 x 102) active
-          PCA-v2 (1 x 102) active
-          PCA-v3 (1 x 102) active
-          Average EEG reference (1 x 60) active
-      Found the data of interest:
-          t =    -199.80 ...     499.49 ms (Left visual)
-          0 CTF compensation matrices available
-          nave = 64 - aspect type = 100
-  Projections have already been applied. Setting proj attribute to True.
-  Applying baseline correction ... (mode: mean)
-  Reading forward solution from /data1/agramfort/work/src/mne-python/examples/MNE-sample-data/MEG/sample/sample_audvis-meg-eeg-oct-6-fwd.fif...
-      Reading a source space...
-  ...
+
+View in 2D and 3D ("glass" brain like 3D plot)
+
+
+.. code-block:: python
+
+    plot_sparse_source_estimates(forward['src'], stc, bgcolor=(1, 1, 1),
+                                 opacity=0.1, fig_name="TF-MxNE (cond %s)"
+                                 % condition, modes=['sphere'], scale_factors=[1.])
+
+    time_label = 'TF-MxNE time=%0.2f ms'
+    clim = dict(kind='value', lims=[10e-9, 15e-9, 20e-9])
+    brain = stc.plot('sample', 'inflated', 'rh', clim=clim, time_label=time_label,
+                     smoothing_steps=5, subjects_dir=subjects_dir)
+    brain.show_view('medial')
+    brain.set_data_time_index(120)
+    brain.add_label("V1", color="yellow", scalar_thresh=.5, borders=True)
+    brain.add_label("V2", color="red", scalar_thresh=.5, borders=True)
 
 
 
-**Python source code:** :download:`plot_time_frequency_mixed_norm_inverse.py <plot_time_frequency_mixed_norm_inverse.py>`
+.. image:: /auto_examples/inverse/images/sphx_glr_plot_time_frequency_mixed_norm_inverse_003.png
+    :align: center
 
-.. literalinclude:: plot_time_frequency_mixed_norm_inverse.py
-    :lines: 35-
 
-**Total running time of the example:**   33 seconds
+.. rst-class:: sphx-glr-script-out
 
-.. raw:: html
+ Out::
 
-    <div class="social-button-container">
-        <div class="social-button">
-            <a href="https://twitter.com/share" class="twitter-share-button">Tweet</a>
-        </div>
-        <div class="social-button">
-            <g:plusone annotation="inline" width="120" size="medium"></g:plusone>
-        </div>
-        <div class="social-button">
-            <div id="fb-root"></div>
-            <script>(function(d, s, id) {
-                var js, fjs = d.getElementsByTagName(s)[0];
-                if (d.getElementById(id)) return;
-                js = d.createElement(s); js.id = id;
-                js.src = "//connect.facebook.net/en_US/all.js#xfbml=1";
-                fjs.parentNode.insertBefore(js, fjs);
-                }(document, 'script', 'facebook-jssdk'));
-            </script>
-            <div class="fb-like" data-send="false" data-width="450" data-show-faces="false"></div>
-        </div>
-    </div>
-    
+      Updating smoothing matrix, be patient..
+    Smoothing matrix creation, step 1
+    Smoothing matrix creation, step 2
+    Smoothing matrix creation, step 3
+    Smoothing matrix creation, step 4
+    Smoothing matrix creation, step 5
+    colormap: fmin=1.00e-08 fmid=1.50e-08 fmax=2.00e-08 transparent=1
+
+
+**Total running time of the script:**
+(0 minutes 9.158 seconds)
+
+
+
+.. container:: sphx-glr-download
+
+    **Download Python source code:** :download:`plot_time_frequency_mixed_norm_inverse.py <plot_time_frequency_mixed_norm_inverse.py>`
+
+
+.. container:: sphx-glr-download
+
+    **Download IPython notebook:** :download:`plot_time_frequency_mixed_norm_inverse.ipynb <plot_time_frequency_mixed_norm_inverse.ipynb>`

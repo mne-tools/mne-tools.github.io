@@ -1,6 +1,6 @@
 
 
-.. _example_inverse_plot_mne_crosstalk_function.py:
+.. _sphx_glr_auto_examples_inverse_plot_mne_crosstalk_function.py:
 
 
 ===================================================================
@@ -16,63 +16,118 @@ to sources outside the label is undesirable, and referred to as
 
 
 
-.. image:: images/plot_mne_crosstalk_function_001.png
-    :align: center
+.. rst-class:: sphx-glr-horizontal
 
 
-**Script output**::
+    *
 
-  Reading forward solution from /data1/agramfort/work/src/mne-python/examples/MNE-sample-data/MEG/sample/sample_audvis-meg-eeg-oct-6-fwd.fif...
-      Reading a source space...
-      Computing patch statistics...
-      Patch information added...
-      Distance information added...
-      [done]
-      Reading a source space...
-      Computing patch statistics...
-      Patch information added...
-      Distance information added...
-      [done]
-      2 source spaces read
-      Desired named matrix (kind = 3523) not available
-      Read MEG forward solution (7498 sources, 306 channels, free orientations)
-      Desired named matrix (kind = 3523) not available
-      Read EEG forward solution (7498 sources, 60 channels, free orientations)
-      MEG and EEG forward solutions combined
-      Source spaces transformed to the forward solution coordinate frame
-      Cartesian source orientations...
-  [done]
-  ...
+      .. image:: /auto_examples/inverse/images/sphx_glr_plot_mne_crosstalk_function_000.png
+            :scale: 47
+
+    *
+
+      .. image:: /auto_examples/inverse/images/sphx_glr_plot_mne_crosstalk_function_001.png
+            :scale: 47
 
 
+**Script output**:
 
-**Python source code:** :download:`plot_mne_crosstalk_function.py <plot_mne_crosstalk_function.py>`
+.. rst-class:: sphx-glr-script-out
 
-.. literalinclude:: plot_mne_crosstalk_function.py
-    :lines: 13-
+  ::
 
-**Total running time of the example:**    6 seconds
+    Updating smoothing matrix, be patient..
+    Smoothing matrix creation, step 1
+    Smoothing matrix creation, step 2
+    Smoothing matrix creation, step 3
+    Smoothing matrix creation, step 4
+    Smoothing matrix creation, step 5
+    Smoothing matrix creation, step 6
+    Smoothing matrix creation, step 7
+    Smoothing matrix creation, step 8
+    Smoothing matrix creation, step 9
+    Smoothing matrix creation, step 10
+    colormap: fmin=6.54e-03 fmid=8.97e-03 fmax=4.19e-02 transparent=1
+    Updating smoothing matrix, be patient..
+    Smoothing matrix creation, step 1
+    Smoothing matrix creation, step 2
+    Smoothing matrix creation, step 3
+    Smoothing matrix creation, step 4
+    Smoothing matrix creation, step 5
+    Smoothing matrix creation, step 6
+    Smoothing matrix creation, step 7
+    Smoothing matrix creation, step 8
+    Smoothing matrix creation, step 9
+    Smoothing matrix creation, step 10
+    colormap: fmin=4.69e+07 fmid=6.23e+07 fmax=2.35e+08 transparent=1
 
-.. raw:: html
 
-    <div class="social-button-container">
-        <div class="social-button">
-            <a href="https://twitter.com/share" class="twitter-share-button">Tweet</a>
-        </div>
-        <div class="social-button">
-            <g:plusone annotation="inline" width="120" size="medium"></g:plusone>
-        </div>
-        <div class="social-button">
-            <div id="fb-root"></div>
-            <script>(function(d, s, id) {
-                var js, fjs = d.getElementsByTagName(s)[0];
-                if (d.getElementById(id)) return;
-                js = d.createElement(s); js.id = id;
-                js.src = "//connect.facebook.net/en_US/all.js#xfbml=1";
-                fjs.parentNode.insertBefore(js, fjs);
-                }(document, 'script', 'facebook-jssdk'));
-            </script>
-            <div class="fb-like" data-send="false" data-width="450" data-show-faces="false"></div>
-        </div>
-    </div>
-    
+
+.. code-block:: python
+
+    # Author: Olaf Hauk <olaf.hauk@mrc-cbu.cam.ac.uk>
+    #
+    # License: BSD (3-clause)
+
+    from mayavi import mlab
+
+    import mne
+    from mne.datasets import sample
+    from mne.minimum_norm import cross_talk_function, read_inverse_operator
+
+    print(__doc__)
+
+    data_path = sample.data_path()
+    subjects_dir = data_path + '/subjects/'
+    fname_fwd = data_path + '/MEG/sample/sample_audvis-meg-eeg-oct-6-fwd.fif'
+    fname_inv = data_path + '/MEG/sample/sample_audvis-meg-oct-6-meg-inv.fif'
+    fname_evoked = data_path + '/MEG/sample/sample_audvis-ave.fif'
+    fname_label = [data_path + '/MEG/sample/labels/Aud-rh.label',
+                   data_path + '/MEG/sample/labels/Aud-lh.label',
+                   data_path + '/MEG/sample/labels/Vis-rh.label',
+                   data_path + '/MEG/sample/labels/Vis-lh.label']
+
+    # read forward solution
+    forward = mne.read_forward_solution(fname_fwd)
+
+    # read label(s)
+    labels = [mne.read_label(ss) for ss in fname_label]
+
+    inverse_operator = read_inverse_operator(fname_inv)
+
+    # regularisation parameter
+    snr = 3.0
+    lambda2 = 1.0 / snr ** 2
+    mode = 'svd'
+    n_svd_comp = 1
+
+    method = 'MNE'  # can be 'MNE', 'dSPM', or 'sLORETA'
+    stc_ctf_mne = cross_talk_function(
+        inverse_operator, forward, labels, method=method, lambda2=lambda2,
+        signed=False, mode=mode, n_svd_comp=n_svd_comp)
+
+    method = 'dSPM'
+    stc_ctf_dspm = cross_talk_function(
+        inverse_operator, forward, labels, method=method, lambda2=lambda2,
+        signed=False, mode=mode, n_svd_comp=n_svd_comp)
+
+    time_label = "MNE %d"
+    brain_mne = stc_ctf_mne.plot(hemi='rh', subjects_dir=subjects_dir,
+                                 time_label=time_label,
+                                 figure=mlab.figure(size=(500, 500)))
+
+    time_label = "dSPM %d"
+    brain_dspm = stc_ctf_dspm.plot(hemi='rh', subjects_dir=subjects_dir,
+                                   time_label=time_label,
+                                   figure=mlab.figure(size=(500, 500)))
+
+    # Cross-talk functions for MNE and dSPM (and sLORETA) have the same shapes
+    # (they may still differ in overall amplitude).
+    # Point-spread functions (PSfs) usually differ significantly.
+
+**Total running time of the script:**
+(0 minutes 4.577 seconds)
+
+
+
+**Download Python source code:** :download:`plot_mne_crosstalk_function.py <plot_mne_crosstalk_function.py>`

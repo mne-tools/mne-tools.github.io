@@ -1,6 +1,6 @@
 
 
-.. _example_inverse_plot_compute_mne_inverse_volume.py:
+.. _sphx_glr_auto_examples_inverse_plot_compute_mne_inverse_volume.py:
 
 
 =======================================================================
@@ -13,63 +13,71 @@ space and stores the solution in a nifti file for visualisation.
 
 
 
-.. image:: images/plot_compute_mne_inverse_volume_001.png
+.. image:: /auto_examples/inverse/images/sphx_glr_plot_compute_mne_inverse_volume_001.png
     :align: center
 
 
-**Script output**::
-
-  Reading /data1/agramfort/work/src/mne-python/examples/MNE-sample-data/MEG/sample/sample_audvis-ave.fif ...
-      Read a total of 4 projection items:
-          PCA-v1 (1 x 102) active
-          PCA-v2 (1 x 102) active
-          PCA-v3 (1 x 102) active
-          Average EEG reference (1 x 60) active
-      Found the data of interest:
-          t =    -199.80 ...     499.49 ms (Left Auditory)
-          0 CTF compensation matrices available
-          nave = 55 - aspect type = 100
-  Projections have already been applied. Setting proj attribute to True.
-  Applying baseline correction ... (mode: mean)
-  Reading inverse operator decomposition from /data1/agramfort/work/src/mne-python/examples/MNE-sample-data/MEG/sample/sample_audvis-meg-vol-7-meg-inv.fif...
-      Reading inverse operator info...
-      [done]
-      Reading inverse operator decomposition...
-      [done]
-      305 x 305 full covariance (kind = 1) found.
-      Read a total of 4 projection items:
-          PCA-v1 (1 x 102) active
-  ...
 
 
 
-**Python source code:** :download:`plot_compute_mne_inverse_volume.py <plot_compute_mne_inverse_volume.py>`
+.. code-block:: python
 
-.. literalinclude:: plot_compute_mne_inverse_volume.py
-    :lines: 10-
+    # Author: Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
+    #
+    # License: BSD (3-clause)
 
-**Total running time of the example:**    4 seconds
+    import matplotlib.pyplot as plt
 
-.. raw:: html
+    from nilearn.plotting import plot_stat_map
+    from nilearn.image import index_img
 
-    <div class="social-button-container">
-        <div class="social-button">
-            <a href="https://twitter.com/share" class="twitter-share-button">Tweet</a>
-        </div>
-        <div class="social-button">
-            <g:plusone annotation="inline" width="120" size="medium"></g:plusone>
-        </div>
-        <div class="social-button">
-            <div id="fb-root"></div>
-            <script>(function(d, s, id) {
-                var js, fjs = d.getElementsByTagName(s)[0];
-                if (d.getElementById(id)) return;
-                js = d.createElement(s); js.id = id;
-                js.src = "//connect.facebook.net/en_US/all.js#xfbml=1";
-                fjs.parentNode.insertBefore(js, fjs);
-                }(document, 'script', 'facebook-jssdk'));
-            </script>
-            <div class="fb-like" data-send="false" data-width="450" data-show-faces="false"></div>
-        </div>
-    </div>
-    
+    from mne.datasets import sample
+    from mne import read_evokeds
+    from mne.minimum_norm import apply_inverse, read_inverse_operator
+
+    print(__doc__)
+
+    data_path = sample.data_path()
+    fname_inv = data_path + '/MEG/sample/sample_audvis-meg-vol-7-meg-inv.fif'
+    fname_evoked = data_path + '/MEG/sample/sample_audvis-ave.fif'
+
+    snr = 3.0
+    lambda2 = 1.0 / snr ** 2
+    method = "dSPM"  # use dSPM method (could also be MNE or sLORETA)
+
+    # Load data
+    evoked = read_evokeds(fname_evoked, condition=0, baseline=(None, 0))
+    inverse_operator = read_inverse_operator(fname_inv)
+    src = inverse_operator['src']
+
+    # Compute inverse solution
+    stc = apply_inverse(evoked, inverse_operator, lambda2, method)
+    stc.crop(0.0, 0.2)
+
+    # Export result as a 4D nifti object
+    img = stc.as_volume(src,
+                        mri_resolution=False)  # set True for full MRI resolution
+
+    # Save it as a nifti file
+    # nib.save(img, 'mne_%s_inverse.nii.gz' % method)
+
+    t1_fname = data_path + '/subjects/sample/mri/T1.mgz'
+
+    # Plotting with nilearn ######################################################
+    plot_stat_map(index_img(img, 61), t1_fname, threshold=8.,
+                  title='%s (t=%.1f s.)' % (method, stc.times[61]))
+    plt.show()
+
+**Total running time of the script:**
+(0 minutes 2.832 seconds)
+
+
+
+.. container:: sphx-glr-download
+
+    **Download Python source code:** :download:`plot_compute_mne_inverse_volume.py <plot_compute_mne_inverse_volume.py>`
+
+
+.. container:: sphx-glr-download
+
+    **Download IPython notebook:** :download:`plot_compute_mne_inverse_volume.ipynb <plot_compute_mne_inverse_volume.ipynb>`

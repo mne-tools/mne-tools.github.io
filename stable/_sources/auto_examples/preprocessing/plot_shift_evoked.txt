@@ -1,6 +1,6 @@
 
 
-.. _example_preprocessing_plot_shift_evoked.py:
+.. _sphx_glr_auto_examples_preprocessing_plot_shift_evoked.py:
 
 
 ==================================
@@ -10,54 +10,67 @@ Shifting time-scale in evoked data
 
 
 
-.. image:: images/plot_shift_evoked_001.png
+.. image:: /auto_examples/preprocessing/images/sphx_glr_plot_shift_evoked_001.png
     :align: center
 
 
-**Script output**::
-
-  Reading /data1/agramfort/work/src/mne-python/examples/MNE-sample-data/MEG/sample/sample_audvis-ave.fif ...
-      Read a total of 4 projection items:
-          PCA-v1 (1 x 102) active
-          PCA-v2 (1 x 102) active
-          PCA-v3 (1 x 102) active
-          Average EEG reference (1 x 60) active
-      Found the data of interest:
-          t =    -199.80 ...     499.49 ms (Left Auditory)
-          0 CTF compensation matrices available
-          nave = 55 - aspect type = 100
-  Projections have already been applied. Setting proj attribute to True.
-  Applying baseline correction ... (mode: mean)
 
 
 
-**Python source code:** :download:`plot_shift_evoked.py <plot_shift_evoked.py>`
+.. code-block:: python
 
-.. literalinclude:: plot_shift_evoked.py
-    :lines: 7-
+    # Author: Mainak Jas <mainak@neuro.hut.fi>
+    #
+    # License: BSD (3-clause)
 
-**Total running time of the example:**    0 seconds
+    import matplotlib.pyplot as plt
+    import mne
+    from mne.viz import tight_layout
+    from mne.datasets import sample
 
-.. raw:: html
+    print(__doc__)
 
-    <div class="social-button-container">
-        <div class="social-button">
-            <a href="https://twitter.com/share" class="twitter-share-button">Tweet</a>
-        </div>
-        <div class="social-button">
-            <g:plusone annotation="inline" width="120" size="medium"></g:plusone>
-        </div>
-        <div class="social-button">
-            <div id="fb-root"></div>
-            <script>(function(d, s, id) {
-                var js, fjs = d.getElementsByTagName(s)[0];
-                if (d.getElementById(id)) return;
-                js = d.createElement(s); js.id = id;
-                js.src = "//connect.facebook.net/en_US/all.js#xfbml=1";
-                fjs.parentNode.insertBefore(js, fjs);
-                }(document, 'script', 'facebook-jssdk'));
-            </script>
-            <div class="fb-like" data-send="false" data-width="450" data-show-faces="false"></div>
-        </div>
-    </div>
-    
+    data_path = sample.data_path()
+
+    fname = data_path + '/MEG/sample/sample_audvis-ave.fif'
+
+    # Reading evoked data
+    condition = 'Left Auditory'
+    evoked = mne.read_evokeds(fname, condition=condition, baseline=(None, 0),
+                              proj=True)
+
+    ch_names = evoked.info['ch_names']
+    picks = mne.pick_channels(ch_names=ch_names, include=["MEG 2332"])
+
+    # Create subplots
+    f, (ax1, ax2, ax3) = plt.subplots(3)
+    evoked.plot(exclude=[], picks=picks, axes=ax1,
+                titles=dict(grad='Before time shifting'))
+
+    # Apply relative time-shift of 500 ms
+    evoked.shift_time(0.5, relative=True)
+
+    evoked.plot(exclude=[], picks=picks, axes=ax2,
+                titles=dict(grad='Relative shift: 500 ms'))
+
+    # Apply absolute time-shift of 500 ms
+    evoked.shift_time(0.5, relative=False)
+
+    evoked.plot(exclude=[], picks=picks, axes=ax3,
+                titles=dict(grad='Absolute shift: 500 ms'))
+
+    tight_layout()
+
+**Total running time of the script:**
+(0 minutes 0.916 seconds)
+
+
+
+.. container:: sphx-glr-download
+
+    **Download Python source code:** :download:`plot_shift_evoked.py <plot_shift_evoked.py>`
+
+
+.. container:: sphx-glr-download
+
+    **Download IPython notebook:** :download:`plot_shift_evoked.ipynb <plot_shift_evoked.ipynb>`

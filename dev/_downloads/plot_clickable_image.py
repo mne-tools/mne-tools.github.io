@@ -56,10 +56,11 @@ nepochs = 50
 sr = 1000
 nsec = 5
 events = np.arange(nepochs).reshape([-1, 1])
-events = np.hstack([events, np.zeros([nepochs, 2])])
+events = np.hstack([events, np.zeros([nepochs, 2], dtype=int)])
 data = np.random.randn(nepochs, nchans, sr * nsec)
 info = mne.create_info(nchans, sr, ch_types='eeg')
 epochs = mne.EpochsArray(data, info, events)
+evoked = epochs.average()
 
 # Using the native plot_topo function with the image plotted in the background
-f = mne.viz.plot_topo(epochs.average(), layout=lt, fig_background=im)
+f = evoked.plot_topo(layout=lt, fig_background=im)

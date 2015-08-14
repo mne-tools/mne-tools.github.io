@@ -1,6 +1,6 @@
 
 
-.. _example_inverse_plot_rap_music.py:
+.. _sphx_glr_auto_examples_inverse_plot_rap_music.py:
 
 
 ================================
@@ -18,83 +18,102 @@ DOI=10.1109/78.740118 http://dx.doi.org/10.1109/78.740118
 
 
 
-.. rst-class:: horizontal
+.. rst-class:: sphx-glr-horizontal
 
 
     *
 
-      .. image:: images/plot_rap_music_001.png
+      .. image:: /auto_examples/inverse/images/sphx_glr_plot_rap_music_001.png
             :scale: 47
 
     *
 
-      .. image:: images/plot_rap_music_002.png
+      .. image:: /auto_examples/inverse/images/sphx_glr_plot_rap_music_002.png
             :scale: 47
 
     *
 
-      .. image:: images/plot_rap_music_003.png
+      .. image:: /auto_examples/inverse/images/sphx_glr_plot_rap_music_003.png
             :scale: 47
 
     *
 
-      .. image:: images/plot_rap_music_004.png
+      .. image:: /auto_examples/inverse/images/sphx_glr_plot_rap_music_003.png
             :scale: 47
 
 
-**Script output**::
+**Script output**:
 
-  Reading /data1/agramfort/work/src/mne-python/examples/MNE-sample-data/MEG/sample/sample_audvis-ave.fif ...
-      Read a total of 4 projection items:
-          PCA-v1 (1 x 102) active
-          PCA-v2 (1 x 102) active
-          PCA-v3 (1 x 102) active
-          Average EEG reference (1 x 60) active
-      Found the data of interest:
-          t =    -199.80 ...     499.49 ms (Right Auditory)
-          0 CTF compensation matrices available
-          nave = 61 - aspect type = 100
-  Projections have already been applied. Setting proj attribute to True.
-  Applying baseline correction ... (mode: mean)
-  Reading forward solution from /data1/agramfort/work/src/mne-python/examples/MNE-sample-data/MEG/sample/sample_audvis-meg-eeg-oct-6-fwd.fif...
-      Reading a source space...
-      Computing patch statistics...
-      Patch information added...
-      Distance information added...
-      [done]
-      Reading a source space...
-      Computing patch statistics...
-  ...
+.. rst-class:: sphx-glr-script-out
+
+  ::
+
+    info["bads"] and noise_cov["bads"] do not match, excluding bad channels from both
+        305 out of 366 channels remain after picking
+        Created an SSP operator (subspace dimension = 3)
+    estimated rank (mag + grad): 302
+    Setting small MEG eigenvalues to zero.
+    Not doing PCA for MEG.
+    source 1 found: p = 1834
+    ori = -0.23561098708 0.775996560723 0.585078456715
+    source 2 found: p = 5304
+    ori = -0.507406337004 0.53445916895 0.675938019269
+    4 projection items deactivated
+    Created an SSP operator (subspace dimension = 3)
+    4 projection items activated
+    SSP projectors applied...
 
 
 
-**Python source code:** :download:`plot_rap_music.py <plot_rap_music.py>`
+.. code-block:: python
 
-.. literalinclude:: plot_rap_music.py
-    :lines: 15-
 
-**Total running time of the example:**   10 seconds
+    # Author: Yousra Bekhti <yousra.bekhti@gmail.com>
+    #
+    # License: BSD (3-clause)
 
-.. raw:: html
+    import mne
 
-    <div class="social-button-container">
-        <div class="social-button">
-            <a href="https://twitter.com/share" class="twitter-share-button">Tweet</a>
-        </div>
-        <div class="social-button">
-            <g:plusone annotation="inline" width="120" size="medium"></g:plusone>
-        </div>
-        <div class="social-button">
-            <div id="fb-root"></div>
-            <script>(function(d, s, id) {
-                var js, fjs = d.getElementsByTagName(s)[0];
-                if (d.getElementById(id)) return;
-                js = d.createElement(s); js.id = id;
-                js.src = "//connect.facebook.net/en_US/all.js#xfbml=1";
-                fjs.parentNode.insertBefore(js, fjs);
-                }(document, 'script', 'facebook-jssdk'));
-            </script>
-            <div class="fb-like" data-send="false" data-width="450" data-show-faces="false"></div>
-        </div>
-    </div>
-    
+    from mne.datasets import sample
+    from mne.beamformer import rap_music
+    from mne.viz import plot_dipole_locations, plot_dipole_amplitudes
+
+    print(__doc__)
+
+    data_path = sample.data_path()
+    subjects_dir = data_path + '/subjects'
+    fwd_fname = data_path + '/MEG/sample/sample_audvis-meg-eeg-oct-6-fwd.fif'
+    evoked_fname = data_path + '/MEG/sample/sample_audvis-ave.fif'
+    cov_fname = data_path + '/MEG/sample/sample_audvis-cov.fif'
+
+    # Read the evoked response and crop it
+    condition = 'Right Auditory'
+    evoked = mne.read_evokeds(evoked_fname, condition=condition,
+                              baseline=(None, 0))
+    evoked.crop(tmin=0.05, tmax=0.15)  # select N100
+
+    evoked.pick_types(meg=True, eeg=False)
+
+    # Read the forward solution
+    forward = mne.read_forward_solution(fwd_fname, surf_ori=True,
+                                        force_fixed=False)
+
+    # Read noise covariance matrix
+    noise_cov = mne.read_cov(cov_fname)
+
+    dipoles, residual = rap_music(evoked, forward, noise_cov, n_dipoles=2,
+                                  return_residual=True, verbose=True)
+    trans = forward['mri_head_t']
+    plot_dipole_locations(dipoles, trans, 'sample', subjects_dir=subjects_dir)
+    plot_dipole_amplitudes(dipoles)
+
+    # Plot the evoked data and the residual.
+    evoked.plot(ylim=dict(grad=[-300, 300], mag=[-800, 800], eeg=[-6, 8]))
+    residual.plot(ylim=dict(grad=[-300, 300], mag=[-800, 800], eeg=[-6, 8]))
+
+**Total running time of the script:**
+(0 minutes 8.556 seconds)
+
+
+
+**Download Python source code:** :download:`plot_rap_music.py <plot_rap_music.py>`
