@@ -1,6 +1,6 @@
 
 
-.. _example_forward_plot_read_forward.py:
+.. _sphx_glr_auto_examples_forward_plot_read_forward.py:
 
 
 ====================================================
@@ -10,79 +10,164 @@ Read a forward operator and display sensitivity maps
 Forward solutions can be read using read_forward_solution in Python.
 
 
+.. code-block:: python
 
-.. rst-class:: horizontal
+    # Author: Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
+    #         Denis Engemann <denis.engemann@gmail.com>
+    #
+    # License: BSD (3-clause)
+
+    import mne
+    from mne.datasets import sample
+    import matplotlib.pyplot as plt
+
+    print(__doc__)
+
+    data_path = sample.data_path()
+
+    fname = data_path + '/MEG/sample/sample_audvis-meg-eeg-oct-6-fwd.fif'
+    subjects_dir = data_path + '/subjects'
+
+    fwd = mne.read_forward_solution(fname, surf_ori=True)
+    leadfield = fwd['sol']['data']
+
+    print("Leadfield size : %d x %d" % leadfield.shape)
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+**Script output**:
+
+.. rst-class:: sphx-glr-script-out
+
+  ::
+
+    Reading forward solution from /home/jaakko/examples/MNE-sample-data/MEG/sample/sample_audvis-meg-eeg-oct-6-fwd.fif...
+        Reading a source space...
+        Computing patch statistics...
+        Patch information added...
+        Distance information added...
+        [done]
+        Reading a source space...
+        Computing patch statistics...
+        Patch information added...
+        Distance information added...
+        [done]
+        2 source spaces read
+        Desired named matrix (kind = 3523) not available
+        Read MEG forward solution (7498 sources, 306 channels, free orientations)
+        Desired named matrix (kind = 3523) not available
+        Read EEG forward solution (7498 sources, 60 channels, free orientations)
+        MEG and EEG forward solutions combined
+        Source spaces transformed to the forward solution coordinate frame
+        Converting to surface-based source orientations...
+        Average patch normals will be employed in the rotation to the local surface coordinates....
+    [done]
+    Leadfield size : 366 x 22494
+
+
+Show gain matrix a.k.a. leadfield matrix with sensitivity map
+
+
+.. code-block:: python
+
+
+    picks_meg = mne.pick_types(fwd['info'], meg=True, eeg=False)
+    picks_eeg = mne.pick_types(fwd['info'], meg=False, eeg=True)
+
+    fig, axes = plt.subplots(2, 1, figsize=(10, 8), sharex=True)
+    fig.suptitle('Lead field matrix (500 dipoles only)', fontsize=14)
+
+    for ax, picks, ch_type in zip(axes, [picks_meg, picks_eeg], ['meg', 'eeg']):
+        im = ax.imshow(leadfield[picks, :500], origin='lower', aspect='auto',
+                       cmap='RdBu_r')
+        ax.set_title(ch_type.upper())
+        ax.set_xlabel('sources')
+        ax.set_ylabel('sensors')
+        plt.colorbar(im, ax=ax, cmap='RdBu_r')
+
+
+
+
+.. image:: /auto_examples/forward/images/sphx_glr_plot_read_forward_001.png
+    :align: center
+
+
+
+
+Show sensitivity of each sensor type to dipoles in the source space
+
+
+.. code-block:: python
+
+
+    grad_map = mne.sensitivity_map(fwd, ch_type='grad', mode='fixed')
+    mag_map = mne.sensitivity_map(fwd, ch_type='mag', mode='fixed')
+    eeg_map = mne.sensitivity_map(fwd, ch_type='eeg', mode='fixed')
+
+    plt.figure()
+    plt.hist([grad_map.data.ravel(), mag_map.data.ravel(), eeg_map.data.ravel()],
+             bins=20, label=['Gradiometers', 'Magnetometers', 'EEG'],
+             color=['c', 'b', 'k'])
+    plt.title('Normal orientation sensitivity')
+    plt.xlabel('sensitivity')
+    plt.ylabel('count')
+    plt.legend()
+
+    # Cautious smoothing to see actual dipoles
+    grad_map.plot(time_label='Gradiometer sensitivity', subjects_dir=subjects_dir,
+                  clim=dict(lims=[0, 50, 100]))
+
+    # Note. The source space uses min-dist and therefore discards most
+    # superficial dipoles. This is why parts of the gyri are not covered.
+
+
+
+.. rst-class:: sphx-glr-horizontal
 
 
     *
 
-      .. image:: images/plot_read_forward_001.png
+      .. image:: /auto_examples/forward/images/sphx_glr_plot_read_forward_002.png
             :scale: 47
 
     *
 
-      .. image:: images/plot_read_forward_002.png
-            :scale: 47
-
-    *
-
-      .. image:: images/plot_read_forward_003.png
+      .. image:: /auto_examples/forward/images/sphx_glr_plot_read_forward_001.png
             :scale: 47
 
 
-**Script output**::
+**Script output**:
 
-  Reading forward solution from /data1/agramfort/work/src/mne-python/examples/MNE-sample-data/MEG/sample/sample_audvis-meg-eeg-oct-6-fwd.fif...
-      Reading a source space...
-      Computing patch statistics...
-      Patch information added...
-      Distance information added...
-      [done]
-      Reading a source space...
-      Computing patch statistics...
-      Patch information added...
-      Distance information added...
-      [done]
-      2 source spaces read
-      Desired named matrix (kind = 3523) not available
-      Read MEG forward solution (7498 sources, 306 channels, free orientations)
-      Desired named matrix (kind = 3523) not available
-      Read EEG forward solution (7498 sources, 60 channels, free orientations)
-      MEG and EEG forward solutions combined
-      Source spaces transformed to the forward solution coordinate frame
-      Converting to surface-based source orientations...
-      Average patch normals will be employed in the rotation to the local surface coordinates....
-  ...
+.. rst-class:: sphx-glr-script-out
 
+  ::
+
+    204 out of 366 channels remain after picking
+        102 out of 366 channels remain after picking
+        60 out of 366 channels remain after picking
+    Adding average EEG reference projection.
+    Updating smoothing matrix, be patient..
+    Smoothing matrix creation, step 1
+    Smoothing matrix creation, step 2
+    Smoothing matrix creation, step 3
+    Smoothing matrix creation, step 4
+    Smoothing matrix creation, step 5
+    Smoothing matrix creation, step 6
+    Smoothing matrix creation, step 7
+    Smoothing matrix creation, step 8
+    Smoothing matrix creation, step 9
+    Smoothing matrix creation, step 10
+    colormap: fmin=2.11e-02 fmid=3.22e-01 fmax=1.00e+00 transparent=1
 
 
-**Python source code:** :download:`plot_read_forward.py <plot_read_forward.py>`
+**Total running time of the script:**
+(0 minutes 7.873 seconds)
 
-.. literalinclude:: plot_read_forward.py
-    :lines: 8-
 
-**Total running time of the example:**    9 seconds
 
-.. raw:: html
-
-    <div class="social-button-container">
-        <div class="social-button">
-            <a href="https://twitter.com/share" class="twitter-share-button">Tweet</a>
-        </div>
-        <div class="social-button">
-            <g:plusone annotation="inline" width="120" size="medium"></g:plusone>
-        </div>
-        <div class="social-button">
-            <div id="fb-root"></div>
-            <script>(function(d, s, id) {
-                var js, fjs = d.getElementsByTagName(s)[0];
-                if (d.getElementById(id)) return;
-                js = d.createElement(s); js.id = id;
-                js.src = "//connect.facebook.net/en_US/all.js#xfbml=1";
-                fjs.parentNode.insertBefore(js, fjs);
-                }(document, 'script', 'facebook-jssdk'));
-            </script>
-            <div class="fb-like" data-send="false" data-width="450" data-show-faces="false"></div>
-        </div>
-    </div>
-    
+**Download Python source code:** :download:`plot_read_forward.py <plot_read_forward.py>`
