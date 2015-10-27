@@ -1,6 +1,6 @@
 
 
-.. _example_decoding_plot_decoding_time_generalization.py:
+.. _sphx_glr_auto_examples_decoding_plot_decoding_time_generalization.py:
 
 
 ==========================================================
@@ -19,62 +19,85 @@ can predict accurately over time.
 
 
 
-.. rst-class:: horizontal
+.. rst-class:: sphx-glr-horizontal
 
 
     *
 
-      .. image:: images/plot_decoding_time_generalization_001.png
+      .. image:: /auto_examples/decoding/images/sphx_glr_plot_decoding_time_generalization_001.png
             :scale: 47
 
     *
 
-      .. image:: images/plot_decoding_time_generalization_002.png
+      .. image:: /auto_examples/decoding/images/sphx_glr_plot_decoding_time_generalization_002.png
             :scale: 47
 
 
-**Script output**::
+**Script output**:
 
-  Opening raw data file /data1/agramfort/work/src/mne-python/examples/MNE-spm-face/MEG/spm/SPM_CTF_MEG_example_faces1_3D_raw.fif...
-      Read 5 compensation matrices
-  Current compensation grade : 3
-      Range : 0 ... 324473 =      0.000 ...   675.985 secs
-  Ready.
-  Reading 0 ... 324473  =      0.000 ...   675.985 secs...
-  [done]
-  Band-pass filtering from 1 - 45 Hz
-  172 events found
-  Events id: [1 2 3]
+.. rst-class:: sphx-glr-script-out
+
+  ::
+
+    Opening raw data file /home/jaakko/examples/MNE-spm-face/MEG/spm/SPM_CTF_MEG_example_faces1_3D_raw.fif...
+        Read 5 compensation matrices
+    Current compensation grade : 3
+        Range : 0 ... 324473 =      0.000 ...   675.985 secs
+    Ready.
+    Reading 0 ... 324473  =      0.000 ...   675.985 secs...
+    [done]
+    Band-pass filtering from 1 - 45 Hz
+    172 events found
+    Events id: [1 2 3]
 
 
 
-**Python source code:** :download:`plot_decoding_time_generalization.py <plot_decoding_time_generalization.py>`
+.. code-block:: python
 
-.. literalinclude:: plot_decoding_time_generalization.py
-    :lines: 16-
+    # Authors: Jean-Remi King <jeanremi.king@gmail.com>
+    #          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
+    #          Denis Engemann <denis.engemann@gmail.com>
+    #
+    # License: BSD (3-clause)
 
-**Total running time of the example:**   39 seconds
+    import mne
+    from mne.datasets import spm_face
+    from mne.decoding import GeneralizationAcrossTime
 
-.. raw:: html
+    print(__doc__)
 
-    <div class="social-button-container">
-        <div class="social-button">
-            <a href="https://twitter.com/share" class="twitter-share-button">Tweet</a>
-        </div>
-        <div class="social-button">
-            <g:plusone annotation="inline" width="120" size="medium"></g:plusone>
-        </div>
-        <div class="social-button">
-            <div id="fb-root"></div>
-            <script>(function(d, s, id) {
-                var js, fjs = d.getElementsByTagName(s)[0];
-                if (d.getElementById(id)) return;
-                js = d.createElement(s); js.id = id;
-                js.src = "//connect.facebook.net/en_US/all.js#xfbml=1";
-                fjs.parentNode.insertBefore(js, fjs);
-                }(document, 'script', 'facebook-jssdk'));
-            </script>
-            <div class="fb-like" data-send="false" data-width="450" data-show-faces="false"></div>
-        </div>
-    </div>
-    
+    # Preprocess data
+    data_path = spm_face.data_path()
+    # Load and filter data, set up epochs
+    raw_fname = data_path + '/MEG/spm/SPM_CTF_MEG_example_faces%d_3D_raw.fif'
+
+    raw = mne.io.Raw(raw_fname % 1, preload=True)  # Take first run
+
+    picks = mne.pick_types(raw.info, meg=True, exclude='bads')
+    raw.filter(1, 45, method='iir')
+
+    events = mne.find_events(raw, stim_channel='UPPT001')
+    event_id = {"faces": 1, "scrambled": 2}
+    tmin, tmax = -0.1, 0.5
+
+    decim = 4  # decimate to make the example faster to run
+    epochs = mne.Epochs(raw, events, event_id, tmin, tmax, proj=True,
+                        picks=picks, baseline=None, preload=True,
+                        reject=dict(mag=1.5e-12), decim=decim, verbose=False)
+
+    # Define decoder. The decision function is employed to use cross-validation
+    gat = GeneralizationAcrossTime(predict_mode='cross-validation', n_jobs=2)
+
+    # fit and score
+    gat.fit(epochs)
+    gat.score(epochs)
+    gat.plot(vmin=0.1, vmax=0.9,
+             title="Generalization Across Time (faces vs. scrambled)")
+    gat.plot_diagonal()  # plot decoding across time (correspond to GAT diagonal)
+
+**Total running time of the script:**
+(0 minutes 21.803 seconds)
+
+
+
+**Download Python source code:** :download:`plot_decoding_time_generalization.py <plot_decoding_time_generalization.py>`

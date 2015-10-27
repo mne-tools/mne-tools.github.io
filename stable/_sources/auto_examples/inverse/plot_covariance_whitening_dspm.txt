@@ -1,6 +1,6 @@
 
 
-.. _example_inverse_plot_covariance_whitening_dspm.py:
+.. _sphx_glr_auto_examples_inverse_plot_covariance_whitening_dspm.py:
 
 
 ===================================================
@@ -27,64 +27,631 @@ References
     328-342, NeuroImage.
 
 
+.. code-block:: python
 
-.. image:: images/plot_covariance_whitening_dspm_001.png
+    # Author: Denis A. Engemann <denis.engemann@gmail.com>
+    #
+    # License: BSD (3-clause)
+
+    import os
+    import os.path as op
+
+    import numpy as np
+    from scipy.misc import imread
+    import matplotlib.pyplot as plt
+
+    import mne
+    from mne import io
+    from mne.datasets import spm_face
+    from mne.minimum_norm import apply_inverse, make_inverse_operator
+    from mne.cov import compute_covariance
+
+    print(__doc__)
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+
+
+Get data
+
+
+.. code-block:: python
+
+
+    data_path = spm_face.data_path()
+    subjects_dir = data_path + '/subjects'
+
+    raw_fname = data_path + '/MEG/spm/SPM_CTF_MEG_example_faces%d_3D_raw.fif'
+
+    raw = io.Raw(raw_fname % 1, preload=True)  # Take first run
+
+    picks = mne.pick_types(raw.info, meg=True, exclude='bads')
+    raw.filter(1, 30, method='iir', n_jobs=1)
+
+    events = mne.find_events(raw, stim_channel='UPPT001')
+
+    event_ids = {"faces": 1, "scrambled": 2}
+    tmin, tmax = -0.2, 0.5
+    baseline = None  # no baseline as high-pass is applied
+    reject = dict(mag=3e-12)
+
+    # Make source space
+
+    trans = data_path + '/MEG/spm/SPM_CTF_MEG_example_faces1_3D_raw-trans.fif'
+    src = mne.setup_source_space('spm', spacing='oct6', subjects_dir=subjects_dir,
+                                 overwrite=True, add_dist=False)
+    bem = data_path + '/subjects/spm/bem/spm-5120-5120-5120-bem-sol.fif'
+    forward = mne.make_forward_solution(raw.info, trans, src, bem)
+    forward = mne.convert_forward_solution(forward, surf_ori=True)
+
+    # inverse parameters
+    conditions = 'faces', 'scrambled'
+    snr = 3.0
+    lambda2 = 1.0 / snr ** 2
+    method = 'dSPM'
+    clim = dict(kind='value', lims=[0, 2.5, 5])
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+**Script output**:
+
+.. rst-class:: sphx-glr-script-out
+
+  ::
+
+    Opening raw data file /home/jaakko/examples/MNE-spm-face/MEG/spm/SPM_CTF_MEG_example_faces1_3D_raw.fif...
+        Read 5 compensation matrices
+    Current compensation grade : 3
+        Range : 0 ... 324473 =      0.000 ...   675.985 secs
+    Ready.
+    Reading 0 ... 324473  =      0.000 ...   675.985 secs...
+    [done]
+    Band-pass filtering from 1 - 30 Hz
+    172 events found
+    Events id: [1 2 3]
+    Setting up the source space with the following parameters:
+
+    SUBJECTS_DIR = /home/jaakko/examples/MNE-spm-face/subjects
+    Subject      = spm
+    Surface      = white
+    Octahedron subdivision grade 6
+
+    >>> 1. Creating the source space file /home/jaakko/examples/MNE-spm-face/subjects/spm/bem/spm-oct-6-src.fif...
+    Doing the octahedral vertex picking...
+    Loading /home/jaakko/examples/MNE-spm-face/subjects/spm/surf/lh.white...
+    Triangle file: created by mluessi on Fri Oct 25 03:16:42 2013 nvert = 139164 ntri = 278324
+        Triangle neighbors and vertex normals...
+    Loading geometry from /home/jaakko/examples/MNE-spm-face/subjects/spm/surf/lh.sphere...
+    Triangle file: created by mluessi on Fri Oct 25 04:31:49 2013 nvert = 139164 ntri = 278324
+    Mapping lh spm -> oct (6) ...
+    Setting up the triangulation for the decimated surface...
+    loaded lh.white 4098/139164 selected to source space (oct = 6)
+
+    Loading /home/jaakko/examples/MNE-spm-face/subjects/spm/surf/rh.white...
+    Triangle file: created by mluessi on Fri Oct 25 06:28:59 2013 nvert = 137848 ntri = 275692
+        Triangle neighbors and vertex normals...
+    Loading geometry from /home/jaakko/examples/MNE-spm-face/subjects/spm/surf/rh.sphere...
+    Triangle file: created by mluessi on Fri Oct 25 07:34:47 2013 nvert = 137848 ntri = 275692
+    Mapping rh spm -> oct (6) ...
+    Setting up the triangulation for the decimated surface...
+    loaded rh.white 4098/137848 selected to source space (oct = 6)
+
+        Write a source space...
+        [done]
+        Write a source space...
+        [done]
+        2 source spaces written
+    Wrote /home/jaakko/examples/MNE-spm-face/subjects/spm/bem/spm-oct-6-src.fif
+    You are now one step closer to computing the gain matrix
+    Source space                 : <SourceSpaces: [<'surf', n_vertices=139164, n_used=4098, coordinate_frame=MRI (surface RAS)>, <'surf', n_vertices=137848, n_used=4098, coordinate_frame=MRI (surface RAS)>]>
+    MRI -> head transform source : /home/jaakko/examples/MNE-spm-face/MEG/spm/SPM_CTF_MEG_example_faces1_3D_raw-trans.fif
+    Measurement data             : info dict
+    BEM model                    : /home/jaakko/examples/MNE-spm-face/subjects/spm/bem/spm-5120-5120-5120-bem-sol.fif
+    Accurate field computations
+    Do computations in head coordinates
+    Free source orientations
+    Destination for the solution : None
+
+    Read 2 source spaces a total of 8196 active source locations
+
+    Coordinate transformation: MRI (surface RAS) -> head
+         0.999569 -0.021063 -0.020452      -1.43 mm
+         0.020158  0.998852 -0.043463       4.16 mm
+         0.021344  0.043032  0.998846      -1.40 mm
+         0.000000  0.000000  0.000000       1.00
+
+    Read 274 MEG channels from info
+    Read  29 MEG compensation channels from info
+    Coordinate transformation: MEG device -> head
+         0.997940 -0.049681 -0.040594      -1.35 mm
+         0.054745  0.989330  0.135013      -0.41 mm
+         0.033453 -0.136957  0.990012      65.80 mm
+         0.000000  0.000000  0.000000       1.00
+    66 coil definitions read
+    5 compensation data sets in info
+    Head coordinate MEG coil definitions created.
+    Source spaces are now in head coordinates.
+
+    Setting up the BEM model using /home/jaakko/examples/MNE-spm-face/subjects/spm/bem/spm-5120-5120-5120-bem-sol.fif...
+
+    Loading surfaces...
+    Three-layer model surfaces loaded.
+
+    Loading the solution matrix...
+
+    Loaded linear_collocation BEM solution from /home/jaakko/examples/MNE-spm-face/subjects/spm/bem/spm-5120-5120-5120-bem-sol.fif
+    Employing the head->MRI coordinate transform with the BEM model.
+    BEM model spm-5120-5120-5120-bem-sol.fif is now set up
+
+    Source spaces are in head coordinates.
+    Checking that the sources are inside the bounding surface (will take a few...)
+    Thank you for waiting.
+
+    Setting up compensation data...
+        274 out of 274 channels have the compensation set.
+        Desired compensation data (3) found.
+        All compensation channels found.
+        Preselector created.
+        Compensation data matrix created.
+        Postselector created.
+
+    Composing the field computation matrix...
+    Composing the field computation matrix (compensation coils)...
+    Computing MEG at 8196 source locations (free orientations)...
+
+    Finished.
+        Converting to surface-based source orientations...
+    [done]
+
+
+Estimate covariance and show resulting source estimates
+
+
+.. code-block:: python
+
+
+    method = 'empirical', 'shrunk'
+    best_colors = 'steelblue', 'red'
+    samples_epochs = 5, 15,
+    fig, (axes1, axes2) = plt.subplots(2, 3, figsize=(9.5, 6))
+
+
+    def brain_to_mpl(brain):
+        """convert image to be usable with matplotlib"""
+        tmp_path = op.abspath(op.join(op.curdir, 'my_tmp'))
+        brain.save_imageset(tmp_path, views=['ven'])
+        im = imread(tmp_path + '_ven.png')
+        os.remove(tmp_path + '_ven.png')
+        return im
+
+    for n_train, (ax_stc_worst, ax_dynamics, ax_stc_best) in zip(samples_epochs,
+                                                                 (axes1, axes2)):
+        # estimate covs based on a subset of samples
+        # make sure we have the same number of conditions.
+        events_ = np.concatenate([events[events[:, 2] == id_][:n_train]
+                                  for id_ in [event_ids[k] for k in conditions]])
+        epochs_train = mne.Epochs(raw, events_, event_ids, tmin, tmax, picks=picks,
+                                  baseline=baseline, preload=True, reject=reject)
+        epochs_train.equalize_event_counts(event_ids, copy=False)
+
+        noise_covs = compute_covariance(epochs_train, method=method,
+                                        tmin=None, tmax=0,  # baseline only
+                                        return_estimators=True)  # returns list
+        # prepare contrast
+        evokeds = [epochs_train[k].average() for k in conditions]
+
+        # compute stc based on worst and best
+        for est, ax, kind, color in zip(noise_covs, (ax_stc_worst, ax_stc_best),
+                                        ['best', 'worst'], best_colors):
+            # We skip empirical rank estimation that we introduced in response to
+            # the findings in reference [1] to use the naive code path that
+            # triggered the behavior described in [1]. The expected true rank is
+            # 274 for this dataset. Please do not do this with your data but
+            # rely on the default rank estimator that helps regularizing the
+            # covariance.
+            inverse_operator = make_inverse_operator(epochs_train.info, forward,
+                                                     est, loose=0.2, depth=0.8,
+                                                     rank=274)
+            stc_a, stc_b = (apply_inverse(e, inverse_operator, lambda2, "dSPM",
+                                          pick_ori=None) for e in evokeds)
+            stc = stc_a - stc_b
+            brain = stc.plot(subjects_dir=subjects_dir, hemi='both', clim=clim)
+            brain.set_time(175)
+
+            im = brain_to_mpl(brain)
+            brain.close()
+            ax.axis('off')
+            ax.get_xaxis().set_visible(False)
+            ax.get_yaxis().set_visible(False)
+            ax.imshow(im)
+            ax.set_title('{0} ({1} epochs)'.format(kind, n_train * 2))
+
+            # plot spatial mean
+            stc_mean = stc.data.mean(0)
+            ax_dynamics.plot(stc.times * 1e3, stc_mean,
+                             label='{0} ({1})'.format(est['method'], kind),
+                             color=color)
+            # plot spatial std
+            stc_var = stc.data.std(0)
+            ax_dynamics.fill_between(stc.times * 1e3, stc_mean - stc_var,
+                                     stc_mean + stc_var, alpha=0.2, color=color)
+
+        # signal dynamics worst and best
+        ax_dynamics.set_title('{0} epochs'.format(n_train * 2))
+        ax_dynamics.set_xlabel('Time (ms)')
+        ax_dynamics.set_ylabel('Source Activation (dSPM)')
+        ax_dynamics.set_xlim(tmin * 1e3, tmax * 1e3)
+        ax_dynamics.set_ylim(-3, 3)
+        ax_dynamics.legend(loc='upper left', fontsize=10)
+
+    fig.subplots_adjust(hspace=0.4, left=0.03, right=0.98, wspace=0.07)
+    fig.canvas.draw()
+    fig.show()
+
+
+
+.. image:: /auto_examples/inverse/images/sphx_glr_plot_covariance_whitening_dspm_001.png
     :align: center
 
 
-**Script output**::
+**Script output**:
 
-  Opening raw data file /data1/agramfort/work/src/mne-python/examples/MNE-spm-face/MEG/spm/SPM_CTF_MEG_example_faces1_3D_raw.fif...
-      Read 5 compensation matrices
-  Current compensation grade : 3
-      Range : 0 ... 324473 =      0.000 ...   675.985 secs
-  Ready.
-  Reading 0 ... 324473  =      0.000 ...   675.985 secs...
-  [done]
-  Band-pass filtering from 1 - 30 Hz
-  172 events found
-  Events id: [1 2 3]
-  Setting up the source space with the following parameters:
-  
-  SUBJECTS_DIR = /data1/agramfort/work/src/mne-python/examples/MNE-spm-face/subjects
-  Subject      = spm
-  Surface      = white
-  Octahedron subdivision grade 6
-  
-  >>> 1. Creating the source space file /data1/agramfort/work/src/mne-python/examples/MNE-spm-face/subjects/spm/bem/spm-oct-6-src.fif...
-  Doing the octahedral vertex picking...
-  Loading /data1/agramfort/work/src/mne-python/examples/MNE-spm-face/subjects/spm/surf/lh.white...
-  ...
+.. rst-class:: sphx-glr-script-out
+
+  ::
+
+    10 matching events found
+    0 projection items activated
+    No baseline correction applied...
+    No baseline correction applied...
+    No baseline correction applied...
+    No baseline correction applied...
+    No baseline correction applied...
+    No baseline correction applied...
+    No baseline correction applied...
+    No baseline correction applied...
+    No baseline correction applied...
+    No baseline correction applied...
+    0 bad epochs dropped
+    Dropped 0 epochs
+    Too few samples (required : 1375 got : 970), covariance estimate may be unreliable
+    Estimating covariance using EMPIRICAL
+    Done.
+    Estimating covariance using SHRUNK
+    Done.
+    Using cross-validation to select the best estimator.
+    Number of samples used : 970
+    [done]
+    Number of samples used : 970
+    [done]
+    log-likelihood on unseen data (descending order):
+       shrunk: -1328.366
+       empirical: -10712540.959
+    Computing inverse operator with 274 channels.
+    Setting small MEG eigenvalues to zero.
+    Not doing PCA for MEG.
+    Total rank is 274
+    Creating the depth weighting matrix...
+        274 magnetometer or axial gradiometer channels
+        limit = 8021/8196 = 10.011070
+        scale = 4.87034e-11 exp = 0.8
+    Computing inverse operator with 274 channels.
+    Creating the source covariance matrix
+    Applying loose dipole orientations. Loose value of 0.2.
+    Whitening the forward solution.
+    Adjusting source covariance matrix.
+    Computing SVD of whitened and weighted lead field matrix.
+        largest singular value = 6.36501
+        scaling factor to adjust the trace = 4.51689e+19
+    Preparing the inverse operator for use...
+        Scaled noise and source covariance from nave = 1 to nave = 5
+        Created the regularized inverter
+        The projection vectors do not apply to these channels.
+        Created the whitener using a full noise covariance matrix (0 small eigenvalues omitted)
+        Computing noise-normalization factors (dSPM)...
+    [done]
+    Picked 274 channels from the data
+    Computing inverse...
+    (eigenleads need to be weighted)...
+    combining the current components...
+    (dSPM)...
+    [done]
+    Preparing the inverse operator for use...
+        Scaled noise and source covariance from nave = 1 to nave = 5
+        Created the regularized inverter
+        The projection vectors do not apply to these channels.
+        Created the whitener using a full noise covariance matrix (0 small eigenvalues omitted)
+        Computing noise-normalization factors (dSPM)...
+    [done]
+    Picked 274 channels from the data
+    Computing inverse...
+    (eigenleads need to be weighted)...
+    combining the current components...
+    (dSPM)...
+    [done]
+    Updating smoothing matrix, be patient..
+    Smoothing matrix creation, step 1
+    Smoothing matrix creation, step 2
+    Smoothing matrix creation, step 3
+    Smoothing matrix creation, step 4
+    Smoothing matrix creation, step 5
+    Smoothing matrix creation, step 6
+    Smoothing matrix creation, step 7
+    Smoothing matrix creation, step 8
+    Smoothing matrix creation, step 9
+    Smoothing matrix creation, step 10
+    colormap: fmin=0.00e+00 fmid=2.50e+00 fmax=5.00e+00 transparent=1
+    Updating smoothing matrix, be patient..
+    Smoothing matrix creation, step 1
+    Smoothing matrix creation, step 2
+    Smoothing matrix creation, step 3
+    Smoothing matrix creation, step 4
+    Smoothing matrix creation, step 5
+    Smoothing matrix creation, step 6
+    Smoothing matrix creation, step 7
+    Smoothing matrix creation, step 8
+    Smoothing matrix creation, step 9
+    Smoothing matrix creation, step 10
+    colormap: fmin=0.00e+00 fmid=2.50e+00 fmax=5.00e+00 transparent=1
+    Computing inverse operator with 274 channels.
+    Setting small MEG eigenvalues to zero.
+    Not doing PCA for MEG.
+    Total rank is 274
+    Creating the depth weighting matrix...
+        274 magnetometer or axial gradiometer channels
+        limit = 8021/8196 = 10.011070
+        scale = 4.87034e-11 exp = 0.8
+    Computing inverse operator with 274 channels.
+    Creating the source covariance matrix
+    Applying loose dipole orientations. Loose value of 0.2.
+    Whitening the forward solution.
+    Adjusting source covariance matrix.
+    Computing SVD of whitened and weighted lead field matrix.
+        largest singular value = 8.95816
+        scaling factor to adjust the trace = 7.76925e+24
+    Preparing the inverse operator for use...
+        Scaled noise and source covariance from nave = 1 to nave = 5
+        Created the regularized inverter
+        The projection vectors do not apply to these channels.
+        Created the whitener using a full noise covariance matrix (0 small eigenvalues omitted)
+        Computing noise-normalization factors (dSPM)...
+    [done]
+    Picked 274 channels from the data
+    Computing inverse...
+    (eigenleads need to be weighted)...
+    combining the current components...
+    (dSPM)...
+    [done]
+    Preparing the inverse operator for use...
+        Scaled noise and source covariance from nave = 1 to nave = 5
+        Created the regularized inverter
+        The projection vectors do not apply to these channels.
+        Created the whitener using a full noise covariance matrix (0 small eigenvalues omitted)
+        Computing noise-normalization factors (dSPM)...
+    [done]
+    Picked 274 channels from the data
+    Computing inverse...
+    (eigenleads need to be weighted)...
+    combining the current components...
+    (dSPM)...
+    [done]
+    Updating smoothing matrix, be patient..
+    Smoothing matrix creation, step 1
+    Smoothing matrix creation, step 2
+    Smoothing matrix creation, step 3
+    Smoothing matrix creation, step 4
+    Smoothing matrix creation, step 5
+    Smoothing matrix creation, step 6
+    Smoothing matrix creation, step 7
+    Smoothing matrix creation, step 8
+    Smoothing matrix creation, step 9
+    Smoothing matrix creation, step 10
+    colormap: fmin=0.00e+00 fmid=2.50e+00 fmax=5.00e+00 transparent=1
+    Updating smoothing matrix, be patient..
+    Smoothing matrix creation, step 1
+    Smoothing matrix creation, step 2
+    Smoothing matrix creation, step 3
+    Smoothing matrix creation, step 4
+    Smoothing matrix creation, step 5
+    Smoothing matrix creation, step 6
+    Smoothing matrix creation, step 7
+    Smoothing matrix creation, step 8
+    Smoothing matrix creation, step 9
+    Smoothing matrix creation, step 10
+    colormap: fmin=0.00e+00 fmid=2.50e+00 fmax=5.00e+00 transparent=1
+    30 matching events found
+    0 projection items activated
+    No baseline correction applied...
+    No baseline correction applied...
+    No baseline correction applied...
+    No baseline correction applied...
+    No baseline correction applied...
+    No baseline correction applied...
+    No baseline correction applied...
+    No baseline correction applied...
+    No baseline correction applied...
+    No baseline correction applied...
+    No baseline correction applied...
+    No baseline correction applied...
+    No baseline correction applied...
+    No baseline correction applied...
+    No baseline correction applied...
+    No baseline correction applied...
+    No baseline correction applied...
+    No baseline correction applied...
+    No baseline correction applied...
+    No baseline correction applied...
+    No baseline correction applied...
+    No baseline correction applied...
+    No baseline correction applied...
+    No baseline correction applied...
+    No baseline correction applied...
+    No baseline correction applied...
+    No baseline correction applied...
+    No baseline correction applied...
+    No baseline correction applied...
+    No baseline correction applied...
+    0 bad epochs dropped
+    Dropped 0 epochs
+    Estimating covariance using EMPIRICAL
+    Done.
+    Estimating covariance using SHRUNK
+    Done.
+    Using cross-validation to select the best estimator.
+    Number of samples used : 2910
+    [done]
+    Number of samples used : 2910
+    [done]
+    log-likelihood on unseen data (descending order):
+       shrunk: -1292.382
+       empirical: -2859.454
+    Computing inverse operator with 274 channels.
+    Setting small MEG eigenvalues to zero.
+    Not doing PCA for MEG.
+    Total rank is 274
+    Creating the depth weighting matrix...
+        274 magnetometer or axial gradiometer channels
+        limit = 8021/8196 = 10.011070
+        scale = 4.87034e-11 exp = 0.8
+    Computing inverse operator with 274 channels.
+    Creating the source covariance matrix
+    Applying loose dipole orientations. Loose value of 0.2.
+    Whitening the forward solution.
+    Adjusting source covariance matrix.
+    Computing SVD of whitened and weighted lead field matrix.
+        largest singular value = 5.85796
+        scaling factor to adjust the trace = 3.37621e+19
+    Preparing the inverse operator for use...
+        Scaled noise and source covariance from nave = 1 to nave = 15
+        Created the regularized inverter
+        The projection vectors do not apply to these channels.
+        Created the whitener using a full noise covariance matrix (0 small eigenvalues omitted)
+        Computing noise-normalization factors (dSPM)...
+    [done]
+    Picked 274 channels from the data
+    Computing inverse...
+    (eigenleads need to be weighted)...
+    combining the current components...
+    (dSPM)...
+    [done]
+    Preparing the inverse operator for use...
+        Scaled noise and source covariance from nave = 1 to nave = 15
+        Created the regularized inverter
+        The projection vectors do not apply to these channels.
+        Created the whitener using a full noise covariance matrix (0 small eigenvalues omitted)
+        Computing noise-normalization factors (dSPM)...
+    [done]
+    Picked 274 channels from the data
+    Computing inverse...
+    (eigenleads need to be weighted)...
+    combining the current components...
+    (dSPM)...
+    [done]
+    Updating smoothing matrix, be patient..
+    Smoothing matrix creation, step 1
+    Smoothing matrix creation, step 2
+    Smoothing matrix creation, step 3
+    Smoothing matrix creation, step 4
+    Smoothing matrix creation, step 5
+    Smoothing matrix creation, step 6
+    Smoothing matrix creation, step 7
+    Smoothing matrix creation, step 8
+    Smoothing matrix creation, step 9
+    Smoothing matrix creation, step 10
+    colormap: fmin=0.00e+00 fmid=2.50e+00 fmax=5.00e+00 transparent=1
+    Updating smoothing matrix, be patient..
+    Smoothing matrix creation, step 1
+    Smoothing matrix creation, step 2
+    Smoothing matrix creation, step 3
+    Smoothing matrix creation, step 4
+    Smoothing matrix creation, step 5
+    Smoothing matrix creation, step 6
+    Smoothing matrix creation, step 7
+    Smoothing matrix creation, step 8
+    Smoothing matrix creation, step 9
+    Smoothing matrix creation, step 10
+    colormap: fmin=0.00e+00 fmid=2.50e+00 fmax=5.00e+00 transparent=1
+    Computing inverse operator with 274 channels.
+    Setting small MEG eigenvalues to zero.
+    Not doing PCA for MEG.
+    Total rank is 274
+    Creating the depth weighting matrix...
+        274 magnetometer or axial gradiometer channels
+        limit = 8021/8196 = 10.011070
+        scale = 4.87034e-11 exp = 0.8
+    Computing inverse operator with 274 channels.
+    Creating the source covariance matrix
+    Applying loose dipole orientations. Loose value of 0.2.
+    Whitening the forward solution.
+    Adjusting source covariance matrix.
+    Computing SVD of whitened and weighted lead field matrix.
+        largest singular value = 5.80945
+        scaling factor to adjust the trace = 9.34584e+19
+    Preparing the inverse operator for use...
+        Scaled noise and source covariance from nave = 1 to nave = 15
+        Created the regularized inverter
+        The projection vectors do not apply to these channels.
+        Created the whitener using a full noise covariance matrix (0 small eigenvalues omitted)
+        Computing noise-normalization factors (dSPM)...
+    [done]
+    Picked 274 channels from the data
+    Computing inverse...
+    (eigenleads need to be weighted)...
+    combining the current components...
+    (dSPM)...
+    [done]
+    Preparing the inverse operator for use...
+        Scaled noise and source covariance from nave = 1 to nave = 15
+        Created the regularized inverter
+        The projection vectors do not apply to these channels.
+        Created the whitener using a full noise covariance matrix (0 small eigenvalues omitted)
+        Computing noise-normalization factors (dSPM)...
+    [done]
+    Picked 274 channels from the data
+    Computing inverse...
+    (eigenleads need to be weighted)...
+    combining the current components...
+    (dSPM)...
+    [done]
+    Updating smoothing matrix, be patient..
+    Smoothing matrix creation, step 1
+    Smoothing matrix creation, step 2
+    Smoothing matrix creation, step 3
+    Smoothing matrix creation, step 4
+    Smoothing matrix creation, step 5
+    Smoothing matrix creation, step 6
+    Smoothing matrix creation, step 7
+    Smoothing matrix creation, step 8
+    Smoothing matrix creation, step 9
+    Smoothing matrix creation, step 10
+    colormap: fmin=0.00e+00 fmid=2.50e+00 fmax=5.00e+00 transparent=1
+    Updating smoothing matrix, be patient..
+    Smoothing matrix creation, step 1
+    Smoothing matrix creation, step 2
+    Smoothing matrix creation, step 3
+    Smoothing matrix creation, step 4
+    Smoothing matrix creation, step 5
+    Smoothing matrix creation, step 6
+    Smoothing matrix creation, step 7
+    Smoothing matrix creation, step 8
+    Smoothing matrix creation, step 9
+    Smoothing matrix creation, step 10
+    colormap: fmin=0.00e+00 fmid=2.50e+00 fmax=5.00e+00 transparent=1
+
+
+**Total running time of the script:**
+(1 minutes 56.985 seconds)
 
 
 
-**Python source code:** :download:`plot_covariance_whitening_dspm.py <plot_covariance_whitening_dspm.py>`
-
-.. literalinclude:: plot_covariance_whitening_dspm.py
-    :lines: 26-
-
-**Total running time of the example:**  246 seconds
-
-.. raw:: html
-
-    <div class="social-button-container">
-        <div class="social-button">
-            <a href="https://twitter.com/share" class="twitter-share-button">Tweet</a>
-        </div>
-        <div class="social-button">
-            <g:plusone annotation="inline" width="120" size="medium"></g:plusone>
-        </div>
-        <div class="social-button">
-            <div id="fb-root"></div>
-            <script>(function(d, s, id) {
-                var js, fjs = d.getElementsByTagName(s)[0];
-                if (d.getElementById(id)) return;
-                js = d.createElement(s); js.id = id;
-                js.src = "//connect.facebook.net/en_US/all.js#xfbml=1";
-                fjs.parentNode.insertBefore(js, fjs);
-                }(document, 'script', 'facebook-jssdk'));
-            </script>
-            <div class="fb-like" data-send="false" data-width="450" data-show-faces="false"></div>
-        </div>
-    </div>
-    
+**Download Python source code:** :download:`plot_covariance_whitening_dspm.py <plot_covariance_whitening_dspm.py>`

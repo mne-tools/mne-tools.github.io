@@ -1,6 +1,6 @@
 
 
-.. _example_preprocessing_plot_estimate_covariance_matrix_baseline.py:
+.. _sphx_glr_auto_examples_preprocessing_plot_estimate_covariance_matrix_baseline.py:
 
 
 ===============================================
@@ -13,74 +13,400 @@ a.k.a. baseline.
 
 
 
+.. code-block:: python
 
-.. rst-class:: horizontal
+    # Author: Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
+    #
+    # License: BSD (3-clause)
+
+    import mne
+    from mne import io
+    from mne.datasets import sample
+
+    print(__doc__)
+
+    data_path = sample.data_path()
+    fname = data_path + '/MEG/sample/sample_audvis_raw.fif'
+    event_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw-eve.fif'
+    event_id, tmin, tmax = 1, -0.2, 0.5
+
+    raw = io.Raw(fname)
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+**Script output**:
+
+.. rst-class:: sphx-glr-script-out
+
+  ::
+
+    Opening raw data file /home/jaakko/examples/MNE-sample-data/MEG/sample/sample_audvis_raw.fif...
+        Read a total of 3 projection items:
+            PCA-v1 (1 x 102)  idle
+            PCA-v2 (1 x 102)  idle
+            PCA-v3 (1 x 102)  idle
+    Current compensation grade : 0
+        Range : 25800 ... 192599 =     42.956 ...   320.670 secs
+    Ready.
+    Adding average EEG reference projection.
+    1 projection items deactivated
+
+
+Set parameters
+
+
+.. code-block:: python
+
+    raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
+
+    #   Setup for reading the raw data
+    raw = io.Raw(raw_fname)
+    events = mne.read_events(event_fname)
+
+    #   Set up pick list: EEG + STI 014 - bad channels (modify to your needs)
+    include = []  # or stim channels ['STI 014']
+    raw.info['bads'] += ['EEG 053']  # bads + 1 more
+
+    # pick EEG channels
+    picks = mne.pick_types(raw.info, meg=True, eeg=True, stim=False, eog=True,
+                           include=include, exclude='bads')
+    # Read epochs, with proj off by default so we can plot either way later
+    reject = dict(grad=4000e-13, mag=4e-12, eeg=80e-6, eog=150e-6)
+    epochs = mne.Epochs(raw, events, event_id, tmin, tmax, picks=picks,
+                        baseline=(None, 0), reject=reject, proj=False)
+
+    # Compute the covariance on baseline
+    cov = mne.compute_covariance(epochs, tmin=None, tmax=0)
+    print(cov)
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+**Script output**:
+
+.. rst-class:: sphx-glr-script-out
+
+  ::
+
+    Opening raw data file /home/jaakko/examples/MNE-sample-data/MEG/sample/sample_audvis_filt-0-40_raw.fif...
+        Read a total of 4 projection items:
+            PCA-v1 (1 x 102)  idle
+            PCA-v2 (1 x 102)  idle
+            PCA-v3 (1 x 102)  idle
+            Average EEG reference (1 x 60)  idle
+    Current compensation grade : 0
+        Range : 6450 ... 48149 =     42.956 ...   320.665 secs
+    Ready.
+    72 matching events found
+    Created an SSP operator (subspace dimension = 4)
+    Reading 712 ... 817  =      4.742 ...     5.441 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 1132 ... 1237  =      7.539 ...     8.238 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 1545 ... 1650  =     10.289 ...    10.989 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 1948 ... 2053  =     12.973 ...    13.673 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 2377 ... 2482  =     15.830 ...    16.530 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 2771 ... 2876  =     18.454 ...    19.154 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 3197 ... 3302  =     21.292 ...    21.991 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 3621 ... 3726  =     24.115 ...    24.815 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 4051 ... 4156  =     26.979 ...    27.678 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 4465 ... 4570  =     29.736 ...    30.435 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EEG : [u'EEG 001', u'EEG 002', u'EEG 003', u'EEG 007']
+    Reading 4891 ... 4996  =     32.573 ...    33.273 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : [u'EOG 061']
+    Reading 5293 ... 5398  =     35.251 ...    35.950 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 5700 ... 5805  =     37.961 ...    38.660 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 6087 ... 6192  =     40.538 ...    41.238 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 6490 ... 6595  =     43.222 ...    43.922 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : [u'EOG 061']
+    Reading 6893 ... 6998  =     45.906 ...    46.606 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : [u'EOG 061']
+    Reading 7295 ... 7400  =     48.584 ...    49.283 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 7699 ... 7804  =     51.274 ...    51.973 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EEG : [u'EEG 001', u'EEG 002', u'EEG 003', u'EEG 006', u'EEG 007']
+    Reading 8132 ... 8237  =     54.158 ...    54.857 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 8552 ... 8657  =     56.955 ...    57.654 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EEG : [u'EEG 001', u'EEG 002', u'EEG 003', u'EEG 004', u'EEG 006', u'EEG 007', u'EEG 015', u'EEG 016']
+    Reading 8987 ... 9092  =     59.852 ...    60.551 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : [u'EOG 061']
+    Reading 9403 ... 9508  =     62.622 ...    63.322 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 9815 ... 9920  =     65.366 ...    66.066 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 10261 ... 10366  =     68.337 ...    69.036 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 10686 ... 10791  =     71.167 ...    71.866 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : [u'EOG 061']
+    Reading 11084 ... 11189  =     73.818 ...    74.517 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EEG : [u'EEG 001', u'EEG 002', u'EEG 003', u'EEG 004', u'EEG 005', u'EEG 006', u'EEG 007', u'EEG 008', u'EEG 009', u'EEG 010', u'EEG 011', u'EEG 012', u'EEG 013', u'EEG 014', u'EEG 015', u'EEG 016', u'EEG 021', u'EEG 022', u'EEG 031', u'EEG 032', u'EEG 046']
+    Reading 11517 ... 11622  =     76.701 ...    77.401 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 11949 ... 12054  =     79.578 ...    80.278 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 12743 ... 12848  =     84.866 ...    85.566 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on MAG : [u'MEG 1711']
+    Reading 13154 ... 13259  =     87.604 ...    88.303 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 13572 ... 13677  =     90.387 ...    91.087 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 13997 ... 14102  =     93.218 ...    93.917 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 14412 ... 14517  =     95.982 ...    96.681 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 14844 ... 14949  =     98.859 ...    99.558 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 15262 ... 15367  =    101.642 ...   102.342 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : [u'EOG 061']
+    Reading 15668 ... 15773  =    104.346 ...   105.046 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 16124 ... 16229  =    107.383 ...   108.083 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 16529 ... 16634  =    110.081 ...   110.780 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 16937 ... 17042  =    112.798 ...   113.497 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : [u'EOG 061']
+    Reading 17378 ... 17483  =    115.735 ...   116.434 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 17828 ... 17933  =    118.732 ...   119.431 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 18245 ... 18350  =    121.509 ...   122.208 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : [u'EOG 061']
+    Reading 18675 ... 18780  =    124.373 ...   125.072 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 19092 ... 19197  =    127.150 ...   127.849 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EEG : [u'EEG 008']
+    Reading 19528 ... 19633  =    130.053 ...   130.753 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : [u'EOG 061']
+    Reading 19960 ... 20065  =    132.930 ...   133.630 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : [u'EOG 061']
+    Reading 20358 ... 20463  =    135.581 ...   136.280 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 21163 ... 21268  =    140.942 ...   141.641 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : [u'EOG 061']
+    Reading 21593 ... 21698  =    143.806 ...   144.505 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : [u'EOG 061']
+    Reading 22008 ... 22113  =    146.570 ...   147.269 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 22424 ... 22529  =    149.340 ...   150.040 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 22846 ... 22951  =    152.151 ...   152.850 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 23239 ... 23344  =    154.768 ...   155.467 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 23654 ... 23759  =    157.532 ...   158.231 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 24074 ... 24179  =    160.329 ...   161.028 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 24502 ... 24607  =    163.179 ...   163.879 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 24947 ... 25052  =    166.143 ...   166.842 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 25352 ... 25457  =    168.840 ...   169.540 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : [u'EOG 061']
+    Reading 25751 ... 25856  =    171.498 ...   172.197 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 26143 ... 26248  =    174.108 ...   174.807 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : [u'EOG 061']
+    Reading 26540 ... 26645  =    176.752 ...   177.451 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 27403 ... 27508  =    182.500 ...   183.199 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 27803 ... 27908  =    185.164 ...   185.863 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 28229 ... 28334  =    188.001 ...   188.700 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : [u'EOG 061']
+    Reading 28673 ... 28778  =    190.958 ...   191.657 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on EOG : [u'EOG 061']
+    Reading 29537 ... 29642  =    196.712 ...   197.411 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 29936 ... 30041  =    199.369 ...   200.068 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 30384 ... 30489  =    202.353 ...   203.052 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 30810 ... 30915  =    205.190 ...   205.889 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 31238 ... 31343  =    208.040 ...   208.739 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 31626 ... 31731  =    210.624 ...   211.323 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 32040 ... 32145  =    213.381 ...   214.081 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    22 bad epochs dropped
+    Too few samples (required : 1825 got : 1550), covariance estimate may be unreliable
+    Estimating covariance using EMPIRICAL
+    Done.
+    Using cross-validation to select the best estimator.
+    Number of samples used : 1550
+    [done]
+    log-likelihood on unseen data (descending order):
+       empirical: -1982.876
+    selecting best estimator: empirical
+    <Covariance  |  size : 364 x 364, n_samples : 1550, data : [[  2.17049386e-23   4.70340456e-24   3.87826687e-25 ...,   1.02882600e-17
+        7.56134018e-18   1.27495888e-17]
+     [  4.70340456e-24   5.62172415e-24   1.82036107e-25 ...,   2.98237933e-18
+        2.32035507e-18   4.82006907e-18]
+     [  3.87826687e-25   1.82036107e-25   7.61915421e-26 ...,  -1.06502799e-19
+       -1.18416466e-19   9.10651465e-20]
+     ..., 
+     [  1.02882600e-17   2.98237933e-18  -1.06502799e-19 ...,   4.10264374e-11
+        3.89758876e-11   3.34306668e-11]
+     [  7.56134018e-18   2.32035507e-18  -1.18416466e-19 ...,   3.89758876e-11
+        4.09615144e-11   3.11633167e-11]
+     [  1.27495888e-17   4.82006907e-18   9.10651465e-20 ...,   3.34306668e-11
+        3.11633167e-11   3.24035358e-11]]>
+
+
+Show covariance
+
+
+.. code-block:: python
+
+    mne.viz.plot_cov(cov, raw.info, colorbar=True, proj=True)
+    # try setting proj to False to see the effect
+
+
+
+.. rst-class:: sphx-glr-horizontal
 
 
     *
 
-      .. image:: images/plot_estimate_covariance_matrix_baseline_001.png
+      .. image:: /auto_examples/preprocessing/images/sphx_glr_plot_estimate_covariance_matrix_baseline_001.png
             :scale: 47
 
     *
 
-      .. image:: images/plot_estimate_covariance_matrix_baseline_002.png
+      .. image:: /auto_examples/preprocessing/images/sphx_glr_plot_estimate_covariance_matrix_baseline_002.png
             :scale: 47
 
 
-**Script output**::
+**Script output**:
 
-  Opening raw data file /data1/agramfort/work/src/mne-python/examples/MNE-sample-data/MEG/sample/sample_audvis_raw.fif...
-      Read a total of 3 projection items:
-          PCA-v1 (1 x 102)  idle
-          PCA-v2 (1 x 102)  idle
-          PCA-v3 (1 x 102)  idle
-  Current compensation grade : 0
-      Range : 25800 ... 192599 =     42.956 ...   320.670 secs
-  Ready.
-  Adding average EEG reference projection.
-  1 projection items deactivated
-  Opening raw data file /data1/agramfort/work/src/mne-python/examples/MNE-sample-data/MEG/sample/sample_audvis_filt-0-40_raw.fif...
-      Read a total of 4 projection items:
-          PCA-v1 (1 x 102)  idle
-          PCA-v2 (1 x 102)  idle
-          PCA-v3 (1 x 102)  idle
-          Average EEG reference (1 x 60)  idle
-  Current compensation grade : 0
-      Range : 6450 ... 48149 =     42.956 ...   320.665 secs
-  Ready.
-  Created an SSP operator (subspace dimension = 4)
-  ...
+.. rst-class:: sphx-glr-script-out
+
+  ::
+
+    Created an SSP operator (subspace dimension = 4)
+
+
+**Total running time of the script:**
+(0 minutes 3.787 seconds)
 
 
 
-**Python source code:** :download:`plot_estimate_covariance_matrix_baseline.py <plot_estimate_covariance_matrix_baseline.py>`
-
-.. literalinclude:: plot_estimate_covariance_matrix_baseline.py
-    :lines: 11-
-
-**Total running time of the example:**    3 seconds
-
-.. raw:: html
-
-    <div class="social-button-container">
-        <div class="social-button">
-            <a href="https://twitter.com/share" class="twitter-share-button">Tweet</a>
-        </div>
-        <div class="social-button">
-            <g:plusone annotation="inline" width="120" size="medium"></g:plusone>
-        </div>
-        <div class="social-button">
-            <div id="fb-root"></div>
-            <script>(function(d, s, id) {
-                var js, fjs = d.getElementsByTagName(s)[0];
-                if (d.getElementById(id)) return;
-                js = d.createElement(s); js.id = id;
-                js.src = "//connect.facebook.net/en_US/all.js#xfbml=1";
-                fjs.parentNode.insertBefore(js, fjs);
-                }(document, 'script', 'facebook-jssdk'));
-            </script>
-            <div class="fb-like" data-send="false" data-width="450" data-show-faces="false"></div>
-        </div>
-    </div>
-    
+**Download Python source code:** :download:`plot_estimate_covariance_matrix_baseline.py <plot_estimate_covariance_matrix_baseline.py>`

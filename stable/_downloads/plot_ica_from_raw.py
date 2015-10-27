@@ -1,7 +1,8 @@
 """
-==================================
-Compute ICA components on raw data
-==================================
+.. _tut_preprocessing_ica:
+
+Compute ICA on MEG data and remove artifacts
+============================================
 
 ICA is fit to MEG raw data.
 The sources matching the ECG and EOG are automatically found and displayed.
@@ -19,8 +20,6 @@ from mne.io import Raw
 from mne.preprocessing import ICA
 from mne.preprocessing import create_ecg_epochs, create_eog_epochs
 from mne.datasets import sample
-
-print(__doc__)
 
 ###############################################################################
 # Setup paths and prepare raw data
@@ -75,7 +74,7 @@ ica.plot_scores(scores, exclude=eog_inds, title=title % 'eog')
 
 show_picks = np.abs(scores).argsort()[::-1][:5]
 
-ica.plot_sources(raw, show_picks, exclude=ecg_inds, title=title % 'eog')
+ica.plot_sources(raw, show_picks, exclude=eog_inds, title=title % 'eog')
 ica.plot_components(eog_inds, title=title % 'eog', colorbar=True)
 
 eog_inds = eog_inds[:n_max_eog]
@@ -97,12 +96,13 @@ ica.plot_overlay(eog_evoked, exclude=eog_inds)  # plot EOG cleaning
 ica.plot_overlay(raw)  # EOG artifacts remain
 
 ###############################################################################
+
 # To save an ICA solution you can say:
-# >>> ica.save('my_ica.fif')
-#
+# ica.save('my_ica.fif')
+
 # You can later load the solution by saying:
-# >>> from mne.preprocessing import read_ica
-# >>> read_ica('my_ica.fif')
-#
+# from mne.preprocessing import read_ica
+# read_ica('my_ica.fif')
+
 # Apply the solution to Raw, Epochs or Evoked like this:
-# >>> ica.apply(epochs, copy=False)
+# ica.apply(epochs, copy=False)

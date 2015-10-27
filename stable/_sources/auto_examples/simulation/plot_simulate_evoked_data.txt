@@ -1,6 +1,6 @@
 
 
-.. _example_simulation_plot_simulate_evoked_data.py:
+.. _sphx_glr_auto_examples_simulation_plot_simulate_evoked_data.py:
 
 
 ==============================
@@ -9,84 +9,235 @@ Generate simulated evoked data
 
 
 
+.. code-block:: python
 
-.. rst-class:: horizontal
+    # Author: Daniel Strohmeier <daniel.strohmeier@tu-ilmenau.de>
+    #         Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
+    #
+    # License: BSD (3-clause)
+
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    from mne import (read_proj, read_forward_solution, read_cov, read_label,
+                     pick_types_forward, pick_types)
+    from mne.io import Raw, read_info
+    from mne.datasets import sample
+    from mne.time_frequency import fit_iir_model_raw
+    from mne.viz import plot_sparse_source_estimates
+    from mne.simulation import simulate_sparse_stc, simulate_evoked
+
+    print(__doc__)
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+
+
+Load real data as templates
+
+
+.. code-block:: python
+
+    data_path = sample.data_path()
+
+    raw = Raw(data_path + '/MEG/sample/sample_audvis_raw.fif')
+    proj = read_proj(data_path + '/MEG/sample/sample_audvis_ecg_proj.fif')
+    raw.info['projs'] += proj
+    raw.info['bads'] = ['MEG 2443', 'EEG 053']  # mark bad channels
+
+    fwd_fname = data_path + '/MEG/sample/sample_audvis-meg-eeg-oct-6-fwd.fif'
+    ave_fname = data_path + '/MEG/sample/sample_audvis-no-filter-ave.fif'
+    cov_fname = data_path + '/MEG/sample/sample_audvis-cov.fif'
+
+    fwd = read_forward_solution(fwd_fname, force_fixed=True, surf_ori=True)
+    fwd = pick_types_forward(fwd, meg=True, eeg=True, exclude=raw.info['bads'])
+    cov = read_cov(cov_fname)
+    info = read_info(ave_fname)
+
+    label_names = ['Aud-lh', 'Aud-rh']
+    labels = [read_label(data_path + '/MEG/sample/labels/%s.label' % ln)
+              for ln in label_names]
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+**Script output**:
+
+.. rst-class:: sphx-glr-script-out
+
+  ::
+
+    Opening raw data file /home/jaakko/examples/MNE-sample-data/MEG/sample/sample_audvis_raw.fif...
+        Read a total of 3 projection items:
+            PCA-v1 (1 x 102)  idle
+            PCA-v2 (1 x 102)  idle
+            PCA-v3 (1 x 102)  idle
+    Current compensation grade : 0
+        Range : 25800 ... 192599 =     42.956 ...   320.670 secs
+    Ready.
+    Adding average EEG reference projection.
+    1 projection items deactivated
+        Read a total of 10 projection items:
+            PCA-v1 (1 x 102)  idle
+            PCA-v2 (1 x 102)  idle
+            PCA-v3 (1 x 102)  idle
+            Average EEG reference (1 x 59)  idle
+            ECG-planar-999--0.200-0.400-PCA-01 (1 x 203)  idle
+            ECG-planar-999--0.200-0.400-PCA-02 (1 x 203)  idle
+            ECG-axial-999--0.200-0.400-PCA-01 (1 x 102)  idle
+            ECG-axial-999--0.200-0.400-PCA-02 (1 x 102)  idle
+            ECG-eeg-999--0.200-0.400-PCA-01 (1 x 59)  idle
+            ECG-eeg-999--0.200-0.400-PCA-02 (1 x 59)  idle
+    Reading forward solution from /home/jaakko/examples/MNE-sample-data/MEG/sample/sample_audvis-meg-eeg-oct-6-fwd.fif...
+        Reading a source space...
+        Computing patch statistics...
+        Patch information added...
+        Distance information added...
+        [done]
+        Reading a source space...
+        Computing patch statistics...
+        Patch information added...
+        Distance information added...
+        [done]
+        2 source spaces read
+        Desired named matrix (kind = 3523) not available
+        Read MEG forward solution (7498 sources, 306 channels, free orientations)
+        Desired named matrix (kind = 3523) not available
+        Read EEG forward solution (7498 sources, 60 channels, free orientations)
+        MEG and EEG forward solutions combined
+        Source spaces transformed to the forward solution coordinate frame
+        Changing to fixed-orientation forward solution with surface-based source orientations...
+        [done]
+        364 out of 366 channels remain after picking
+        366 x 366 full covariance (kind = 1) found.
+        Read a total of 4 projection items:
+            PCA-v1 (1 x 102) active
+            PCA-v2 (1 x 102) active
+            PCA-v3 (1 x 102) active
+            Average EEG reference (1 x 60) active
+        Read a total of 4 projection items:
+            PCA-v1 (1 x 102) active
+            PCA-v2 (1 x 102) active
+            PCA-v3 (1 x 102) active
+            Average EEG reference (1 x 60) active
+
+
+Generate source time courses from 2 dipoles and the correspond evoked data
+
+
+.. code-block:: python
+
+
+    times = np.arange(300, dtype=np.float) / raw.info['sfreq'] - 0.1
+    rng = np.random.RandomState(42)
+
+
+    def data_fun(times):
+        """Function to generate random source time courses"""
+        return (1e-9 * np.sin(30. * times) *
+                np.exp(- (times - 0.15 + 0.05 * rng.randn(1)) ** 2 / 0.01))
+
+    stc = simulate_sparse_stc(fwd['src'], n_dipoles=2, times=times,
+                              random_state=42, labels=labels, data_fun=data_fun)
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+
+
+Generate noisy evoked data
+
+
+.. code-block:: python
+
+    picks = pick_types(raw.info, meg=True, exclude='bads')
+    iir_filter = fit_iir_model_raw(raw, order=5, picks=picks, tmin=60, tmax=180)[1]
+    snr = 6.  # dB
+    evoked = simulate_evoked(fwd, stc, info, cov, snr, iir_filter=iir_filter)
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+**Script output**:
+
+.. rst-class:: sphx-glr-script-out
+
+  ::
+
+    Reading 36036 ... 108110  =     59.999 ...   179.999 secs...
+    [done]
+    Projecting source estimate to sensor space...
+    [done]
+
+
+Plot
+
+
+.. code-block:: python
+
+    plot_sparse_source_estimates(fwd['src'], stc, bgcolor=(1, 1, 1),
+                                 opacity=0.5, high_resolution=True)
+
+    plt.figure()
+    plt.psd(evoked.data[0])
+
+    evoked.plot()
+
+
+
+.. rst-class:: sphx-glr-horizontal
 
 
     *
 
-      .. image:: images/plot_simulate_evoked_data_001.png
+      .. image:: /auto_examples/simulation/images/sphx_glr_plot_simulate_evoked_data_001.png
             :scale: 47
 
     *
 
-      .. image:: images/plot_simulate_evoked_data_002.png
+      .. image:: /auto_examples/simulation/images/sphx_glr_plot_simulate_evoked_data_002.png
             :scale: 47
 
     *
 
-      .. image:: images/plot_simulate_evoked_data_003.png
+      .. image:: /auto_examples/simulation/images/sphx_glr_plot_simulate_evoked_data_003.png
             :scale: 47
 
     *
 
-      .. image:: images/plot_simulate_evoked_data_004.png
+      .. image:: /auto_examples/simulation/images/sphx_glr_plot_simulate_evoked_data_003.png
             :scale: 47
 
 
-**Script output**::
+**Script output**:
 
-  Opening raw data file /data1/agramfort/work/src/mne-python/examples/MNE-sample-data/MEG/sample/sample_audvis_raw.fif...
-      Read a total of 3 projection items:
-          PCA-v1 (1 x 102)  idle
-          PCA-v2 (1 x 102)  idle
-          PCA-v3 (1 x 102)  idle
-  Current compensation grade : 0
-      Range : 25800 ... 192599 =     42.956 ...   320.670 secs
-  Ready.
-  Adding average EEG reference projection.
-  1 projection items deactivated
-      Read a total of 10 projection items:
-          PCA-v1 (1 x 102)  idle
-          PCA-v2 (1 x 102)  idle
-          PCA-v3 (1 x 102)  idle
-          Average EEG reference (1 x 59)  idle
-          ECG-planar-999--0.200-0.400-PCA-01 (1 x 203)  idle
-          ECG-planar-999--0.200-0.400-PCA-02 (1 x 203)  idle
-          ECG-axial-999--0.200-0.400-PCA-01 (1 x 102)  idle
-          ECG-axial-999--0.200-0.400-PCA-02 (1 x 102)  idle
-          ECG-eeg-999--0.200-0.400-PCA-01 (1 x 59)  idle
-  ...
+.. rst-class:: sphx-glr-script-out
+
+  ::
+
+    Total number of active sources: 2
+
+
+**Total running time of the script:**
+(0 minutes 4.818 seconds)
 
 
 
-**Python source code:** :download:`plot_simulate_evoked_data.py <plot_simulate_evoked_data.py>`
-
-.. literalinclude:: plot_simulate_evoked_data.py
-    :lines: 7-
-
-**Total running time of the example:**    7 seconds
-
-.. raw:: html
-
-    <div class="social-button-container">
-        <div class="social-button">
-            <a href="https://twitter.com/share" class="twitter-share-button">Tweet</a>
-        </div>
-        <div class="social-button">
-            <g:plusone annotation="inline" width="120" size="medium"></g:plusone>
-        </div>
-        <div class="social-button">
-            <div id="fb-root"></div>
-            <script>(function(d, s, id) {
-                var js, fjs = d.getElementsByTagName(s)[0];
-                if (d.getElementById(id)) return;
-                js = d.createElement(s); js.id = id;
-                js.src = "//connect.facebook.net/en_US/all.js#xfbml=1";
-                fjs.parentNode.insertBefore(js, fjs);
-                }(document, 'script', 'facebook-jssdk'));
-            </script>
-            <div class="fb-like" data-send="false" data-width="450" data-show-faces="false"></div>
-        </div>
-    </div>
-    
+**Download Python source code:** :download:`plot_simulate_evoked_data.py <plot_simulate_evoked_data.py>`

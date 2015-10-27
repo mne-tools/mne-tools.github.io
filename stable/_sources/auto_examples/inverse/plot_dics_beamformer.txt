@@ -1,6 +1,6 @@
 
 
-.. _example_inverse_plot_dics_beamformer.py:
+.. _sphx_glr_auto_examples_inverse_plot_dics_beamformer.py:
 
 
 =====================================
@@ -16,74 +16,393 @@ Gross et al. Dynamic imaging of coherent sources: Studying neural interactions
 in the human brain. PNAS (2001) vol. 98 (2) pp. 694-699
 
 
+.. code-block:: python
 
-.. rst-class:: horizontal
+    # Author: Roman Goj <roman.goj@gmail.com>
+    #
+    # License: BSD (3-clause)
+
+    import mne
+
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    from mne.io import Raw
+    from mne.datasets import sample
+    from mne.time_frequency import compute_epochs_csd
+    from mne.beamformer import dics
+
+    print(__doc__)
+
+    data_path = sample.data_path()
+    raw_fname = data_path + '/MEG/sample/sample_audvis_raw.fif'
+    event_fname = data_path + '/MEG/sample/sample_audvis_raw-eve.fif'
+    fname_fwd = data_path + '/MEG/sample/sample_audvis-meg-eeg-oct-6-fwd.fif'
+    label_name = 'Aud-lh'
+    fname_label = data_path + '/MEG/sample/labels/%s.label' % label_name
+    subjects_dir = data_path + '/subjects'
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+
+
+Read raw data
+
+
+.. code-block:: python
+
+    raw = Raw(raw_fname)
+    raw.info['bads'] = ['MEG 2443', 'EEG 053']  # 2 bads channels
+
+    # Set picks
+    picks = mne.pick_types(raw.info, meg=True, eeg=False, eog=False,
+                           stim=False, exclude='bads')
+
+    # Read epochs
+    event_id, tmin, tmax = 1, -0.2, 0.5
+    events = mne.read_events(event_fname)
+    epochs = mne.Epochs(raw, events, event_id, tmin, tmax, proj=True,
+                        picks=picks, baseline=(None, 0), preload=True,
+                        reject=dict(grad=4000e-13, mag=4e-12))
+    evoked = epochs.average()
+
+    # Read forward operator
+    forward = mne.read_forward_solution(fname_fwd, surf_ori=True)
+
+    # Computing the data and noise cross-spectral density matrices
+    # The time-frequency window was chosen on the basis of spectrograms from
+    # example time_frequency/plot_time_frequency.py
+    data_csd = compute_epochs_csd(epochs, mode='multitaper', tmin=0.04, tmax=0.15,
+                                  fmin=6, fmax=10)
+    noise_csd = compute_epochs_csd(epochs, mode='multitaper', tmin=-0.11, tmax=0.0,
+                                   fmin=6, fmax=10)
+
+    evoked = epochs.average()
+
+    # Compute DICS spatial filter and estimate source time courses on evoked data
+    stc = dics(evoked, forward, noise_csd, data_csd)
+
+    plt.figure()
+    ts_show = -30  # show the 40 largest responses
+    plt.plot(1e3 * stc.times,
+             stc.data[np.argsort(stc.data.max(axis=1))[ts_show:]].T)
+    plt.xlabel('Time (ms)')
+    plt.ylabel('DICS value')
+    plt.title('DICS time course of the 30 largest sources.')
+    plt.show()
+
+    # Plot brain in 3D with PySurfer if available
+    brain = stc.plot(hemi='rh', subjects_dir=subjects_dir)
+    brain.set_data_time_index(180)
+    brain.show_view('lateral')
+
+    # Uncomment to save image
+    # brain.save_image('DICS_map.png')
+
+
+
+.. rst-class:: sphx-glr-horizontal
 
 
     *
 
-      .. image:: images/plot_dics_beamformer_001.png
+      .. image:: /auto_examples/inverse/images/sphx_glr_plot_dics_beamformer_001.png
             :scale: 47
 
     *
 
-      .. image:: images/plot_dics_beamformer_002.png
+      .. image:: /auto_examples/inverse/images/sphx_glr_plot_dics_beamformer_001.png
             :scale: 47
 
 
-**Script output**::
+**Script output**:
 
-  Opening raw data file /data1/agramfort/work/src/mne-python/examples/MNE-sample-data/MEG/sample/sample_audvis_raw.fif...
-      Read a total of 3 projection items:
-          PCA-v1 (1 x 102)  idle
-          PCA-v2 (1 x 102)  idle
-          PCA-v3 (1 x 102)  idle
-  Current compensation grade : 0
-      Range : 25800 ... 192599 =     42.956 ...   320.670 secs
-  Ready.
-  Adding average EEG reference projection.
-  1 projection items deactivated
-  Created an SSP operator (subspace dimension = 3)
-  4 projection items activated
-  72 matching events found
-  Reading 2851 ... 3271  =      4.747 ...     5.446 secs...
-  [done]
-  Applying baseline correction ... (mode: mean)
-  Reading 4530 ... 4950  =      7.542 ...     8.242 secs...
-  [done]
-  Applying baseline correction ... (mode: mean)
-  Reading 6181 ... 6601  =     10.291 ...    10.990 secs...
-  ...
+.. rst-class:: sphx-glr-script-out
+
+  ::
+
+    Opening raw data file /home/jaakko/examples/MNE-sample-data/MEG/sample/sample_audvis_raw.fif...
+        Read a total of 3 projection items:
+            PCA-v1 (1 x 102)  idle
+            PCA-v2 (1 x 102)  idle
+            PCA-v3 (1 x 102)  idle
+    Current compensation grade : 0
+        Range : 25800 ... 192599 =     42.956 ...   320.670 secs
+    Ready.
+    Adding average EEG reference projection.
+    1 projection items deactivated
+    72 matching events found
+    Created an SSP operator (subspace dimension = 3)
+    4 projection items activated
+    Reading 2851 ... 3271  =      4.747 ...     5.446 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 4530 ... 4950  =      7.542 ...     8.242 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 6181 ... 6601  =     10.291 ...    10.990 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 7792 ... 8212  =     12.973 ...    13.673 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 9508 ... 9928  =     15.830 ...    16.530 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 11087 ... 11507  =     18.459 ...    19.159 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 12791 ... 13211  =     21.297 ...    21.996 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 14485 ... 14905  =     24.117 ...    24.816 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 16206 ... 16626  =     26.982 ...    27.682 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 17861 ... 18281  =     29.738 ...    30.437 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 19566 ... 19986  =     32.577 ...    33.276 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 21175 ... 21595  =     35.256 ...    35.955 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 22802 ... 23222  =     37.964 ...    38.664 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 24349 ... 24769  =     40.540 ...    41.239 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 25961 ... 26381  =     43.224 ...    43.923 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 27574 ... 27994  =     45.910 ...    46.609 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 29180 ... 29600  =     48.584 ...    49.283 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 30797 ... 31217  =     51.276 ...    51.975 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 32528 ... 32948  =     54.158 ...    54.857 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 34209 ... 34629  =     56.957 ...    57.656 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 35948 ... 36368  =     59.852 ...    60.551 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 37612 ... 38032  =     62.622 ...    63.322 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 39261 ... 39681  =     65.368 ...    66.067 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 41044 ... 41464  =     68.337 ...    69.036 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 42746 ... 43166  =     71.170 ...    71.870 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 44339 ... 44759  =     73.823 ...    74.522 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 46071 ... 46491  =     76.706 ...    77.406 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 47798 ... 48218  =     79.582 ...    80.281 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 50974 ... 51394  =     84.870 ...    85.569 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+        Rejecting  epoch based on MAG : [u'MEG 1711']
+    Reading 52619 ... 53039  =     87.609 ...    88.308 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 54289 ... 54709  =     90.389 ...    91.088 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 55991 ... 56411  =     93.223 ...    93.922 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 57648 ... 58068  =     95.982 ...    96.681 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 59379 ... 59799  =     98.864 ...    99.563 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 61051 ... 61471  =    101.647 ...   102.347 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 62673 ... 63093  =    104.348 ...   105.047 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 64499 ... 64919  =    107.388 ...   108.088 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 66118 ... 66538  =    110.084 ...   110.783 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 67749 ... 68169  =    112.799 ...   113.499 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 69515 ... 69935  =    115.740 ...   116.439 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 71314 ... 71734  =    118.735 ...   119.434 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 72983 ... 73403  =    121.514 ...   122.213 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 74700 ... 75120  =    124.373 ...   125.072 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 76368 ... 76788  =    127.150 ...   127.849 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 78113 ... 78533  =    130.055 ...   130.754 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 79840 ... 80260  =    132.930 ...   133.630 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 81435 ... 81855  =    135.586 ...   136.285 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 84654 ... 85074  =    140.946 ...   141.645 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 86372 ... 86792  =    143.806 ...   144.505 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 88032 ... 88452  =    146.570 ...   147.269 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 89699 ... 90119  =    149.345 ...   150.045 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 91384 ... 91804  =    152.151 ...   152.850 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 92959 ... 93379  =    154.773 ...   155.472 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 94619 ... 95039  =    157.537 ...   158.236 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 96298 ... 96718  =    160.332 ...   161.032 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 98011 ... 98431  =    163.184 ...   163.884 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 99789 ... 100209  =    166.145 ...   166.844 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 101411 ... 101831  =    168.845 ...   169.545 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 103005 ... 103425  =    171.499 ...   172.198 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 104575 ... 104995  =    174.113 ...   174.812 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 106161 ... 106581  =    176.754 ...   177.453 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 109613 ... 110033  =    182.501 ...   183.201 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 111213 ... 111633  =    185.165 ...   185.864 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 112916 ... 113336  =    188.001 ...   188.700 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 114692 ... 115112  =    190.958 ...   191.657 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 118151 ... 118571  =    196.717 ...   197.416 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 119746 ... 120166  =    199.372 ...   200.072 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 121538 ... 121958  =    202.356 ...   203.055 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 123242 ... 123662  =    205.193 ...   205.892 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 124952 ... 125372  =    208.040 ...   208.739 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 126506 ... 126926  =    210.627 ...   211.327 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    Reading 128160 ... 128580  =    213.381 ...   214.081 secs...
+    [done]
+    Applying baseline correction ... (mode: mean)
+    1 bad epochs dropped
+    Reading forward solution from /home/jaakko/examples/MNE-sample-data/MEG/sample/sample_audvis-meg-eeg-oct-6-fwd.fif...
+        Reading a source space...
+        Computing patch statistics...
+        Patch information added...
+        Distance information added...
+        [done]
+        Reading a source space...
+        Computing patch statistics...
+        Patch information added...
+        Distance information added...
+        [done]
+        2 source spaces read
+        Desired named matrix (kind = 3523) not available
+        Read MEG forward solution (7498 sources, 306 channels, free orientations)
+        Desired named matrix (kind = 3523) not available
+        Read EEG forward solution (7498 sources, 60 channels, free orientations)
+        MEG and EEG forward solutions combined
+        Source spaces transformed to the forward solution coordinate frame
+        Converting to surface-based source orientations...
+        Average patch normals will be employed in the rotation to the local surface coordinates....
+    [done]
+    Computing cross-spectral density from epochs...
+        using multitaper spectrum estimation with 3 DPSS windows
+    [done]
+    Computing cross-spectral density from epochs...
+        using multitaper spectrum estimation with 3 DPSS windows
+    [done]
+        305 out of 366 channels remain after picking
+    combining the current components...
+    Updating smoothing matrix, be patient..
+    Smoothing matrix creation, step 1
+    Smoothing matrix creation, step 2
+    Smoothing matrix creation, step 3
+    Smoothing matrix creation, step 4
+    Smoothing matrix creation, step 5
+    Smoothing matrix creation, step 6
+    Smoothing matrix creation, step 7
+    Smoothing matrix creation, step 8
+    Smoothing matrix creation, step 9
+    Smoothing matrix creation, step 10
+    colormap: fmin=3.21e+00 fmid=3.71e+00 fmax=1.00e+01 transparent=1
+
+
+**Total running time of the script:**
+(0 minutes 20.180 seconds)
 
 
 
-**Python source code:** :download:`plot_dics_beamformer.py <plot_dics_beamformer.py>`
-
-.. literalinclude:: plot_dics_beamformer.py
-    :lines: 14-
-
-**Total running time of the example:**   19 seconds
-
-.. raw:: html
-
-    <div class="social-button-container">
-        <div class="social-button">
-            <a href="https://twitter.com/share" class="twitter-share-button">Tweet</a>
-        </div>
-        <div class="social-button">
-            <g:plusone annotation="inline" width="120" size="medium"></g:plusone>
-        </div>
-        <div class="social-button">
-            <div id="fb-root"></div>
-            <script>(function(d, s, id) {
-                var js, fjs = d.getElementsByTagName(s)[0];
-                if (d.getElementById(id)) return;
-                js = d.createElement(s); js.id = id;
-                js.src = "//connect.facebook.net/en_US/all.js#xfbml=1";
-                fjs.parentNode.insertBefore(js, fjs);
-                }(document, 'script', 'facebook-jssdk'));
-            </script>
-            <div class="fb-like" data-send="false" data-width="450" data-show-faces="false"></div>
-        </div>
-    </div>
-    
+**Download Python source code:** :download:`plot_dics_beamformer.py <plot_dics_beamformer.py>`
