@@ -1,6 +1,4 @@
 """
-.. _tut_stats_cluster_source_2samp:
-
 =========================================================================
 2 samples permutation test on source data with spatio-temporal clustering
 =========================================================================
@@ -15,6 +13,8 @@ permutation test across space and time.
 #          Eric Larson <larson.eric.d@gmail.com>
 # License: BSD (3-clause)
 
+print(__doc__)
+
 import os.path as op
 import numpy as np
 from scipy import stats as stats
@@ -23,8 +23,6 @@ import mne
 from mne import spatial_tris_connectivity, grade_to_tris
 from mne.stats import spatio_temporal_cluster_test, summarize_clusters_stc
 from mne.datasets import sample
-
-print(__doc__)
 
 ###############################################################################
 # Set parameters
@@ -92,16 +90,18 @@ print('Visualizing clusters.')
 #    cluster becomes a "time point" in the SourceEstimate
 fsave_vertices = [np.arange(10242), np.arange(10242)]
 stc_all_cluster_vis = summarize_clusters_stc(clu, tstep=tstep,
-                                             vertices=fsave_vertices,
+                                             vertno=fsave_vertices,
                                              subject='fsaverage')
 
 #    Let's actually plot the first "time point" in the SourceEstimate, which
 #    shows all the clusters, weighted by duration
 subjects_dir = op.join(data_path, 'subjects')
 # blue blobs are for condition A != condition B
-brain = stc_all_cluster_vis.plot('fsaverage', hemi='both', colormap='mne',
+brain = stc_all_cluster_vis.plot('fsaverage', 'inflated', 'both',
                                  subjects_dir=subjects_dir,
-                                 time_label='Duration significant (ms)')
+                                 time_label='Duration significant (ms)',
+                                 fmin=0, fmid=25, fmax=50)
 brain.set_data_time_index(0)
+brain.scale_data_colormap(fmin=0, fmid=25, fmax=50, transparent=True)
 brain.show_view('lateral')
 brain.save_image('clusters.png')

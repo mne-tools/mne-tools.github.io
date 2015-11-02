@@ -1,6 +1,4 @@
 """
-.. _tut_stats_cluster_sensor_rANOVA_tfr
-
 ====================================================================
 Mass-univariate twoway repeated measures ANOVA on single trial power
 ====================================================================
@@ -26,16 +24,15 @@ multiple comparisons using False Discovery Rate correction.
 #
 # License: BSD (3-clause)
 
+print(__doc__)
+
 import numpy as np
-import matplotlib.pyplot as plt
 
 import mne
 from mne import io
 from mne.time_frequency import single_trial_power
-from mne.stats import f_threshold_mway_rm, f_mway_rm, fdr_correction
+from mne.stats import f_threshold_twoway_rm, f_twoway_rm, fdr_correction
 from mne.datasets import sample
-
-print(__doc__)
 
 ###############################################################################
 # Set parameters
@@ -77,15 +74,15 @@ times = 1e3 * epochs.times  # change unit to ms
 # single_trial_power.
 decim = 2
 frequencies = np.arange(7, 30, 3)  # define frequencies of interest
-sfreq = raw.info['sfreq']  # sampling in Hz
+Fs = raw.info['sfreq']  # sampling in Hz
 n_cycles = frequencies / frequencies[0]
 baseline_mask = times[::decim] < 0
 
 # now create TFR representations for all conditions
 epochs_power = []
 for condition in [epochs[k].get_data()[:, 97:98, :] for k in event_id]:
-    this_power = single_trial_power(condition, sfreq=sfreq,
-                                    frequencies=frequencies, n_cycles=n_cycles,
+    this_power = single_trial_power(condition, Fs=Fs, frequencies=frequencies,
+                                    n_cycles=n_cycles, use_fft=False,
                                     decim=decim)
     this_power = this_power[:, 0, :, :]  # we only have one channel.
     # Compute ratio with baseline power (be sure to correct time vector with
@@ -130,9 +127,10 @@ print(data.shape)
 #
 # Now we're ready to run our repeated measures ANOVA.
 
-fvals, pvals = f_mway_rm(data, factor_levels, effects=effects)
+fvals, pvals = f_twoway_rm(data, factor_levels, effects=effects)
 
 effect_labels = ['modality', 'location', 'modality by location']
+import matplotlib.pyplot as plt
 
 # let's visualize our effects by computing f-images
 for effect, sig, effect_label in zip(fvals, pvals, effect_labels):
@@ -143,7 +141,7 @@ for effect, sig, effect_label in zip(fvals, pvals, effect_labels):
                origin='lower')
     # create mask for significant Time-frequency locations
     effect = np.ma.masked_array(effect, [sig > .05])
-    plt.imshow(effect.reshape(8, 211), cmap='RdBu_r', extent=[times[0],
+    plt.imshow(effect.reshape(8, 211), cmap=plt.cm.jet, extent=[times[0],
                times[-1], frequencies[0], frequencies[-1]], aspect='auto',
                origin='lower')
     plt.colorbar()
@@ -173,16 +171,20 @@ def stat_fun(*args):
     # flattened array, necessitated by the clustering procedure.
     # The ANOVA however expects an input array of dimensions:
     # subjects X conditions X observations (optional).
-    # The following expression catches the list input and swaps the first and
-    # the second dimension and finally calls the ANOVA function.
-    return f_mway_rm(np.swapaxes(args, 1, 0), factor_levels=factor_levels,
-                     effects=effects, return_pvals=False)[0]
+    # The following expression catches the list input, swaps the first and the
+    # second dimension and puts the remaining observations in the third
+    # dimension.
+    data = np.swapaxes(np.asarray(args), 1, 0).reshape(n_replications,
+                                                       n_conditions,
+                                                       n_times * n_frequencies)
+    return f_twoway_rm(data, factor_levels=factor_levels,
+                       effects=effects, return_pvals=False)[0]
     # The ANOVA returns a tuple f-values and p-values, we will pick the former.
 
 
 pthresh = 0.00001  # set threshold rather high to save some time
-f_thresh = f_threshold_mway_rm(n_replications, factor_levels, effects,
-                               pthresh)
+f_thresh = f_threshold_twoway_rm(n_replications, factor_levels, effects,
+                                 pthresh)
 tail = 1  # f-test, so tail > 0
 n_permutations = 256  # Save some time (the test won't be too sensitive ...)
 T_obs, clusters, cluster_p_values, h0 = mne.stats.permutation_cluster_test(
@@ -191,11 +193,10 @@ T_obs, clusters, cluster_p_values, h0 = mne.stats.permutation_cluster_test(
 
 # Create new stats image with only significant clusters
 good_clusers = np.where(cluster_p_values < .05)[0]
-T_obs_plot = np.ma.masked_array(T_obs,
-                                np.invert(clusters[np.squeeze(good_clusers)]))
+T_obs_plot = np.ma.masked_array(T_obs, np.invert(clusters[good_clusers]))
 
 plt.figure()
-for f_image, cmap in zip([T_obs, T_obs_plot], [plt.cm.gray, 'RdBu_r']):
+for f_image, cmap in zip([T_obs, T_obs_plot], [plt.cm.gray, plt.cm.jet]):
     plt.imshow(f_image, cmap=cmap, extent=[times[0], times[-1],
                frequencies[0], frequencies[-1]], aspect='auto',
                origin='lower')
@@ -210,7 +211,7 @@ mask, _ = fdr_correction(pvals[2])
 T_obs_plot2 = np.ma.masked_array(T_obs, np.invert(mask))
 
 plt.figure()
-for f_image, cmap in zip([T_obs, T_obs_plot2], [plt.cm.gray, 'RdBu_r']):
+for f_image, cmap in zip([T_obs, T_obs_plot2], [plt.cm.gray, plt.cm.jet]):
     plt.imshow(f_image, cmap=cmap, extent=[times[0], times[-1],
                frequencies[0], frequencies[-1]], aspect='auto',
                origin='lower')

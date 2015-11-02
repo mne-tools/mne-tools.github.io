@@ -1,6 +1,4 @@
 """
-.. _tut_stats_cluster_source_rANOVA:
-
 ======================================================================
 Repeated measures ANOVA on source data with spatio-temporal clustering
 ======================================================================
@@ -15,27 +13,27 @@ interaction effect using a repeated measures ANOVA. The multiple
 comparisons problem is addressed with a cluster-level permutation test
 across space and time.
 """
+
 # Authors: Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 #          Eric Larson <larson.eric.d@gmail.com>
 #          Denis Engemannn <denis.engemann@gmail.com>
 #
 # License: BSD (3-clause)
 
+print(__doc__)
+
 import os.path as op
 import numpy as np
 from numpy.random import randn
-import matplotlib.pyplot as plt
 
 import mne
 from mne import (io, spatial_tris_connectivity, compute_morph_matrix,
                  grade_to_tris)
-from mne.stats import (spatio_temporal_cluster_test, f_threshold_mway_rm,
-                       f_mway_rm, summarize_clusters_stc)
+from mne.stats import (spatio_temporal_cluster_test, f_threshold_twoway_rm,
+                       f_twoway_rm, summarize_clusters_stc)
 
 from mne.minimum_norm import apply_inverse, read_inverse_operator
 from mne.datasets import sample
-
-print(__doc__)
 
 ###############################################################################
 # Set parameters
@@ -77,7 +75,7 @@ inverse_operator = read_inverse_operator(fname_inv)
 
 # we'll only use one hemisphere to speed up this example
 # instead of a second vertex array we'll pass an empty array
-sample_vertices = [inverse_operator['src'][0]['vertno'], np.array([], int)]
+sample_vertices = [inverse_operator['src'][0]['vertno'], np.array([])]
 
 #    Let's average and compute inverse, then resample to speed things up
 conditions = []
@@ -117,7 +115,7 @@ for ii, condition in enumerate(conditions):
 #    each subject's data separately (and you might want to use morph_data
 #    instead), but here since all estimates are on 'sample' we can use one
 #    morph matrix for all the heavy lifting.
-fsave_vertices = [np.arange(10242), np.array([], int)]  # right hemi is empty
+fsave_vertices = [np.arange(10242), np.array([])]  # right hemisphere is empty
 morph_mat = compute_morph_matrix('sample', 'fsaverage', sample_vertices,
                                  fsave_vertices, 20, subjects_dir)
 n_vertices_fsave = morph_mat.shape[0]
@@ -168,11 +166,15 @@ def stat_fun(*args):
     # flattened array, necessitated by the clustering procedure.
     # The ANOVA however expects an input array of dimensions:
     # subjects X conditions X observations (optional).
-    # The following expression catches the list input
-    # and swaps the first and the second dimension, and finally calls ANOVA.
-    return f_mway_rm(np.swapaxes(args, 1, 0), factor_levels=factor_levels,
-                     effects=effects, return_pvals=return_pvals)[0]
-    # get f-values only.
+    # The following expression catches the list input, swaps the first and the
+    # second dimension and puts the remaining observations in the third
+    # dimension.
+    data = np.squeeze(np.swapaxes(np.array(args), 1, 0))
+    data = data.reshape(n_subjects, n_conditions,  # generalized if buffer used
+                        data.size / (n_subjects * n_conditions))
+    return f_twoway_rm(data, factor_levels=factor_levels, effects=effects,
+                       return_pvals=return_pvals)[0]
+                       #  drop p-values (empty array).
     # Note. for further details on this ANOVA function consider the
     # corresponding time frequency example.
 
@@ -191,10 +193,10 @@ connectivity = spatial_tris_connectivity(lh_source_space)
 #    Now let's actually do the clustering. Please relax, on a small
 #    notebook and one single thread only this will take a couple of minutes ...
 pthresh = 0.0005
-f_thresh = f_threshold_mway_rm(n_subjects, factor_levels, effects, pthresh)
+f_thresh = f_threshold_twoway_rm(n_subjects, factor_levels, effects, pthresh)
 
 #    To speed things up a bit we will ...
-n_permutations = 128  # ... run fewer permutations (reduces sensitivity)
+n_permutations = 100  # ... run fewer permutations (reduces sensitivity)
 
 print('Clustering.')
 T_obs, clusters, cluster_p_values, H0 = clu = \
@@ -214,7 +216,7 @@ print('Visualizing clusters.')
 #    Now let's build a convenient representation of each cluster, where each
 #    cluster becomes a "time point" in the SourceEstimate
 stc_all_cluster_vis = summarize_clusters_stc(clu, tstep=tstep,
-                                             vertices=fsave_vertices,
+                                             vertno=fsave_vertices,
                                              subject='fsaverage')
 
 #    Let's actually plot the first "time point" in the SourceEstimate, which
@@ -224,10 +226,12 @@ subjects_dir = op.join(data_path, 'subjects')
 # The brighter the color, the stronger the interaction between
 # stimulus modality and stimulus location
 
-brain = stc_all_cluster_vis.plot(subjects_dir=subjects_dir, colormap='mne',
+brain = stc_all_cluster_vis.plot('fsaverage', 'inflated', 'lh',
+                                 subjects_dir=subjects_dir,
                                  time_label='Duration significant (ms)')
 
 brain.set_data_time_index(0)
+brain.scale_data_colormap(fmin=5, fmid=10, fmax=30, transparent=True)
 brain.show_view('lateral')
 brain.save_image('cluster-lh.png')
 brain.show_view('medial')
@@ -236,12 +240,13 @@ brain.show_view('medial')
 # Finally, let's investigate interaction effect by reconstructing the time
 # courses
 
+import matplotlib.pyplot as plt
 inds_t, inds_v = [(clusters[cluster_ind]) for ii, cluster_ind in
                   enumerate(good_cluster_inds)][0]  # first cluster
 
 times = np.arange(X[0].shape[1]) * tstep * 1e3
 
-plt.figure()
+plt.clf()
 colors = ['y', 'b', 'g', 'purple']
 event_ids = ['l_aud', 'r_aud', 'l_vis', 'r_vis']
 
@@ -257,12 +262,12 @@ for ii, (condition, color, eve_id) in enumerate(zip(X, colors, event_ids)):
     plt.fill_between(times, mean_tc + std_tc, mean_tc - std_tc, color='gray',
                      alpha=0.5, label='')
 
-ymin, ymax = mean_tc.min() - 5, mean_tc.max() + 5
+ymin, ymax = mean_tc.min() -5, mean_tc.max() + 5 
 plt.xlabel('Time (ms)')
 plt.ylabel('Activation (F-values)')
 plt.xlim(times[[0, -1]])
 plt.ylim(ymin, ymax)
-plt.fill_betweenx((ymin, ymax), times[inds_t[0]],
+plt.fill_betweenx(np.arange(ymin, ymax), times[inds_t[0]],
                   times[inds_t[-1]], color='orange', alpha=0.3)
 plt.legend()
 plt.title('Interaction between stimulus-modality and location.')

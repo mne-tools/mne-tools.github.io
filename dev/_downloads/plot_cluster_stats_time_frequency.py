@@ -1,6 +1,4 @@
 """
-.. _tut_stats_cluster_sensor_2samp_tfr:
-
 =========================================================================
 Non-parametric between conditions cluster statistic on single trial power
 =========================================================================
@@ -23,16 +21,15 @@ The procedure consists in:
 #
 # License: BSD (3-clause)
 
+print(__doc__)
+
 import numpy as np
-import matplotlib.pyplot as plt
 
 import mne
 from mne import io
 from mne.time_frequency import single_trial_power
 from mne.stats import permutation_cluster_test
 from mne.datasets import sample
-
-print(__doc__)
 
 ###############################################################################
 # Set parameters
@@ -87,16 +84,17 @@ times = 1e3 * epochs_condition_1.times  # change unit to ms
 # spectrotemporal resolution.
 decim = 2
 frequencies = np.arange(7, 30, 3)  # define frequencies of interest
-sfreq = raw.info['sfreq']  # sampling in Hz
+Fs = raw.info['sfreq']  # sampling in Hz
 n_cycles = 1.5
-
-epochs_power_1 = single_trial_power(data_condition_1, sfreq=sfreq,
+epochs_power_1 = single_trial_power(data_condition_1, Fs=Fs,
                                     frequencies=frequencies,
-                                    n_cycles=n_cycles, decim=decim)
+                                    n_cycles=n_cycles, use_fft=False,
+                                    decim=decim)
 
-epochs_power_2 = single_trial_power(data_condition_2, sfreq=sfreq,
+epochs_power_2 = single_trial_power(data_condition_2, Fs=Fs,
                                     frequencies=frequencies,
-                                    n_cycles=n_cycles, decim=decim)
+                                    n_cycles=n_cycles, use_fft=False,
+                                    decim=decim)
 
 epochs_power_1 = epochs_power_1[:, 0, :, :]  # only 1 channel to get 3D matrix
 epochs_power_2 = epochs_power_2[:, 0, :, :]  # only 1 channel to get 3D matrix
@@ -113,11 +111,12 @@ epochs_power_2 /= epochs_baseline_2[..., np.newaxis]
 # Compute statistic
 threshold = 6.0
 T_obs, clusters, cluster_p_values, H0 = \
-    permutation_cluster_test([epochs_power_1, epochs_power_2],
-                             n_permutations=100, threshold=threshold, tail=0)
+                   permutation_cluster_test([epochs_power_1, epochs_power_2],
+                               n_permutations=100, threshold=threshold, tail=0)
 
 ###############################################################################
 # View time-frequency plots
+import matplotlib.pyplot as plt
 plt.clf()
 plt.subplots_adjust(0.12, 0.08, 0.96, 0.94, 0.2, 0.43)
 plt.subplot(2, 1, 1)
@@ -137,12 +136,12 @@ for c, p_val in zip(clusters, cluster_p_values):
     if p_val <= 0.05:
         T_obs_plot[c] = T_obs[c]
 
-plt.imshow(T_obs,
+plt.imshow(T_obs, cmap=plt.cm.gray,
            extent=[times[0], times[-1], frequencies[0], frequencies[-1]],
-           aspect='auto', origin='lower', cmap='RdBu_r')
-plt.imshow(T_obs_plot,
+           aspect='auto', origin='lower')
+plt.imshow(T_obs_plot, cmap=plt.cm.jet,
            extent=[times[0], times[-1], frequencies[0], frequencies[-1]],
-           aspect='auto', origin='lower', cmap='RdBu_r')
+           aspect='auto', origin='lower')
 
 plt.xlabel('time (ms)')
 plt.ylabel('Frequency (Hz)')
