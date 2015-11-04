@@ -1,4 +1,6 @@
 """
+.. _tut_stats_cluster_sensor_1samp_tfr:
+
 ===============================================================
 Non-parametric 1 sample cluster statistic on single trial power
 ===============================================================
@@ -20,15 +22,16 @@ The procedure consists in:
 #
 # License: BSD (3-clause)
 
-print(__doc__)
-
 import numpy as np
+import matplotlib.pyplot as plt
 
 import mne
 from mne import io
 from mne.time_frequency import single_trial_power
 from mne.stats import permutation_cluster_1samp_test
 from mne.datasets import sample
+
+print(__doc__)
 
 ###############################################################################
 # Set parameters
@@ -74,9 +77,9 @@ evoked_data = np.mean(data, 0)
 # spectrotemporal resolution.
 decim = 5
 frequencies = np.arange(8, 40, 2)  # define frequencies of interest
-Fs = raw.info['sfreq']  # sampling in Hz
-epochs_power = single_trial_power(data, Fs=Fs, frequencies=frequencies,
-                                  n_cycles=4, use_fft=False, n_jobs=1,
+sfreq = raw.info['sfreq']  # sampling in Hz
+epochs_power = single_trial_power(data, sfreq=sfreq, frequencies=frequencies,
+                                  n_cycles=4, n_jobs=1,
                                   baseline=(-100, 0), times=times,
                                   baseline_mode='ratio', decim=decim)
 
@@ -98,12 +101,11 @@ epochs_power = np.log10(epochs_power)  # take log of ratio
 # Compute statistic
 threshold = 2.5
 T_obs, clusters, cluster_p_values, H0 = \
-                   permutation_cluster_1samp_test(epochs_power,
-                               n_permutations=100, threshold=threshold, tail=0)
+    permutation_cluster_1samp_test(epochs_power, n_permutations=100,
+                                   threshold=threshold, tail=0)
 
 ###############################################################################
 # View time-frequency plots
-import matplotlib.pyplot as plt
 plt.clf()
 plt.subplots_adjust(0.12, 0.08, 0.96, 0.94, 0.2, 0.43)
 plt.subplot(2, 1, 1)

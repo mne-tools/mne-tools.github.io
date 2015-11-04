@@ -1,4 +1,6 @@
 """
+.. _tut_stats_cluster_source_1samp:
+
 =================================================================
 Permutation t-test on source data with spatio-temporal clustering
 =================================================================
@@ -9,12 +11,10 @@ The multiple comparisons problem is addressed with a cluster-level
 permutation test across space and time.
 
 """
-
 # Authors: Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 #          Eric Larson <larson.eric.d@gmail.com>
 # License: BSD (3-clause)
 
-print(__doc__)
 
 import os.path as op
 import numpy as np
@@ -29,7 +29,8 @@ from mne.stats import (spatio_temporal_cluster_1samp_test,
                        summarize_clusters_stc)
 from mne.minimum_norm import apply_inverse, read_inverse_operator
 from mne.datasets import sample
-from mne.viz import mne_analyze_colormap
+
+print(__doc__)
 
 ###############################################################################
 # Set parameters
@@ -161,19 +162,15 @@ print('Visualizing clusters.')
 #    Now let's build a convenient representation of each cluster, where each
 #    cluster becomes a "time point" in the SourceEstimate
 stc_all_cluster_vis = summarize_clusters_stc(clu, tstep=tstep,
-                                             vertno=fsave_vertices,
+                                             vertices=fsave_vertices,
                                              subject='fsaverage')
 
 #    Let's actually plot the first "time point" in the SourceEstimate, which
 #    shows all the clusters, weighted by duration
-colormap = mne_analyze_colormap(limits=[0, 10, 50])
 subjects_dir = op.join(data_path, 'subjects')
 # blue blobs are for condition A < condition B, red for A > B
-brain = stc_all_cluster_vis.plot('fsaverage', 'inflated', 'both', colormap,
-                                 subjects_dir=subjects_dir,
+brain = stc_all_cluster_vis.plot(hemi='both', subjects_dir=subjects_dir,
                                  time_label='Duration significant (ms)')
 brain.set_data_time_index(0)
-# The colormap requires brain data to be scaled -fmax -> fmax
-brain.scale_data_colormap(fmin=-50, fmid=0, fmax=50, transparent=False)
 brain.show_view('lateral')
 brain.save_image('clusters.png')
