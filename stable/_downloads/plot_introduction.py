@@ -373,6 +373,6 @@ stc.save('mne_dSPM_raw_inverse_Aud')
 # Want to know more ?
 # ^^^^^^^^^^^^^^^^^^^
 #
-# Browse `the examples gallery <auto_examples/index.html>`_.
+# Browse :ref:`examples-index` gallery.
 
 print("Done!")
