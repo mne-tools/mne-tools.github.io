@@ -83,7 +83,7 @@ From raw data to evoked data
 Now, launch `ipython`_ (Advanced Python shell) using the QT backend which best
 supported across systems::
 
-  $ ipython --pylab -qt
+  $ ipython --matplotlib=qt
 
 First, load the mne package:
 """
@@ -373,6 +373,6 @@ stc.save('mne_dSPM_raw_inverse_Aud')
 # Want to know more ?
 # ^^^^^^^^^^^^^^^^^^^
 #
-# Browse :ref:`examples-index` gallery.
+# Browse `the examples gallery <auto_examples/index.html>`_.
 
 print("Done!")
