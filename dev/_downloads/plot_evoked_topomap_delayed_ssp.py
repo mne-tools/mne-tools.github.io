@@ -28,11 +28,11 @@ data_path = sample.data_path()
 # Set parameters
 raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
 event_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw-eve.fif'
-ecg_fname = data_path + '/MEG/sample/sample_audvis_ecg_proj.fif'
+ecg_fname = data_path + '/MEG/sample/sample_audvis_ecg-proj.fif'
 event_id, tmin, tmax = 1, -0.2, 0.5
 
 # Setup for reading the raw data
-raw = io.Raw(raw_fname)
+raw = io.read_raw_fif(raw_fname)
 events = mne.read_events(event_fname)
 
 # delete EEG projections (we know it's the last one)

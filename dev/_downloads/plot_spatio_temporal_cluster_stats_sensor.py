@@ -39,7 +39,7 @@ tmin = -0.2
 tmax = 0.5
 
 # Setup for reading the raw data
-raw = mne.io.Raw(raw_fname, preload=True)
+raw = mne.io.read_raw_fif(raw_fname, preload=True)
 raw.filter(1, 30)
 events = mne.read_events(event_fname)
 
@@ -96,7 +96,7 @@ p_accept = 0.001
 
 cluster_stats = spatio_temporal_cluster_test(X, n_permutations=1000,
                                              threshold=threshold, tail=1,
-                                             n_jobs=2,
+                                             n_jobs=1,
                                              connectivity=connectivity)
 
 T_obs, clusters, p_values, _ = cluster_stats

@@ -9,6 +9,7 @@ Generate simulated evoked data
 
 
 
+
 .. code-block:: python
 
     # Author: Daniel Strohmeier <daniel.strohmeier@tu-ilmenau.de>
@@ -19,9 +20,7 @@ Generate simulated evoked data
     import numpy as np
     import matplotlib.pyplot as plt
 
-    from mne import (read_proj, read_forward_solution, read_cov, read_label,
-                     pick_types_forward, pick_types)
-    from mne.io import Raw, read_info
+    import mne
     from mne.datasets import sample
     from mne.time_frequency import fit_iir_model_raw
     from mne.viz import plot_sparse_source_estimates
@@ -38,12 +37,13 @@ Generate simulated evoked data
 Load real data as templates
 
 
+
 .. code-block:: python
 
     data_path = sample.data_path()
 
-    raw = Raw(data_path + '/MEG/sample/sample_audvis_raw.fif')
-    proj = read_proj(data_path + '/MEG/sample/sample_audvis_ecg_proj.fif')
+    raw = mne.io.read_raw_fif(data_path + '/MEG/sample/sample_audvis_raw.fif')
+    proj = mne.read_proj(data_path + '/MEG/sample/sample_audvis_ecg-proj.fif')
     raw.info['projs'] += proj
     raw.info['bads'] = ['MEG 2443', 'EEG 053']  # mark bad channels
 
@@ -51,22 +51,76 @@ Load real data as templates
     ave_fname = data_path + '/MEG/sample/sample_audvis-no-filter-ave.fif'
     cov_fname = data_path + '/MEG/sample/sample_audvis-cov.fif'
 
-    fwd = read_forward_solution(fwd_fname, force_fixed=True, surf_ori=True)
-    fwd = pick_types_forward(fwd, meg=True, eeg=True, exclude=raw.info['bads'])
-    cov = read_cov(cov_fname)
-    info = read_info(ave_fname)
+    fwd = mne.read_forward_solution(fwd_fname, force_fixed=True, surf_ori=True)
+    fwd = mne.pick_types_forward(fwd, meg=True, eeg=True, exclude=raw.info['bads'])
+    cov = mne.read_cov(cov_fname)
+    info = mne.io.read_info(ave_fname)
 
     label_names = ['Aud-lh', 'Aud-rh']
-    labels = [read_label(data_path + '/MEG/sample/labels/%s.label' % ln)
+    labels = [mne.read_label(data_path + '/MEG/sample/labels/%s.label' % ln)
               for ln in label_names]
 
 
 
 
 
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    Opening raw data file /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis_raw.fif...
+        Read a total of 3 projection items:
+            PCA-v1 (1 x 102)  idle
+            PCA-v2 (1 x 102)  idle
+            PCA-v3 (1 x 102)  idle
+    Current compensation grade : 0
+        Range : 25800 ... 192599 =     42.956 ...   320.670 secs
+    Ready.
+    Adding average EEG reference projection.
+    1 projection items deactivated
+        Read a total of 6 projection items:
+            ECG-planar-999--0.200-0.400-PCA-01 (1 x 203)  idle
+            ECG-planar-999--0.200-0.400-PCA-02 (1 x 203)  idle
+            ECG-axial-999--0.200-0.400-PCA-01 (1 x 102)  idle
+            ECG-axial-999--0.200-0.400-PCA-02 (1 x 102)  idle
+            ECG-eeg-999--0.200-0.400-PCA-01 (1 x 59)  idle
+            ECG-eeg-999--0.200-0.400-PCA-02 (1 x 59)  idle
+    Reading forward solution from /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis-meg-eeg-oct-6-fwd.fif...
+        Reading a source space...
+        Computing patch statistics...
+        Patch information added...
+        Distance information added...
+        [done]
+        Reading a source space...
+        Computing patch statistics...
+        Patch information added...
+        Distance information added...
+        [done]
+        2 source spaces read
+        Desired named matrix (kind = 3523) not available
+        Read MEG forward solution (7498 sources, 306 channels, free orientations)
+        Desired named matrix (kind = 3523) not available
+        Read EEG forward solution (7498 sources, 60 channels, free orientations)
+        MEG and EEG forward solutions combined
+        Source spaces transformed to the forward solution coordinate frame
+        Changing to fixed-orientation forward solution with surface-based source orientations...
+        [done]
+        364 out of 366 channels remain after picking
+        366 x 366 full covariance (kind = 1) found.
+        Read a total of 4 projection items:
+            PCA-v1 (1 x 102) active
+            PCA-v2 (1 x 102) active
+            PCA-v3 (1 x 102) active
+            Average EEG reference (1 x 60) active
+        Read a total of 4 projection items:
+            PCA-v1 (1 x 102) active
+            PCA-v2 (1 x 102) active
+            PCA-v3 (1 x 102) active
+            Average EEG reference (1 x 60) active
 
 
 Generate source time courses from 2 dipoles and the correspond evoked data
+
 
 
 .. code-block:: python
@@ -93,9 +147,10 @@ Generate source time courses from 2 dipoles and the correspond evoked data
 Generate noisy evoked data
 
 
+
 .. code-block:: python
 
-    picks = pick_types(raw.info, meg=True, exclude='bads')
+    picks = mne.pick_types(raw.info, meg=True, exclude='bads')
     iir_filter = fit_iir_model_raw(raw, order=5, picks=picks, tmin=60, tmax=180)[1]
     snr = 6.  # dB
     evoked = simulate_evoked(fwd, stc, info, cov, snr, iir_filter=iir_filter)
@@ -104,9 +159,16 @@ Generate noisy evoked data
 
 
 
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    Projecting source estimate to sensor space...
+    [done]
 
 
 Plot
+
 
 
 .. code-block:: python
@@ -141,14 +203,19 @@ Plot
 
     *
 
-      .. image:: /auto_examples/simulation/images/sphx_glr_plot_simulate_evoked_data_003.png
+      .. image:: /auto_examples/simulation/images/sphx_glr_plot_simulate_evoked_data_004.png
             :scale: 47
 
 
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    Total number of active sources: 2
 
 
 **Total running time of the script:**
-(0 minutes 6.952 seconds)
+(0 minutes 5.751 seconds)
 
 
 

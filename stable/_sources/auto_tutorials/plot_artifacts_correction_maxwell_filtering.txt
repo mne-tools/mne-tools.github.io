@@ -1,0 +1,215 @@
+
+
+.. _sphx_glr_auto_tutorials_plot_artifacts_correction_maxwell_filtering.py:
+
+
+=======================================
+Artifact correction with Maxwell filter
+=======================================
+
+This tutorial shows how to clean MEG data with Maxwell filtering.
+
+Maxwell filtering in MNE can be used to suppress sources of external
+intereference and compensate for subject head movements.
+
+See :ref:`maxwell` for more details.
+
+
+
+.. code-block:: python
+
+
+    import mne
+    from mne.preprocessing import maxwell_filter
+
+    data_path = mne.datasets.sample.data_path()
+
+
+
+
+
+
+
+Set parameters
+
+
+
+.. code-block:: python
+
+    raw_fname = data_path + '/MEG/sample/sample_audvis_raw.fif'
+    ctc_fname = data_path + '/SSS/ct_sparse_mgh.fif'
+    fine_cal_fname = data_path + '/SSS/sss_cal_mgh.dat'
+
+
+
+
+
+
+
+Preprocess with Maxwell filtering
+
+
+
+.. code-block:: python
+
+    raw = mne.io.read_raw_fif(raw_fname)
+    raw.info['bads'] = ['MEG 2443', 'EEG 053', 'MEG 1032', 'MEG 2313']  # set bads
+    # Here we don't use tSSS (set st_duration) because MGH data is very clean
+    raw_sss = maxwell_filter(raw, cross_talk=ctc_fname, calibration=fine_cal_fname)
+
+
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    Opening raw data file /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis_raw.fif...
+        Read a total of 3 projection items:
+            PCA-v1 (1 x 102)  idle
+            PCA-v2 (1 x 102)  idle
+            PCA-v3 (1 x 102)  idle
+    Current compensation grade : 0
+        Range : 25800 ... 192599 =     42.956 ...   320.670 secs
+    Ready.
+    Adding average EEG reference projection.
+    1 projection items deactivated
+    Maxwell filtering raw data
+        Loading raw data from disk
+        Bad MEG channels being reconstructed: ['MEG 2443', 'MEG 1032', 'MEG 2313']
+        Processing 204 gradiometers and 102 magnetometers
+        Using fine calibration sss_cal_mgh.dat
+            Adjusting non-orthogonal EX and EY
+            Adjusted coil positions by (μ ± σ): 1.2° ± 1.5° (max: 6.7°)
+        Automatic origin fit: head of radius 91.0 mm
+        Using origin -4.1, 16.0, 51.7 mm in the head frame
+        Computing regularization
+            Resulting information: 398.5 bits/sample (98.2% of peak 405.9)
+            Using 72/80 inside and 15/15 outside harmonic components
+        Processing 27 data chunks of (at least) 10.0 sec
+            Used  1 head position for     0.00 -    10.00 sec
+            Used  1 head position for    10.00 -    20.00 sec
+            Used  1 head position for    20.00 -    30.00 sec
+            Used  1 head position for    30.00 -    40.00 sec
+            Used  1 head position for    40.00 -    50.00 sec
+            Used  1 head position for    50.00 -    60.00 sec
+            Used  1 head position for    60.00 -    70.00 sec
+            Used  1 head position for    70.00 -    80.00 sec
+            Used  1 head position for    80.00 -    90.00 sec
+            Used  1 head position for    90.00 -   100.00 sec
+            Used  1 head position for   100.00 -   110.00 sec
+            Used  1 head position for   110.00 -   120.00 sec
+            Used  1 head position for   120.00 -   130.00 sec
+            Used  1 head position for   130.00 -   140.00 sec
+            Used  1 head position for   140.00 -   150.00 sec
+            Used  1 head position for   150.00 -   160.00 sec
+            Used  1 head position for   160.00 -   170.00 sec
+            Used  1 head position for   170.00 -   180.00 sec
+            Used  1 head position for   180.00 -   190.00 sec
+            Used  1 head position for   190.00 -   200.00 sec
+            Used  1 head position for   200.00 -   210.00 sec
+            Used  1 head position for   210.00 -   220.00 sec
+            Used  1 head position for   220.00 -   230.00 sec
+            Used  1 head position for   230.00 -   240.00 sec
+            Used  1 head position for   240.00 -   250.00 sec
+            Used  1 head position for   250.00 -   260.00 sec
+            Used  1 head position for   260.00 -   277.71 sec
+    [done]
+
+
+Select events to extract epochs from, pick M/EEG channels, and plot evoked
+
+
+
+.. code-block:: python
+
+    tmin, tmax = -0.2, 0.5
+    event_id = {'Auditory/Left': 1}
+    events = mne.find_events(raw, 'STI 014')
+    picks = mne.pick_types(raw.info, meg=True, eeg=False, stim=False, eog=True,
+                           include=[], exclude='bads')
+    for r, kind in zip((raw, raw_sss), ('Raw data', 'Maxwell filtered data')):
+        epochs = mne.Epochs(r, events, event_id, tmin, tmax, picks=picks,
+                            baseline=(None, 0), reject=dict(eog=150e-6),
+                            preload=False)
+        evoked = epochs.average()
+        evoked.plot(window_title=kind, ylim=dict(grad=(-200, 250),
+                                                 mag=(-600, 700)))
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+    *
+
+      .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_maxwell_filtering_001.png
+            :scale: 47
+
+    *
+
+      .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_maxwell_filtering_002.png
+            :scale: 47
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    320 events found
+    Events id: [ 1  2  3  4  5 32]
+    72 matching events found
+    Applying baseline correction (mode: mean)
+    Created an SSP operator (subspace dimension = 3)
+    4 projection items activated
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : [u'EOG 061']
+    72 matching events found
+    Applying baseline correction (mode: mean)
+    1 projection items activated
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : [u'EOG 061']
+
+
+**Total running time of the script:**
+(0 minutes 6.865 seconds)
+
+
+
+.. container:: sphx-glr-download
+
+    **Download Python source code:** :download:`plot_artifacts_correction_maxwell_filtering.py <plot_artifacts_correction_maxwell_filtering.py>`
+
+
+.. container:: sphx-glr-download
+
+    **Download IPython notebook:** :download:`plot_artifacts_correction_maxwell_filtering.ipynb <plot_artifacts_correction_maxwell_filtering.ipynb>`

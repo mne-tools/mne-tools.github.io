@@ -31,7 +31,7 @@ tmin, tmax = -0.2, 0.5
 event_id = {'Auditory/Left': 1, 'Auditory/Right': 2}
 
 #   Setup for reading the raw data
-raw = io.Raw(raw_fname)
+raw = io.read_raw_fif(raw_fname)
 events = mne.read_events(event_fname)
 
 #   Plot raw data
@@ -54,7 +54,7 @@ epochs.plot(title='Auditory left/right')
 
 # Look at channels that caused dropped events, showing that the subject's
 # blinks were likely to blame for most epochs being dropped
-epochs.drop_bad_epochs()
+epochs.drop_bad()
 epochs.plot_drop_log(subject='sample')
 
 # Average epochs and get evoked data corresponding to the left stimulation

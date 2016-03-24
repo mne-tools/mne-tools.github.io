@@ -26,7 +26,7 @@ raw_fname = data_path + '/MEG/somato/sef_raw_sss.fif'
 event_id, tmin, tmax = 1, -1., 3.
 
 # Setup for reading the raw data
-raw = io.Raw(raw_fname)
+raw = io.read_raw_fif(raw_fname)
 baseline = (None, 0)
 events = mne.find_events(raw, stim_channel='STI 014')
 
@@ -45,6 +45,6 @@ epochs = epochs.pick_channels([epochs.ch_names[82]])  # reduce computation
 power, itc = tfr_stockwell(epochs, fmin=6., fmax=30., decim=4, n_jobs=1,
                            width=.3, return_itc=True)
 
-power.plot([0], baseline=(-0.5, 0), mode=None, title='S-transform (power)')
+power.plot([0], baseline=None, mode=None, title='S-transform (power)')
 
 itc.plot([0], baseline=None, mode=None, title='S-transform (ITC)')

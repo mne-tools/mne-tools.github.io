@@ -12,6 +12,7 @@ activation multiple times.
 
 
 
+
 .. code-block:: python
 
     # Authors: Yousra Bekhti <yousra.bekhti@gmail.com>
@@ -23,8 +24,8 @@ activation multiple times.
     import numpy as np
     import matplotlib.pyplot as plt
 
+    import mne
     from mne import read_source_spaces, find_events, Epochs, compute_covariance
-    from mne.io import Raw
     from mne.datasets import sample
     from mne.simulation import simulate_sparse_stc, simulate_raw
 
@@ -38,18 +39,32 @@ activation multiple times.
                  '/subjects/sample/bem/sample-5120-5120-5120-bem-sol.fif')
 
     # Load real data as the template
-    raw = Raw(raw_fname).crop(0., 30., copy=False)  # 30 sec is enough
+    raw = mne.io.read_raw_fif(raw_fname)
+    raw = raw.crop(0., 30.)  # 30 sec is enough
 
 
 
 
-.. rst-class:: sphx-glr-horizontal
 
+.. rst-class:: sphx-glr-script-out
 
+ Out::
 
+    Opening raw data file /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis_raw.fif...
+        Read a total of 3 projection items:
+            PCA-v1 (1 x 102)  idle
+            PCA-v2 (1 x 102)  idle
+            PCA-v3 (1 x 102)  idle
+    Current compensation grade : 0
+        Range : 25800 ... 192599 =     42.956 ...   320.670 secs
+    Ready.
+    Adding average EEG reference projection.
+    1 projection items deactivated
+    The copy parameter is deprecated and will be removed in 0.14. In 0.13 the behavior will be to operate in-place (like copy=False). In 0.12 the default is copy=True. Use inst.copy() if necessary.
 
 
 Generate dipole time series
+
 
 
 .. code-block:: python
@@ -89,16 +104,26 @@ Generate dipole time series
     :align: center
 
 
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    Reading a source space...
+        [done]
+        Reading a source space...
+        [done]
+        2 source spaces read
 
 
 Simulate raw data
+
 
 
 .. code-block:: python
 
     raw_sim = simulate_raw(raw, stc, trans_fname, src, bem_fname, cov='simple',
                            iir_filter=[0.2, -0.2, 0.04], ecg=True, blink=True,
-                           n_jobs=2, verbose=True)
+                           n_jobs=1, verbose=True)
     raw_sim.plot()
 
 
@@ -108,11 +133,9 @@ Simulate raw data
     :align: center
 
 
-**Script output**:
-
 .. rst-class:: sphx-glr-script-out
 
-  ::
+ Out::
 
     Provided parameters will provide approximately 15 events
     Setting up raw simulation: 2 positions, "zero" interpolation
@@ -129,6 +152,7 @@ Simulate raw data
 Plot evoked data
 
 
+
 .. code-block:: python
 
     events = find_events(raw_sim)  # only 1 pos, so event number == 1
@@ -143,18 +167,50 @@ Plot evoked data
     :align: center
 
 
-**Script output**:
-
 .. rst-class:: sphx-glr-script-out
 
-  ::
+ Out::
 
+    Removing orphaned offset at the beginning of the file.
+    15 events found
+    Events id: [1]
+    15 matching events found
+    Applying baseline correction (mode: mean)
+    Created an SSP operator (subspace dimension = 4)
+    4 projection items activated
+    Loading data for 15 events and 1322 original time points ...
+    1 bad epochs dropped
     Too few samples (required : 1825 got : 1694), covariance estimate may be unreliable
+    Estimating covariance using EMPIRICAL
+    Done.
+    Using cross-validation to select the best estimator.
+    Number of samples used : 1694
+    [done]
+    log-likelihood on unseen data (descending order):
+       empirical: -2271.682
+    selecting best estimator: empirical
+    estimated rank (eeg): 58
+    estimated rank (grad): 203
+    estimated rank (mag): 99
+    estimated rank (mag + grad): 302
+    estimated rank (eeg): 58
+    Setting small MEG eigenvalues to zero.
+    Not doing PCA for MEG.
+    Setting small EEG eigenvalues to zero.
+    Not doing PCA for EEG.
+    No average EEG reference present in info["projs"], covariance may be adversely affected. Consider recomputing covariance using a raw file with an average eeg reference projector added.
 
 
 **Total running time of the script:**
-(0 minutes 42.176 seconds)
+(0 minutes 56.165 seconds)
 
 
 
-**Download Python source code:** :download:`plot_simulate_raw_data.py <plot_simulate_raw_data.py>`
+.. container:: sphx-glr-download
+
+    **Download Python source code:** :download:`plot_simulate_raw_data.py <plot_simulate_raw_data.py>`
+
+
+.. container:: sphx-glr-download
+
+    **Download IPython notebook:** :download:`plot_simulate_raw_data.ipynb <plot_simulate_raw_data.ipynb>`

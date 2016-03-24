@@ -13,6 +13,7 @@ The sources matching the ECG and EOG are automatically found and displayed.
 Subsequently, artifact detection and rejection quality are assessed.
 
 
+
 .. code-block:: python
 
     # Authors: Denis Engemann <denis.engemann@gmail.com>
@@ -23,15 +24,11 @@ Subsequently, artifact detection and rejection quality are assessed.
     import numpy as np
 
     import mne
-    from mne.io import Raw
     from mne.preprocessing import ICA
     from mne.preprocessing import create_ecg_epochs, create_eog_epochs
     from mne.datasets import sample
 
 
-
-
-.. rst-class:: sphx-glr-horizontal
 
 
 
@@ -40,25 +37,39 @@ Subsequently, artifact detection and rejection quality are assessed.
 Setup paths and prepare raw data
 
 
+
 .. code-block:: python
 
 
     data_path = sample.data_path()
     raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
 
-    raw = Raw(raw_fname, preload=True)
-    raw.filter(1, 45, n_jobs=2)
+    raw = mne.io.read_raw_fif(raw_fname, preload=True)
+    raw.filter(1, 45, n_jobs=1)
 
 
 
 
-.. rst-class:: sphx-glr-horizontal
 
+.. rst-class:: sphx-glr-script-out
 
+ Out::
 
+    Opening raw data file /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis_filt-0-40_raw.fif...
+        Read a total of 4 projection items:
+            PCA-v1 (1 x 102)  idle
+            PCA-v2 (1 x 102)  idle
+            PCA-v3 (1 x 102)  idle
+            Average EEG reference (1 x 60)  idle
+    Current compensation grade : 0
+        Range : 6450 ... 48149 =     42.956 ...   320.665 secs
+    Ready.
+    Reading 0 ... 41699  =      0.000 ...   277.709 secs...
+    Band-pass filtering from 1 - 45 Hz
 
 
 1) Fit ICA model using the FastICA algorithm
+
 
 
 .. code-block:: python
@@ -81,13 +92,25 @@ Setup paths and prepare raw data
 
 
 
-.. rst-class:: sphx-glr-horizontal
 
+.. rst-class:: sphx-glr-script-out
 
+ Out::
 
+    Fitting ICA to data using 305 channels. 
+    Please be patient, this may take some time
+    Inferring max_pca_components from picks.
+        Rejecting  epoch based on MAG : [u'MEG 1711']
+    Artifact detected in [4242, 4343]
+        Rejecting  epoch based on MAG : [u'MEG 1711']
+    Artifact detected in [5858, 5959]
+        Rejecting  epoch based on MAG : [u'MEG 1411']
+    Artifact detected in [13433, 13534]
+    Selection by explained variance: 123 components
 
 
 2) identify bad components by analyzing latent sources.
+
 
 
 .. code-block:: python
@@ -160,9 +183,28 @@ Setup paths and prepare raw data
             :scale: 47
 
 
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    Reconstructing ECG signal from Magnetometers
+    Reconstructing ECG signal from Magnetometers
+    Number of ECG events detected : 284 (average pulse 61 / min.)
+    Creating RawArray with float64 data, n_channels=1, n_times=41700
+        Range : 0 ... 41699 =      0.000 ...   277.709 secs
+    Ready.
+    284 matching events found
+    No baseline correction applied
+    Created an SSP operator (subspace dimension = 3)
+    Loading data for 284 events and 151 original time points ...
+    0 bad epochs dropped
+    Reconstructing ECG signal from Magnetometers
+    ... filtering ICA sources
+    ... filtering target
 
 
 3) Assess component selection and unmixing quality
+
 
 
 .. code-block:: python
@@ -212,6 +254,25 @@ Setup paths and prepare raw data
             :scale: 47
 
 
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    Transforming to ICA space (123 components)
+    Zeroing out 4 ICA components
+    EOG channel index for this subject is: [375]
+    Filtering the data to remove DC offset to help distinguish blinks from saccades
+    Now detecting blinks and generating corresponding events
+    Number of EOG events detected : 46
+    46 matching events found
+    No baseline correction applied
+    Created an SSP operator (subspace dimension = 3)
+    Loading data for 46 events and 151 original time points ...
+    0 bad epochs dropped
+    Transforming to ICA space (123 components)
+    Zeroing out 4 ICA components
+    Transforming to ICA space (123 components)
+    Zeroing out 4 ICA components
 
 
 
@@ -226,19 +287,23 @@ Setup paths and prepare raw data
     # read_ica('my_ica.fif')
 
     # Apply the solution to Raw, Epochs or Evoked like this:
-    # ica.apply(epochs, copy=False)
+    # ica.apply(epochs)
 
-
-
-.. rst-class:: sphx-glr-horizontal
 
 
 
 
 
 **Total running time of the script:**
-(26 minutes 33.385 seconds)
+(0 minutes 58.778 seconds)
 
 
 
-**Download Python source code:** :download:`plot_ica_from_raw.py <plot_ica_from_raw.py>`
+.. container:: sphx-glr-download
+
+    **Download Python source code:** :download:`plot_ica_from_raw.py <plot_ica_from_raw.py>`
+
+
+.. container:: sphx-glr-download
+
+    **Download IPython notebook:** :download:`plot_ica_from_raw.ipynb <plot_ica_from_raw.ipynb>`
