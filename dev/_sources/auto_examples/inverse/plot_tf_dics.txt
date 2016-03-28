@@ -51,7 +51,7 @@ Read raw data
 
 .. code-block:: python
 
-    raw = Raw(raw_fname)
+    raw = Raw(raw_fname, preload=True)
     raw.info['bads'] = ['MEG 2443']  # 1 bad MEG channel
 
     # Pick a selection of magnetometer channels. A subset of all channels was used
@@ -61,7 +61,11 @@ Read raw data
     picks = mne.pick_types(raw.info, meg='mag', eeg=False, eog=False,
                            stim=False, exclude='bads',
                            selection=left_temporal_channels)
+    raw.pick_channels([raw.ch_names[pick] for pick in picks])
     reject = dict(mag=4e-12)
+    # Re-normalize our empty-room projectors, which should be fine after
+    # subselection
+    raw.info.normalize_proj()
 
     # Setting time windows. Note that tmin and tmax are set so that time-frequency
     # beamforming will be performed for a wider range of time points than will
@@ -73,19 +77,23 @@ Read raw data
     # Read epochs
     event_id = 1
     events = mne.read_events(event_fname)
-    epochs = mne.Epochs(raw, events, event_id, tmin, tmax, proj=True, picks=picks,
-                        baseline=None, preload=True, reject=reject)
+    epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
+                        baseline=None, preload=True, proj=True, reject=reject)
 
     # Read empty room noise raw data
-    raw_noise = Raw(noise_fname)
+    raw_noise = Raw(noise_fname, preload=True)
     raw_noise.info['bads'] = ['MEG 2443']  # 1 bad MEG channel
+    raw_noise.pick_channels([raw_noise.ch_names[pick] for pick in picks])
+    raw_noise.info.normalize_proj()
 
     # Create noise epochs and make sure the number of noise epochs corresponds to
     # the number of data epochs
     events_noise = make_fixed_length_events(raw_noise, event_id)
     epochs_noise = mne.Epochs(raw_noise, events_noise, event_id, tmin_plot,
-                              tmax_plot, proj=True, picks=picks,
-                              baseline=None, preload=True, reject=reject)
+                              tmax_plot, baseline=None, preload=True, proj=True,
+                              reject=reject)
+    epochs_noise.info.normalize_proj()
+    epochs_noise.apply_proj()
     # then make sure the number of epochs is the same
     epochs_noise = epochs_noise[:len(epochs.events)]
 
@@ -113,6 +121,7 @@ Read raw data
     Ready.
     Adding average EEG reference projection.
     1 projection items deactivated
+    Reading 0 ... 166799  =      0.000 ...   277.714 secs...
     72 matching events found
     No baseline correction applied
     Created an SSP operator (subspace dimension = 3)
@@ -128,12 +137,14 @@ Read raw data
     Current compensation grade : 0
         Range : 19800 ... 85867 =     32.966 ...   142.965 secs
     Ready.
+    Reading 0 ... 66067  =      0.000 ...   109.999 secs...
     110 matching events found
     No baseline correction applied
     Created an SSP operator (subspace dimension = 3)
     3 projection items activated
     Loading data for 110 events and 481 original time points ...
     1 bad epochs dropped
+    Projections have already been applied. Setting proj attribute to True.
     Reading forward solution from /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis-meg-eeg-oct-6-fwd.fif...
         Reading a source space...
         Computing patch statistics...
@@ -208,24 +219,19 @@ Time-frequency beamforming based on DICS
 
  Out::
 
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
     Computing time-frequency DICS beamformer for time window -550 to -250 ms, in frequency range 4 to 12 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -233,7 +239,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window -500 to -200 ms, in frequency range 4 to 12 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -241,7 +246,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window -450 to -150 ms, in frequency range 4 to 12 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -249,7 +253,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window -400 to -100 ms, in frequency range 4 to 12 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -257,7 +260,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window -350 to -50 ms, in frequency range 4 to 12 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -265,7 +267,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window -300 to 0 ms, in frequency range 4 to 12 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -273,7 +274,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window -250 to 49 ms, in frequency range 4 to 12 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -281,7 +281,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window -200 to 99 ms, in frequency range 4 to 12 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -289,7 +288,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window -150 to 149 ms, in frequency range 4 to 12 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -297,7 +295,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window -100 to 199 ms, in frequency range 4 to 12 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -305,7 +302,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window -50 to 249 ms, in frequency range 4 to 12 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -313,7 +309,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window 0 to 300 ms, in frequency range 4 to 12 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -321,7 +316,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window 50 to 350 ms, in frequency range 4 to 12 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -329,7 +323,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window 99 to 399 ms, in frequency range 4 to 12 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -337,7 +330,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window 150 to 450 ms, in frequency range 4 to 12 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -345,7 +337,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window 199 to 499 ms, in frequency range 4 to 12 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -353,7 +344,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window 250 to 550 ms, in frequency range 4 to 12 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -361,7 +351,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window 300 to 600 ms, in frequency range 4 to 12 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -369,7 +358,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window 350 to 649 ms, in frequency range 4 to 12 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -377,7 +365,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window 400 to 700 ms, in frequency range 4 to 12 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -385,7 +372,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window 449 to 750 ms, in frequency range 4 to 12 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -393,7 +379,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window -550 to -350 ms, in frequency range 12 to 30 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -401,7 +386,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window -500 to -300 ms, in frequency range 12 to 30 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -409,7 +393,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window -450 to -250 ms, in frequency range 12 to 30 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -417,7 +400,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window -400 to -200 ms, in frequency range 12 to 30 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -425,7 +407,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window -350 to -150 ms, in frequency range 12 to 30 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -433,7 +414,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window -300 to -100 ms, in frequency range 12 to 30 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -441,7 +421,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window -250 to -49 ms, in frequency range 12 to 30 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -449,7 +428,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window -200 to 0 ms, in frequency range 12 to 30 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -457,7 +435,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window -150 to 49 ms, in frequency range 12 to 30 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -465,7 +442,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window -100 to 99 ms, in frequency range 12 to 30 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -473,7 +449,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window -50 to 149 ms, in frequency range 12 to 30 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -481,7 +456,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window 0 to 200 ms, in frequency range 12 to 30 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -489,7 +463,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window 50 to 250 ms, in frequency range 12 to 30 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -497,7 +470,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window 99 to 300 ms, in frequency range 12 to 30 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -505,7 +477,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window 150 to 350 ms, in frequency range 12 to 30 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -513,7 +484,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window 199 to 399 ms, in frequency range 12 to 30 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -521,7 +491,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window 250 to 450 ms, in frequency range 12 to 30 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -529,7 +498,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window 300 to 500 ms, in frequency range 12 to 30 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -537,7 +505,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window 350 to 550 ms, in frequency range 12 to 30 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -545,7 +512,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window 400 to 600 ms, in frequency range 12 to 30 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -553,7 +519,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window 449 to 649 ms, in frequency range 12 to 30 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -561,7 +526,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window 500 to 700 ms, in frequency range 12 to 30 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -569,7 +533,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window 550 to 750 ms, in frequency range 12 to 30 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -577,7 +540,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window -550 to -400 ms, in frequency range 30 to 55 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -585,7 +547,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window -500 to -350 ms, in frequency range 30 to 55 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -593,7 +554,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window -450 to -300 ms, in frequency range 30 to 55 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -601,7 +561,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window -400 to -250 ms, in frequency range 30 to 55 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -609,7 +568,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window -350 to -200 ms, in frequency range 30 to 55 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -617,7 +575,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window -300 to -150 ms, in frequency range 30 to 55 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -625,7 +582,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window -250 to -100 ms, in frequency range 30 to 55 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -633,7 +589,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window -200 to -50 ms, in frequency range 30 to 55 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -641,7 +596,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window -150 to 0 ms, in frequency range 30 to 55 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -649,7 +603,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window -100 to 49 ms, in frequency range 30 to 55 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -657,7 +610,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window -50 to 99 ms, in frequency range 30 to 55 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -665,7 +617,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window 0 to 150 ms, in frequency range 30 to 55 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -673,7 +624,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window 50 to 200 ms, in frequency range 30 to 55 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -681,7 +631,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window 99 to 249 ms, in frequency range 30 to 55 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -689,7 +638,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window 150 to 300 ms, in frequency range 30 to 55 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -697,7 +645,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window 199 to 350 ms, in frequency range 30 to 55 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -705,7 +652,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window 250 to 400 ms, in frequency range 30 to 55 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -713,7 +659,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window 300 to 450 ms, in frequency range 30 to 55 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -721,7 +666,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window 350 to 500 ms, in frequency range 30 to 55 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -729,7 +673,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window 400 to 550 ms, in frequency range 30 to 55 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -737,7 +680,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window 449 to 600 ms, in frequency range 30 to 55 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -745,7 +687,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window 500 to 650 ms, in frequency range 30 to 55 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -753,7 +694,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window 550 to 700 ms, in frequency range 30 to 55 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -761,7 +701,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window 600 to 750 ms, in frequency range 30 to 55 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -769,7 +708,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window -550 to -450 ms, in frequency range 65 to 300 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -777,7 +715,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window -500 to -400 ms, in frequency range 65 to 300 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -785,7 +722,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window -450 to -350 ms, in frequency range 65 to 300 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -793,7 +729,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window -400 to -300 ms, in frequency range 65 to 300 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -801,7 +736,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window -350 to -250 ms, in frequency range 65 to 300 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -809,7 +743,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window -300 to -200 ms, in frequency range 65 to 300 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -817,7 +750,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window -250 to -150 ms, in frequency range 65 to 300 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -825,7 +757,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window -200 to -100 ms, in frequency range 65 to 300 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -833,7 +764,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window -150 to -50 ms, in frequency range 65 to 300 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -841,7 +771,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window -100 to 0 ms, in frequency range 65 to 300 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -849,7 +778,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window -50 to 49 ms, in frequency range 65 to 300 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -857,7 +785,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window 0 to 100 ms, in frequency range 65 to 300 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -865,7 +792,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window 50 to 150 ms, in frequency range 65 to 300 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -873,7 +799,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window 99 to 199 ms, in frequency range 65 to 300 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -881,7 +806,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window 150 to 250 ms, in frequency range 65 to 300 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -889,7 +813,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window 199 to 299 ms, in frequency range 65 to 300 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -897,7 +820,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window 250 to 350 ms, in frequency range 65 to 300 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -905,7 +827,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window 300 to 400 ms, in frequency range 65 to 300 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -913,7 +834,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window 350 to 449 ms, in frequency range 65 to 300 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -921,7 +841,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window 400 to 500 ms, in frequency range 65 to 300 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -929,7 +848,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window 449 to 549 ms, in frequency range 65 to 300 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -937,7 +855,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window 500 to 600 ms, in frequency range 65 to 300 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -945,7 +862,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window 550 to 650 ms, in frequency range 65 to 300 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -953,7 +869,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window 600 to 700 ms, in frequency range 65 to 300 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -961,7 +876,6 @@ Time-frequency beamforming based on DICS
     Computing DICS source power...
     [done]
     Computing time-frequency DICS beamformer for time window 650 to 750 ms, in frequency range 65 to 300 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -970,7 +884,6 @@ Time-frequency beamforming based on DICS
     [done]
     Adding a time window to cover last time points
     Computing time-frequency DICS beamformer for time window 650 to 750 ms, in frequency range 65 to 300 Hz
-    Epochs are not baseline corrected, cross-spectral density may be inaccurate
     Computing cross-spectral density from epochs...
         using FFT with a Hanning window to estimate spectra
     [done]
@@ -980,7 +893,7 @@ Time-frequency beamforming based on DICS
 
 
 **Total running time of the script:**
-(0 minutes 29.286 seconds)
+(0 minutes 25.263 seconds)
 
 
 

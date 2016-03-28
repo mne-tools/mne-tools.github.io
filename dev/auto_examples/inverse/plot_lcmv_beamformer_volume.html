@@ -34,8 +34,8 @@
     <link rel="shortcut icon" href="../../_static/favicon.ico"/>
     <link rel="top" title="MNE 0.12.dev0 documentation" href="../../index.html" />
     <link rel="up" title="Examples Gallery" href="../index.html" />
-    <link rel="next" title="Compute sparse inverse solution with mixed norm: MxNE and irMxNE" href="plot_mixed_norm_inverse.html" />
-    <link rel="prev" title="Compute LCMV beamformer on evoked data" href="plot_lcmv_beamformer.html" />
+    <link rel="next" title="Compute point-spread functions (PSFs) for MNE/dSPM/sLORETA" href="plot_mne_point_spread_function.html" />
+    <link rel="prev" title="Assemble inverse operator and compute MNE-dSPM inverse solution" href="plot_make_inverse_operator.html" />
 
 <link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,700italic,400,700' rel='stylesheet' type='text/css'>
 
@@ -181,11 +181,11 @@ This documentation is for the development version (0.12.dev0) - <a href="http://
 </ul>
 
   <li>
-    <a href="plot_lcmv_beamformer.html" title="Previous Chapter: Compute LCMV beamformer on evoked data"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; Compute LCMV ...</span>
+    <a href="plot_make_inverse_operator.html" title="Previous Chapter: Assemble inverse operator and compute MNE-dSPM inverse solution"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; Assemble inve...</span>
     </a>
   </li>
   <li>
-    <a href="plot_mixed_norm_inverse.html" title="Next Chapter: Compute sparse inverse solution with mixed norm: MxNE and irMxNE"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">Compute spars... &raquo;</span>
+    <a href="plot_mne_point_spread_function.html" title="Next Chapter: Compute point-spread functions (PSFs) for MNE/dSPM/sLORETA"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">Compute point... &raquo;</span>
     </a>
   </li>
 <form action="../../search.html" method="get">
@@ -225,14 +225,13 @@ Freeview.</p>
 <span class="n">raw_fname</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis_raw.fif&#39;</span>
 <span class="n">event_fname</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis_raw-eve.fif&#39;</span>
 <span class="n">fname_fwd</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis-meg-vol-7-fwd.fif&#39;</span>
-<span class="n">fname_cov</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis-shrunk-cov.fif&#39;</span>
 </pre></div>
 </div>
 <p>Get epochs</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">event_id</span><span class="p">,</span> <span class="n">tmin</span><span class="p">,</span> <span class="n">tmax</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.5</span>
 
 <span class="c1"># Setup for reading the raw data</span>
-<span class="n">raw</span> <span class="o">=</span> <a href="../../generated/mne.io.Raw.html#mne.io.Raw"><span class="n">Raw</span></a><span class="p">(</span><span class="n">raw_fname</span><span class="p">)</span>
+<span class="n">raw</span> <span class="o">=</span> <a href="../../generated/mne.io.Raw.html#mne.io.Raw"><span class="n">Raw</span></a><span class="p">(</span><span class="n">raw_fname</span><span class="p">,</span> <span class="n">preload</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">proj</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 <span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;bads&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;MEG 2443&#39;</span><span class="p">,</span> <span class="s1">&#39;EEG 053&#39;</span><span class="p">]</span>  <span class="c1"># 2 bads channels</span>
 <span class="n">events</span> <span class="o">=</span> <a href="../../generated/mne.read_events.html#mne.read_events"><span class="n">mne</span><span class="o">.</span><span class="n">read_events</span></a><span class="p">(</span><span class="n">event_fname</span><span class="p">)</span>
 
@@ -241,16 +240,22 @@ Freeview.</p>
 <span class="n">picks</span> <span class="o">=</span> <a href="../../generated/mne.pick_types.html#mne.pick_types"><span class="n">mne</span><span class="o">.</span><span class="n">pick_types</span></a><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">meg</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">eeg</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">stim</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">eog</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
                        <span class="n">exclude</span><span class="o">=</span><span class="s1">&#39;bads&#39;</span><span class="p">,</span> <span class="n">selection</span><span class="o">=</span><span class="n">left_temporal_channels</span><span class="p">)</span>
 
+<span class="c1"># Pick the channels of interest</span>
+<span class="n">raw</span><span class="o">.</span><span class="n">pick_channels</span><span class="p">([</span><span class="n">raw</span><span class="o">.</span><span class="n">ch_names</span><span class="p">[</span><span class="n">pick</span><span class="p">]</span> <span class="k">for</span> <span class="n">pick</span> <span class="ow">in</span> <span class="n">picks</span><span class="p">])</span>
+<span class="c1"># Re-normalize our empty-room projectors, so they are fine after subselection</span>
+<span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="o">.</span><span class="n">normalize_proj</span><span class="p">()</span>
+
 <span class="c1"># Read epochs</span>
-<span class="n">epochs</span> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs"><span class="n">mne</span><span class="o">.</span><span class="n">Epochs</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">event_id</span><span class="p">,</span> <span class="n">tmin</span><span class="p">,</span> <span class="n">tmax</span><span class="p">,</span> <span class="n">proj</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
-                    <span class="n">picks</span><span class="o">=</span><span class="n">picks</span><span class="p">,</span> <span class="n">baseline</span><span class="o">=</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">preload</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+<span class="n">proj</span> <span class="o">=</span> <span class="bp">False</span>  <span class="c1"># already applied</span>
+<span class="n">epochs</span> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs"><span class="n">mne</span><span class="o">.</span><span class="n">Epochs</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">event_id</span><span class="p">,</span> <span class="n">tmin</span><span class="p">,</span> <span class="n">tmax</span><span class="p">,</span>
+                    <span class="n">baseline</span><span class="o">=</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">preload</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">proj</span><span class="o">=</span><span class="n">proj</span><span class="p">,</span>
                     <span class="n">reject</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">grad</span><span class="o">=</span><span class="mf">4000e-13</span><span class="p">,</span> <span class="n">mag</span><span class="o">=</span><span class="mf">4e-12</span><span class="p">,</span> <span class="n">eog</span><span class="o">=</span><span class="mf">150e-6</span><span class="p">))</span>
 <span class="n">evoked</span> <span class="o">=</span> <span class="n">epochs</span><span class="o">.</span><span class="n">average</span><span class="p">()</span>
 
 <span class="n">forward</span> <span class="o">=</span> <span class="n">mne</span><span class="o">.</span><span class="n">read_forward_solution</span><span class="p">(</span><span class="n">fname_fwd</span><span class="p">)</span>
 
 <span class="c1"># Read regularized noise covariance and compute regularized data covariance</span>
-<span class="n">noise_cov</span> <span class="o">=</span> <a href="../../generated/mne.read_cov.html#mne.read_cov"><span class="n">mne</span><span class="o">.</span><span class="n">read_cov</span></a><span class="p">(</span><span class="n">fname_cov</span><span class="p">)</span>
+<span class="n">noise_cov</span> <span class="o">=</span> <a href="../../generated/mne.compute_covariance.html#mne.compute_covariance"><span class="n">mne</span><span class="o">.</span><span class="n">compute_covariance</span></a><span class="p">(</span><span class="n">epochs</span><span class="p">,</span> <span class="n">tmin</span><span class="o">=</span><span class="n">tmin</span><span class="p">,</span> <span class="n">tmax</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;shrunk&#39;</span><span class="p">)</span>
 <span class="n">data_cov</span> <span class="o">=</span> <a href="../../generated/mne.compute_covariance.html#mne.compute_covariance"><span class="n">mne</span><span class="o">.</span><span class="n">compute_covariance</span></a><span class="p">(</span><span class="n">epochs</span><span class="p">,</span> <span class="n">tmin</span><span class="o">=</span><span class="mf">0.04</span><span class="p">,</span> <span class="n">tmax</span><span class="o">=</span><span class="mf">0.15</span><span class="p">,</span>
                                   <span class="n">method</span><span class="o">=</span><span class="s1">&#39;shrunk&#39;</span><span class="p">)</span>
 
@@ -299,6 +304,10 @@ Current compensation grade : 0
 Ready.
 Adding average EEG reference projection.
 1 projection items deactivated
+Reading 0 ... 166799  =      0.000 ...   277.714 secs...
+Created an SSP operator (subspace dimension = 4)
+4 projection items activated
+SSP projectors applied...
 72 matching events found
 Applying baseline correction (mode: mean)
 Created an SSP operator (subspace dimension = 3)
@@ -330,12 +339,14 @@ Reading forward solution from /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/s
     Source spaces transformed to the forward solution coordinate frame
     Cartesian source orientations...
 [done]
-    365 x 365 full covariance (kind = 1) found.
-    Read a total of 4 projection items:
-        PCA-v1 (1 x 102) active
-        PCA-v2 (1 x 102) active
-        PCA-v3 (1 x 102) active
-        Average EEG reference (1 x 59) active
+Estimating covariance using SHRUNK
+Done.
+Using cross-validation to select the best estimator.
+Number of samples used : 6776
+[done]
+log-likelihood on unseen data (descending order):
+   shrunk: -195.027
+selecting best estimator: shrunk
 Estimating covariance using SHRUNK
 Done.
 Using cross-validation to select the best estimator.
@@ -344,7 +355,6 @@ Number of samples used : 3752
 log-likelihood on unseen data (descending order):
    shrunk: -201.698
 selecting best estimator: shrunk
-info[&quot;bads&quot;] and noise_cov[&quot;bads&quot;] do not match, excluding bad channels from both
     39 out of 306 channels remain after picking
     Created an SSP operator (subspace dimension = 3)
 estimated rank (mag + grad): 36
@@ -356,7 +366,7 @@ Writing STC to disk...
 </pre></div>
 </div>
 <p><strong>Total running time of the script:</strong>
-(0 minutes 3.983 seconds)</p>
+(0 minutes 7.420 seconds)</p>
 <div class="sphx-glr-download container">
 <strong>Download Python source code:</strong> <a class="reference download internal" href="../../_downloads/plot_lcmv_beamformer_volume.py"><code class="xref download docutils literal"><span class="pre">plot_lcmv_beamformer_volume.py</span></code></a></div>
 <div class="sphx-glr-download container">
