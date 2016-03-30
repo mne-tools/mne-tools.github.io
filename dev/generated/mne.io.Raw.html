@@ -204,7 +204,7 @@ This documentation is for the development version (0.12.dev0) - <a href="http://
 <dl class="class">
 <dt id="mne.io.Raw">
 <em class="property">class </em><code class="descclassname">mne.io.</code><code class="descname">Raw</code><span class="sig-paren">(</span><em>fnames</em>, <em>allow_maxshield=False</em>, <em>preload=False</em>, <em>proj=False</em>, <em>compensation=None</em>, <em>add_eeg_ref=True</em>, <em>verbose=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mne.io.Raw" title="Permalink to this definition">¶</a></dt>
-<dd><p>Raw FIF data</p>
+<dd><p>Raw data in FIF format</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -377,7 +377,7 @@ present).</p>
 <td>Rename channels.</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#mne.io.Raw.resample" title="mne.io.Raw.resample"><code class="xref py py-obj docutils literal"><span class="pre">resample</span></code></a>(sfreq[,&nbsp;npad,&nbsp;window,&nbsp;stim_picks,&nbsp;...])</td>
-<td>Resample data channels.</td>
+<td>Resample all channels.</td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#mne.io.Raw.save" title="mne.io.Raw.save"><code class="xref py py-obj docutils literal"><span class="pre">save</span></code></a>(fname[,&nbsp;picks,&nbsp;tmin,&nbsp;tmax,&nbsp;...])</td>
 <td>Save raw data to file</td>
@@ -503,7 +503,7 @@ to &#8216;STI 014&#8217;.</p>
 <dt id="mne.io.Raw.anonymize">
 <code class="descname">anonymize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mne.io.Raw.anonymize" title="Permalink to this definition">¶</a></dt>
 <dd><p>Anonymize data</p>
-<p>This function will remove info[&#8216;subject_info&#8217;] if it exists.</p>
+<p>This function will remove <code class="docutils literal"><span class="pre">raw.info['subject_info']</span></code> if it exists.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -556,14 +556,20 @@ data of the Raw object is modified inplace. If the function returns
 a different data type (e.g. numpy.complex) it must be specified using
 the dtype parameter, which causes the data type used for representing
 the raw data to change.</p>
-<p>The Raw object has to be constructed using preload=True (or string).</p>
-<dl class="docutils">
-<dt>Note: If n_jobs &gt; 1, more memory is required as &#8220;len(picks) * n_times&#8221;</dt>
-<dd>additional time points need to be temporaily stored in memory.</dd>
-<dt>Note: If the data type changes (dtype != None), more memory is required</dt>
-<dd>since the original and the converted data needs to be stored in
-memory.</dd>
-</dl>
+<p>The Raw object has to have the data loaded e.g. with <code class="docutils literal"><span class="pre">preload=True</span></code>
+or <code class="docutils literal"><span class="pre">self.load_data()</span></code>.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">If n_jobs &gt; 1, more memory is required as
+<code class="docutils literal"><span class="pre">len(picks)</span> <span class="pre">*</span> <span class="pre">n_times</span></code> additional time points need to
+be temporaily stored in memory.</p>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">If the data type changes (dtype != None), more memory is
+required since the original and the converted data needs
+to be stored in memory.</p>
+</div>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -615,18 +621,18 @@ a complex representation (the analytic signal is complex valued).</p>
 <p>If envelope=True, the absolute value of the analytic signal for the
 channels defined in &#8220;picks&#8221; is computed, resulting in the envelope
 signal.</p>
-<dl class="docutils">
-<dt>Note: DO NOT use envelope=True if you intend to compute an inverse</dt>
-<dd>solution from the raw data. If you want to compute the
-envelope in source space, use envelope=False and compute the
-envelope after the inverse solution has been obtained.</dd>
-<dt>Note: If envelope=False, more memory is required since the original</dt>
-<dd>raw data as well as the analytic signal have temporarily to
-be stored in memory.</dd>
-<dt>Note: If n_jobs &gt; 1 and envelope=True, more memory is required as</dt>
-<dd>&#8220;len(picks) * n_times&#8221; additional time points need to be
-temporaily stored in memory.</dd>
-</dl>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">If envelope=False, more memory is required since the
+original raw data as well as the analytic signal have
+temporarily to be stored in memory.</p>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">If n_jobs &gt; 1, more memory is required as
+<code class="docutils literal"><span class="pre">len(picks)</span> <span class="pre">*</span> <span class="pre">n_times</span></code> additional time points need to
+be temporaily stored in memory.</p>
+</div>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -905,11 +911,12 @@ to tell whether or not projectors have been applied previously.</p>
 <code class="descname">filter</code><span class="sig-paren">(</span><em>l_freq</em>, <em>h_freq</em>, <em>picks=None</em>, <em>filter_length='10s'</em>, <em>l_trans_bandwidth=0.5</em>, <em>h_trans_bandwidth=0.5</em>, <em>n_jobs=1</em>, <em>method='fft'</em>, <em>iir_params=None</em>, <em>copy=False</em>, <em>verbose=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mne.io.Raw.filter" title="Permalink to this definition">¶</a></dt>
 <dd><p>Filter a subset of channels.</p>
 <p>Applies a zero-phase low-pass, high-pass, band-pass, or band-stop
-filter to the channels selected by &#8220;picks&#8221;. The data of the Raw
-object is modified inplace.</p>
-<p>The Raw object has to be constructed using preload=True (or string).</p>
-<p>l_freq and h_freq are the frequencies below which and above which,
-respectively, to filter out of the data. Thus the uses are:</p>
+filter to the channels selected by <code class="docutils literal"><span class="pre">picks</span></code>. By default the data
+of the Raw object is modified inplace.</p>
+<p>The Raw object has to have the data loaded e.g. with <code class="docutils literal"><span class="pre">preload=True</span></code>
+or <code class="docutils literal"><span class="pre">self.load_data()</span></code>.</p>
+<p><code class="docutils literal"><span class="pre">l_freq</span></code> and <code class="docutils literal"><span class="pre">h_freq</span></code> are the frequencies below which and above
+which, respectively, to filter out of the data. Thus the uses are:</p>
 <blockquote>
 <div><ul class="simple">
 <li><code class="docutils literal"><span class="pre">l_freq</span> <span class="pre">&lt;</span> <span class="pre">h_freq</span></code>: band-pass filter</li>
@@ -918,10 +925,14 @@ respectively, to filter out of the data. Thus the uses are:</p>
 <li><code class="docutils literal"><span class="pre">l_freq</span> <span class="pre">is</span> <span class="pre">None</span> <span class="pre">and</span> <span class="pre">h_freq</span> <span class="pre">is</span> <span class="pre">not</span> <span class="pre">None</span></code>: low-pass filter</li>
 </ul>
 </div></blockquote>
-<p>If n_jobs &gt; 1, more memory is required as &#8220;len(picks) * n_times&#8221;
-additional time points need to be temporarily stored in memory.</p>
-<p>self.info[&#8216;lowpass&#8217;] and self.info[&#8216;highpass&#8217;] are only updated
-with picks=None.</p>
+<p><code class="docutils literal"><span class="pre">self.info['lowpass']</span></code> and <code class="docutils literal"><span class="pre">self.info['highpass']</span></code> are only
+updated with picks=None.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">If n_jobs &gt; 1, more memory is required as
+<code class="docutils literal"><span class="pre">len(picks)</span> <span class="pre">*</span> <span class="pre">n_times</span></code> additional time points need to
+be temporaily stored in memory.</p>
+</div>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -980,13 +991,22 @@ is None and method=&#8221;iir&#8221;, 4th order Butterworth will be used.</p>
 </div></blockquote>
 <p><strong>copy</strong> : bool</p>
 <blockquote>
-<div><p>If <code class="docutils literal"><span class="pre">True</span></code>, return the modified original object. If <code class="docutils literal"><span class="pre">False</span></code>,
-modify in-place and return the original object.</p>
+<div><p>If <code class="docutils literal"><span class="pre">True</span></code>, return a modified copy of original object. If
+<code class="docutils literal"><span class="pre">False</span></code> modify in-place and return the original object.</p>
+<div class="versionadded">
+<p><span class="versionmodified">New in version 0.12.0.</span></p>
+</div>
 </div></blockquote>
 <p><strong>verbose</strong> : bool, str, int, or None</p>
-<blockquote class="last">
+<blockquote>
 <div><p>If not None, override default verbose level (see mne.verbose).
 Defaults to self.verbose.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>raw</strong> : instance of Raw</p>
+<blockquote class="last">
+<div><p>The raw instance with filtered data.</p>
 </div></blockquote>
 </td>
 </tr>
@@ -994,7 +1014,7 @@ Defaults to self.verbose.</p>
 </table>
 <div class="admonition seealso">
 <p class="first admonition-title">See also</p>
-<p class="last"><a class="reference internal" href="mne.Epochs.html#mne.Epochs.savgol_filter" title="mne.Epochs.savgol_filter"><code class="xref py py-obj docutils literal"><span class="pre">mne.Epochs.savgol_filter</span></code></a></p>
+<p class="last"><a class="reference internal" href="mne.Epochs.html#mne.Epochs.savgol_filter" title="mne.Epochs.savgol_filter"><code class="xref py py-obj docutils literal"><span class="pre">mne.Epochs.savgol_filter</span></code></a>, <a class="reference internal" href="#mne.io.Raw.notch_filter" title="mne.io.Raw.notch_filter"><code class="xref py py-obj docutils literal"><span class="pre">mne.io.Raw.notch_filter</span></code></a>, <a class="reference internal" href="#mne.io.Raw.resample" title="mne.io.Raw.resample"><code class="xref py py-obj docutils literal"><span class="pre">mne.io.Raw.resample</span></code></a></p>
 </div>
 </dd></dl>
 
@@ -1031,7 +1051,7 @@ to upgrade the data files to use the true coil type.</p>
 <p class="first admonition-title">Note</p>
 <p class="last">The effect of the difference between the coil sizes on the
 current estimates computed by the MNE software is very small.
-Therefore the use of mne_fix_mag_coil_types is not mandatory.</p>
+Therefore the use of this function is not mandatory.</p>
 </div>
 </dd></dl>
 
@@ -1165,15 +1185,18 @@ If data were already preloaded, it will do nothing.</p>
 
 <dl class="method">
 <dt id="mne.io.Raw.notch_filter">
-<code class="descname">notch_filter</code><span class="sig-paren">(</span><em>freqs</em>, <em>picks=None</em>, <em>filter_length='10s'</em>, <em>notch_widths=None</em>, <em>trans_bandwidth=1.0</em>, <em>n_jobs=1</em>, <em>method='fft'</em>, <em>iir_params=None</em>, <em>mt_bandwidth=None</em>, <em>p_value=0.05</em>, <em>verbose=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mne.io.Raw.notch_filter" title="Permalink to this definition">¶</a></dt>
+<code class="descname">notch_filter</code><span class="sig-paren">(</span><em>freqs</em>, <em>picks=None</em>, <em>filter_length='10s'</em>, <em>notch_widths=None</em>, <em>trans_bandwidth=1.0</em>, <em>n_jobs=1</em>, <em>method='fft'</em>, <em>iir_params=None</em>, <em>mt_bandwidth=None</em>, <em>p_value=0.05</em>, <em>copy=False</em>, <em>verbose=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mne.io.Raw.notch_filter" title="Permalink to this definition">¶</a></dt>
 <dd><p>Notch filter a subset of channels.</p>
 <p>Applies a zero-phase notch filter to the channels selected by
-&#8220;picks&#8221;. The data of the Raw object is modified inplace.</p>
-<p>The Raw object has to be constructed using preload=True (or string).</p>
-<dl class="docutils">
-<dt>Note: If n_jobs &gt; 1, more memory is required as &#8220;len(picks) * n_times&#8221;</dt>
-<dd>additional time points need to be temporaily stored in memory.</dd>
-</dl>
+&#8220;picks&#8221;. By default the data of the Raw object is modified inplace.</p>
+<p>The Raw object has to have the data loaded e.g. with <code class="docutils literal"><span class="pre">preload=True</span></code>
+or <code class="docutils literal"><span class="pre">self.load_data()</span></code>.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">If n_jobs &gt; 1, more memory is required as
+<code class="docutils literal"><span class="pre">len(picks)</span> <span class="pre">*</span> <span class="pre">n_times</span></code> additional time points need to
+be temporaily stored in memory.</p>
+</div>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -1238,17 +1261,35 @@ sinusoidal components to remove when method=&#8217;spectrum_fit&#8217; and
 freqs=None. Note that this will be Bonferroni corrected for the
 number of frequencies, so large p-values may be justified.</p>
 </div></blockquote>
+<p><strong>copy</strong> : bool</p>
+<blockquote>
+<div><p>If <code class="docutils literal"><span class="pre">True</span></code>, return a modified copy of original object. If
+<code class="docutils literal"><span class="pre">False</span></code> modify in-place and return the original object.</p>
+<div class="versionadded">
+<p><span class="versionmodified">New in version 0.12.0.</span></p>
+</div>
+</div></blockquote>
 <p><strong>verbose</strong> : bool, str, int, or None</p>
-<blockquote class="last">
+<blockquote>
 <div><p>If not None, override default verbose level (see mne.verbose).
 Defaults to self.verbose.</p>
 </div></blockquote>
 </td>
 </tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>raw</strong> : instance of Raw</p>
+<blockquote class="last">
+<div><p>The raw instance with filtered data.</p>
+</div></blockquote>
+</td>
+</tr>
 </tbody>
 </table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="#mne.io.Raw.filter" title="mne.io.Raw.filter"><code class="xref py py-obj docutils literal"><span class="pre">mne.io.Raw.filter</span></code></a></p>
+</div>
 <p class="rubric">Notes</p>
-<p>For details, see mne.filter.notch_filter.</p>
+<p>For details, see <a class="reference internal" href="mne.filter.notch_filter.html#mne.filter.notch_filter" title="mne.filter.notch_filter"><code class="xref py py-func docutils literal"><span class="pre">mne.filter.notch_filter()</span></code></a>.</p>
 </dd></dl>
 
 <dl class="method">
@@ -1760,9 +1801,9 @@ that takes and returns a string (new in version 0.10.0).</p>
 <dl class="method">
 <dt id="mne.io.Raw.resample">
 <code class="descname">resample</code><span class="sig-paren">(</span><em>sfreq</em>, <em>npad=None</em>, <em>window='boxcar'</em>, <em>stim_picks=None</em>, <em>n_jobs=1</em>, <em>events=None</em>, <em>copy=False</em>, <em>verbose=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mne.io.Raw.resample" title="Permalink to this definition">¶</a></dt>
-<dd><p>Resample data channels.</p>
-<p>Resamples all channels.</p>
-<p>The Raw object has to be constructed using preload=True (or string).</p>
+<dd><p>Resample all channels.</p>
+<p>The Raw object has to have the data loaded e.g. with <code class="docutils literal"><span class="pre">preload=True</span></code>
+or <code class="docutils literal"><span class="pre">self.load_data()</span></code>.</p>
 <div class="admonition warning">
 <p class="first admonition-title">Warning</p>
 <p>The intended purpose of this function is primarily to
@@ -1772,9 +1813,8 @@ raw data effectively jitters trigger timings. It is
 generally recommended not to epoch downsampled data,
 but instead epoch and then downsample, as epoching
 downsampled data jitters triggers.
-See here for an example:</p>
-<blockquote>
-<div><a class="reference external" href="https://gist.github.com/Eric89GXL/01642cb3789992fbca59">https://gist.github.com/Eric89GXL/01642cb3789992fbca59</a></div></blockquote>
+For more, see
+<a class="reference external" href="https://gist.github.com/Eric89GXL/01642cb3789992fbca59">this illustrative gist</a>.</p>
 <p class="last">If resampling the continuous data is desired, it is
 recommended to construct events using the original data.
 The event onsets can be jointly resampled with the raw
@@ -1836,8 +1876,12 @@ Defaults to self.verbose.</p>
 </tr>
 </tbody>
 </table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="#mne.io.Raw.filter" title="mne.io.Raw.filter"><code class="xref py py-obj docutils literal"><span class="pre">mne.io.Raw.filter</span></code></a>, <a class="reference internal" href="mne.Epochs.html#mne.Epochs.resample" title="mne.Epochs.resample"><code class="xref py py-obj docutils literal"><span class="pre">mne.Epochs.resample</span></code></a></p>
+</div>
 <p class="rubric">Notes</p>
-<p>For some data, it may be more accurate to use npad=0 to reduce
+<p>For some data, it may be more accurate to use <code class="docutils literal"><span class="pre">npad=0</span></code> to reduce
 artifacts. This is dataset dependent &#8211; check your data!</p>
 </dd></dl>
 
@@ -1882,9 +1926,12 @@ that only accepts raw files with buffers of the same size.</p>
 </div></blockquote>
 <p><strong>proj</strong> : bool</p>
 <blockquote>
-<div><p>If True the data is saved with the projections applied (active).
-Note: If apply_proj() was used to apply the projections,
-the projectons will be active even if proj is False.</p>
+<div><p>If True the data is saved with the projections applied (active).</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">If <code class="docutils literal"><span class="pre">apply_proj()</span></code> was used to apply the projections,
+the projectons will be active even if <code class="docutils literal"><span class="pre">proj</span></code> is False.</p>
+</div>
 </div></blockquote>
 <p><strong>fmt</strong> : str</p>
 <blockquote>
@@ -1908,8 +1955,12 @@ If False (default), an error will be raised if the file exists.</p>
 <div><p>Large raw files are automatically split into multiple pieces. This
 parameter specifies the maximum size of each piece. If the
 parameter is an integer, it specifies the size in Bytes. It is
-also possible to pass a human-readable string, e.g., 100MB.
-Note: Due to FIFF file limitations, the maximum split size is 2GB.</p>
+also possible to pass a human-readable string, e.g., 100MB.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">Due to FIFF file limitations, the maximum split
+size is 2GB.</p>
+</div>
 </div></blockquote>
 <p><strong>verbose</strong> : bool, str, int, or None</p>
 <blockquote class="last">
