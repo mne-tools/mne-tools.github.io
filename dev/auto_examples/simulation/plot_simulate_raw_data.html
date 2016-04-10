@@ -34,8 +34,8 @@
     <link rel="shortcut icon" href="../../_static/favicon.ico"/>
     <link rel="top" title="MNE 0.12.dev0 documentation" href="../../index.html" />
     <link rel="up" title="Examples Gallery" href="../index.html" />
-    <link rel="next" title="Generate simulated evoked data" href="plot_simulate_evoked_data.html" />
-    <link rel="prev" title="Real-time feedback for decoding :: Server Side" href="../realtime/rt_feedback_server.html" />
+    <link rel="next" title="Regression on continuous data (rER[P/F])" href="../stats/plot_linear_regression_raw.html" />
+    <link rel="prev" title="Generate simulated evoked data" href="plot_simulate_evoked_data.html" />
 
 <link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,700italic,400,700' rel='stylesheet' type='text/css'>
 
@@ -181,11 +181,11 @@ This documentation is for the development version (0.12.dev0) - <a href="http://
 </ul>
 
   <li>
-    <a href="../realtime/rt_feedback_server.html" title="Previous Chapter: Real-time feedback for decoding :: Server Side"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; Real-time fee...</span>
+    <a href="plot_simulate_evoked_data.html" title="Previous Chapter: Generate simulated evoked data"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; Generate simu...</span>
     </a>
   </li>
   <li>
-    <a href="plot_simulate_evoked_data.html" title="Next Chapter: Generate simulated evoked data"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">Generate simu... &raquo;</span>
+    <a href="../stats/plot_linear_regression_raw.html" title="Next Chapter: Regression on continuous data (rER[P/F])"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">Regression on... &raquo;</span>
     </a>
   </li>
 <form action="../../search.html" method="get">
@@ -212,14 +212,14 @@ activation multiple times.</p>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
 
+<span class="kn">import</span> <span class="nn">mne</span>
 <span class="kn">from</span> <span class="nn">mne</span> <span class="kn">import</span> <a href="../../generated/mne.read_source_spaces.html#mne.read_source_spaces"><span class="n">read_source_spaces</span></a><span class="p">,</span> <a href="../../generated/mne.find_events.html#mne.find_events"><span class="n">find_events</span></a><span class="p">,</span> <a href="../../generated/mne.Epochs.html#mne.Epochs"><span class="n">Epochs</span></a><span class="p">,</span> <a href="../../generated/mne.compute_covariance.html#mne.compute_covariance"><span class="n">compute_covariance</span></a>
-<span class="kn">from</span> <span class="nn">mne.io</span> <span class="kn">import</span> <a href="../../generated/mne.io.Raw.html#mne.io.Raw"><span class="n">Raw</span></a>
 <span class="kn">from</span> <span class="nn">mne.datasets</span> <span class="kn">import</span> <span class="n">sample</span>
 <span class="kn">from</span> <span class="nn">mne.simulation</span> <span class="kn">import</span> <a href="../../generated/mne.simulation.simulate_sparse_stc.html#mne.simulation.simulate_sparse_stc"><span class="n">simulate_sparse_stc</span></a><span class="p">,</span> <a href="../../generated/mne.simulation.simulate_raw.html#mne.simulation.simulate_raw"><span class="n">simulate_raw</span></a>
 
 <span class="k">print</span><span class="p">(</span><span class="n">__doc__</span><span class="p">)</span>
 
-<span class="n">data_path</span> <span class="o">=</span> <span class="n">sample</span><span class="o">.</span><span class="n">data_path</span><span class="p">()</span>
+<span class="n">data_path</span> <span class="o">=</span> <a href="../../generated/mne.datasets.sample.data_path.html#mne.datasets.sample.data_path"><span class="n">sample</span><span class="o">.</span><span class="n">data_path</span></a><span class="p">()</span>
 <span class="n">raw_fname</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis_raw.fif&#39;</span>
 <span class="n">trans_fname</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis_raw-trans.fif&#39;</span>
 <span class="n">src_fname</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/subjects/sample/bem/sample-oct-6-src.fif&#39;</span>
@@ -227,7 +227,8 @@ activation multiple times.</p>
              <span class="s1">&#39;/subjects/sample/bem/sample-5120-5120-5120-bem-sol.fif&#39;</span><span class="p">)</span>
 
 <span class="c1"># Load real data as the template</span>
-<span class="n">raw</span> <span class="o">=</span> <a href="../../generated/mne.io.Raw.html#mne.io.Raw"><span class="n">Raw</span></a><span class="p">(</span><span class="n">raw_fname</span><span class="p">)</span><span class="o">.</span><span class="n">crop</span><span class="p">(</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">30.</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>  <span class="c1"># 30 sec is enough</span>
+<span class="n">raw</span> <span class="o">=</span> <span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read_raw_fif</span><span class="p">(</span><span class="n">raw_fname</span><span class="p">)</span>
+<span class="n">raw</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">crop</span><span class="p">(</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">30.</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>  <span class="c1"># 30 sec is enough</span>
 </pre></div>
 </div>
 <p class="sphx-glr-script-out">Out:</p>
@@ -329,7 +330,7 @@ Using cross-validation to select the best estimator.
 Number of samples used : 1694
 [done]
 log-likelihood on unseen data (descending order):
-   empirical: -2273.813
+   empirical: -2271.682
 selecting best estimator: empirical
 estimated rank (eeg): 58
 estimated rank (grad): 203
@@ -344,7 +345,7 @@ No average EEG reference present in info[&quot;projs&quot;], covariance may be a
 </pre></div>
 </div>
 <p><strong>Total running time of the script:</strong>
-(0 minutes 59.686 seconds)</p>
+(0 minutes 57.461 seconds)</p>
 <div class="sphx-glr-download container">
 <strong>Download Python source code:</strong> <a class="reference download internal" href="../../_downloads/plot_simulate_raw_data.py"><code class="xref download docutils literal"><span class="pre">plot_simulate_raw_data.py</span></code></a></div>
 <div class="sphx-glr-download container">
