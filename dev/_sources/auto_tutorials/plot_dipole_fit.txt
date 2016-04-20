@@ -54,6 +54,7 @@ Let's localize the N100m (using MEG only)
     evoked = mne.read_evokeds(fname_ave, condition='Right Auditory',
                               baseline=(None, 0))
     evoked.pick_types(meg=True, eeg=False)
+    evoked_full = evoked.copy()
     evoked.crop(0.07, 0.08)
 
     # Fit a dipole
@@ -85,26 +86,14 @@ Let's localize the N100m (using MEG only)
             nave = 61 - aspect type = 100
     Projections have already been applied. Setting proj attribute to True.
     Applying baseline correction (mode: mean)
-    BEM              : /home/ubuntu/mne_data/MNE-sample-data/subjects/sample/bem/sample-5120-bem-sol.fif
-    MRI transform    : /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis_raw-trans.fif
-
-    Setting up the BEM model using /home/ubuntu/mne_data/MNE-sample-data/subjects/sample/bem/sample-5120-bem-sol.fif...
-
-    Loading surfaces...
-    Homogeneous model surface loaded.
-
-    Loading the solution matrix...
-
-    Loaded linear_collocation BEM solution from /home/ubuntu/mne_data/MNE-sample-data/subjects/sample/bem/sample-5120-bem-sol.fif
-    Employing the head->MRI coordinate transform with the BEM model.
-    BEM model sample-5120-bem-sol.fif is now set up
-
-    Grid origin      :   -4.3   18.4   67.0 mm rad =   71.8 mm.
-    Guess grid       :   20.0 mm
-    Guess mindist    :    5.0 mm
-    Guess exclude    :   20.0 mm
+    BEM               : /home/ubuntu/mne_data/MNE-sample-data/subjects/sample/bem/sample-5120-bem-sol.fif
+    MRI transform     : /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis_raw-trans.fif
+    Head origin       :   -4.3   18.4   67.0 mm rad =   71.8 mm.
+    Guess grid        :   20.0 mm
+    Guess mindist     :    5.0 mm
+    Guess exclude     :   20.0 mm
     Using standard MEG coil definitions.
-    Noise covariance : /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis-cov.fif
+    Noise covariance  : /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis-cov.fif
 
     Coordinate transformation: MRI (surface RAS) -> head
          0.999310  0.009985 -0.035787      -3.17 mm
@@ -157,7 +146,7 @@ Let's localize the N100m (using MEG only)
     ---- Fitted :    76.6 ms, distance to inner skull : 10.0605 mm
     ---- Fitted :    78.3 ms, distance to inner skull : 9.7364 mm
     ---- Fitted :    79.9 ms, distance to inner skull : 9.4212 mm
-    7 dipoles fitted
+    7 time points fitted
     Triangle file: Converted tri file nvert = 2562 ntri = 5120
 
 
@@ -171,7 +160,8 @@ and compare to the measured data, highlighting the ipsilateral (right) source
     pred_evoked = simulate_evoked(fwd, stc, evoked.info, None, snr=np.inf)
 
     # find time point with highes GOF to plot
-    best_time = dip.times[np.argmax(dip.gof)]
+    best_idx = np.argmax(dip.gof)
+    best_time = dip.times[best_idx]
     # rememeber to create a subplot for the colorbar
     fig, axes = plt.subplots(nrows=1, ncols=4, figsize=[10., 3.4])
     vmin, vmax = -400, 400  # make sure each plot has same colour range
@@ -191,6 +181,7 @@ and compare to the measured data, highlighting the ipsilateral (right) source
     diff.plot_topomap(time_format='Difference', axes=axes[2], **plot_params)
     plt.suptitle('Comparison of measured and predicted fields '
                  'at {:.0f} ms'.format(best_time * 1000.), fontsize=16)
+
 
 
 
@@ -260,8 +251,60 @@ and compare to the measured data, highlighting the ipsilateral (right) source
     Colorbar is drawn to the rightmost column of the figure. Be sure to provide enough space for it or turn it off with colorbar=False.
 
 
+Estimate the time course of a single dipole with fixed position and
+orientation (the one that maximized GOF)over the entire interval
+
+
+.. code-block:: python
+
+    dip_fixed = mne.fit_dipole(evoked_full, fname_cov, fname_bem, fname_trans,
+                               pos=dip.pos[best_idx], ori=dip.ori[best_idx])[0]
+    dip_fixed.plot()
+
+
+
+.. image:: /auto_tutorials/images/sphx_glr_plot_dipole_fit_003.png
+    :align: center
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    BEM               : /home/ubuntu/mne_data/MNE-sample-data/subjects/sample/bem/sample-5120-bem-sol.fif
+    MRI transform     : /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis_raw-trans.fif
+    Head origin       :   -4.3   18.4   67.0 mm rad =   71.8 mm.
+    Fixed position    :  -61.2    5.4   59.6 mm
+    Fixed orientation  : 0.0100 -0.7504 -0.6609 mm
+    Noise covariance  : /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis-cov.fif
+
+    Coordinate transformation: MRI (surface RAS) -> head
+         0.999310  0.009985 -0.035787      -3.17 mm
+         0.012759  0.812405  0.582954       6.86 mm
+         0.034894 -0.583008  0.811716      28.88 mm
+         0.000000  0.000000  0.000000       1.00
+    Coordinate transformation: MEG device -> head
+         0.991420 -0.039936 -0.124467      -6.13 mm
+         0.060661  0.984012  0.167456       0.06 mm
+         0.115790 -0.173570  0.977991      64.74 mm
+         0.000000  0.000000  0.000000       1.00
+    0 bad channels total
+    Read 305 MEG channels from info
+    69 coil definitions read
+    Coordinate transformation: MEG device -> head
+         0.991420 -0.039936 -0.124467      -6.13 mm
+         0.060661  0.984012  0.167456       0.06 mm
+         0.115790 -0.173570  0.977991      64.74 mm
+         0.000000  0.000000  0.000000       1.00
+    MEG coil definitions created in head coordinates.
+    Decomposing the sensor noise covariance matrix...
+    Compute forward for dipole location...
+    [done 1 source]
+    421 time points fitted
+
+
 **Total running time of the script:**
-(0 minutes 27.350 seconds)
+(0 minutes 32.347 seconds)
 
 
 

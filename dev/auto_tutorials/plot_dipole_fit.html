@@ -231,6 +231,7 @@ backend, such as:</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">evoked</span> <span class="o">=</span> <a href="../generated/mne.read_evokeds.html#mne.read_evokeds"><span class="n">mne</span><span class="o">.</span><span class="n">read_evokeds</span></a><span class="p">(</span><span class="n">fname_ave</span><span class="p">,</span> <span class="n">condition</span><span class="o">=</span><span class="s1">&#39;Right Auditory&#39;</span><span class="p">,</span>
                           <span class="n">baseline</span><span class="o">=</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
 <span class="n">evoked</span><span class="o">.</span><span class="n">pick_types</span><span class="p">(</span><span class="n">meg</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">eeg</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="n">evoked_full</span> <span class="o">=</span> <span class="n">evoked</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
 <span class="n">evoked</span><span class="o">.</span><span class="n">crop</span><span class="p">(</span><span class="mf">0.07</span><span class="p">,</span> <span class="mf">0.08</span><span class="p">)</span>
 
 <span class="c1"># Fit a dipole</span>
@@ -254,26 +255,14 @@ backend, such as:</p>
         nave = 61 - aspect type = 100
 Projections have already been applied. Setting proj attribute to True.
 Applying baseline correction (mode: mean)
-BEM              : /home/ubuntu/mne_data/MNE-sample-data/subjects/sample/bem/sample-5120-bem-sol.fif
-MRI transform    : /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis_raw-trans.fif
-
-Setting up the BEM model using /home/ubuntu/mne_data/MNE-sample-data/subjects/sample/bem/sample-5120-bem-sol.fif...
-
-Loading surfaces...
-Homogeneous model surface loaded.
-
-Loading the solution matrix...
-
-Loaded linear_collocation BEM solution from /home/ubuntu/mne_data/MNE-sample-data/subjects/sample/bem/sample-5120-bem-sol.fif
-Employing the head-&gt;MRI coordinate transform with the BEM model.
-BEM model sample-5120-bem-sol.fif is now set up
-
-Grid origin      :   -4.3   18.4   67.0 mm rad =   71.8 mm.
-Guess grid       :   20.0 mm
-Guess mindist    :    5.0 mm
-Guess exclude    :   20.0 mm
+BEM               : /home/ubuntu/mne_data/MNE-sample-data/subjects/sample/bem/sample-5120-bem-sol.fif
+MRI transform     : /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis_raw-trans.fif
+Head origin       :   -4.3   18.4   67.0 mm rad =   71.8 mm.
+Guess grid        :   20.0 mm
+Guess mindist     :    5.0 mm
+Guess exclude     :   20.0 mm
 Using standard MEG coil definitions.
-Noise covariance : /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis-cov.fif
+Noise covariance  : /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis-cov.fif
 
 Coordinate transformation: MRI (surface RAS) -&gt; head
      0.999310  0.009985 -0.035787      -3.17 mm
@@ -326,7 +315,7 @@ Go through all guess source locations...
 ---- Fitted :    76.6 ms, distance to inner skull : 10.0605 mm
 ---- Fitted :    78.3 ms, distance to inner skull : 9.7364 mm
 ---- Fitted :    79.9 ms, distance to inner skull : 9.4212 mm
-7 dipoles fitted
+7 time points fitted
 Triangle file: Converted tri file nvert = 2562 ntri = 5120
 </pre></div>
 </div>
@@ -336,7 +325,8 @@ and compare to the measured data, highlighting the ipsilateral (right) source</p
 <span class="n">pred_evoked</span> <span class="o">=</span> <a href="../generated/mne.simulation.simulate_evoked.html#mne.simulation.simulate_evoked"><span class="n">simulate_evoked</span></a><span class="p">(</span><span class="n">fwd</span><span class="p">,</span> <span class="n">stc</span><span class="p">,</span> <span class="n">evoked</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="n">snr</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">)</span>
 
 <span class="c1"># find time point with highes GOF to plot</span>
-<span class="n">best_time</span> <span class="o">=</span> <span class="n">dip</span><span class="o">.</span><span class="n">times</span><span class="p">[</span><a href="http://docs.scipy.org/doc/numpy-1.10.1/reference/generated/numpy.argmax.html#numpy.argmax"><span class="n">np</span><span class="o">.</span><span class="n">argmax</span></a><span class="p">(</span><span class="n">dip</span><span class="o">.</span><span class="n">gof</span><span class="p">)]</span>
+<span class="n">best_idx</span> <span class="o">=</span> <a href="http://docs.scipy.org/doc/numpy-1.10.1/reference/generated/numpy.argmax.html#numpy.argmax"><span class="n">np</span><span class="o">.</span><span class="n">argmax</span></a><span class="p">(</span><span class="n">dip</span><span class="o">.</span><span class="n">gof</span><span class="p">)</span>
+<span class="n">best_time</span> <span class="o">=</span> <span class="n">dip</span><span class="o">.</span><span class="n">times</span><span class="p">[</span><span class="n">best_idx</span><span class="p">]</span>
 <span class="c1"># rememeber to create a subplot for the colorbar</span>
 <span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.subplots"><span class="n">plt</span><span class="o">.</span><span class="n">subplots</span></a><span class="p">(</span><span class="n">nrows</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">ncols</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">[</span><span class="mf">10.</span><span class="p">,</span> <span class="mf">3.4</span><span class="p">])</span>
 <span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span> <span class="o">=</span> <span class="o">-</span><span class="mi">400</span><span class="p">,</span> <span class="mi">400</span>  <span class="c1"># make sure each plot has same colour range</span>
@@ -418,8 +408,49 @@ Projecting source estimate to sensor space...
 Colorbar is drawn to the rightmost column of the figure. Be sure to provide enough space for it or turn it off with colorbar=False.
 </pre></div>
 </div>
+<p>Estimate the time course of a single dipole with fixed position and
+orientation (the one that maximized GOF)over the entire interval</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">dip_fixed</span> <span class="o">=</span> <a href="../generated/mne.fit_dipole.html#mne.fit_dipole"><span class="n">mne</span><span class="o">.</span><span class="n">fit_dipole</span></a><span class="p">(</span><span class="n">evoked_full</span><span class="p">,</span> <span class="n">fname_cov</span><span class="p">,</span> <span class="n">fname_bem</span><span class="p">,</span> <span class="n">fname_trans</span><span class="p">,</span>
+                           <span class="n">pos</span><span class="o">=</span><span class="n">dip</span><span class="o">.</span><span class="n">pos</span><span class="p">[</span><span class="n">best_idx</span><span class="p">],</span> <span class="n">ori</span><span class="o">=</span><span class="n">dip</span><span class="o">.</span><span class="n">ori</span><span class="p">[</span><span class="n">best_idx</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">dip_fixed</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
+</pre></div>
+</div>
+<img alt="../_images/sphx_glr_plot_dipole_fit_003.png" class="align-center" src="../_images/sphx_glr_plot_dipole_fit_003.png" />
+<p class="sphx-glr-script-out">Out:</p>
+<div class="sphx-glr-script-out highlight-python"><div class="highlight"><pre><span></span>BEM               : /home/ubuntu/mne_data/MNE-sample-data/subjects/sample/bem/sample-5120-bem-sol.fif
+MRI transform     : /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis_raw-trans.fif
+Head origin       :   -4.3   18.4   67.0 mm rad =   71.8 mm.
+Fixed position    :  -61.2    5.4   59.6 mm
+Fixed orientation  : 0.0100 -0.7504 -0.6609 mm
+Noise covariance  : /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis-cov.fif
+
+Coordinate transformation: MRI (surface RAS) -&gt; head
+     0.999310  0.009985 -0.035787      -3.17 mm
+     0.012759  0.812405  0.582954       6.86 mm
+     0.034894 -0.583008  0.811716      28.88 mm
+     0.000000  0.000000  0.000000       1.00
+Coordinate transformation: MEG device -&gt; head
+     0.991420 -0.039936 -0.124467      -6.13 mm
+     0.060661  0.984012  0.167456       0.06 mm
+     0.115790 -0.173570  0.977991      64.74 mm
+     0.000000  0.000000  0.000000       1.00
+0 bad channels total
+Read 305 MEG channels from info
+69 coil definitions read
+Coordinate transformation: MEG device -&gt; head
+     0.991420 -0.039936 -0.124467      -6.13 mm
+     0.060661  0.984012  0.167456       0.06 mm
+     0.115790 -0.173570  0.977991      64.74 mm
+     0.000000  0.000000  0.000000       1.00
+MEG coil definitions created in head coordinates.
+Decomposing the sensor noise covariance matrix...
+Compute forward for dipole location...
+[done 1 source]
+421 time points fitted
+</pre></div>
+</div>
 <p><strong>Total running time of the script:</strong>
-(0 minutes 27.350 seconds)</p>
+(0 minutes 32.347 seconds)</p>
 <div class="sphx-glr-download container">
 <strong>Download Python source code:</strong> <a class="reference download internal" href="../_downloads/plot_dipole_fit.py"><code class="xref download docutils literal"><span class="pre">plot_dipole_fit.py</span></code></a></div>
 <div class="sphx-glr-download container">
