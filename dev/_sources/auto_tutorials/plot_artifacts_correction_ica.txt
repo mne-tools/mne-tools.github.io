@@ -1,0 +1,478 @@
+
+
+.. _sphx_glr_auto_tutorials_plot_artifacts_correction_ica.py:
+
+
+
+.. _tut_artifacts_correct_ica:
+
+Artifact Correction with ICA
+============================
+
+ICA finds directions in the feature space
+corresponding to projections with high non-Gaussianity. We thus obtain
+a decomposition into independent components, and the artifact's contribution
+is localized in only a small number of components.
+These components have to be correctly identified and removed.
+
+If EOG or ECG recordings are available, they can be used in ICA to
+automatically select the corresponding artifact components from the
+decomposition. To do so, you have to first build an Epoch object around
+blink or heartbeat event.
+
+
+.. code-block:: python
+
+
+    import numpy as np
+
+    import mne
+    from mne.datasets import sample
+
+    from mne.preprocessing import ICA
+    from mne.preprocessing import create_eog_epochs
+
+    # getting some data ready
+    data_path = sample.data_path()
+    raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
+
+    raw = mne.io.read_raw_fif(raw_fname, preload=True)
+    raw.filter(1, 40, n_jobs=2)  # 1Hz high pass is often helpful for fitting ICA
+
+    picks_meg = mne.pick_types(raw.info, meg=True, eeg=False, eog=False,
+                               stim=False, exclude='bads')
+
+
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    Opening raw data file /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis_filt-0-40_raw.fif...
+        Read a total of 4 projection items:
+            PCA-v1 (1 x 102)  idle
+            PCA-v2 (1 x 102)  idle
+            PCA-v3 (1 x 102)  idle
+            Average EEG reference (1 x 60)  idle
+    Current compensation grade : 0
+        Range : 6450 ... 48149 =     42.956 ...   320.665 secs
+    Ready.
+    Reading 0 ... 41699  =      0.000 ...   277.709 secs...
+    Band-pass filtering from 1 - 40 Hz
+
+
+Before applying artifact correction please learn about your actual artifacts
+by reading :ref:`tut_artifacts_detect`.
+
+Fit ICA
+-------
+
+ICA parameters:
+
+
+.. code-block:: python
+
+
+    n_components = 25  # if float, select n_components by explained variance of PCA
+    method = 'fastica'  # for comparison with EEGLAB try "extended-infomax" here
+    decim = 3  # we need sufficient statistics, not all time points -> save time
+
+
+
+
+
+
+
+Define the ICA object instance
+
+
+.. code-block:: python
+
+    ica = ICA(n_components=n_components, method=method)
+    print(ica)
+
+
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    <ICA  |  no decomposition, fit (fastica):  samples, no dimension reduction>
+
+
+we avoid fitting ICA on crazy environmental artifacts that would
+dominate the variance and decomposition
+
+
+.. code-block:: python
+
+    reject = dict(mag=5e-12, grad=4000e-13)
+    ica.fit(raw, picks=picks_meg, decim=decim, reject=reject)
+    print(ica)
+
+
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    Fitting ICA to data using 305 channels. 
+    Please be patient, this may take some time
+    Inferring max_pca_components from picks.
+        Rejecting  epoch based on MAG : [u'MEG 1711']
+    Artifact detected in [4242, 4343]
+        Rejecting  epoch based on MAG : [u'MEG 1711']
+    Artifact detected in [5858, 5959]
+    Selection by number: 25 components
+    <ICA  |  raw data decomposition, fit (fastica): 13635 samples, 25 components, channels used: "mag"; "grad">
+
+
+Plot ICA components
+
+
+.. code-block:: python
+
+
+    ica.plot_components()  # can you see some potential bad guys?
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+    *
+
+      .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_001.png
+            :scale: 47
+
+    *
+
+      .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_002.png
+            :scale: 47
+
+
+
+
+Let's use a more efficient way to find artefacts
+
+
+.. code-block:: python
+
+
+    eog_average = create_eog_epochs(raw, reject=dict(mag=5e-12, grad=4000e-13),
+                                    picks=picks_meg).average()
+
+    # We simplify things by setting the maximum number of components to reject
+    n_max_eog = 1  # here we bet on finding the vertical EOG components
+    eog_epochs = create_eog_epochs(raw, reject=reject)  # get single EOG trials
+    eog_inds, scores = ica.find_bads_eog(eog_epochs)  # find via correlation
+
+    ica.plot_scores(scores, exclude=eog_inds)  # look at r scores of components
+    # we can see that only one component is highly correlated and that this
+    # component got detected by our correlation analysis (red).
+
+    ica.plot_sources(eog_average, exclude=eog_inds)  # look at source time course
+    # That component is also showing a prototypical average vertical EOG time
+    # course.
+
+    # Pay attention to the labels, a customized read-out of the ica.labels_
+    print(ica.labels_)
+    # These labels were used by the plotters and are added automatically
+    # by artifact detection functions. You can also manually edit them to annotate
+    # components.
+
+    # now let's see how we would modify our signals if we would remove this
+    # component from the data
+
+    ica.plot_overlay(eog_average, exclude=eog_inds, show=False)
+    # red -> before, black -> after. Yes! We remove quite a lot!
+
+    # to definitely register this component as a bad one to be removed
+    # there is the ``ica.exclude`` attribute, a simple Python list
+
+    ica.exclude.extend(eog_inds)
+
+    # from now on the ICA will reject this component even if no exclude
+    # parameter is passed, and this information will be stored to disk
+    # on saving
+
+    # uncomment this for reading and writing
+    # ica.save('my-ica.fif')
+    # ica = read_ica('my-ica.fif')
+
+    # Exercise: find and remove ECG artifacts using ICA!
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+    *
+
+      .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_003.png
+            :scale: 47
+
+    *
+
+      .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_004.png
+            :scale: 47
+
+    *
+
+      .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_005.png
+            :scale: 47
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    EOG channel index for this subject is: [375]
+    Filtering the data to remove DC offset to help distinguish blinks from saccades
+    Now detecting blinks and generating corresponding events
+    Number of EOG events detected : 46
+    46 matching events found
+    No baseline correction applied
+    Created an SSP operator (subspace dimension = 3)
+    Loading data for 46 events and 151 original time points ...
+    0 bad epochs dropped
+    EOG channel index for this subject is: [375]
+    Filtering the data to remove DC offset to help distinguish blinks from saccades
+    Now detecting blinks and generating corresponding events
+    Number of EOG events detected : 46
+    46 matching events found
+    No baseline correction applied
+    Created an SSP operator (subspace dimension = 4)
+    Loading data for 46 events and 151 original time points ...
+    0 bad epochs dropped
+    {u'eog/0/EOG 061': [3], 'eog': [3]}
+    Transforming to ICA space (25 components)
+    Zeroing out 1 ICA components
+
+
+What if we don't have an EOG channel?
+-------------------------------------
+
+1) make a bipolar reference from frontal EEG sensors and use as virtual EOG
+channel. This can be tricky though as you can only hope that the frontal
+EEG channels only reflect EOG and not brain dynamics in the prefrontal
+cortex.
+2) Go for a semi-automated approach, using template matching.
+In MNE-Python option 2 is easily achievable and it might be better,
+so let's have a look at it.
+
+
+.. code-block:: python
+
+
+    from mne.preprocessing.ica import corrmap  # noqa
+
+
+
+
+
+
+
+The idea behind corrmap is that artefact patterns are similar across subjects
+and can thus be identified by correlating the different patterns resulting
+from each solution with a template. The procedure is therefore
+semi-automatic. Corrmap hence takes at least a list of ICA solutions and a
+template, that can be an index or an array. As we don't have different
+subjects or runs available today, here we will fit ICA models to different
+parts of the recording and then use a user-defined template from the first
+part for detecting corresponding components in the other parts. The following
+block of code in addresses this point and should not be copied, ok?
+
+We'll start by simulating a group of subjects or runs from a subject
+
+
+.. code-block:: python
+
+
+    start, stop = raw.index_as_time([raw.first_samp, raw.last_samp])
+    intervals = np.linspace(start, stop, 4)
+    icas = list()
+    seed = 42  # for reproducible results
+    raw.pick_types(meg=True, eeg=False)  # take only MEG channels
+    for ii, start in enumerate(intervals):
+        if ii + 1 < len(intervals):
+            stop = intervals[ii + 1]
+            print('fitting ICA from {} to {} seconds'.format(start, stop))
+            this_ica = ICA(n_components=n_components, method=method,
+                           random_state=seed).fit(raw, start=start, stop=stop,
+                                                  reject=reject)
+            icas.append(this_ica)
+
+
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    fitting ICA from 42.9559708291 to 135.525532979 seconds
+    Fitting ICA to data using 305 channels. 
+    Please be patient, this may take some time
+    Inferring max_pca_components from picks.
+        Rejecting  epoch based on MAG : [u'MEG 1711']
+    Artifact detected in [6020, 6321]
+        Rejecting  epoch based on MAG : [u'MEG 1711']
+    Artifact detected in [11137, 11438]
+    Selection by number: 25 components
+    fitting ICA from 135.525532979 to 228.095095129 seconds
+    Fitting ICA to data using 305 channels. 
+    Please be patient, this may take some time
+    Inferring max_pca_components from picks.
+    Selection by number: 25 components
+    fitting ICA from 228.095095129 to 320.664657279 seconds
+    Fitting ICA to data using 305 channels. 
+    Please be patient, this may take some time
+    Inferring max_pca_components from picks.
+    Selection by number: 25 components
+
+
+Do not copy this at home! You start by reading in a collections of ICA
+solutions, something like
+
+icas = [mne.preprocessing.read_ica(fname) for fname in ica_fnames]
+
+
+.. code-block:: python
+
+
+    print(icas)
+
+
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    [<ICA  |  raw data decomposition, fit (fastica): 13244 samples, 25 components, channels used: "mag"; "grad">, <ICA  |  raw data decomposition, fit (fastica): 13846 samples, 25 components, channels used: "mag"; "grad">, <ICA  |  raw data decomposition, fit (fastica): 7224 samples, 25 components, channels used: "mag"; "grad">]
+
+
+investiage our reference ICA, here we arbitrarily say it's the first
+
+
+.. code-block:: python
+
+    reference_ica = icas[0]
+    reference_ica.plot_components()
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+    *
+
+      .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_006.png
+            :scale: 47
+
+    *
+
+      .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_007.png
+            :scale: 47
+
+
+
+
+with random seed = 42 we see that IC number 10 from run 1 looks like an EOG
+
+
+.. code-block:: python
+
+
+    reference_ica.plot_sources(eog_average, exclude=[9])
+
+
+
+
+.. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_008.png
+    :align: center
+
+
+
+
+indeed it looks like an EOG, also in the average time course
+
+So our template shall be a tuple like (reference_run_index, component_index):
+
+
+.. code-block:: python
+
+    template = (0, 9)
+
+
+
+
+
+
+
+now we can do the corrmap
+
+
+.. code-block:: python
+
+    fig_template, fig_detected = corrmap(icas, template=template, label="blinks",
+                                         show=True, threshold=.8, ch_type='mag')
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+    *
+
+      .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_009.png
+            :scale: 47
+
+    *
+
+      .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_010.png
+            :scale: 47
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    Median correlation with constructed map: 0.992
+    Displaying selected ICs per subject.
+    At least 1 IC detected for each subject.
+
+
+Nice, we have found similar ICs from the other runs!
+This is even nicer if we have 20 or 100 ICA solutions in a list.
+
+You can also use SSP for correcting for artifacts. It is a bit simpler,
+faster but is less precise than ICA. And it requires that you
+know the event timing of your artifact.
+See :ref:`tut_artifacts_correct_ssp`.
+
+**Total running time of the script:**
+(0 minutes 51.881 seconds)
+
+
+
+.. container:: sphx-glr-download
+
+    **Download Python source code:** :download:`plot_artifacts_correction_ica.py <plot_artifacts_correction_ica.py>`
+
+
+.. container:: sphx-glr-download
+
+    **Download IPython notebook:** :download:`plot_artifacts_correction_ica.ipynb <plot_artifacts_correction_ica.ipynb>`
