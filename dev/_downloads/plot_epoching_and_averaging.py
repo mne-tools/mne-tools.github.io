@@ -41,7 +41,15 @@ raw.plot(n_channels=10, order=order, block=True)
 # attention in aligning the events correctly with the raw data.
 events = mne.find_events(raw)
 print(events)
-mne.viz.plot_events(events, raw.info['sfreq'], raw.first_samp)
+
+# Plot the events to get an idea of the paradigm
+# Specify colors and an event_id dictionary for the legend.
+event_id = {'aud_l': 1, 'aud_r': 2, 'vis_l': 3, 'vis_r': 4, 'smiley': 5,
+            'button': 32}
+color = {1: 'green', 2: 'yellow', 3: 'red', 4: 'c', 5: 'black', 32: 'blue'}
+
+mne.viz.plot_events(events, raw.info['sfreq'], raw.first_samp, color=color,
+                    event_id=event_id)
 
 ###############################################################################
 # The event list contains three columns. The first column corresponds to
@@ -74,7 +82,8 @@ raw.plot(events=events, n_channels=10, order=order)
 # offsets in relation to the events. Here we make epochs that collect the data
 # from 200 ms before to 500 ms after the event.
 tmin, tmax = -0.2, 0.5
-event_id = {'Auditory/Left': 1, 'Auditory/Right': 2}
+event_id = {'Auditory/Left': 1, 'Auditory/Right': 2,
+            'Visual/Left': 3, 'Visual/Right': 4}
 # Only pick MEG and EOG channels.
 picks = mne.pick_types(raw.info, meg=True, eeg=False, eog=True)
 
@@ -131,6 +140,16 @@ epochs.plot_drop_log()
 picks = mne.pick_types(epochs.info, meg=True, eog=True)
 evoked_left = epochs['Auditory/Left'].average(picks=picks)
 evoked_right = epochs['Auditory/Right'].average(picks=picks)
+
+###############################################################################
+# Notice we have used forward slashes ('/') to separate the factors of the
+# conditions of the experiment. We can use these 'tags' to select for example
+# all left trials (both visual left and auditory right) ...
+
+epochs_left = epochs['Left']
+
+# ... or to select a very specific subset. This is the same as above:
+evoked_left = epochs['Auditory', 'Left'].average(picks=picks)
 
 ###############################################################################
 # Finally, let's plot the evoked responses.

@@ -5,7 +5,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Artifacts Detection &mdash; MNE 0.12.dev0 documentation</title>
+    <title>Introduction to artifacts and artifact detection &mdash; MNE 0.12.dev0 documentation</title>
     
     <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -35,7 +35,7 @@
     <link rel="top" title="MNE 0.12.dev0 documentation" href="../index.html" />
     <link rel="up" title="Tutorials" href="../tutorials.html" />
     <link rel="next" title="Filtering and Resampling" href="plot_artifacts_correction_filtering.html" />
-    <link rel="prev" title="Introduction: dealing with artifacts" href="plot_artifacts_intro.html" />
+    <link rel="prev" title="Seven stories about MNE" href="../tutorials/seven_stories_about_mne.html" />
 
 <link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,700italic,400,700' rel='stylesheet' type='text/css'>
 
@@ -144,7 +144,10 @@ This documentation is for the development version (0.12.dev0) - <a href="http://
   <ul class="dropdown-menu localtoc"
       role="menu"
       aria-labelledby="dLabelLocalToc"><ul>
-<li><a class="reference internal" href="#">Artifacts Detection</a><ul>
+<li><a class="reference internal" href="#">Introduction to artifacts and artifact detection</a><ul>
+<li><a class="reference internal" href="#background-what-is-an-artifact">Background: what is an artifact?</a></li>
+<li><a class="reference internal" href="#how-to-handle-artifacts">How to handle artifacts?</a></li>
+<li><a class="reference internal" href="#artifacts-detection">Artifacts Detection</a></li>
 <li><a class="reference internal" href="#ecg">ECG</a></li>
 <li><a class="reference internal" href="#eog">EOG</a></li>
 </ul>
@@ -181,7 +184,10 @@ This documentation is for the development version (0.12.dev0) - <a href="http://
             <p class="logo"><a href="../index.html">
               <img class="logo" src="../_static/mne_logo_small.png" alt="Logo"/>
             </a></p><ul>
-<li><a class="reference internal" href="#">Artifacts Detection</a><ul>
+<li><a class="reference internal" href="#">Introduction to artifacts and artifact detection</a><ul>
+<li><a class="reference internal" href="#background-what-is-an-artifact">Background: what is an artifact?</a></li>
+<li><a class="reference internal" href="#how-to-handle-artifacts">How to handle artifacts?</a></li>
+<li><a class="reference internal" href="#artifacts-detection">Artifacts Detection</a></li>
 <li><a class="reference internal" href="#ecg">ECG</a></li>
 <li><a class="reference internal" href="#eog">EOG</a></li>
 </ul>
@@ -189,7 +195,7 @@ This documentation is for the development version (0.12.dev0) - <a href="http://
 </ul>
 
   <li>
-    <a href="plot_artifacts_intro.html" title="Previous Chapter: Introduction: dealing with artifacts"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; Introduction:...</span>
+    <a href="../tutorials/seven_stories_about_mne.html" title="Previous Chapter: Seven stories about MNE"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; Seven stories...</span>
     </a>
   </li>
   <li>
@@ -207,8 +213,57 @@ This documentation is for the development version (0.12.dev0) - <a href="http://
       </div>
     <div class="col-md-12 content">
       
-  <div class="section" id="artifacts-detection">
-<span id="tut-artifacts-detect"></span><span id="sphx-glr-auto-tutorials-plot-artifacts-detection-py"></span><h1>Artifacts Detection<a class="headerlink" href="#artifacts-detection" title="Permalink to this headline">¶</a></h1>
+  <div class="section" id="introduction-to-artifacts-and-artifact-detection">
+<span id="tut-artifacts-detect"></span><span id="sphx-glr-auto-tutorials-plot-artifacts-detection-py"></span><h1>Introduction to artifacts and artifact detection<a class="headerlink" href="#introduction-to-artifacts-and-artifact-detection" title="Permalink to this headline">¶</a></h1>
+<p>Since MNE supports the data of many different acquisition systems, the
+particular artifacts in your data might behave very differently from the
+artifacts you can observe in our tutorials and examples.</p>
+<p>Therefore you should be aware of the different approaches and of
+the variability of artifact rejection (automatic/manual) procedures described
+onwards. At the end consider always to visually inspect your data
+after artifact rejection or correction.</p>
+<div class="section" id="background-what-is-an-artifact">
+<h2>Background: what is an artifact?<a class="headerlink" href="#background-what-is-an-artifact" title="Permalink to this headline">¶</a></h2>
+<p>Artifacts are signal interference that can be
+endogenous (biological) and exogenous (environmental).
+Typical biological artifacts are head movements, eye blinks
+or eye movements, heart beats. The most common environmental
+artifact is due to the power line, the so-called <em>line noise</em>.</p>
+</div>
+<div class="section" id="how-to-handle-artifacts">
+<h2>How to handle artifacts?<a class="headerlink" href="#how-to-handle-artifacts" title="Permalink to this headline">¶</a></h2>
+<p>MNE deals with artifacts by first identifying them, and subsequently removing
+them. Detection of artifacts can be done visually, or using automatic routines
+(or a combination of both). After you know what the artifacts are, you need
+remove them. This can be done by:</p>
+<blockquote>
+<div><ul class="simple">
+<li><em>ignoring</em> the piece of corrupted data</li>
+<li><em>fixing</em> the corrupted data</li>
+</ul>
+</div></blockquote>
+<p>For the artifact detection the functions MNE provides depend on whether
+your data is continuous (Raw) or epoch-based (Epochs) and depending on
+whether your data is stored on disk or already in memory.</p>
+<p>Detecting the artifacts without reading the complete data into memory allows
+you to work with datasets that are too large to fit in memory all at once.
+Detecting the artifacts in continuous data allows you to apply filters
+(e.g. a band-pass filter to zoom in on the muscle artifacts on the temporal
+channels) without having to worry about edge effects due to the filter
+(i.e. filter ringing). Having the data in memory after segmenting/epoching is
+however a very efficient way of browsing through the data which helps
+in visualizing. So to conclude, there is not a single most optimal manner
+to detect the artifacts: it just depends on the data properties and your
+own preferences.</p>
+<p>In this tutorial we show how to detect artifacts visually and automatically.
+For how to correct artifacts by rejection see <a class="reference internal" href="plot_artifacts_correction_rejection.html#tut-artifacts-reject"><span>Rejecting bad data (channels and segments)</span></a>.
+To discover how to correct certain artifacts by filtering see
+<a class="reference internal" href="plot_artifacts_correction_filtering.html#tut-artifacts-filter"><span>Filtering and Resampling</span></a> and to learn how to correct artifacts
+with subspace methods like SSP and ICA see <a class="reference internal" href="plot_artifacts_correction_ssp.html#tut-artifacts-correct-ssp"><span>Artifact Correction with SSP</span></a>
+and <a class="reference internal" href="plot_artifacts_correction_ica.html#tut-artifacts-correct-ica"><span>Artifact Correction with ICA</span></a>.</p>
+</div>
+<div class="section" id="artifacts-detection">
+<h2>Artifacts Detection<a class="headerlink" href="#artifacts-detection" title="Permalink to this headline">¶</a></h2>
 <p>This tutorial discusses a couple of major artifacts that most analyses
 have to deal with and demonstrates how to detect them.</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">mne</span>
@@ -261,6 +316,7 @@ But also some high amplitude signals between 25 and 32 Hz, hinting at other
 biological artifacts such as ECG. These can be most easily detected in the
 time domain using MNE helper functions</p>
 <p>See <a class="reference internal" href="plot_artifacts_correction_filtering.html#tut-artifacts-filter"><span>Filtering and Resampling</span></a>.</p>
+</div>
 <div class="section" id="ecg">
 <h2>ECG<a class="headerlink" href="#ecg" title="Permalink to this headline">¶</a></h2>
 <p>finds ECG events, creates epochs, averages and plots</p>
@@ -340,7 +396,7 @@ to artifacts.</p>
 </dd>
 </dl>
 <p><strong>Total running time of the script:</strong>
-(0 minutes 18.959 seconds)</p>
+(0 minutes 19.081 seconds)</p>
 <div class="sphx-glr-download container">
 <strong>Download Python source code:</strong> <a class="reference download internal" href="../_downloads/plot_artifacts_detection.py"><code class="xref download docutils literal"><span class="pre">plot_artifacts_detection.py</span></code></a></div>
 <div class="sphx-glr-download container">
@@ -363,7 +419,7 @@ to artifacts.</p>
       
     </p>
     <p>
-        &copy; Copyright 2012-2016, MNE Developers. Last updated on 2016-04-23.<br/>
+        &copy; Copyright 2012-2016, MNE Developers. Last updated on 2016-04-25.<br/>
     </p>
   </div>
 </footer>

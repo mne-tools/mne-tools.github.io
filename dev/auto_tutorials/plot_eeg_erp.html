@@ -147,6 +147,7 @@ This documentation is for the development version (0.12.dev0) - <a href="http://
 <li><a class="reference internal" href="#">EEG processing and Event Related Potentials (ERPs)</a><ul>
 <li><a class="reference internal" href="#setting-eeg-montage">Setting EEG montage</a></li>
 <li><a class="reference internal" href="#setting-eeg-reference">Setting EEG reference</a></li>
+<li><a class="reference internal" href="#evoked-arithmetics">Evoked arithmetics</a></li>
 </ul>
 </li>
 </ul>
@@ -184,6 +185,7 @@ This documentation is for the development version (0.12.dev0) - <a href="http://
 <li><a class="reference internal" href="#">EEG processing and Event Related Potentials (ERPs)</a><ul>
 <li><a class="reference internal" href="#setting-eeg-montage">Setting EEG montage</a></li>
 <li><a class="reference internal" href="#setting-eeg-reference">Setting EEG reference</a></li>
+<li><a class="reference internal" href="#evoked-arithmetics">Evoked arithmetics</a></li>
 </ul>
 </li>
 </ul>
@@ -216,9 +218,9 @@ of EEG, namely:</p>
 <div><ul class="simple">
 <li>setting the reference</li>
 <li>using standard montages <a class="reference internal" href="../generated/mne.channels.Montage.html#mne.channels.Montage" title="mne.channels.Montage"><code class="xref py py-func docutils literal"><span class="pre">mne.channels.Montage()</span></code></a></li>
+<li>Evoked arithmetic (e.g. differences)</li>
 </ul>
 </div></blockquote>
-<p>XXX : ROI plots?</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">mne</span>
 <span class="kn">from</span> <span class="nn">mne.datasets</span> <span class="kn">import</span> <span class="n">sample</span>
 </pre></div>
@@ -396,7 +398,7 @@ required for source localization.</p>
 Removing existing average EEG reference projection.
 </pre></div>
 </div>
-<p>We next define Epochs and compute en ERP for the left auditory condition.</p>
+<p>We next define Epochs and compute an ERP for the left auditory condition.</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">reject</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">eeg</span><span class="o">=</span><span class="mf">180e-6</span><span class="p">,</span> <span class="n">eog</span><span class="o">=</span><span class="mf">150e-6</span><span class="p">)</span>
 <span class="n">event_id</span><span class="p">,</span> <span class="n">tmin</span><span class="p">,</span> <span class="n">tmax</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;left/auditory&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span> <span class="o">-</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.5</span>
 <span class="n">events</span> <span class="o">=</span> <a href="../generated/mne.read_events.html#mne.read_events"><span class="n">mne</span><span class="o">.</span><span class="n">read_events</span></a><span class="p">(</span><span class="n">event_fname</span><span class="p">)</span>
@@ -521,8 +523,240 @@ Applying baseline correction (mode: mean)
     Rejecting  epoch based on EOG : [&#39;EOG&#39;]
 </pre></div>
 </div>
+</div>
+<div class="section" id="evoked-arithmetics">
+<h2>Evoked arithmetics<a class="headerlink" href="#evoked-arithmetics" title="Permalink to this headline">¶</a></h2>
+<p>Trial subsets from Epochs can be selected using &#8216;tags&#8217; separated by &#8216;/&#8217;.
+Evoked objects support basic arithmetic.
+First, we create an Epochs object containing 4 conditions.</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">event_id</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;left/auditory&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;right/auditory&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+            <span class="s1">&#39;left/visual&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s1">&#39;right/visual&#39;</span><span class="p">:</span> <span class="mi">4</span><span class="p">}</span>
+<span class="n">epochs_params</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">events</span><span class="o">=</span><span class="n">events</span><span class="p">,</span> <span class="n">event_id</span><span class="o">=</span><span class="n">event_id</span><span class="p">,</span> <span class="n">tmin</span><span class="o">=</span><span class="n">tmin</span><span class="p">,</span> <span class="n">tmax</span><span class="o">=</span><span class="n">tmax</span><span class="p">,</span>
+                     <span class="n">reject</span><span class="o">=</span><span class="n">reject</span><span class="p">)</span>
+<span class="n">epochs</span> <span class="o">=</span> <a href="../generated/mne.Epochs.html#mne.Epochs"><span class="n">mne</span><span class="o">.</span><span class="n">Epochs</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="o">**</span><span class="n">epochs_params</span><span class="p">)</span>
+
+<span class="k">print</span><span class="p">(</span><span class="n">epochs</span><span class="p">)</span>
+</pre></div>
+</div>
+<p class="sphx-glr-script-out">Out:</p>
+<div class="sphx-glr-script-out highlight-python"><div class="highlight"><pre><span></span>288 matching events found
+Applying baseline correction (mode: mean)
+Created an SSP operator (subspace dimension = 1)
+4 projection items activated
+&lt;Epochs  |  n_events : 288 (good &amp; bad), tmin : -0.199795213158 (s), tmax : 0.499488032896 (s), baseline : (None, 0),
+ &#39;left/auditory&#39;: 72, &#39;left/visual&#39;: 73, &#39;right/auditory&#39;: 73, &#39;right/visual&#39;: 70&gt;
+</pre></div>
+</div>
+<p>Next, we create averages of stimulation-left vs stimulation-right trials.
+We can use basic arithmetic to, for example, construct and plot
+difference ERPs.</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">left</span><span class="p">,</span> <span class="n">right</span> <span class="o">=</span> <span class="n">epochs</span><span class="p">[</span><span class="s2">&quot;left&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">average</span><span class="p">(),</span> <span class="n">epochs</span><span class="p">[</span><span class="s2">&quot;right&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">average</span><span class="p">()</span>
+
+<span class="p">(</span><span class="n">left</span> <span class="o">-</span> <span class="n">right</span><span class="p">)</span><span class="o">.</span><span class="n">plot_joint</span><span class="p">()</span>  <span class="c1"># create and plot difference ERP</span>
+</pre></div>
+</div>
+<img alt="../_images/sphx_glr_plot_eeg_erp_009.png" class="align-center" src="../_images/sphx_glr_plot_eeg_erp_009.png" />
+<p class="sphx-glr-script-out">Out:</p>
+<div class="sphx-glr-script-out highlight-python"><div class="highlight"><pre><span></span>Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EEG : [u&#39;EEG 001&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+</pre></div>
+</div>
+<p>Note that by default, this is a trial-weighted average. If you have
+imbalanced trial numbers, consider either equalizing the number of events per
+condition (using <code class="docutils literal"><span class="pre">Epochs.equalize_event_counts</span></code>), or the <code class="docutils literal"><span class="pre">combine_evoked</span></code>
+function.
+As an example, first, we create individual ERPs for each condition.</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">aud_l</span> <span class="o">=</span> <span class="n">epochs</span><span class="p">[</span><span class="s2">&quot;auditory&quot;</span><span class="p">,</span> <span class="s2">&quot;left&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">average</span><span class="p">()</span>
+<span class="n">aud_r</span> <span class="o">=</span> <span class="n">epochs</span><span class="p">[</span><span class="s2">&quot;auditory&quot;</span><span class="p">,</span> <span class="s2">&quot;right&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">average</span><span class="p">()</span>
+<span class="n">vis_l</span> <span class="o">=</span> <span class="n">epochs</span><span class="p">[</span><span class="s2">&quot;visual&quot;</span><span class="p">,</span> <span class="s2">&quot;left&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">average</span><span class="p">()</span>
+<span class="n">vis_r</span> <span class="o">=</span> <span class="n">epochs</span><span class="p">[</span><span class="s2">&quot;visual&quot;</span><span class="p">,</span> <span class="s2">&quot;right&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">average</span><span class="p">()</span>
+
+<span class="n">all_evokeds</span> <span class="o">=</span> <span class="p">[</span><span class="n">aud_l</span><span class="p">,</span> <span class="n">aud_r</span><span class="p">,</span> <span class="n">vis_l</span><span class="p">,</span> <span class="n">vis_r</span><span class="p">]</span>
+
+<span class="c1"># This could have been much simplified with a list comprehension:</span>
+<span class="c1"># all_evokeds = [epochs[cond] for cond in event_id]</span>
+
+<span class="c1"># Then, we construct and plot an unweighted average of left vs. right trials.</span>
+<a href="../generated/mne.combine_evoked.html#mne.combine_evoked"><span class="n">mne</span><span class="o">.</span><span class="n">combine_evoked</span></a><span class="p">(</span><span class="n">all_evokeds</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">))</span><span class="o">.</span><span class="n">plot_joint</span><span class="p">()</span>
+</pre></div>
+</div>
+<img alt="../_images/sphx_glr_plot_eeg_erp_010.png" class="align-center" src="../_images/sphx_glr_plot_eeg_erp_010.png" />
+<p class="sphx-glr-script-out">Out:</p>
+<div class="sphx-glr-script-out highlight-python"><div class="highlight"><pre><span></span>Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EEG : [u&#39;EEG 001&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+</pre></div>
+</div>
+<p>Often, it makes sense to store Evoked objects in a dictionary or a list -
+either different conditions, or different subjects.</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># If they are stored in a list, they can be easily averaged, for example,</span>
+<span class="c1"># for a grand average across subjects (or conditions).</span>
+<span class="n">grand_average</span> <span class="o">=</span> <a href="../generated/mne.grand_average.html#mne.grand_average"><span class="n">mne</span><span class="o">.</span><span class="n">grand_average</span></a><span class="p">(</span><span class="n">all_evokeds</span><span class="p">)</span>
+<a href="../generated/mne.write_evokeds.html#mne.write_evokeds"><span class="n">mne</span><span class="o">.</span><span class="n">write_evokeds</span></a><span class="p">(</span><span class="s1">&#39;/tmp/tmp-ave.fif&#39;</span><span class="p">,</span> <span class="n">all_evokeds</span><span class="p">)</span>
+
+<span class="c1"># If Evokeds objects are stored in a dictionary, they can be retrieved by name.</span>
+<span class="n">all_evokeds</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">((</span><span class="n">cond</span><span class="p">,</span> <span class="n">epochs</span><span class="p">[</span><span class="n">cond</span><span class="p">]</span><span class="o">.</span><span class="n">average</span><span class="p">())</span> <span class="k">for</span> <span class="n">cond</span> <span class="ow">in</span> <span class="n">event_id</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">all_evokeds</span><span class="p">[</span><span class="s1">&#39;left/auditory&#39;</span><span class="p">])</span>
+
+<span class="c1"># Besides for explicit access, this can be used for example to set titles.</span>
+<span class="k">for</span> <span class="n">cond</span> <span class="ow">in</span> <span class="n">all_evokeds</span><span class="p">:</span>
+    <span class="n">all_evokeds</span><span class="p">[</span><span class="n">cond</span><span class="p">]</span><span class="o">.</span><span class="n">plot_joint</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="n">cond</span><span class="p">)</span>
+</pre></div>
+</div>
+<ul class="sphx-glr-horizontal">
+<li><a class="first reference internal image-reference" href="../_images/sphx_glr_plot_eeg_erp_011.png"><img alt="../_images/sphx_glr_plot_eeg_erp_011.png" src="../_images/sphx_glr_plot_eeg_erp_011.png" style="width: 376.0px; height: 197.4px;" /></a>
+</li>
+<li><a class="first reference internal image-reference" href="../_images/sphx_glr_plot_eeg_erp_012.png"><img alt="../_images/sphx_glr_plot_eeg_erp_012.png" src="../_images/sphx_glr_plot_eeg_erp_012.png" style="width: 376.0px; height: 197.4px;" /></a>
+</li>
+<li><a class="first reference internal image-reference" href="../_images/sphx_glr_plot_eeg_erp_013.png"><img alt="../_images/sphx_glr_plot_eeg_erp_013.png" src="../_images/sphx_glr_plot_eeg_erp_013.png" style="width: 376.0px; height: 197.4px;" /></a>
+</li>
+<li><a class="first reference internal image-reference" href="../_images/sphx_glr_plot_eeg_erp_014.png"><img alt="../_images/sphx_glr_plot_eeg_erp_014.png" src="../_images/sphx_glr_plot_eeg_erp_014.png" style="width: 376.0px; height: 197.4px;" /></a>
+</li>
+</ul>
+<p class="sphx-glr-script-out">Out:</p>
+<div class="sphx-glr-script-out highlight-python"><div class="highlight"><pre><span></span>Identiying common channels ...
+all channels are corresponding, nothing to do.
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EEG : [u&#39;EEG 001&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+&lt;Evoked  |  comment : &#39;left/auditory&#39;, kind : average, time : [-0.199795, 0.499488], n_epochs : 56, n_channels x n_times : 59 x 106&gt;
+</pre></div>
+</div>
 <p><strong>Total running time of the script:</strong>
-(0 minutes 3.513 seconds)</p>
+(0 minutes 13.393 seconds)</p>
 <div class="sphx-glr-download container">
 <strong>Download Python source code:</strong> <a class="reference download internal" href="../_downloads/plot_eeg_erp.py"><code class="xref download docutils literal"><span class="pre">plot_eeg_erp.py</span></code></a></div>
 <div class="sphx-glr-download container">
@@ -545,7 +779,7 @@ Applying baseline correction (mode: mean)
       
     </p>
     <p>
-        &copy; Copyright 2012-2016, MNE Developers. Last updated on 2016-04-23.<br/>
+        &copy; Copyright 2012-2016, MNE Developers. Last updated on 2016-04-25.<br/>
     </p>
   </div>
 </footer>

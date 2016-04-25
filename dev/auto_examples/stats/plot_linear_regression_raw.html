@@ -201,41 +201,33 @@ This documentation is for the development version (0.12.dev0) - <a href="http://
       
   <div class="section" id="regression-on-continuous-data-rer-p-f">
 <span id="sphx-glr-auto-examples-stats-plot-linear-regression-raw-py"></span><h1>Regression on continuous data (rER[P/F])<a class="headerlink" href="#regression-on-continuous-data-rer-p-f" title="Permalink to this headline">¶</a></h1>
-<p>This demonstrates how rERPs/regressing the continuous data is a
+<p>This demonstrates how rER[P/F]s - regressing the continuous data - is a
 generalisation of traditional averaging. If all preprocessing steps
-are the same and if no overlap between epochs exists and if all
+are the same, no overlap between epochs exists, and if all
 predictors are binary, regression is virtually identical to traditional
 averaging.
 If overlap exists and/or predictors are continuous, traditional averaging
-is inapplicable, but regression can estimate, including those of
+is inapplicable, but regression can estimate effects, including those of
 continuous predictors.</p>
-<p>Note. This example is based on new code which may still not be
-memory-optimized. Be careful when working with a small computer.</p>
 <p>rERPs are described in:
 Smith, N. J., &amp; Kutas, M. (2015). Regression-based estimation of ERP
 waveforms: II. Non-linear effects, overlap correction, and practical
 considerations. Psychophysiology, 52(2), 169-189.</p>
 <img alt="../../_images/sphx_glr_plot_linear_regression_raw_001.png" class="align-center" src="../../_images/sphx_glr_plot_linear_regression_raw_001.png" />
 <p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-python"><div class="highlight"><pre><span></span>ds directory : /home/ubuntu/mne_data/MNE-spm-face/MEG/spm/SPM_CTF_MEG_example_faces1_3D.ds
-    res4 data read.
-    hc data read.
-    Separate EEG position data file not present.
-    Quaternion matching (desired vs. transformed):
-      -0.90   72.01    0.00 mm &lt;-&gt;   -0.90   72.01    0.00 mm (orig :  -43.09   61.46 -252.17 mm) diff =    0.000 mm
-       0.90  -72.01    0.00 mm &lt;-&gt;    0.90  -72.01    0.00 mm (orig :   53.49  -45.24 -258.02 mm) diff =    0.000 mm
-      98.30    0.00    0.00 mm &lt;-&gt;   98.30   -0.00    0.00 mm (orig :   78.60   72.16 -241.87 mm) diff =    0.000 mm
-    Coordinate transformations established.
-    Polhemus data for 3 HPI coils added
-    Device coordinate locations for 3 HPI coils added
-    Measurement info composed.
-Finding samples for /home/ubuntu/mne_data/MNE-spm-face/MEG/spm/SPM_CTF_MEG_example_faces1_3D.ds/SPM_CTF_MEG_example_faces1_3D.meg4:
-    System clock channel is available, checking which samples are valid.
-    1 x 324474 = 324474 samples from 340 chs
-Reading 0 ... 115200  =      0.000 ...   240.000 secs...
-Band-pass filtering from 1 - 45 Hz
-66 events found
-Events id: [1 2 3]
+<div class="sphx-glr-script-out highlight-python"><div class="highlight"><pre><span></span>Opening raw data file /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis_filt-0-40_raw.fif...
+    Read a total of 4 projection items:
+        PCA-v1 (1 x 102)  idle
+        PCA-v2 (1 x 102)  idle
+        PCA-v3 (1 x 102)  idle
+        Average EEG reference (1 x 60)  idle
+Current compensation grade : 0
+    Range : 6450 ... 48149 =     42.956 ...   320.665 secs
+Ready.
+Reading 0 ... 41699  =      0.000 ...   277.709 secs...
+High-pass filtering at 1 Hz
+319 events found
+Events id: [ 1  2  3  4  5 32]
 </pre></div>
 </div>
 <div class="line-block">
@@ -248,49 +240,46 @@ Events id: [1 2 3]
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
 
 <span class="kn">import</span> <span class="nn">mne</span>
-<span class="kn">from</span> <span class="nn">mne.datasets</span> <span class="kn">import</span> <span class="n">spm_face</span>
+<span class="kn">from</span> <span class="nn">mne.datasets</span> <span class="kn">import</span> <span class="n">sample</span>
 <span class="kn">from</span> <span class="nn">mne.stats.regression</span> <span class="kn">import</span> <a href="../../generated/mne.stats.linear_regression_raw.html#mne.stats.linear_regression_raw"><span class="n">linear_regression_raw</span></a>
 
-<span class="c1"># Preprocess data</span>
-<span class="n">data_path</span> <span class="o">=</span> <a href="../../generated/mne.datasets.spm_face.data_path.html#mne.datasets.spm_face.data_path"><span class="n">spm_face</span><span class="o">.</span><span class="n">data_path</span></a><span class="p">()</span>
-<span class="c1"># Load and filter data, set up epochs</span>
-<span class="n">raw_fname</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/spm/SPM_CTF_MEG_example_faces1_3D.ds&#39;</span>
+<span class="c1"># Load and preprocess data</span>
+<span class="n">data_path</span> <span class="o">=</span> <a href="../../generated/mne.datasets.sample.data_path.html#mne.datasets.sample.data_path"><span class="n">sample</span><span class="o">.</span><span class="n">data_path</span></a><span class="p">()</span>
+<span class="n">raw_fname</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis_filt-0-40_raw.fif&#39;</span>
+<span class="n">raw</span> <span class="o">=</span> <span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read_raw_fif</span><span class="p">(</span><span class="n">raw_fname</span><span class="p">,</span> <span class="n">preload</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span><span class="o">.</span><span class="n">pick_types</span><span class="p">(</span>
+    <span class="n">meg</span><span class="o">=</span><span class="s1">&#39;grad&#39;</span><span class="p">,</span> <span class="n">stim</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">eeg</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;iir&#39;</span><span class="p">)</span>
 
-<span class="c1"># Use just the first 4 minutes to save memory</span>
-<span class="n">raw</span> <span class="o">=</span> <span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read_raw_ctf</span><span class="p">(</span><span class="n">raw_fname</span><span class="p">)</span><span class="o">.</span><span class="n">crop</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">240</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span><span class="o">.</span><span class="n">load_data</span><span class="p">()</span>
-
-<span class="n">picks</span> <span class="o">=</span> <a href="../../generated/mne.pick_types.html#mne.pick_types"><span class="n">mne</span><span class="o">.</span><span class="n">pick_types</span></a><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">meg</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="s1">&#39;bads&#39;</span><span class="p">)</span>
-<span class="n">raw</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">45</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;iir&#39;</span><span class="p">)</span>
-
-<span class="n">events</span> <span class="o">=</span> <a href="../../generated/mne.find_events.html#mne.find_events"><span class="n">mne</span><span class="o">.</span><span class="n">find_events</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">stim_channel</span><span class="o">=</span><span class="s1">&#39;UPPT001&#39;</span><span class="p">)</span>
-<span class="n">event_id</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">faces</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">scrambled</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
+<span class="c1"># Set up events</span>
+<span class="n">events</span> <span class="o">=</span> <a href="../../generated/mne.find_events.html#mne.find_events"><span class="n">mne</span><span class="o">.</span><span class="n">find_events</span></a><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
+<span class="n">event_id</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Aud/L&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;Aud/R&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">}</span>
 <span class="n">tmin</span><span class="p">,</span> <span class="n">tmax</span> <span class="o">=</span> <span class="o">-.</span><span class="mi">1</span><span class="p">,</span> <span class="o">.</span><span class="mi">5</span>
 
 <span class="c1"># regular epoching</span>
 <span class="n">picks</span> <span class="o">=</span> <a href="../../generated/mne.pick_types.html#mne.pick_types"><span class="n">mne</span><span class="o">.</span><span class="n">pick_types</span></a><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">meg</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 <span class="n">epochs</span> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs"><span class="n">mne</span><span class="o">.</span><span class="n">Epochs</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">event_id</span><span class="p">,</span> <span class="n">tmin</span><span class="p">,</span> <span class="n">tmax</span><span class="p">,</span> <span class="n">reject</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-                    <span class="n">baseline</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">preload</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">picks</span><span class="o">=</span><span class="n">picks</span><span class="p">,</span>
-                    <span class="n">verbose</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">decim</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+                    <span class="n">baseline</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">preload</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
 
 <span class="c1"># rERF</span>
 <span class="n">evokeds</span> <span class="o">=</span> <a href="../../generated/mne.stats.linear_regression_raw.html#mne.stats.linear_regression_raw"><span class="n">linear_regression_raw</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">events</span><span class="o">=</span><span class="n">events</span><span class="p">,</span> <span class="n">event_id</span><span class="o">=</span><span class="n">event_id</span><span class="p">,</span>
-                                <span class="n">reject</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">tmin</span><span class="o">=</span><span class="n">tmin</span><span class="p">,</span> <span class="n">tmax</span><span class="o">=</span><span class="n">tmax</span><span class="p">,</span>
-                                <span class="n">decim</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">picks</span><span class="o">=</span><span class="n">picks</span><span class="p">)</span>
+                                <span class="n">reject</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">tmin</span><span class="o">=</span><span class="n">tmin</span><span class="p">,</span> <span class="n">tmax</span><span class="o">=</span><span class="n">tmax</span><span class="p">)</span>
 <span class="c1"># linear_regression_raw returns a dict of evokeds</span>
 <span class="c1"># select conditions similarly to mne.Epochs objects</span>
 
-<span class="c1"># plot both results</span>
-<span class="n">cond</span> <span class="o">=</span> <span class="s2">&quot;faces&quot;</span>
-<span class="n">fig</span><span class="p">,</span> <span class="p">(</span><span class="n">ax1</span><span class="p">,</span> <span class="n">ax2</span><span class="p">)</span> <span class="o">=</span> <a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.subplots"><span class="n">plt</span><span class="o">.</span><span class="n">subplots</span></a><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-<span class="n">epochs</span><span class="p">[</span><span class="n">cond</span><span class="p">]</span><span class="o">.</span><span class="n">average</span><span class="p">()</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">axes</span><span class="o">=</span><span class="n">ax1</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
-<span class="n">evokeds</span><span class="p">[</span><span class="n">cond</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">axes</span><span class="o">=</span><span class="n">ax2</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="c1"># plot both results, and their difference</span>
+<span class="n">cond</span> <span class="o">=</span> <span class="s2">&quot;Aud/L&quot;</span>
+<span class="n">fig</span><span class="p">,</span> <span class="p">(</span><span class="n">ax1</span><span class="p">,</span> <span class="n">ax2</span><span class="p">,</span> <span class="n">ax3</span><span class="p">)</span> <span class="o">=</span> <a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.subplots"><span class="n">plt</span><span class="o">.</span><span class="n">subplots</span></a><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">params</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">spatial_colors</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">ylim</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">grad</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">200</span><span class="p">,</span> <span class="mi">200</span><span class="p">)))</span>
+<span class="n">epochs</span><span class="p">[</span><span class="n">cond</span><span class="p">]</span><span class="o">.</span><span class="n">average</span><span class="p">()</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">axes</span><span class="o">=</span><span class="n">ax1</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+<span class="n">evokeds</span><span class="p">[</span><span class="n">cond</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">axes</span><span class="o">=</span><span class="n">ax2</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
+<span class="p">(</span><span class="n">evokeds</span><span class="p">[</span><span class="n">cond</span><span class="p">]</span> <span class="o">-</span> <span class="n">epochs</span><span class="p">[</span><span class="n">cond</span><span class="p">]</span><span class="o">.</span><span class="n">average</span><span class="p">())</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">axes</span><span class="o">=</span><span class="n">ax3</span><span class="p">,</span> <span class="o">**</span><span class="n">params</span><span class="p">)</span>
 <span class="n">ax1</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Traditional averaging&quot;</span><span class="p">)</span>
 <span class="n">ax2</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;rERF&quot;</span><span class="p">)</span>
+<span class="n">ax3</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s2">&quot;Difference&quot;</span><span class="p">)</span>
 <a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.show"><span class="n">plt</span><span class="o">.</span><span class="n">show</span></a><span class="p">()</span>
 </pre></div>
 </div>
 <p><strong>Total running time of the script:</strong>
-(0 minutes 4.023 seconds)</p>
+(0 minutes 3.931 seconds)</p>
 <div class="sphx-glr-download container">
 <strong>Download Python source code:</strong> <a class="reference download internal" href="../../_downloads/plot_linear_regression_raw.py"><code class="xref download docutils literal"><span class="pre">plot_linear_regression_raw.py</span></code></a></div>
 <div class="sphx-glr-download container">
@@ -312,7 +301,7 @@ Events id: [1 2 3]
       
     </p>
     <p>
-        &copy; Copyright 2012-2016, MNE Developers. Last updated on 2016-04-23.<br/>
+        &copy; Copyright 2012-2016, MNE Developers. Last updated on 2016-04-25.<br/>
     </p>
   </div>
 </footer>

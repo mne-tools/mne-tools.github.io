@@ -96,35 +96,6 @@ Set parameters
     # Time vector
     times = 1e3 * epochs_condition_1.times  # change unit to ms
 
-    # Factor to downsample the temporal dimension of the PSD computed by
-    # single_trial_power.  Decimation occurs after frequency decomposition and can
-    # be used to reduce memory usage (and possibly comptuational time of downstream
-    # operations such as nonparametric statistics) if you don't need high
-    # spectrotemporal resolution.
-    decim = 2
-    frequencies = np.arange(7, 30, 3)  # define frequencies of interest
-    sfreq = raw.info['sfreq']  # sampling in Hz
-    n_cycles = 1.5
-
-    epochs_power_1 = single_trial_power(data_condition_1, sfreq=sfreq,
-                                        frequencies=frequencies,
-                                        n_cycles=n_cycles, decim=decim)
-
-    epochs_power_2 = single_trial_power(data_condition_2, sfreq=sfreq,
-                                        frequencies=frequencies,
-                                        n_cycles=n_cycles, decim=decim)
-
-    epochs_power_1 = epochs_power_1[:, 0, :, :]  # only 1 channel to get 3D matrix
-    epochs_power_2 = epochs_power_2[:, 0, :, :]  # only 1 channel to get 3D matrix
-
-    # Compute ratio with baseline power (be sure to correct time vector with
-    # decimation factor)
-    baseline_mask = times[::decim] < 0
-    epochs_baseline_1 = np.mean(epochs_power_1[:, :, baseline_mask], axis=2)
-    epochs_power_1 /= epochs_baseline_1[..., np.newaxis]
-    epochs_baseline_2 = np.mean(epochs_power_2[:, :, baseline_mask], axis=2)
-    epochs_power_2 /= epochs_baseline_2[..., np.newaxis]
-
 
 
 
@@ -182,10 +153,63 @@ Set parameters
         Rejecting  epoch based on EOG : [u'EOG 061']
         Rejecting  epoch based on EOG : [u'EOG 061']
     13 bad epochs dropped
+
+
+Factor to downsample the temporal dimension of the PSD computed by
+single_trial_power.  Decimation occurs after frequency decomposition and can
+be used to reduce memory usage (and possibly comptuational time of downstream
+operations such as nonparametric statistics) if you don't need high
+spectrotemporal resolution.
+
+
+.. code-block:: python
+
+    decim = 2
+    frequencies = np.arange(7, 30, 3)  # define frequencies of interest
+    sfreq = raw.info['sfreq']  # sampling in Hz
+    n_cycles = 1.5
+
+    epochs_power_1 = single_trial_power(data_condition_1, sfreq=sfreq,
+                                        frequencies=frequencies,
+                                        n_cycles=n_cycles, decim=decim)
+
+    epochs_power_2 = single_trial_power(data_condition_2, sfreq=sfreq,
+                                        frequencies=frequencies,
+                                        n_cycles=n_cycles, decim=decim)
+
+    epochs_power_1 = epochs_power_1[:, 0, :, :]  # only 1 channel to get 3D matrix
+    epochs_power_2 = epochs_power_2[:, 0, :, :]  # only 1 channel to get 3D matrix
+
+
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
     Computing time-frequency power on single epochs...
     No baseline correction applied
     Computing time-frequency power on single epochs...
     No baseline correction applied
+
+
+Compute ratio with baseline power (be sure to correct time vector with
+decimation factor)
+
+
+.. code-block:: python
+
+    baseline_mask = times[::decim] < 0
+    epochs_baseline_1 = np.mean(epochs_power_1[:, :, baseline_mask], axis=2)
+    epochs_power_1 /= epochs_baseline_1[..., np.newaxis]
+    epochs_baseline_2 = np.mean(epochs_power_2[:, :, baseline_mask], axis=2)
+    epochs_power_2 /= epochs_baseline_2[..., np.newaxis]
+
+
+
+
+
 
 
 Compute statistic
@@ -259,7 +283,7 @@ View time-frequency plots
 
 
 **Total running time of the script:**
-(0 minutes 1.101 seconds)
+(0 minutes 1.168 seconds)
 
 
 

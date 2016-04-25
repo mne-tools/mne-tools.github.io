@@ -46,6 +46,7 @@ permutation test across space and time.
 
 
 Set parameters
+--------------
 
 
 .. code-block:: python
@@ -82,6 +83,7 @@ Set parameters
 
 
 Read epochs for all channels, removing a bad one
+------------------------------------------------
 
 
 .. code-block:: python
@@ -141,6 +143,7 @@ Read epochs for all channels, removing a bad one
 
 
 Transform to source space
+-------------------------
 
 
 .. code-block:: python
@@ -240,17 +243,21 @@ Transform to source space
 
 
 Transform to common cortical space
+----------------------------------
+
+Normally you would read in estimates across several subjects and morph
+them to the same cortical space (e.g. fsaverage). For example purposes,
+we will simulate this by just having each "subject" have the same
+response (just noisy in source space) here.
+
+.. note::
+    Note that for 7 subjects with a two-sided statistical test, the minimum
+    significance under a permutation test is only p = 1/(2 ** 6) = 0.015,
+    which is large.
 
 
 .. code-block:: python
 
-
-    #    Normally you would read in estimates across several subjects and morph
-    #    them to the same cortical space (e.g. fsaverage). For example purposes,
-    #    we will simulate this by just having each "subject" have the same
-    #    response (just noisy in source space) here. Note that for 7 subjects
-    #    with a two-sided statistical test, the minimum significance under a
-    #    permutation test is only p = 1/(2 ** 6) = 0.015, which is large.
     n_vertices_sample, n_times = condition1.data.shape
     n_subjects = 7
     print('Simulating data for %d subjects.' % n_subjects)
@@ -261,12 +268,27 @@ Transform to common cortical space
     X[:, :, :, 0] += condition1.data[:, :, np.newaxis]
     X[:, :, :, 1] += condition2.data[:, :, np.newaxis]
 
-    #    It's a good idea to spatially smooth the data, and for visualization
-    #    purposes, let's morph these to fsaverage, which is a grade 5 source space
-    #    with vertices 0:10242 for each hemisphere. Usually you'd have to morph
-    #    each subject's data separately (and you might want to use morph_data
-    #    instead), but here since all estimates are on 'sample' we can use one
-    #    morph matrix for all the heavy lifting.
+
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    Simulating data for 7 subjects.
+
+
+It's a good idea to spatially smooth the data, and for visualization
+purposes, let's morph these to fsaverage, which is a grade 5 source space
+with vertices 0:10242 for each hemisphere. Usually you'd have to morph
+each subject's data separately (and you might want to use morph_data
+instead), but here since all estimates are on 'sample' we can use one
+morph matrix for all the heavy lifting.
+
+
+.. code-block:: python
+
     fsave_vertices = [np.arange(10242), np.arange(10242)]
     morph_mat = compute_morph_matrix('sample', 'fsaverage', sample_vertices,
                                      fsave_vertices, 20, subjects_dir)
@@ -278,13 +300,6 @@ Transform to common cortical space
     X = morph_mat.dot(X)  # morph_mat is a sparse matrix
     X = X.reshape(n_vertices_fsave, n_times, n_subjects, 2)
 
-    #    Finally, we want to compare the overall activity levels in each condition,
-    #    the diff is taken along the last axis (condition). The negative sign makes
-    #    it so condition1 > condition2 shows up as "red blobs" (instead of blue).
-    X = np.abs(X)  # only magnitude
-    X = X[:, :, :, 0] - X[:, :, :, 1]  # make paired contrast
-
-
 
 
 
@@ -293,7 +308,6 @@ Transform to common cortical space
 
  Out::
 
-    Simulating data for 7 subjects.
     Computing morph matrix...
     Triangle file: created by gramfort on Thu Sep 15 21:13:45 2011 nvert = 155407 ntri = 310810
     Triangle file: created by gramfort on Fri Sep 16 00:40:11 2011 nvert = 156866 ntri = 313728
@@ -305,14 +319,32 @@ Transform to common cortical space
     Morphing data.
 
 
-Compute statistic
+Finally, we want to compare the overall activity levels in each condition,
+the diff is taken along the last axis (condition). The negative sign makes
+it so condition1 > condition2 shows up as "red blobs" (instead of blue).
 
 
 .. code-block:: python
 
+    X = np.abs(X)  # only magnitude
+    X = X[:, :, :, 0] - X[:, :, :, 1]  # make paired contrast
 
-    #    To use an algorithm optimized for spatio-temporal clustering, we
-    #    just pass the spatial connectivity matrix (instead of spatio-temporal)
+
+
+
+
+
+
+
+Compute statistic
+-----------------
+
+To use an algorithm optimized for spatio-temporal clustering, we
+just pass the spatial connectivity matrix (instead of spatio-temporal)
+
+
+.. code-block:: python
+
     print('Computing connectivity.')
     connectivity = spatial_tris_connectivity(grade_to_tris(5))
 
@@ -352,10 +384,10 @@ Compute statistic
 
 
 Visualize the clusters
+----------------------
 
 
 .. code-block:: python
-
 
     print('Visualizing clusters.')
 
@@ -413,7 +445,7 @@ Visualize the clusters
 
 
 **Total running time of the script:**
-(0 minutes 57.057 seconds)
+(0 minutes 58.283 seconds)
 
 
 

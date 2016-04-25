@@ -16,6 +16,8 @@ inverse method such as MNE/dSPM/sLORETA on evoked/raw/epochs data.
 .. code-block:: python
 
     import numpy as np
+    import matplotlib.pyplot as plt
+
     import mne
     from mne.datasets import sample
     from mne.minimum_norm import (make_inverse_operator, apply_inverse,
@@ -207,7 +209,7 @@ Inverse modeling: MNE/dSPM on evoked and raw data
     # Restrict forward solution as necessary for MEG
     fwd = mne.pick_types_forward(fwd, meg=True, eeg=False)
 
-    # make an M/EEG, MEG-only, and EEG-only inverse operators
+    # make an MEG inverse operator
     info = evoked.info
     inverse_operator = make_inverse_operator(info, fwd, noise_cov,
                                              loose=0.2, depth=0.8)
@@ -311,22 +313,50 @@ Compute inverse solution
     [done]
 
 
-Let's now visualize
+Visualization
+-------------
+View activation time-series
 
 
 .. code-block:: python
 
 
+    plt.plot(1e3 * stc.times, stc.data[::100, :].T)
+    plt.xlabel('time (ms)')
+    plt.ylabel('%s value' % method)
+    plt.show()
+
+
+
+
+.. image:: /auto_tutorials/images/sphx_glr_plot_mne_dspm_source_localization_006.png
+    :align: center
+
+
+
+
+Here we use peak getter to move visualization to the time point of the peak
+and draw a marker at the maximum peak vertex.
+
+
+.. code-block:: python
+
+
+    vertno_max, time_idx = stc.get_peak(hemi='rh', time_as_index=True)
+
     subjects_dir = data_path + '/subjects'
     brain = stc.plot(surface='inflated', hemi='rh', subjects_dir=subjects_dir)
-    brain.set_data_time_index(45)
+
+    brain.set_data_time_index(time_idx)
+    brain.add_foci(vertno_max, coords_as_verts=True, hemi='rh', color='blue',
+                   scale_factor=0.6)
     brain.scale_data_colormap(fmin=8, fmid=12, fmax=15, transparent=True)
     brain.show_view('lateral')
 
 
 
 
-.. image:: /auto_tutorials/images/sphx_glr_plot_mne_dspm_source_localization_006.png
+.. image:: /auto_tutorials/images/sphx_glr_plot_mne_dspm_source_localization_007.png
     :align: center
 
 
@@ -360,14 +390,14 @@ Morph data to average brain
 
     brain_fsaverage = stc_fsaverage.plot(surface='inflated', hemi='rh',
                                          subjects_dir=subjects_dir)
-    brain_fsaverage.set_data_time_index(45)
+    brain_fsaverage.set_data_time_index(time_idx)
     brain_fsaverage.scale_data_colormap(fmin=8, fmid=12, fmax=15, transparent=True)
     brain_fsaverage.show_view('lateral')
 
 
 
 
-.. image:: /auto_tutorials/images/sphx_glr_plot_mne_dspm_source_localization_007.png
+.. image:: /auto_tutorials/images/sphx_glr_plot_mne_dspm_source_localization_008.png
     :align: center
 
 
@@ -406,7 +436,7 @@ Exercise
      estimates using the sLORETA method.
 
 **Total running time of the script:**
-(1 minutes 28.357 seconds)
+(1 minutes 30.522 seconds)
 
 
 

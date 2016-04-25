@@ -100,10 +100,10 @@ read each instance to a variable.
 
 .. code-block:: python
 
-    left_auditory = evoked[0]
-    right_auditory = evoked[1]
-    left_visual = evoked[2]
-    right_visual = evoked[3]
+    evoked_l_aud = evoked[0]
+    evoked_r_aud = evoked[1]
+    evoked_l_vis = evoked[2]
+    evoked_r_vis = evoked[3]
 
 
 
@@ -111,12 +111,16 @@ read each instance to a variable.
 
 
 
-Let's start with a simple one.
+Let's start with a simple one. We plot event related potentials / fields
+(ERP/ERF). The bad channels are not plotted by default. Here we explicitly
+set the exclude parameter to show the bad channels in red. All plotting
+functions of MNE-python return a handle to the figure instance. When we have
+the handle, we can customise the plots to our liking.
 
 
 .. code-block:: python
 
-    fig = left_auditory.plot()
+    fig = evoked_l_aud.plot(exclude=())
 
 
 
@@ -147,12 +151,15 @@ MNE-functions include a ``picks`` parameter to include a selection of
 channels. ``picks`` is simply a list of channel indices that you can easily
 construct with :func:`mne.pick_types`. See also :func:`mne.pick_channels` and
 :func:`mne.pick_channels_regexp`.
+Using ``spatial_colors=True``, the individual channel lines are color coded
+to show the sensor positions - specifically, the x, y, and z locations of
+the sensors are transformed into R, G and B values.
 
 
 .. code-block:: python
 
-    picks = mne.pick_types(left_auditory.info, meg=True, eeg=False, eog=False)
-    left_auditory.plot(spatial_colors=True, gfp=True, picks=picks)
+    picks = mne.pick_types(evoked_l_aud.info, meg=True, eeg=False, eog=False)
+    evoked_l_aud.plot(spatial_colors=True, gfp=True, picks=picks)
 
 
 
@@ -172,7 +179,7 @@ also a function for drawing topomaps separately.
 
 .. code-block:: python
 
-    right_auditory.plot_topomap()
+    evoked_l_aud.plot_topomap()
 
 
 
@@ -190,7 +197,7 @@ the evoked data. We can also define the times ourselves.
 .. code-block:: python
 
     times = np.arange(0.05, 0.151, 0.05)
-    right_auditory.plot_topomap(times=times, ch_type='mag')
+    evoked_r_aud.plot_topomap(times=times, ch_type='mag')
 
 
 
@@ -206,7 +213,7 @@ Or we can automatically select the peaks.
 
 .. code-block:: python
 
-    right_auditory.plot_topomap(times='peaks', ch_type='mag')
+    evoked_r_aud.plot_topomap(times='peaks', ch_type='mag')
 
 
 
@@ -218,7 +225,7 @@ Or we can automatically select the peaks.
 
 
 You can take a look at the documentation of :func:`mne.Evoked.plot_topomap`
-or simply write ``right_auditory.plot_topomap?`` in your python console to
+or simply write ``evoked_r_aud.plot_topomap?`` in your python console to
 see the different parameters you can pass to this function. Most of the
 plotting functions also accept ``axes`` parameter. With that, you can
 customise your plots even further. First we shall create a set of matplotlib
@@ -229,10 +236,10 @@ other.
 .. code-block:: python
 
     fig, ax = plt.subplots(1, 5)
-    left_auditory.plot_topomap(times=0.1, axes=ax[0], show=False)
-    right_auditory.plot_topomap(times=0.1, axes=ax[1], show=False)
-    left_visual.plot_topomap(times=0.1, axes=ax[2], show=False)
-    right_visual.plot_topomap(times=0.1, axes=ax[3], show=True)
+    evoked_l_aud.plot_topomap(times=0.1, axes=ax[0], show=False)
+    evoked_r_aud.plot_topomap(times=0.1, axes=ax[1], show=False)
+    evoked_l_vis.plot_topomap(times=0.1, axes=ax[2], show=False)
+    evoked_r_vis.plot_topomap(times=0.1, axes=ax[3], show=True)
 
 
 
@@ -260,15 +267,24 @@ showing of the figure prematurely. The behavior depends on the mode you are
 using for your python session. See http://matplotlib.org/users/shell.html for
 more information.
 
-We can also combine the two kinds of plots to one. Notice the
-``topomap_args`` parameter of :func:`mne.Evoked.plot_joint`. You can pass
-key-value pairs as a python dictionary that gets passed as parameters to the
-topomaps of the joint plot.
+We can also combine the two kinds of plots to on using the ``plot_joint``
+method of Evoked objects. Notice the ``topomap_args`` and ``ts_args``
+parameters of :func:`mne.Evoked.plot_joint`.
+You can pass key-value pairs as a python dictionary that gets passed as
+parameters to the topomaps and time series of the joint plot.
 
 
 .. code-block:: python
 
-    right_auditory.plot_joint()
+    evoked_r_aud.plot_joint()
+
+    # For slightly more elaborate plots, use these ``topomap_args`` and ``ts_args``
+    # arguments. Here, topomaps at specific time points (70 and 105 msec) are
+    # shown, sensors are not plotted, and the Global Field Power is shown:
+    ts_args = dict(gfp=True)
+    topomap_args = dict(sensors=False)
+    evoked_r_aud.plot_joint(title='right auditory', times=[.07, .105],
+                            ts_args=ts_args, topomap_args=topomap_args)
 
 
 
@@ -291,6 +307,21 @@ topomaps of the joint plot.
       .. image:: /auto_tutorials/images/sphx_glr_plot_visualize_evoked_009.png
             :scale: 47
 
+    *
+
+      .. image:: /auto_tutorials/images/sphx_glr_plot_visualize_evoked_010.png
+            :scale: 47
+
+    *
+
+      .. image:: /auto_tutorials/images/sphx_glr_plot_visualize_evoked_011.png
+            :scale: 47
+
+    *
+
+      .. image:: /auto_tutorials/images/sphx_glr_plot_visualize_evoked_012.png
+            :scale: 47
+
 
 
 
@@ -303,27 +334,29 @@ the color map yourself. The accepted values include all matplotlib colormaps.
 
 .. code-block:: python
 
-    left_auditory.plot_image(picks=picks)
+    evoked_r_aud.plot_image(picks=picks)
 
 
 
 
-.. image:: /auto_tutorials/images/sphx_glr_plot_visualize_evoked_010.png
+.. image:: /auto_tutorials/images/sphx_glr_plot_visualize_evoked_013.png
     :align: center
 
 
 
 
 Finally we plot the sensor data as a topographical view. In the simple case
-we plot only the ``left_auditory``, and then we plot them all in the same
+we plot only left auditory responses, and then we plot them all in the same
 figure for comparison. Click on the individual plots to open them bigger.
 
 
 .. code-block:: python
 
-    left_auditory.plot_topo()
+    title = 'MNE sample data (condition : %s)'
+    evoked_l_aud.plot_topo(title=title % evoked_l_aud.comment)
     colors = 'yellow', 'green', 'red', 'blue'
-    mne.viz.plot_evoked_topo(evoked, color=colors)
+    mne.viz.plot_evoked_topo(evoked, color=colors,
+                             title=title % 'Left/Right Auditory/Visual')
 
 
 
@@ -333,12 +366,12 @@ figure for comparison. Click on the individual plots to open them bigger.
 
     *
 
-      .. image:: /auto_tutorials/images/sphx_glr_plot_visualize_evoked_011.png
+      .. image:: /auto_tutorials/images/sphx_glr_plot_visualize_evoked_014.png
             :scale: 47
 
     *
 
-      .. image:: /auto_tutorials/images/sphx_glr_plot_visualize_evoked_012.png
+      .. image:: /auto_tutorials/images/sphx_glr_plot_visualize_evoked_015.png
             :scale: 47
 
 
@@ -362,16 +395,16 @@ Here we just illustrate usage.
     subjects_dir = data_path + '/subjects'
     trans_fname = data_path + '/MEG/sample/sample_audvis_raw-trans.fif'
 
-    maps = mne.make_field_map(left_auditory, trans=trans_fname, subject='sample',
+    maps = mne.make_field_map(evoked_l_aud, trans=trans_fname, subject='sample',
                               subjects_dir=subjects_dir, n_jobs=1)
 
     # explore several points in time
-    field_map = left_auditory.plot_field(maps, time=.1)
+    field_map = evoked_l_aud.plot_field(maps, time=.1)
 
 
 
 
-.. image:: /auto_tutorials/images/sphx_glr_plot_visualize_evoked_013.png
+.. image:: /auto_tutorials/images/sphx_glr_plot_visualize_evoked_016.png
     :align: center
 
 
@@ -397,10 +430,10 @@ Here we just illustrate usage.
 
 
 .. note::
-      If trans_fname is set to None then only MEG estimates can be visualized
+    If trans_fname is set to None then only MEG estimates can be visualized.
 
 **Total running time of the script:**
-(0 minutes 27.846 seconds)
+(0 minutes 33.357 seconds)
 
 
 
