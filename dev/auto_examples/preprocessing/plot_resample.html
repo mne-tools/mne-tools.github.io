@@ -34,8 +34,8 @@
     <link rel="shortcut icon" href="../../_static/favicon.ico"/>
     <link rel="top" title="MNE 0.12.dev0 documentation" href="../../index.html" />
     <link rel="up" title="Examples Gallery" href="../index.html" />
-    <link rel="next" title="Define target events based on time lag, plot evoked response" href="plot_define_target_events.html" />
-    <link rel="prev" title="Re-referencing the EEG signal" href="plot_rereference_eeg.html" />
+    <link rel="next" title="Re-referencing the EEG signal" href="plot_rereference_eeg.html" />
+    <link rel="prev" title="XDAWN Denoising" href="plot_xdawn_denoising.html" />
 
 <link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,700italic,400,700' rel='stylesheet' type='text/css'>
 
@@ -181,11 +181,11 @@ This documentation is for the development version (0.12.dev0) - <a href="http://
 </ul>
 
   <li>
-    <a href="plot_rereference_eeg.html" title="Previous Chapter: Re-referencing the EEG signal"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; Re-referencin...</span>
+    <a href="plot_xdawn_denoising.html" title="Previous Chapter: XDAWN Denoising"><span class="glyphicon glyphicon-chevron-left visible-sm"></span><span class="hidden-sm hidden-tablet">&laquo; XDAWN Denoising</span>
     </a>
   </li>
   <li>
-    <a href="plot_define_target_events.html" title="Next Chapter: Define target events based on time lag, plot evoked response"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">Define target... &raquo;</span>
+    <a href="plot_rereference_eeg.html" title="Next Chapter: Re-referencing the EEG signal"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">Re-referencin... &raquo;</span>
     </a>
   </li>
 <form action="../../search.html" method="get">
@@ -222,7 +222,7 @@ reduction in data size, at the cost of an equal loss of temporal resolution.</p>
 <p>Setting up data paths and loading raw data (skip some data for speed)</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">data_path</span> <span class="o">=</span> <a href="../../generated/mne.datasets.sample.data_path.html#mne.datasets.sample.data_path"><span class="n">sample</span><span class="o">.</span><span class="n">data_path</span></a><span class="p">()</span>
 <span class="n">raw_fname</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis_raw.fif&#39;</span>
-<span class="n">raw</span> <span class="o">=</span> <span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read_raw_fif</span><span class="p">(</span><span class="n">raw_fname</span><span class="p">)</span><span class="o">.</span><span class="n">crop</span><span class="p">(</span><span class="mi">120</span><span class="p">,</span> <span class="mi">240</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span><span class="o">.</span><span class="n">load_data</span><span class="p">()</span>
+<span class="n">raw</span> <span class="o">=</span> <span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read_raw_fif</span><span class="p">(</span><span class="n">raw_fname</span><span class="p">)</span><span class="o">.</span><span class="n">crop</span><span class="p">(</span><span class="mi">120</span><span class="p">,</span> <span class="mi">240</span><span class="p">)</span><span class="o">.</span><span class="n">load_data</span><span class="p">()</span>
 </pre></div>
 </div>
 <p class="sphx-glr-script-out">Out:</p>
@@ -236,6 +236,7 @@ Current compensation grade : 0
 Ready.
 Adding average EEG reference projection.
 1 projection items deactivated
+The copy parameter is deprecated and will be removed in 0.14. In 0.13 the behavior will be to operate in-place (like copy=False). In 0.12 the default is copy=True. Use inst.copy() if necessary.
 Reading 0 ... 72074  =      0.000 ...   120.000 secs...
 </pre></div>
 </div>
@@ -246,7 +247,7 @@ first extracting epochs and downsampling the Epochs object:</p>
 
 <span class="c1"># Downsample to 100 Hz</span>
 <span class="k">print</span><span class="p">(</span><span class="s1">&#39;Original sampling rate:&#39;</span><span class="p">,</span> <span class="n">epochs</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;sfreq&#39;</span><span class="p">],</span> <span class="s1">&#39;Hz&#39;</span><span class="p">)</span>
-<span class="n">epochs_resampled</span> <span class="o">=</span> <span class="n">epochs</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="n">npad</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">epochs_resampled</span> <span class="o">=</span> <span class="n">epochs</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="n">npad</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">)</span>
 <span class="k">print</span><span class="p">(</span><span class="s1">&#39;New sampling rate:&#39;</span><span class="p">,</span> <span class="n">epochs_resampled</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;sfreq&#39;</span><span class="p">],</span> <span class="s1">&#39;Hz&#39;</span><span class="p">)</span>
 
 <span class="c1"># Plot a piece of data to see the effects of downsampling</span>
@@ -286,7 +287,7 @@ doesn&#8217;t fit into memory or your analysis pipeline doesn&#8217;t involve ep
 all, the alternative approach is to resample the continuous data. This
 can also be done on non-preloaded data.</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># Resample to 300 Hz</span>
-<span class="n">raw_resampled</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="mi">300</span><span class="p">,</span> <span class="n">npad</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">raw_resampled</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="mi">300</span><span class="p">,</span> <span class="n">npad</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p class="sphx-glr-script-out">Out:</p>
@@ -303,14 +304,14 @@ events on the original data before downsampling.</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="s1">&#39;Number of events before resampling:&#39;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><a href="../../generated/mne.find_events.html#mne.find_events"><span class="n">mne</span><span class="o">.</span><span class="n">find_events</span></a><span class="p">(</span><span class="n">raw</span><span class="p">)))</span>
 
 <span class="c1"># Resample to 100 Hz (generates warning)</span>
-<span class="n">raw_resampled</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="n">npad</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">raw_resampled</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="n">npad</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">)</span>
 <span class="k">print</span><span class="p">(</span><span class="s1">&#39;Number of events after resampling:&#39;</span><span class="p">,</span>
       <span class="nb">len</span><span class="p">(</span><a href="../../generated/mne.find_events.html#mne.find_events"><span class="n">mne</span><span class="o">.</span><span class="n">find_events</span></a><span class="p">(</span><span class="n">raw_resampled</span><span class="p">)))</span>
 
 <span class="c1"># To avoid losing events, jointly resample the data and event matrix</span>
 <span class="n">events</span> <span class="o">=</span> <a href="../../generated/mne.find_events.html#mne.find_events"><span class="n">mne</span><span class="o">.</span><span class="n">find_events</span></a><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
-<span class="n">raw_resampled</span><span class="p">,</span> <span class="n">events_resampled</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="n">npad</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span>
-                                               <span class="n">events</span><span class="o">=</span><span class="n">events</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">raw_resampled</span><span class="p">,</span> <span class="n">events_resampled</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span>
+    <span class="mi">100</span><span class="p">,</span> <span class="n">npad</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="n">events</span><span class="o">=</span><span class="n">events</span><span class="p">)</span>
 <span class="k">print</span><span class="p">(</span><span class="s1">&#39;Number of events after resampling:&#39;</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">events_resampled</span><span class="p">))</span>
 </pre></div>
 </div>
@@ -332,7 +333,7 @@ Number of events after resampling: 144
 </pre></div>
 </div>
 <p><strong>Total running time of the script:</strong>
-(0 minutes 14.841 seconds)</p>
+(0 minutes 14.287 seconds)</p>
 <div class="sphx-glr-download container">
 <strong>Download Python source code:</strong> <a class="reference download internal" href="../../_downloads/plot_resample.py"><code class="xref download docutils literal"><span class="pre">plot_resample.py</span></code></a></div>
 <div class="sphx-glr-download container">
@@ -354,7 +355,7 @@ Number of events after resampling: 144
       
     </p>
     <p>
-        &copy; Copyright 2012-2016, MNE Developers. Last updated on 2016-04-27.<br/>
+        &copy; Copyright 2012-2016, MNE Developers. Last updated on 2016-04-28.<br/>
     </p>
   </div>
 </footer>
