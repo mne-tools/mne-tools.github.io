@@ -144,6 +144,7 @@ Plot ICA components
 
 
 
+
 .. rst-class:: sphx-glr-horizontal
 
 
@@ -159,6 +160,9 @@ Plot ICA components
 
 
 
+
+Advanced artifact detection
+---------------------------
 
 Let's use a more efficient way to find artefacts
 
@@ -314,29 +318,26 @@ from each solution with a template. The procedure is therefore
 semi-automatic. Corrmap hence takes at least a list of ICA solutions and a
 template, that can be an index or an array. As we don't have different
 subjects or runs available today, here we will fit ICA models to different
-parts of the recording and then use a user-defined template from the first
-part for detecting corresponding components in the other parts. The following
-block of code in addresses this point and should not be copied, ok?
-
+parts of the recording and then use as a user-defined template the ICA
+that we just fitted for detecting corresponding components in the three "new"
+ICAs. The following block of code addresses this point and should not be
+copied, ok?
 We'll start by simulating a group of subjects or runs from a subject
 
 
 .. code-block:: python
 
-
     start, stop = [0, len(raw.times) - 1]
     intervals = np.linspace(start, stop, 4, dtype=int)
-    icas = list()
-    seed = 42  # for reproducible results
+    icas_from_other_data = list()
     raw.pick_types(meg=True, eeg=False)  # take only MEG channels
     for ii, start in enumerate(intervals):
         if ii + 1 < len(intervals):
             stop = intervals[ii + 1]
-            print('fitting ICA from {} to {} seconds'.format(start, stop))
-            this_ica = ICA(n_components=n_components, method=method,
-                           random_state=seed).fit(raw, start=start, stop=stop,
-                                                  reject=reject)
-            icas.append(this_ica)
+            print('fitting ICA from {0} to {1} seconds'.format(start, stop))
+            this_ica = ICA(n_components=n_components, method=method).fit(
+                raw, start=start, stop=stop, reject=reject)
+            icas_from_other_data.append(this_ica)
 
 
 
@@ -375,7 +376,7 @@ solutions, something like
 
 .. code-block:: python
 
-    print(icas)
+    print(icas_from_other_data)
 
 
 
@@ -388,12 +389,24 @@ solutions, something like
     [<ICA  |  raw data decomposition, fit (fastica): 13545 samples, 25 components, channels used: "mag"; "grad">, <ICA  |  raw data decomposition, fit (fastica): 13545 samples, 25 components, channels used: "mag"; "grad">, <ICA  |  raw data decomposition, fit (fastica): 13846 samples, 25 components, channels used: "mag"; "grad">]
 
 
-Investigate our reference ICA, here we arbitrarily say it's the first.
+use our previous ICA as reference.
 
 
 .. code-block:: python
 
-    reference_ica = icas[0]
+    reference_ica = ica
+
+
+
+
+
+
+
+Investigate our reference ICA, here we use the previous fit from above.
+
+
+.. code-block:: python
+
     reference_ica.plot_components()
 
 
@@ -415,12 +428,15 @@ Investigate our reference ICA, here we arbitrarily say it's the first.
 
 
 
-With random seed = 42 we see that IC number 13 from run 1 looks like an EOG.
+Which one is the bad EOG component?
+Here we rely on our previous detection algorithm. You will need to decide
+yourself in that situation where no other detection is available.
 
 
 .. code-block:: python
 
-    reference_ica.plot_sources(eog_average, exclude=[12])
+
+    reference_ica.plot_sources(eog_average, exclude=eog_inds)
 
 
 
@@ -438,7 +454,7 @@ So our template shall be a tuple like (reference_run_index, component_index):
 
 .. code-block:: python
 
-    template = (0, 12)
+    template = (0, eog_inds[0])
 
 
 
@@ -451,8 +467,9 @@ Now we can do the corrmap.
 
 .. code-block:: python
 
-    fig_template, fig_detected = corrmap(icas, template=template, label="blinks",
-                                         show=True, threshold=.8, ch_type='mag')
+    fig_template, fig_detected = corrmap(
+        icas_from_other_data, template=template, label="blinks", show=True,
+        threshold=.8, ch_type='mag')
 
 
 
@@ -489,7 +506,7 @@ know the event timing of your artifact.
 See :ref:`tut_artifacts_correct_ssp`.
 
 **Total running time of the script:**
-(0 minutes 49.898 seconds)
+(0 minutes 49.850 seconds)
 
 
 
