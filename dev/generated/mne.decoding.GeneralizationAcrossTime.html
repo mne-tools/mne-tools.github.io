@@ -203,7 +203,7 @@ This documentation is for the development version (0.12.dev0) - <a href="http://
 <h1>mne.decoding.GeneralizationAcrossTime<a class="headerlink" href="#mne-decoding-generalizationacrosstime" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="mne.decoding.GeneralizationAcrossTime">
-<em class="property">class </em><code class="descclassname">mne.decoding.</code><code class="descname">GeneralizationAcrossTime</code><span class="sig-paren">(</span><em>picks=None</em>, <em>cv=5</em>, <em>clf=None</em>, <em>train_times=None</em>, <em>test_times=None</em>, <em>predict_method='predict'</em>, <em>predict_mode='cross-validation'</em>, <em>scorer=None</em>, <em>n_jobs=1</em><span class="sig-paren">)</span><a class="headerlink" href="#mne.decoding.GeneralizationAcrossTime" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">mne.decoding.</code><code class="descname">GeneralizationAcrossTime</code><span class="sig-paren">(</span><em>picks=None</em>, <em>cv=5</em>, <em>clf=None</em>, <em>train_times=None</em>, <em>test_times=None</em>, <em>predict_method='predict'</em>, <em>predict_mode='cross-validation'</em>, <em>scorer=None</em>, <em>score_mode='mean-fold-wise'</em>, <em>n_jobs=1</em><span class="sig-paren">)</span><a class="headerlink" href="#mne.decoding.GeneralizationAcrossTime" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generalize across time and conditions</p>
 <p>Creates an estimator object used to 1) fit a series of classifiers on
 multidimensional time-resolved data, and 2) test the ability of each
@@ -235,28 +235,43 @@ StandardScaler and LogisticRegression with default parameters.</p>
 <blockquote>
 <div><p>A dictionary to configure the training times:</p>
 <blockquote>
-<div><dl class="docutils">
+<div><ul>
+<li><dl class="first docutils">
 <dt><code class="docutils literal"><span class="pre">slices</span></code> <span class="classifier-delimiter">:</span> <span class="classifier">ndarray, shape (n_clfs,)</span></dt>
 <dd><p class="first last">Array of time slices (in indices) used for each classifier.
 If not given, computed from &#8216;start&#8217;, &#8216;stop&#8217;, &#8216;length&#8217;, &#8216;step&#8217;.</p>
 </dd>
+</dl>
+</li>
+<li><dl class="first docutils">
 <dt><code class="docutils literal"><span class="pre">start</span></code> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
 <dd><p class="first last">Time at which to start decoding (in seconds).
 Defaults to min(epochs.times).</p>
 </dd>
+</dl>
+</li>
+<li><dl class="first docutils">
 <dt><code class="docutils literal"><span class="pre">stop</span></code> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
 <dd><p class="first last">Maximal time at which to stop decoding (in seconds).
 Defaults to max(times).</p>
 </dd>
+</dl>
+</li>
+<li><dl class="first docutils">
 <dt><code class="docutils literal"><span class="pre">step</span></code> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
 <dd><p class="first last">Duration separating the start of subsequent classifiers (in
 seconds). Defaults to one time sample.</p>
 </dd>
+</dl>
+</li>
+<li><dl class="first docutils">
 <dt><code class="docutils literal"><span class="pre">length</span></code> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
 <dd><p class="first last">Duration of each classifier (in seconds).
 Defaults to one time sample.</p>
 </dd>
 </dl>
+</li>
+</ul>
 </div></blockquote>
 <p>If None, empty dict.</p>
 </div></blockquote>
@@ -268,11 +283,14 @@ each classifier is trained.
 If set to None, predictions are made at all time points.
 If set to dict, the dict should contain <code class="docutils literal"><span class="pre">slices</span></code> or be contructed in
 a similar way to train_times:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span>``slices`` : ndarray, shape (n_clfs,)
-    Array of time slices (in indices) used for each classifier.
-    If not given, computed from &#39;start&#39;, &#39;stop&#39;, &#39;length&#39;, &#39;step&#39;.
-</pre></div>
-</div>
+<blockquote>
+<div><dl class="docutils">
+<dt><code class="docutils literal"><span class="pre">slices</span></code> <span class="classifier-delimiter">:</span> <span class="classifier">ndarray, shape (n_clfs,)</span></dt>
+<dd><p class="first last">Array of time slices (in indices) used for each classifier.
+If not given, computed from &#8216;start&#8217;, &#8216;stop&#8217;, &#8216;length&#8217;, &#8216;step&#8217;.</p>
+</dd>
+</dl>
+</div></blockquote>
 <p>If None, empty dict.</p>
 </div></blockquote>
 <p><strong>predict_method</strong> : str</p>
@@ -287,24 +305,50 @@ adapted to the prediction outputs of the method. Defaults to &#8216;predict&#821
 <div><p>Indicates how predictions are achieved with regards to the cross-
 validation procedure:</p>
 <blockquote>
-<div><dl class="docutils">
+<div><ul>
+<li><dl class="first docutils">
 <dt><code class="docutils literal"><span class="pre">cross-validation</span></code> <span class="classifier-delimiter">:</span> <span class="classifier">estimates a single prediction per sample</span></dt>
 <dd><p class="first last">based on the unique independent classifier fitted in the
 cross-validation.</p>
 </dd>
-<dt><code class="docutils literal"><span class="pre">mean-prediction</span></code> <span class="classifier-delimiter">:</span> <span class="classifier">estimates k predictions per sample, based on</span></dt>
-<dd><p class="first last">each of the k-fold cross-validation classifiers, and average
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><code class="docutils literal"><span class="pre">mean-prediction</span></code> <span class="classifier-delimiter">:</span> <span class="classifier">estimates k predictions per sample, based</span></dt>
+<dd><p class="first last">on each of the k-fold cross-validation classifiers, and average
 these predictions into a single estimate per sample.</p>
 </dd>
 </dl>
+</li>
+</ul>
 </div></blockquote>
-<p>Default: &#8216;cross-validation&#8217;</p>
+<p>Defaults to &#8216;cross-validation&#8217;.</p>
 </div></blockquote>
 <p><strong>scorer</strong> : object | None | str</p>
 <blockquote>
-<div><p>scikit-learn Scorer instance or str type indicating the name of
-the scorer such as <cite>accuracy</cite>, <cite>roc_auc</cite>. If None, set to 
-accuracy_score.</p>
+<div><p>scikit-learn Scorer instance or str type indicating the name of the
+scorer such as <code class="docutils literal"><span class="pre">accuracy</span></code>, <code class="docutils literal"><span class="pre">roc_auc</span></code>. If None, set to <code class="docutils literal"><span class="pre">accuracy</span></code>.</p>
+</div></blockquote>
+<p><strong>score_mode</strong> : {&#8216;fold-wise&#8217;, &#8216;mean-fold-wise&#8217;, &#8216;mean-sample-wise&#8217;}</p>
+<blockquote>
+<div><p>Determines how the scorer is estimated:</p>
+<blockquote>
+<div><ul>
+<li><p class="first"><code class="docutils literal"><span class="pre">fold-wise</span></code> : returns the score obtained in each fold.</p>
+</li>
+<li><p class="first"><code class="docutils literal"><span class="pre">mean-fold-wise</span></code> : returns the average of the fold-wise scores.</p>
+</li>
+<li><dl class="first docutils">
+<dt><code class="docutils literal"><span class="pre">mean-sample-wise</span></code> <span class="classifier-delimiter">:</span> <span class="classifier">returns score estimated across across all</span></dt>
+<dd><p class="first last">y_pred independently of the cross-validation. This method is
+faster than <code class="docutils literal"><span class="pre">mean-fold-wise</span></code> but less conventional, use at
+your own risk.</p>
+</dd>
+</dl>
+</li>
+</ul>
+</div></blockquote>
+<p>Defaults to &#8216;mean-fold-wise&#8217;.</p>
 </div></blockquote>
 <p><strong>n_jobs</strong> : int</p>
 <blockquote>
@@ -328,15 +372,21 @@ accuracy_score.</p>
 <blockquote>
 <div><p>A dictionary that configures the training times:</p>
 <blockquote>
-<div><dl class="docutils">
+<div><ul>
+<li><dl class="first docutils">
 <dt><code class="docutils literal"><span class="pre">slices</span></code> <span class="classifier-delimiter">:</span> <span class="classifier">ndarray, shape (n_clfs,)</span></dt>
 <dd><p class="first last">Array of time slices (in indices) used for each classifier.
 If not given, computed from &#8216;start&#8217;, &#8216;stop&#8217;, &#8216;length&#8217;, &#8216;step&#8217;.</p>
 </dd>
+</dl>
+</li>
+<li><dl class="first docutils">
 <dt><code class="docutils literal"><span class="pre">times</span></code> <span class="classifier-delimiter">:</span> <span class="classifier">ndarray, shape (n_clfs,)</span></dt>
 <dd><p class="first last">The training times (in seconds).</p>
 </dd>
 </dl>
+</li>
+</ul>
 </div></blockquote>
 </div></blockquote>
 <p><strong>test_times_</strong> : dict</p>
@@ -430,15 +480,18 @@ DOI: 10.1371/journal.pone.0085791</div></blockquote>
 </table>
 <dl class="method">
 <dt id="mne.decoding.GeneralizationAcrossTime.__init__">
-<code class="descname">__init__</code><span class="sig-paren">(</span><em>picks=None</em>, <em>cv=5</em>, <em>clf=None</em>, <em>train_times=None</em>, <em>test_times=None</em>, <em>predict_method='predict'</em>, <em>predict_mode='cross-validation'</em>, <em>scorer=None</em>, <em>n_jobs=1</em><span class="sig-paren">)</span><a class="headerlink" href="#mne.decoding.GeneralizationAcrossTime.__init__" title="Permalink to this definition">¶</a></dt>
+<code class="descname">__init__</code><span class="sig-paren">(</span><em>picks=None</em>, <em>cv=5</em>, <em>clf=None</em>, <em>train_times=None</em>, <em>test_times=None</em>, <em>predict_method='predict'</em>, <em>predict_mode='cross-validation'</em>, <em>scorer=None</em>, <em>score_mode='mean-fold-wise'</em>, <em>n_jobs=1</em><span class="sig-paren">)</span><a class="headerlink" href="#mne.decoding.GeneralizationAcrossTime.__init__" title="Permalink to this definition">¶</a></dt>
 <dd></dd></dl>
 
 <dl class="method">
 <dt id="mne.decoding.GeneralizationAcrossTime.fit">
 <code class="descname">fit</code><span class="sig-paren">(</span><em>epochs</em>, <em>y=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mne.decoding.GeneralizationAcrossTime.fit" title="Permalink to this definition">¶</a></dt>
 <dd><p>Train a classifier on each specified time slice.</p>
-<p>Note. This function sets the <code class="docutils literal"><span class="pre">picks_</span></code>, <code class="docutils literal"><span class="pre">ch_names</span></code>, <code class="docutils literal"><span class="pre">cv_</span></code>,
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">This function sets the <code class="docutils literal"><span class="pre">picks_</span></code>, <code class="docutils literal"><span class="pre">ch_names</span></code>, <code class="docutils literal"><span class="pre">cv_</span></code>,
 <code class="docutils literal"><span class="pre">y_train</span></code>, <code class="docutils literal"><span class="pre">train_times_</span></code> and <code class="docutils literal"><span class="pre">estimators_</span></code> attributes.</p>
+</div>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -688,8 +741,7 @@ of scorer.</p>
 <dd><p>Classifiers&#8217; predictions on each specified testing time slice.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
-<p class="last">This function sets the <code class="docutils literal"><span class="pre">y_pred_</span></code> and <code class="docutils literal"><span class="pre">test_times_</span></code>
-attributes.</p>
+<p class="last">This function sets the <code class="docutils literal"><span class="pre">y_pred_</span></code> and <code class="docutils literal"><span class="pre">test_times_</span></code> attributes.</p>
 </div>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -722,8 +774,16 @@ not be regular; else
 <p>Estimate scores across trials by comparing the prediction estimated for
 each trial to its true value.</p>
 <p>Calls <code class="docutils literal"><span class="pre">predict()</span></code> if it has not been already.</p>
-<p>Note. The function updates the <code class="docutils literal"><span class="pre">scorer_</span></code>, <code class="docutils literal"><span class="pre">scores_</span></code>, and
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The function updates the <code class="docutils literal"><span class="pre">scorer_</span></code>, <code class="docutils literal"><span class="pre">scores_</span></code>, and
 <code class="docutils literal"><span class="pre">y_true_</span></code> attributes.</p>
+</div>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">If <code class="docutils literal"><span class="pre">predict_mode</span></code> is &#8216;mean-prediction&#8217;, <code class="docutils literal"><span class="pre">score_mode</span></code> is
+automatically set to &#8216;mean-sample-wise&#8217;.</p>
+</div>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -747,7 +807,9 @@ If None and <code class="docutils literal"><span class="pre">predict_mode``=='cr
 <div><p>The scores estimated by <code class="docutils literal"><span class="pre">scorer_</span></code> at each training time and each
 testing time (e.g. mean accuracy of <code class="docutils literal"><span class="pre">predict(X)</span></code>). Note that the
 number of testing times per training time need not be regular;
-else, np.shape(scores) = (n_train_time, n_test_time).</p>
+else, np.shape(scores) = (n_train_time, n_test_time). If
+<code class="docutils literal"><span class="pre">score_mode</span></code> is &#8216;fold-wise&#8217;, np.shape(scores) = (n_train_time,
+n_test_time, n_folds).</p>
 </div></blockquote>
 </td>
 </tr>
