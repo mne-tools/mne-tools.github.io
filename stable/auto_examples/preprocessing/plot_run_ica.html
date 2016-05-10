@@ -5,7 +5,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Compute ICA components on epochs &mdash; MNE 0.11.0 documentation</title>
+    <title>Compute ICA components on epochs &mdash; MNE 0.12.0 documentation</title>
     
     <link rel="stylesheet" href="../../_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.11.0',
+        VERSION:     '0.12.0',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -32,9 +32,9 @@
     <script type="text/javascript" src="../../_static/bootstrap-3.3.4/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="../../_static/bootstrap-sphinx.js"></script>
     <link rel="shortcut icon" href="../../_static/favicon.ico"/>
-    <link rel="top" title="MNE 0.11.0 documentation" href="../../index.html" />
+    <link rel="top" title="MNE 0.12.0 documentation" href="../../index.html" />
     <link rel="up" title="Examples Gallery" href="../index.html" />
-    <link rel="next" title="Estimate covariance matrix from a raw FIF file" href="plot_estimate_covariance_matrix_raw.html" />
+    <link rel="next" title="Find EOG artifacts" href="plot_find_eog_artifacts.html" />
     <link rel="prev" title="Remap MEG channel types" href="plot_virtual_evoked.html" />
 
 <link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,700italic,400,700' rel='stylesheet' type='text/css'>
@@ -74,6 +74,10 @@
   </head>
   <body role="document">
 
+<div class="devbar">
+This documentation is for the development version (0.12.0) - <a href="http://martinos.org/mne/stable">Stable version</a>
+</div>
+
 
 
 
@@ -89,7 +93,7 @@
         </button>
         <a class="navbar-brand" href="../../index.html"><img src="../../_static/mne_logo_small.png">
            </a>
-        <span class="navbar-text navbar-version pull-left"><b>0.11.0</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.12.0</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -112,17 +116,21 @@
   <ul class="dropdown-menu globaltoc"
       role="menu"
       aria-labelledby="dLabelGlobalToc"><ul class="current">
-<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">Getting Started</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../whats_new.html">What&#8217;s new</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../cite.html">Cite MNE</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../references.html">Related publications</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../getting_started.html">Getting started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../tutorials.html">Tutorials</a></li>
 <li class="toctree-l1 current"><a class="reference internal" href="../index.html">Examples Gallery</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../manual/index.html">Manual</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../python_reference.html">API Reference</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../faq.html">Frequently Asked Questions</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../advanced_setup.html">Advanced installation and setup</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../mne_cpp.html">MNE with CPP</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../contributing.html">Contribute to MNE</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../python_reference.html">Python API Reference</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../manual/index.html">User Manual</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../whats_new.html">What&#8217;s new</a></li>
+</ul>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../cite.html">How to cite MNE</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../references.html">Related publications</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cited.html">Publications from MNE users</a></li>
 </ul>
 </ul>
 </li>
@@ -177,7 +185,7 @@
     </a>
   </li>
   <li>
-    <a href="plot_estimate_covariance_matrix_raw.html" title="Next Chapter: Estimate covariance matrix from a raw FIF file"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">Estimate cova... &raquo;</span>
+    <a href="plot_find_eog_artifacts.html" title="Next Chapter: Find EOG artifacts"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">Find EOG arti... &raquo;</span>
     </a>
   </li>
 <form action="../../search.html" method="get">
@@ -205,8 +213,7 @@ fast machine it can take about a minute to complete.</p>
 <span class="c1"># License: BSD (3-clause)</span>
 
 <span class="kn">import</span> <span class="nn">mne</span>
-<span class="kn">from</span> <span class="nn">mne.io</span> <span class="kn">import</span> <a href="../../generated/mne.io.Raw.html#mne.io.Raw"><span class="n">Raw</span></a>
-<span class="kn">from</span> <span class="nn">mne.preprocessing</span> <span class="kn">import</span> <a href="../../generated/mne.preprocessing.ICA.html#mne.preprocessing.ICA"><span class="n">ICA</span></a><span class="p">,</span> <a href="../../generated/mne.preprocessing.create_ecg_epochs.html#mne.preprocessing.create_ecg_epochs"><span class="n">create_ecg_epochs</span></a>
+<span class="kn">from</span> <span class="nn">mne.preprocessing</span> <span class="kn">import</span> <span class="n">ICA</span><span class="p">,</span> <span class="n">create_ecg_epochs</span>
 <span class="kn">from</span> <span class="nn">mne.datasets</span> <span class="kn">import</span> <span class="n">sample</span>
 
 <span class="k">print</span><span class="p">(</span><span class="n">__doc__</span><span class="p">)</span>
@@ -216,29 +223,28 @@ fast machine it can take about a minute to complete.</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">data_path</span> <span class="o">=</span> <span class="n">sample</span><span class="o">.</span><span class="n">data_path</span><span class="p">()</span>
 <span class="n">raw_fname</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis_filt-0-40_raw.fif&#39;</span>
 
-<span class="n">raw</span> <span class="o">=</span> <a href="../../generated/mne.io.Raw.html#mne.io.Raw"><span class="n">Raw</span></a><span class="p">(</span><span class="n">raw_fname</span><span class="p">,</span> <span class="n">preload</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">raw</span> <span class="o">=</span> <span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read_raw_fif</span><span class="p">(</span><span class="n">raw_fname</span><span class="p">,</span> <span class="n">preload</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 <span class="n">raw</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;iir&#39;</span><span class="p">)</span>
 <span class="n">raw</span><span class="o">.</span><span class="n">pick_types</span><span class="p">(</span><span class="n">meg</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">eeg</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="s1">&#39;bads&#39;</span><span class="p">,</span> <span class="n">stim</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 
 <span class="c1"># longer + more epochs for more artifact exposure</span>
-<span class="n">events</span> <span class="o">=</span> <a href="../../generated/mne.find_events.html#mne.find_events"><span class="n">mne</span><span class="o">.</span><span class="n">find_events</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">stim_channel</span><span class="o">=</span><span class="s1">&#39;STI 014&#39;</span><span class="p">)</span>
-<span class="n">epochs</span> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs"><span class="n">mne</span><span class="o">.</span><span class="n">Epochs</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">event_id</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">tmin</span><span class="o">=-</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">tmax</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+<span class="n">events</span> <span class="o">=</span> <span class="n">mne</span><span class="o">.</span><span class="n">find_events</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">stim_channel</span><span class="o">=</span><span class="s1">&#39;STI 014&#39;</span><span class="p">)</span>
+<span class="n">epochs</span> <span class="o">=</span> <span class="n">mne</span><span class="o">.</span><span class="n">Epochs</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">event_id</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">tmin</span><span class="o">=-</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">tmax</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
 
-<span class="n">ica</span> <span class="o">=</span> <a href="../../generated/mne.preprocessing.ICA.html#mne.preprocessing.ICA"><span class="n">ICA</span></a><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="mf">0.95</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;fastica&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">epochs</span><span class="p">)</span>
+<span class="n">ica</span> <span class="o">=</span> <span class="n">ICA</span><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="mf">0.95</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;fastica&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">epochs</span><span class="p">)</span>
 
-<span class="n">ecg_epochs</span> <span class="o">=</span> <a href="../../generated/mne.preprocessing.create_ecg_epochs.html#mne.preprocessing.create_ecg_epochs"><span class="n">create_ecg_epochs</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">tmin</span><span class="o">=-.</span><span class="mi">5</span><span class="p">,</span> <span class="n">tmax</span><span class="o">=.</span><span class="mi">5</span><span class="p">)</span>
+<span class="n">ecg_epochs</span> <span class="o">=</span> <span class="n">create_ecg_epochs</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">tmin</span><span class="o">=-.</span><span class="mi">5</span><span class="p">,</span> <span class="n">tmax</span><span class="o">=.</span><span class="mi">5</span><span class="p">)</span>
 <span class="n">ecg_inds</span><span class="p">,</span> <span class="n">scores</span> <span class="o">=</span> <span class="n">ica</span><span class="o">.</span><span class="n">find_bads_ecg</span><span class="p">(</span><span class="n">ecg_epochs</span><span class="p">)</span>
 
 <span class="n">ica</span><span class="o">.</span><span class="n">plot_components</span><span class="p">(</span><span class="n">ecg_inds</span><span class="p">)</span>
 </pre></div>
 </div>
-<img alt="../../_images/sphx_glr_plot_run_ica_001.png" class="align-center" src="../../_images/sphx_glr_plot_run_ica_001.png" />
 <p><strong>Total running time of the script:</strong>
-(1 minutes 18.755 seconds)</p>
+(0 minutes 0.000 seconds)</p>
 <div class="sphx-glr-download container">
-<strong>Download Python source code:</strong> <a class="reference download internal" href="../../_downloads/plot_run_ica.py" download=""><code class="xref download docutils literal"><span class="pre">plot_run_ica.py</span></code></a></div>
+<strong>Download Python source code:</strong> <a class="reference download internal" href="../../_downloads/plot_run_ica.py"><code class="xref download docutils literal"><span class="pre">plot_run_ica.py</span></code></a></div>
 <div class="sphx-glr-download container">
-<strong>Download IPython notebook:</strong> <a class="reference download internal" href="../../_downloads/plot_run_ica.ipynb" download=""><code class="xref download docutils literal"><span class="pre">plot_run_ica.ipynb</span></code></a></div>
+<strong>Download IPython notebook:</strong> <a class="reference download internal" href="../../_downloads/plot_run_ica.ipynb"><code class="xref download docutils literal"><span class="pre">plot_run_ica.ipynb</span></code></a></div>
 </div>
 
 
@@ -256,7 +262,7 @@ fast machine it can take about a minute to complete.</p>
       
     </p>
     <p>
-        &copy; Copyright 2012-2016, MNE Developers.<br/>
+        &copy; Copyright 2012-2016, MNE Developers. Last updated on 2016-05-10.<br/>
     </p>
   </div>
 </footer>

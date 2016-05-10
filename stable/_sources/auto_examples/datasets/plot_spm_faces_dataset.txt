@@ -8,13 +8,14 @@ From raw data to dSPM on SPM Faces dataset
 ==========================================
 
 Runs a full pipeline using MNE-Python:
-- artifact removal
-- averaging Epochs
-- forward model computation
-- source reconstruction using dSPM on the contrast : "faces - scrambled"
 
-Note that this example does quite a bit of processing, so even on a
-fast machine it can take about 10 minutes to complete.
+    - artifact removal
+    - averaging Epochs
+    - forward model computation
+    - source reconstruction using dSPM on the contrast : "faces - scrambled"
+
+.. note:: This example does quite a bit of processing, so even on a
+          fast machine it can take several minutes to complete.
 
 
 .. code-block:: python
@@ -39,20 +40,18 @@ fast machine it can take about 10 minutes to complete.
     subjects_dir = data_path + '/subjects'
 
 
-
-
-
-
-
 Load and filter data, set up epochs
 
 
 .. code-block:: python
 
 
-    raw_fname = data_path + '/MEG/spm/SPM_CTF_MEG_example_faces%d_3D_raw.fif'
+    raw_fname = data_path + '/MEG/spm/SPM_CTF_MEG_example_faces%d_3D.ds'
 
-    raw = io.Raw(raw_fname % 1, preload=True)  # Take first run
+    raw = io.read_raw_ctf(raw_fname % 1, preload=True)  # Take first run
+    # Here to save memory and time we'll downsample heavily -- this is not
+    # advised for real data as it can effectively jitter events!
+    raw.resample(120., npad='auto')
 
     picks = mne.pick_types(raw.info, meg=True, exclude='bads')
     raw.filter(1, 30, method='iir')
@@ -72,7 +71,7 @@ Load and filter data, set up epochs
                         baseline=baseline, preload=True, reject=reject)
 
     # Fit ICA, find and remove major artifacts
-    ica = ICA(n_components=0.95).fit(raw, decim=6, reject=reject)
+    ica = ICA(n_components=0.95, random_state=0).fit(raw, decim=1, reject=reject)
 
     # compute correlation scores, get bad indices sorted by score
     eog_epochs = create_eog_epochs(raw, ch_name='MRT31-2908', reject=reject)
@@ -81,9 +80,9 @@ Load and filter data, set up epochs
     ica.plot_components(eog_inds)  # view topographic sensitivity of components
     ica.exclude += eog_inds[:1]  # we saw the 2nd ECG component looked too dipolar
     ica.plot_overlay(eog_epochs.average())  # inspect artifact removal
-    epochs_cln = ica.apply(epochs, copy=True)  # clean data, default in place
+    ica.apply(epochs)  # clean data, default in place
 
-    evoked = [epochs_cln[k].average() for k in event_ids]
+    evoked = [epochs[k].average() for k in event_ids]
 
     contrast = evoked[1] - evoked[0]
 
@@ -95,50 +94,7 @@ Load and filter data, set up epochs
     plt.show()
 
     # estimate noise covarariance
-    noise_cov = mne.compute_covariance(epochs_cln, tmax=0)
-
-
-
-
-.. rst-class:: sphx-glr-horizontal
-
-
-    *
-
-      .. image:: /auto_examples/datasets/images/sphx_glr_plot_spm_faces_dataset_001.png
-            :scale: 47
-
-    *
-
-      .. image:: /auto_examples/datasets/images/sphx_glr_plot_spm_faces_dataset_002.png
-            :scale: 47
-
-    *
-
-      .. image:: /auto_examples/datasets/images/sphx_glr_plot_spm_faces_dataset_003.png
-            :scale: 47
-
-    *
-
-      .. image:: /auto_examples/datasets/images/sphx_glr_plot_spm_faces_dataset_004.png
-            :scale: 47
-
-    *
-
-      .. image:: /auto_examples/datasets/images/sphx_glr_plot_spm_faces_dataset_005.png
-            :scale: 47
-
-    *
-
-      .. image:: /auto_examples/datasets/images/sphx_glr_plot_spm_faces_dataset_006.png
-            :scale: 47
-
-    *
-
-      .. image:: /auto_examples/datasets/images/sphx_glr_plot_spm_faces_dataset_007.png
-            :scale: 47
-
-
+    noise_cov = mne.compute_covariance(epochs, tmax=0, method='shrunk')
 
 
 Visualize fields on MEG helmet
@@ -154,14 +110,6 @@ Visualize fields on MEG helmet
                               subjects_dir=subjects_dir, n_jobs=1)
 
     evoked[0].plot_field(maps, time=0.170)
-
-
-
-
-
-.. image:: /auto_examples/datasets/images/sphx_glr_plot_spm_faces_dataset_001.png
-    :align: center
-
 
 
 
@@ -182,11 +130,6 @@ Compute forward model
     bem = data_path + '/subjects/spm/bem/spm-5120-5120-5120-bem-sol.fif'
     forward = mne.make_forward_solution(contrast.info, trans_fname, src, bem)
     forward = mne.convert_forward_solution(forward, surf_ori=True)
-
-
-
-
-
 
 
 Compute inverse solution
@@ -212,44 +155,8 @@ Compute inverse solution
     brain.show_view('ventral')
     # brain.save_image('dSPM_map.png')
 
-
-
-.. image:: /auto_examples/datasets/images/sphx_glr_plot_spm_faces_dataset_001.png
-    :align: center
-
-
-.. rst-class:: sphx-glr-script-out
-
- Out::
-
-    Updating smoothing matrix, be patient..
-    Smoothing matrix creation, step 1
-    Smoothing matrix creation, step 2
-    Smoothing matrix creation, step 3
-    Smoothing matrix creation, step 4
-    Smoothing matrix creation, step 5
-    Smoothing matrix creation, step 6
-    Smoothing matrix creation, step 7
-    Smoothing matrix creation, step 8
-    Smoothing matrix creation, step 9
-    Smoothing matrix creation, step 10
-    colormap: fmin=2.76e+00 fmid=3.08e+00 fmax=5.86e+00 transparent=1
-    Updating smoothing matrix, be patient..
-    Smoothing matrix creation, step 1
-    Smoothing matrix creation, step 2
-    Smoothing matrix creation, step 3
-    Smoothing matrix creation, step 4
-    Smoothing matrix creation, step 5
-    Smoothing matrix creation, step 6
-    Smoothing matrix creation, step 7
-    Smoothing matrix creation, step 8
-    Smoothing matrix creation, step 9
-    Smoothing matrix creation, step 10
-    colormap: fmin=2.76e+00 fmid=3.08e+00 fmax=5.86e+00 transparent=1
-
-
 **Total running time of the script:**
-(2 minutes 40.568 seconds)
+(0 minutes 0.000 seconds)
 
 
 
