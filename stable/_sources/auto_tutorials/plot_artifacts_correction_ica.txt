@@ -21,6 +21,7 @@ decomposition. To do so, you have to first build an Epoch object around
 blink or heartbeat event.
 
 
+
 .. code-block:: python
 
 
@@ -43,13 +44,35 @@ blink or heartbeat event.
                                stim=False, exclude='bads')
 
 
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    Opening raw data file /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis_filt-0-40_raw.fif...
+        Read a total of 4 projection items:
+            PCA-v1 (1 x 102)  idle
+            PCA-v2 (1 x 102)  idle
+            PCA-v3 (1 x 102)  idle
+            Average EEG reference (1 x 60)  idle
+    Current compensation grade : 0
+        Range : 6450 ... 48149 =     42.956 ...   320.665 secs
+    Ready.
+    Reading 0 ... 41699  =      0.000 ...   277.709 secs...
+    Band-pass filtering from 1 - 40 Hz
+
+
 Before applying artifact correction please learn about your actual artifacts
 by reading :ref:`tut_artifacts_detect`.
+
 
 Fit ICA
 -------
 
 ICA parameters:
+
 
 
 .. code-block:: python
@@ -60,7 +83,13 @@ ICA parameters:
     decim = 3  # we need sufficient statistics, not all time points -> save time
 
 
+
+
+
+
+
 Define the ICA object instance
+
 
 
 .. code-block:: python
@@ -69,8 +98,19 @@ Define the ICA object instance
     print(ica)
 
 
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    <ICA  |  no decomposition, fit (fastica):  samples, no dimension reduction>
+
+
 we avoid fitting ICA on crazy environmental artifacts that would
 dominate the variance and decomposition
+
 
 
 .. code-block:: python
@@ -80,7 +120,26 @@ dominate the variance and decomposition
     print(ica)
 
 
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    Fitting ICA to data using 305 channels. 
+    Please be patient, this may take some time
+    Inferring max_pca_components from picks.
+        Rejecting  epoch based on MAG : [u'MEG 1711']
+    Artifact detected in [4242, 4343]
+        Rejecting  epoch based on MAG : [u'MEG 1711']
+    Artifact detected in [5858, 5959]
+    Selection by number: 25 components
+    <ICA  |  raw data decomposition, fit (fastica): 13635 samples, 25 components, channels used: "mag"; "grad">
+
+
 Plot ICA components
+
 
 
 .. code-block:: python
@@ -90,10 +149,29 @@ Plot ICA components
 
 
 
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+    *
+
+      .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_001.png
+            :scale: 47
+
+    *
+
+      .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_002.png
+            :scale: 47
+
+
+
+
 Advanced artifact detection
 ---------------------------
 
 Let's use a more efficient way to find artefacts
+
 
 
 .. code-block:: python
@@ -114,15 +192,66 @@ Let's use a more efficient way to find artefacts
     ica.plot_sources(eog_average, exclude=eog_inds)  # look at source time course
 
 
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+    *
+
+      .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_003.png
+            :scale: 47
+
+    *
+
+      .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_004.png
+            :scale: 47
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    EOG channel index for this subject is: [375]
+    Filtering the data to remove DC offset to help distinguish blinks from saccades
+    Now detecting blinks and generating corresponding events
+    Number of EOG events detected : 46
+    46 matching events found
+    No baseline correction applied
+    Created an SSP operator (subspace dimension = 3)
+    Loading data for 46 events and 151 original time points ...
+    0 bad epochs dropped
+    EOG channel index for this subject is: [375]
+    Filtering the data to remove DC offset to help distinguish blinks from saccades
+    Now detecting blinks and generating corresponding events
+    Number of EOG events detected : 46
+    46 matching events found
+    No baseline correction applied
+    Created an SSP operator (subspace dimension = 4)
+    Loading data for 46 events and 151 original time points ...
+    0 bad epochs dropped
+
+
 That component is also showing a prototypical average vertical EOG time
 course.
 
 Pay attention to the labels, a customized read-out of the ica.labels_
 
 
+
 .. code-block:: python
 
     print(ica.labels_)
+
+
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    {u'eog/0/EOG 061': [17], 'eog': [17]}
 
 
 These labels were used by the plotters and are added automatically
@@ -131,6 +260,7 @@ components.
 
 Now let's see how we would modify our signals if we would remove this
 component from the data
+
 
 
 .. code-block:: python
@@ -152,6 +282,20 @@ component from the data
     # ica = read_ica('my-ica.fif')
 
 
+
+
+.. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_005.png
+    :align: center
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    Transforming to ICA space (25 components)
+    Zeroing out 1 ICA components
+
+
 Exercise: find and remove ECG artifacts using ICA!
 
 What if we don't have an EOG channel?
@@ -166,10 +310,16 @@ In MNE-Python option 2 is easily achievable and it might be better,
 so let's have a look at it.
 
 
+
 .. code-block:: python
 
 
     from mne.preprocessing.ica import corrmap  # noqa
+
+
+
+
+
 
 
 The idea behind corrmap is that artefact patterns are similar across subjects
@@ -183,6 +333,7 @@ that we just fitted for detecting corresponding components in the three "new"
 ICAs. The following block of code addresses this point and should not be
 copied, ok?
 We'll start by simulating a group of subjects or runs from a subject
+
 
 
 .. code-block:: python
@@ -200,10 +351,39 @@ We'll start by simulating a group of subjects or runs from a subject
             icas_from_other_data.append(this_ica)
 
 
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    fitting ICA from 0 to 13899 seconds
+    Fitting ICA to data using 305 channels. 
+    Please be patient, this may take some time
+    Inferring max_pca_components from picks.
+        Rejecting  epoch based on MAG : [u'MEG 1711']
+    Artifact detected in [12642, 12943]
+    Selection by number: 25 components
+    fitting ICA from 13899 to 27799 seconds
+    Fitting ICA to data using 305 channels. 
+    Please be patient, this may take some time
+    Inferring max_pca_components from picks.
+        Rejecting  epoch based on MAG : [u'MEG 1711']
+    Artifact detected in [3612, 3913]
+    Selection by number: 25 components
+    fitting ICA from 27799 to 41699 seconds
+    Fitting ICA to data using 305 channels. 
+    Please be patient, this may take some time
+    Inferring max_pca_components from picks.
+    Selection by number: 25 components
+
+
 Do not copy this at home! You start by reading in a collections of ICA
 solutions, something like
 
 ``icas = [mne.preprocessing.read_ica(fname) for fname in ica_fnames]``
+
 
 
 .. code-block:: python
@@ -211,7 +391,18 @@ solutions, something like
     print(icas_from_other_data)
 
 
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    [<ICA  |  raw data decomposition, fit (fastica): 13545 samples, 25 components, channels used: "mag"; "grad">, <ICA  |  raw data decomposition, fit (fastica): 13545 samples, 25 components, channels used: "mag"; "grad">, <ICA  |  raw data decomposition, fit (fastica): 13846 samples, 25 components, channels used: "mag"; "grad">]
+
+
 use our previous ICA as reference.
+
 
 
 .. code-block:: python
@@ -219,7 +410,13 @@ use our previous ICA as reference.
     reference_ica = ica
 
 
+
+
+
+
+
 Investigate our reference ICA, here we use the previous fit from above.
+
 
 
 .. code-block:: python
@@ -227,9 +424,28 @@ Investigate our reference ICA, here we use the previous fit from above.
     reference_ica.plot_components()
 
 
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+    *
+
+      .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_006.png
+            :scale: 47
+
+    *
+
+      .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_007.png
+            :scale: 47
+
+
+
+
 Which one is the bad EOG component?
 Here we rely on our previous detection algorithm. You will need to decide
 yourself in that situation where no other detection is available.
+
 
 
 .. code-block:: python
@@ -238,9 +454,18 @@ yourself in that situation where no other detection is available.
     reference_ica.plot_sources(eog_average, exclude=eog_inds)
 
 
+
+
+.. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_008.png
+    :align: center
+
+
+
+
 Indeed it looks like an EOG, also in the average time course.
 
 So our template shall be a tuple like (reference_run_index, component_index):
+
 
 
 .. code-block:: python
@@ -248,7 +473,13 @@ So our template shall be a tuple like (reference_run_index, component_index):
     template = (0, eog_inds[0])
 
 
+
+
+
+
+
 Now we can do the corrmap.
+
 
 
 .. code-block:: python
@@ -256,6 +487,31 @@ Now we can do the corrmap.
     fig_template, fig_detected = corrmap(
         icas_from_other_data, template=template, label="blinks", show=True,
         threshold=.8, ch_type='mag')
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+    *
+
+      .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_009.png
+            :scale: 47
+
+    *
+
+      .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_010.png
+            :scale: 47
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    Median correlation with constructed map: 1.000
+    Displaying selected ICs per subject.
+    No maps selected for subject(s) 1, 2, consider a more liberal threshold.
 
 
 Nice, we have found similar ICs from the other runs!
@@ -266,8 +522,9 @@ faster but is less precise than ICA. And it requires that you
 know the event timing of your artifact.
 See :ref:`tut_artifacts_correct_ssp`.
 
+
 **Total running time of the script:**
-(0 minutes 0.000 seconds)
+(0 minutes 49.622 seconds)
 
 
 

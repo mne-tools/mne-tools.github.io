@@ -16,6 +16,7 @@ concepts for forward modeling. See :ref:`ch_forward`.
 
 
 
+
 .. code-block:: python
 
 
@@ -30,6 +31,11 @@ concepts for forward modeling. See :ref:`ch_forward`.
     subject = 'sample'
 
 
+
+
+
+
+
 Computing the forward operator
 ------------------------------
 
@@ -37,6 +43,7 @@ To compute a forward operator we need:
    - a -trans.fif file that contains the coregistration info.
    - a source space
    - the BEM surfaces
+
 
 Compute and visualize BEM surfaces
 ----------------------------------
@@ -62,11 +69,30 @@ assumes that you have the the *bem* folder of your subject FreeSurfer
 reconstruction the necessary files.
 
 
+
 .. code-block:: python
 
 
     mne.viz.plot_bem(subject=subject, subjects_dir=subjects_dir,
                      orientation='coronal')
+
+
+
+
+.. image:: /auto_tutorials/images/sphx_glr_plot_forward_001.png
+    :align: center
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    Using surface: /home/ubuntu/mne_data/MNE-sample-data/subjects/sample/bem/inner_skull.surf
+    Using surface: /home/ubuntu/mne_data/MNE-sample-data/subjects/sample/bem/outer_skull.surf
+    Using surface: /home/ubuntu/mne_data/MNE-sample-data/subjects/sample/bem/outer_skin.surf
+    Triangle file: Converted tri file nvert = 2562 ntri = 5120
+    Triangle file: Converted tri file nvert = 2562 ntri = 5120
+    Triangle file: Converted tri file nvert = 2562 ntri = 5120
 
 
 Visualization the coregistration
@@ -85,6 +111,7 @@ Here we assume the coregistration is done, so we just visually check the
 alignment with the following code.
 
 
+
 .. code-block:: python
 
 
@@ -94,6 +121,24 @@ alignment with the following code.
     info = mne.io.read_info(raw_fname)
     mne.viz.plot_trans(info, trans, subject=subject, dig=True,
                        meg_sensors=True, subjects_dir=subjects_dir)
+
+
+
+
+.. image:: /auto_tutorials/images/sphx_glr_plot_forward_002.png
+    :align: center
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    Read a total of 3 projection items:
+            PCA-v1 (1 x 102)  idle
+            PCA-v2 (1 x 102)  idle
+            PCA-v3 (1 x 102)  idle
+    Using surface from /home/ubuntu/mne_data/MNE-sample-data/subjects/sample/bem/sample-5120-5120-5120-bem.fif
+    Getting helmet for system 306m
 
 
 Compute Source Space
@@ -107,6 +152,7 @@ See :ref:`setting_up_source_space` for details on source space definition
 and spacing parameter.
 
 
+
 .. code-block:: python
 
 
@@ -116,10 +162,55 @@ and spacing parameter.
     print(src)
 
 
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    Setting up the source space with the following parameters:
+
+    SUBJECTS_DIR = /home/ubuntu/mne_data/MNE-sample-data/subjects
+    Subject      = sample
+    Surface      = white
+    Octahedron subdivision grade 6
+
+    >>> 1. Creating the source space file /home/ubuntu/mne_data/MNE-sample-data/subjects/sample/bem/sample-oct-6-src.fif...
+    Doing the octahedral vertex picking...
+    Loading /home/ubuntu/mne_data/MNE-sample-data/subjects/sample/surf/lh.white...
+    Triangle file: created by gramfort on Thu Sep 15 19:44:31 2011 nvert = 155407 ntri = 310810
+        Triangle neighbors and vertex normals...
+    Loading geometry from /home/ubuntu/mne_data/MNE-sample-data/subjects/sample/surf/lh.sphere...
+    Triangle file: created by gramfort on Thu Sep 15 20:42:21 2011 nvert = 155407 ntri = 310810
+    Mapping lh sample -> oct (6) ...
+    Setting up the triangulation for the decimated surface...
+    loaded lh.white 4098/155407 selected to source space (oct = 6)
+
+    Loading /home/ubuntu/mne_data/MNE-sample-data/subjects/sample/surf/rh.white...
+    Triangle file: created by gramfort on Thu Sep 15 22:04:14 2011 nvert = 156866 ntri = 313728
+        Triangle neighbors and vertex normals...
+    Loading geometry from /home/ubuntu/mne_data/MNE-sample-data/subjects/sample/surf/rh.sphere...
+    Triangle file: created by gramfort on Thu Sep 15 23:55:44 2011 nvert = 156866 ntri = 313728
+    Mapping rh sample -> oct (6) ...
+    Setting up the triangulation for the decimated surface...
+    loaded rh.white 4098/156866 selected to source space (oct = 6)
+
+        Write a source space...
+        [done]
+        Write a source space...
+        [done]
+        2 source spaces written
+    Wrote /home/ubuntu/mne_data/MNE-sample-data/subjects/sample/bem/sample-oct-6-src.fif
+    You are now one step closer to computing the gain matrix
+    <SourceSpaces: [<'surf', n_vertices=155407, n_used=4098, coordinate_frame=MRI (surface RAS)>, <'surf', n_vertices=156866, n_used=4098, coordinate_frame=MRI (surface RAS)>]>
+
+
 src contains two parts, one for the left hemisphere (4098 locations) and
 one for the right hemisphere (4098 locations).
 
 Let's write a few lines of mayavi to see what it contains
+
 
 
 .. code-block:: python
@@ -138,6 +229,14 @@ Let's write a few lines of mayavi to see what it contains
                   surf.z[vertidx], color=(1, 1, 0), scale_factor=1.5)
 
 
+
+
+.. image:: /auto_tutorials/images/sphx_glr_plot_forward_003.png
+    :align: center
+
+
+
+
 Compute forward solution
 ------------------------
 
@@ -152,6 +251,7 @@ The BEM solution requires a BEM model which describes the geometry
 of the head the conductivities of the different tissues.
 
 
+
 .. code-block:: python
 
 
@@ -161,6 +261,30 @@ of the head the conductivities of the different tissues.
                                conductivity=conductivity,
                                subjects_dir=subjects_dir)
     bem = mne.make_bem_solution(model)
+
+
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    Creating the BEM geometry...
+    Going from 4th to 4th subdivision of an icosahedron (n_tri: 5120 -> 5120)
+    inner skull CM is   0.67 -10.01  44.26 mm
+    Surfaces passed the basic topology checks.
+    Complete.
+
+    Approximation method : Linear collocation
+
+    Homogeneous model surface loaded.
+    Computing the linear collocation solution...
+        Matrix coefficients...
+            inner_skull (2562) -> inner_skull (2562) ...
+        Inverting the coefficient matrix...
+    Solution ready.
+    BEM geometry computations complete.
 
 
 Note that the BEM does not involve any use of the trans file. The BEM
@@ -173,6 +297,7 @@ gain or leadfield matrix.
 See :func:`mne.make_forward_solution` for details on parameters meaning.
 
 
+
 .. code-block:: python
 
 
@@ -182,8 +307,64 @@ See :func:`mne.make_forward_solution` for details on parameters meaning.
     print(fwd)
 
 
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    Source space                 : <SourceSpaces: [<'surf', n_vertices=155407, n_used=4098, coordinate_frame=MRI (surface RAS)>, <'surf', n_vertices=156866, n_used=4098, coordinate_frame=MRI (surface RAS)>]>
+    MRI -> head transform source : /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis_raw-trans.fif
+    Measurement data             : sample_audvis_raw.fif
+    BEM model                    : dict
+    Accurate field computations
+    Do computations in head coordinates
+    Free source orientations
+    Destination for the solution : None
+
+    Read 2 source spaces a total of 8196 active source locations
+
+    Coordinate transformation: MRI (surface RAS) -> head
+         0.999310  0.009985 -0.035787      -3.17 mm
+         0.012759  0.812405  0.582954       6.86 mm
+         0.034894 -0.583008  0.811716      28.88 mm
+         0.000000  0.000000  0.000000       1.00
+
+    Read 306 MEG channels from info
+    69 coil definitions read
+    Coordinate transformation: MEG device -> head
+         0.991420 -0.039936 -0.124467      -6.13 mm
+         0.060661  0.984012  0.167456       0.06 mm
+         0.115790 -0.173570  0.977991      64.74 mm
+         0.000000  0.000000  0.000000       1.00
+    MEG coil definitions created in head coordinates.
+    Source spaces are now in head coordinates.
+
+    Employing the head->MRI coordinate transform with the BEM model.
+    BEM model dict is now set up
+
+    Source spaces are in head coordinates.
+    Checking that the sources are inside the bounding surface and at least    5.0 mm away (will take a few...)
+    2 source space points omitted because they are outside the inner skull surface.
+    364 source space points omitted because of the    5.0-mm distance limit.
+    1 source space point omitted because it is outside the inner skull surface.
+    331 source space point omitted because of the    5.0-mm distance limit.
+    Thank you for waiting.
+
+    Setting up compensation data...
+        No compensation set. Nothing more to do.
+
+    Composing the field computation matrix...
+    Computing MEG at 7498 source locations (free orientations)...
+
+    Finished.
+    <Forward | MEG channels: 305 | EEG channels: 0 | Source space: Surface with 7498 vertices | Source orientation: Free>
+
+
 We can explore the content of fwd to access the numpy array that contains
 the gain matrix.
+
 
 
 .. code-block:: python
@@ -193,10 +374,21 @@ the gain matrix.
     print("Leadfield size : %d sensors x %d dipoles" % leadfield.shape)
 
 
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    Leadfield size : 306 sensors x 22494 dipoles
+
+
 To save to disk a forward solution you can use
 :func:`mne.write_forward_solution` and to read it back from disk
 :func:`mne.read_forward_solution`. Don't forget that FIF files containing
 forward solution should end with *-fwd.fif*.
+
 
 Exercise
 --------
@@ -213,8 +405,9 @@ instead if a fixed/surface oriented orientation?
 Try this changing the mode parameter in :func:`mne.sensitivity_map`
 accordingly. Why don't we see any dipoles on the gyri?
 
+
 **Total running time of the script:**
-(0 minutes 0.000 seconds)
+(0 minutes 47.536 seconds)
 
 
 

@@ -10,6 +10,7 @@ Rejecting bad data (channels and segments)
 
 
 
+
 .. code-block:: python
 
 
@@ -20,6 +21,24 @@ Rejecting bad data (channels and segments)
     data_path = sample.data_path()
     raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
     raw = mne.io.read_raw_fif(raw_fname)
+
+
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    Opening raw data file /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis_filt-0-40_raw.fif...
+        Read a total of 4 projection items:
+            PCA-v1 (1 x 102)  idle
+            PCA-v2 (1 x 102)  idle
+            PCA-v3 (1 x 102)  idle
+            Average EEG reference (1 x 60)  idle
+    Current compensation grade : 0
+        Range : 6450 ... 48149 =     42.956 ...   320.665 secs
+    Ready.
 
 
 .. _marking_bad_channels:
@@ -35,10 +54,16 @@ Evoked). The info['bads'] value is a Python string. Here is
 example:
 
 
+
 .. code-block:: python
 
 
     raw.info['bads'] = ['MEG 2443']
+
+
+
+
+
 
 
 **Why setting a channel bad?**: If a channel does not show
@@ -80,9 +105,11 @@ Recommended ways to identify bad channels are:
 The actual removal happens using :func:`pick_types <mne.pick_types>` with
 `exclude='bads'` option (see :ref:`picking_channels`).
 
+
 Instead of removing the bad channels, you can also try to repair them.
 This is done by **interpolation** of the data from other channels.
 To illustrate how to use channel interpolation let us load some data.
+
 
 
 .. code-block:: python
@@ -102,7 +129,33 @@ To illustrate how to use channel interpolation let us load some data.
     print(evoked.info['bads'])
 
 
+
+
+.. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_rejection_001.png
+    :align: center
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    Reading /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis-ave.fif ...
+        Read a total of 4 projection items:
+            PCA-v1 (1 x 102) active
+            PCA-v2 (1 x 102) active
+            PCA-v3 (1 x 102) active
+            Average EEG reference (1 x 60) active
+        Found the data of interest:
+            t =    -199.80 ...     499.49 ms (Left Auditory)
+            0 CTF compensation matrices available
+            nave = 55 - aspect type = 100
+    Projections have already been applied. Setting proj attribute to True.
+    Applying baseline correction (mode: mean)
+    [u'MEG 2443', u'EEG 053']
+
+
 Let's now interpolate the bad channels (displayed in red above)
+
 
 
 .. code-block:: python
@@ -110,7 +163,23 @@ Let's now interpolate the bad channels (displayed in red above)
     evoked.interpolate_bads(reset_bads=False)
 
 
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    Computing interpolation matrix from 59 sensor positions
+    Interpolating 1 sensors
+        Computing dot products for 305 coils...
+        Computing cross products for coils 305 x 1 coils...
+        Preparing the mapping matrix...
+        [Truncate at 79 missing 0.0001]
+
+
 Let's plot the cleaned data
+
 
 
 .. code-block:: python
@@ -118,11 +187,20 @@ Let's plot the cleaned data
     evoked.plot(exclude=[])
 
 
+
+
+.. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_rejection_002.png
+    :align: center
+
+
+
+
 .. note::
     Interpolation is a linear operation that can be performed also on
     Raw and Epochs objects.
 
 For more details on interpolation see the page :ref:`channel_interpolation`.
+
 
 .. _marking_bad_segments:
 
@@ -144,6 +222,7 @@ the duration of the annotation. The instance of :class:`mne.Annotations`
 can be added as an attribute of :class:`mne.io.Raw`.
 
 
+
 .. code-block:: python
 
 
@@ -156,12 +235,29 @@ can be added as an attribute of :class:`mne.io.Raw`.
     raw.plot(events=eog_events)  # To see the annotated segments.
 
 
+
+
+.. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_rejection_003.png
+    :align: center
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    EOG channel index for this subject is: [375]
+    Filtering the data to remove DC offset to help distinguish blinks from saccades
+    Now detecting blinks and generating corresponding events
+    Number of EOG events detected : 46
+
+
 As the data is epoched, all the epochs overlapping with segments whose
 description starts with 'bad' are rejected by default. To turn rejection off,
 use keyword argument ``reject_by_annotation=False`` when constructing
 :class:`mne.Epochs`. When working with neuromag data, the ``first_samp``
 offset of raw acquisition is also taken into account the same way as with
 event lists. For more see :class:`mne.Epochs` and :class:`mne.Annotations`.
+
 
 .. _rejecting_bad_epochs:
 
@@ -180,10 +276,16 @@ the peak-to-peak rejection values for gradiometers,
 magnetometers and EOG:
 
 
+
 .. code-block:: python
 
 
     reject = dict(grad=4000e-13, mag=4e-12, eog=150e-6)
+
+
+
+
+
 
 
 .. note::
@@ -193,7 +295,9 @@ magnetometers and EOG:
    of marking a single channel as bad and you'll be able to save a lot
    of data.
 
+
 We then construct the epochs
+
 
 
 .. code-block:: python
@@ -210,7 +314,23 @@ We then construct the epochs
                         reject_by_annotation=True)
 
 
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    319 events found
+    Events id: [ 1  2  3  4  5 32]
+    72 matching events found
+    Applying baseline correction (mode: mean)
+    Created an SSP operator (subspace dimension = 3)
+    4 projection items activated
+
+
 We then drop/reject the bad epochs
+
 
 
 .. code-block:: python
@@ -218,8 +338,22 @@ We then drop/reject the bad epochs
     epochs.drop_bad()
 
 
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    Loading data for 72 events and 106 original time points ...
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on MAG : [u'MEG 1711']
+    22 bad epochs dropped
+
+
 And plot the so-called *drop log* that details the reason for which some
 epochs have been dropped.
+
 
 
 .. code-block:: python
@@ -229,14 +363,28 @@ epochs have been dropped.
     epochs.plot_drop_log()
 
 
+
+
+.. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_rejection_004.png
+    :align: center
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    [['bad blink'], ['IGNORED'], ['IGNORED'], ['IGNORED'], ['bad blink']]
+
+
 What you see is that some drop log values are empty. It means event was kept.
 If it says 'IGNORED' is means the event_id did not contain the associated
 event. If it gives the name of channel such as 'EOG 061' it means the
 epoch was rejected because 'EOG 061' exceeded the peak-to-peak rejection
 limit.
 
+
 **Total running time of the script:**
-(0 minutes 0.000 seconds)
+(0 minutes 10.633 seconds)
 
 
 

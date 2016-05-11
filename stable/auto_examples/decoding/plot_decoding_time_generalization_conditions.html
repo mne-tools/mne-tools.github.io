@@ -74,10 +74,6 @@
   </head>
   <body role="document">
 
-<div class="devbar">
-This documentation is for the development version (0.12.0) - <a href="http://martinos.org/mne/stable">Stable version</a>
-</div>
-
 
 
 
@@ -212,6 +208,26 @@ Sciences, 18(4), 203-210.
 <a class="reference external" href="http://www.ncbi.nlm.nih.gov/pubmed/24593982">http://www.ncbi.nlm.nih.gov/pubmed/24593982</a></p>
 <p>The idea is to learn at one time instant and assess if the decoder
 can predict accurately over time and on a second set of conditions.</p>
+<img alt="../../_images/sphx_glr_plot_decoding_time_generalization_conditions_001.png" class="align-center" src="../../_images/sphx_glr_plot_decoding_time_generalization_conditions_001.png" />
+<p class="sphx-glr-script-out">Out:</p>
+<div class="sphx-glr-script-out highlight-python"><div class="highlight"><pre><span></span>Opening raw data file /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis_filt-0-40_raw.fif...
+    Read a total of 4 projection items:
+        PCA-v1 (1 x 102)  idle
+        PCA-v2 (1 x 102)  idle
+        PCA-v3 (1 x 102)  idle
+        Average EEG reference (1 x 60)  idle
+Current compensation grade : 0
+    Range : 6450 ... 48149 =     42.956 ...   320.665 secs
+Ready.
+Reading 0 ... 41699  =      0.000 ...   277.709 secs...
+Band-pass filtering from 1 - 30 Hz
+The unique classes&#39; labels are: [0 1]
+score_mode changed from mean-fold-wise set to &#39;mean-sample-wise&#39; because predict_mode is &#39;mean-prediction&#39;.
+</pre></div>
+</div>
+<div class="line-block">
+<div class="line"><br /></div>
+</div>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># Authors: Jean-Remi King &lt;jeanremi.king@gmail.com&gt;</span>
 <span class="c1">#          Alexandre Gramfort &lt;alexandre.gramfort@telecom-paristech.fr&gt;</span>
 <span class="c1">#          Denis Engemann &lt;denis.engemann@gmail.com&gt;</span>
@@ -222,22 +238,22 @@ can predict accurately over time and on a second set of conditions.</p>
 
 <span class="kn">import</span> <span class="nn">mne</span>
 <span class="kn">from</span> <span class="nn">mne.datasets</span> <span class="kn">import</span> <span class="n">sample</span>
-<span class="kn">from</span> <span class="nn">mne.decoding</span> <span class="kn">import</span> <span class="n">GeneralizationAcrossTime</span>
+<span class="kn">from</span> <span class="nn">mne.decoding</span> <span class="kn">import</span> <a href="../../generated/mne.decoding.GeneralizationAcrossTime.html#mne.decoding.GeneralizationAcrossTime"><span class="n">GeneralizationAcrossTime</span></a>
 
 <span class="k">print</span><span class="p">(</span><span class="n">__doc__</span><span class="p">)</span>
 
 <span class="c1"># Preprocess data</span>
-<span class="n">data_path</span> <span class="o">=</span> <span class="n">sample</span><span class="o">.</span><span class="n">data_path</span><span class="p">()</span>
+<span class="n">data_path</span> <span class="o">=</span> <a href="../../generated/mne.datasets.sample.data_path.html#mne.datasets.sample.data_path"><span class="n">sample</span><span class="o">.</span><span class="n">data_path</span></a><span class="p">()</span>
 <span class="c1"># Load and filter data, set up epochs</span>
 <span class="n">raw_fname</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis_filt-0-40_raw.fif&#39;</span>
 <span class="n">events_fname</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis_filt-0-40_raw-eve.fif&#39;</span>
 <span class="n">raw</span> <span class="o">=</span> <span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read_raw_fif</span><span class="p">(</span><span class="n">raw_fname</span><span class="p">,</span> <span class="n">preload</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-<span class="n">picks</span> <span class="o">=</span> <span class="n">mne</span><span class="o">.</span><span class="n">pick_types</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">meg</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="s1">&#39;bads&#39;</span><span class="p">)</span>  <span class="c1"># Pick MEG channels</span>
+<span class="n">picks</span> <span class="o">=</span> <a href="../../generated/mne.pick_types.html#mne.pick_types"><span class="n">mne</span><span class="o">.</span><span class="n">pick_types</span></a><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">meg</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="s1">&#39;bads&#39;</span><span class="p">)</span>  <span class="c1"># Pick MEG channels</span>
 <span class="n">raw</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;fft&#39;</span><span class="p">)</span>  <span class="c1"># Band pass filtering signals</span>
-<span class="n">events</span> <span class="o">=</span> <span class="n">mne</span><span class="o">.</span><span class="n">read_events</span><span class="p">(</span><span class="n">events_fname</span><span class="p">)</span>
+<span class="n">events</span> <span class="o">=</span> <a href="../../generated/mne.read_events.html#mne.read_events"><span class="n">mne</span><span class="o">.</span><span class="n">read_events</span></a><span class="p">(</span><span class="n">events_fname</span><span class="p">)</span>
 <span class="n">event_id</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;AudL&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;AudR&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;VisL&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s1">&#39;VisR&#39;</span><span class="p">:</span> <span class="mi">4</span><span class="p">}</span>
 <span class="n">decim</span> <span class="o">=</span> <span class="mi">2</span>  <span class="c1"># decimate to make the example faster to run</span>
-<span class="n">epochs</span> <span class="o">=</span> <span class="n">mne</span><span class="o">.</span><span class="n">Epochs</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">event_id</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.050</span><span class="p">,</span> <span class="mf">0.400</span><span class="p">,</span> <span class="n">proj</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+<span class="n">epochs</span> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs"><span class="n">mne</span><span class="o">.</span><span class="n">Epochs</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">event_id</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.050</span><span class="p">,</span> <span class="mf">0.400</span><span class="p">,</span> <span class="n">proj</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
                     <span class="n">picks</span><span class="o">=</span><span class="n">picks</span><span class="p">,</span> <span class="n">baseline</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">preload</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
                     <span class="n">reject</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">mag</span><span class="o">=</span><span class="mf">5e-12</span><span class="p">),</span> <span class="n">decim</span><span class="o">=</span><span class="n">decim</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
 
@@ -249,20 +265,20 @@ can predict accurately over time and on a second set of conditions.</p>
 
 <span class="c1"># Define events of interest</span>
 <span class="n">triggers</span> <span class="o">=</span> <span class="n">epochs</span><span class="o">.</span><span class="n">events</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span>
-<span class="n">viz_vs_auditory</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">in1d</span><span class="p">(</span><span class="n">triggers</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+<span class="n">viz_vs_auditory</span> <span class="o">=</span> <a href="http://docs.scipy.org/doc/numpy-1.10.1/reference/generated/numpy.in1d.html#numpy.in1d"><span class="n">np</span><span class="o">.</span><span class="n">in1d</span></a><span class="p">(</span><span class="n">triggers</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
 
-<span class="n">gat</span> <span class="o">=</span> <span class="n">GeneralizationAcrossTime</span><span class="p">(</span><span class="n">predict_mode</span><span class="o">=</span><span class="s1">&#39;mean-prediction&#39;</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">gat</span> <span class="o">=</span> <a href="../../generated/mne.decoding.GeneralizationAcrossTime.html#mne.decoding.GeneralizationAcrossTime"><span class="n">GeneralizationAcrossTime</span></a><span class="p">(</span><span class="n">predict_mode</span><span class="o">=</span><span class="s1">&#39;mean-prediction&#39;</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
 <span class="c1"># For our left events, which ones are visual?</span>
-<span class="n">viz_vs_auditory_l</span> <span class="o">=</span> <span class="p">(</span><span class="n">triggers</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">in1d</span><span class="p">(</span><span class="n">triggers</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">))]</span> <span class="o">==</span> <span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+<span class="n">viz_vs_auditory_l</span> <span class="o">=</span> <span class="p">(</span><span class="n">triggers</span><span class="p">[</span><a href="http://docs.scipy.org/doc/numpy-1.10.1/reference/generated/numpy.in1d.html#numpy.in1d"><span class="n">np</span><span class="o">.</span><span class="n">in1d</span></a><span class="p">(</span><span class="n">triggers</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">))]</span> <span class="o">==</span> <span class="mi">3</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
 <span class="c1"># To make scikit-learn happy, we converted the bool array to integers</span>
 <span class="c1"># in the same line. This results in an array of zeros and ones:</span>
-<span class="k">print</span><span class="p">(</span><span class="s2">&quot;The unique classes&#39; labels are: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">np</span><span class="o">.</span><span class="n">unique</span><span class="p">(</span><span class="n">viz_vs_auditory_l</span><span class="p">))</span>
+<span class="k">print</span><span class="p">(</span><span class="s2">&quot;The unique classes&#39; labels are: </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <a href="http://docs.scipy.org/doc/numpy-1.10.1/reference/generated/numpy.unique.html#numpy.unique"><span class="n">np</span><span class="o">.</span><span class="n">unique</span></a><span class="p">(</span><span class="n">viz_vs_auditory_l</span><span class="p">))</span>
 
 <span class="n">gat</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">epochs</span><span class="p">[(</span><span class="s1">&#39;AudL&#39;</span><span class="p">,</span> <span class="s1">&#39;VisL&#39;</span><span class="p">)],</span> <span class="n">y</span><span class="o">=</span><span class="n">viz_vs_auditory_l</span><span class="p">)</span>
 
 <span class="c1"># For our right events, which ones are visual?</span>
-<span class="n">viz_vs_auditory_r</span> <span class="o">=</span> <span class="p">(</span><span class="n">triggers</span><span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">in1d</span><span class="p">(</span><span class="n">triggers</span><span class="p">,</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">))]</span> <span class="o">==</span> <span class="mi">4</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
+<span class="n">viz_vs_auditory_r</span> <span class="o">=</span> <span class="p">(</span><span class="n">triggers</span><span class="p">[</span><a href="http://docs.scipy.org/doc/numpy-1.10.1/reference/generated/numpy.in1d.html#numpy.in1d"><span class="n">np</span><span class="o">.</span><span class="n">in1d</span></a><span class="p">(</span><span class="n">triggers</span><span class="p">,</span> <span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">))]</span> <span class="o">==</span> <span class="mi">4</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
 
 <span class="n">gat</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="n">epochs</span><span class="p">[(</span><span class="s1">&#39;AudR&#39;</span><span class="p">,</span> <span class="s1">&#39;VisR&#39;</span><span class="p">)],</span> <span class="n">y</span><span class="o">=</span><span class="n">viz_vs_auditory_r</span><span class="p">)</span>
 <span class="n">gat</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
@@ -270,7 +286,7 @@ can predict accurately over time and on a second set of conditions.</p>
 </pre></div>
 </div>
 <p><strong>Total running time of the script:</strong>
-(0 minutes 0.000 seconds)</p>
+(0 minutes 7.695 seconds)</p>
 <div class="sphx-glr-download container">
 <strong>Download Python source code:</strong> <a class="reference download internal" href="../../_downloads/plot_decoding_time_generalization_conditions.py"><code class="xref download docutils literal"><span class="pre">plot_decoding_time_generalization_conditions.py</span></code></a></div>
 <div class="sphx-glr-download container">
