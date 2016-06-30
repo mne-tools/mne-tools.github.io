@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="../_static/gallery.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/bootswatch-3.3.4/flatly/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootswatch-3.3.6/flatly/bootstrap.min.css" type="text/css" />
     <link rel="stylesheet" href="../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../_static/style.css" type="text/css" />
     
@@ -29,7 +29,7 @@
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <script type="text/javascript" src="../_static/js/jquery-1.11.0.min.js"></script>
     <script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
-    <script type="text/javascript" src="../_static/bootstrap-3.3.4/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
     <link rel="shortcut icon" href="../_static/favicon.ico"/>
     <link rel="top" title="MNE 0.13.dev0 documentation" href="../index.html" />
@@ -91,7 +91,7 @@ This documentation is for the development version (0.13.dev0) - <a href="http://
           <span class="icon-bar"></span>
           <span class="icon-bar"></span>
         </button>
-        <a class="navbar-brand" href="../index.html"><img src="../_static/mne_logo_small.png">
+        <a class="navbar-brand" href="../index.html"><span><img src="../_static/mne_logo_small.png"></span>
            </a>
         <span class="navbar-text navbar-version pull-left"><b>0.13.dev0</b></span>
       </div>
@@ -149,8 +149,6 @@ This documentation is for the development version (0.13.dev0) - <a href="http://
 <li><a class="reference internal" href="#create-tfr-representations-for-all-conditions">Create TFR representations for all conditions</a></li>
 <li><a class="reference internal" href="#setup-repeated-measures-anova">Setup repeated measures ANOVA</a></li>
 <li><a class="reference internal" href="#account-for-multiple-comparisons-using-fdr-versus-permutation-clustering-test">Account for multiple comparisons using FDR versus permutation clustering test</a></li>
-<li><a class="reference internal" href="#create-new-stats-image-with-only-significant-clusters">Create new stats image with only significant clusters</a></li>
-<li><a class="reference internal" href="#now-using-fdr">Now using FDR</a></li>
 </ul>
 </li>
 </ul>
@@ -190,8 +188,6 @@ This documentation is for the development version (0.13.dev0) - <a href="http://
 <li><a class="reference internal" href="#create-tfr-representations-for-all-conditions">Create TFR representations for all conditions</a></li>
 <li><a class="reference internal" href="#setup-repeated-measures-anova">Setup repeated measures ANOVA</a></li>
 <li><a class="reference internal" href="#account-for-multiple-comparisons-using-fdr-versus-permutation-clustering-test">Account for multiple comparisons using FDR versus permutation clustering test</a></li>
-<li><a class="reference internal" href="#create-new-stats-image-with-only-significant-clusters">Create new stats image with only significant clusters</a></li>
-<li><a class="reference internal" href="#now-using-fdr">Now using FDR</a></li>
 </ul>
 </li>
 </ul>
@@ -241,8 +237,7 @@ multiple comparisons using False Discovery Rate correction.</p>
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
 
 <span class="kn">import</span> <span class="nn">mne</span>
-<span class="kn">from</span> <span class="nn">mne</span> <span class="kn">import</span> <span class="n">io</span>
-<span class="kn">from</span> <span class="nn">mne.time_frequency</span> <span class="kn">import</span> <a href="../generated/mne.time_frequency.single_trial_power.html#mne.time_frequency.single_trial_power"><span class="n">single_trial_power</span></a>
+<span class="kn">from</span> <span class="nn">mne.time_frequency</span> <span class="kn">import</span> <a href="../generated/mne.time_frequency.tfr_morlet.html#mne.time_frequency.tfr_morlet"><span class="n">tfr_morlet</span></a>
 <span class="kn">from</span> <span class="nn">mne.stats</span> <span class="kn">import</span> <a href="../generated/mne.stats.f_threshold_mway_rm.html#mne.stats.f_threshold_mway_rm"><span class="n">f_threshold_mway_rm</span></a><span class="p">,</span> <a href="../generated/mne.stats.f_mway_rm.html#mne.stats.f_mway_rm"><span class="n">f_mway_rm</span></a><span class="p">,</span> <a href="../generated/mne.stats.fdr_correction.html#mne.stats.fdr_correction"><span class="n">fdr_correction</span></a>
 <span class="kn">from</span> <span class="nn">mne.datasets</span> <span class="kn">import</span> <span class="n">sample</span>
 
@@ -254,12 +249,10 @@ multiple comparisons using False Discovery Rate correction.</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">data_path</span> <span class="o">=</span> <a href="../generated/mne.datasets.sample.data_path.html#mne.datasets.sample.data_path"><span class="n">sample</span><span class="o">.</span><span class="n">data_path</span></a><span class="p">()</span>
 <span class="n">raw_fname</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis_raw.fif&#39;</span>
 <span class="n">event_fname</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis_raw-eve.fif&#39;</span>
-<span class="n">event_id</span> <span class="o">=</span> <span class="mi">1</span>
-<span class="n">tmin</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.2</span>
-<span class="n">tmax</span> <span class="o">=</span> <span class="mf">0.5</span>
+<span class="n">tmin</span><span class="p">,</span> <span class="n">tmax</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.5</span>
 
 <span class="c1"># Setup for reading the raw data</span>
-<span class="n">raw</span> <span class="o">=</span> <a href="../generated/mne.io.read_raw_fif.html#mne.io.read_raw_fif"><span class="n">io</span><span class="o">.</span><span class="n">read_raw_fif</span></a><span class="p">(</span><span class="n">raw_fname</span><span class="p">)</span>
+<span class="n">raw</span> <span class="o">=</span> <a href="../generated/mne.io.read_raw_fif.html#mne.io.read_raw_fif"><span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read_raw_fif</span></a><span class="p">(</span><span class="n">raw_fname</span><span class="p">)</span>
 <span class="n">events</span> <span class="o">=</span> <a href="../generated/mne.read_events.html#mne.read_events"><span class="n">mne</span><span class="o">.</span><span class="n">read_events</span></a><span class="p">(</span><span class="n">event_fname</span><span class="p">)</span>
 
 <span class="n">include</span> <span class="o">=</span> <span class="p">[]</span>
@@ -269,136 +262,125 @@ multiple comparisons using False Discovery Rate correction.</p>
 <span class="n">picks</span> <span class="o">=</span> <a href="../generated/mne.pick_types.html#mne.pick_types"><span class="n">mne</span><span class="o">.</span><span class="n">pick_types</span></a><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">meg</span><span class="o">=</span><span class="s1">&#39;grad&#39;</span><span class="p">,</span> <span class="n">eeg</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">eog</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
                        <span class="n">stim</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">include</span><span class="o">=</span><span class="n">include</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="s1">&#39;bads&#39;</span><span class="p">)</span>
 
-<span class="n">ch_name</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;ch_names&#39;</span><span class="p">][</span><span class="n">picks</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+<span class="n">ch_name</span> <span class="o">=</span> <span class="s1">&#39;MEG 1332&#39;</span>
 
 <span class="c1"># Load conditions</span>
 <span class="n">reject</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">grad</span><span class="o">=</span><span class="mf">4000e-13</span><span class="p">,</span> <span class="n">eog</span><span class="o">=</span><span class="mf">150e-6</span><span class="p">)</span>
 <span class="n">event_id</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">aud_l</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">aud_r</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">vis_l</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">vis_r</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
 <span class="n">epochs</span> <span class="o">=</span> <a href="../generated/mne.Epochs.html#mne.Epochs"><span class="n">mne</span><span class="o">.</span><span class="n">Epochs</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">event_id</span><span class="p">,</span> <span class="n">tmin</span><span class="p">,</span> <span class="n">tmax</span><span class="p">,</span>
-                    <span class="n">picks</span><span class="o">=</span><span class="n">picks</span><span class="p">,</span> <span class="n">baseline</span><span class="o">=</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
+                    <span class="n">picks</span><span class="o">=</span><span class="n">picks</span><span class="p">,</span> <span class="n">baseline</span><span class="o">=</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">preload</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
                     <span class="n">reject</span><span class="o">=</span><span class="n">reject</span><span class="p">)</span>
+<span class="n">epochs</span><span class="o">.</span><span class="n">pick_channels</span><span class="p">([</span><span class="n">ch_name</span><span class="p">])</span>  <span class="c1"># restrict example to one channel</span>
 </pre></div>
 </div>
 <p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-python"><div class="highlight"><pre><span></span>Opening raw data file /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis_raw.fif...
-    Read a total of 3 projection items:
-        PCA-v1 (1 x 102)  idle
-        PCA-v2 (1 x 102)  idle
-        PCA-v3 (1 x 102)  idle
-Current compensation grade : 0
-    Range : 25800 ... 192599 =     42.956 ...   320.670 secs
-Ready.
-Adding average EEG reference projection.
-1 projection items deactivated
-289 matching events found
-Applying baseline correction (mode: mean)
-4 projection items activated
+<div class="sphx-glr-script-out highlight-default"><div class="highlight"><pre><span></span><span class="n">Opening</span> <span class="n">raw</span> <span class="n">data</span> <span class="n">file</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">ubuntu</span><span class="o">/</span><span class="n">mne_data</span><span class="o">/</span><span class="n">MNE</span><span class="o">-</span><span class="n">sample</span><span class="o">-</span><span class="n">data</span><span class="o">/</span><span class="n">MEG</span><span class="o">/</span><span class="n">sample</span><span class="o">/</span><span class="n">sample_audvis_raw</span><span class="o">.</span><span class="n">fif</span><span class="o">...</span>
+    <span class="n">Read</span> <span class="n">a</span> <span class="n">total</span> <span class="n">of</span> <span class="mi">3</span> <span class="n">projection</span> <span class="n">items</span><span class="p">:</span>
+        <span class="n">PCA</span><span class="o">-</span><span class="n">v1</span> <span class="p">(</span><span class="mi">1</span> <span class="n">x</span> <span class="mi">102</span><span class="p">)</span>  <span class="n">idle</span>
+        <span class="n">PCA</span><span class="o">-</span><span class="n">v2</span> <span class="p">(</span><span class="mi">1</span> <span class="n">x</span> <span class="mi">102</span><span class="p">)</span>  <span class="n">idle</span>
+        <span class="n">PCA</span><span class="o">-</span><span class="n">v3</span> <span class="p">(</span><span class="mi">1</span> <span class="n">x</span> <span class="mi">102</span><span class="p">)</span>  <span class="n">idle</span>
+    <span class="n">Range</span> <span class="p">:</span> <span class="mi">25800</span> <span class="o">...</span> <span class="mi">192599</span> <span class="o">=</span>     <span class="mf">42.956</span> <span class="o">...</span>   <span class="mf">320.670</span> <span class="n">secs</span>
+<span class="n">Ready</span><span class="o">.</span>
+<span class="n">Current</span> <span class="n">compensation</span> <span class="n">grade</span> <span class="p">:</span> <span class="mi">0</span>
+<span class="n">Adding</span> <span class="n">average</span> <span class="n">EEG</span> <span class="n">reference</span> <span class="n">projection</span><span class="o">.</span>
+<span class="mi">1</span> <span class="n">projection</span> <span class="n">items</span> <span class="n">deactivated</span>
+<span class="mi">289</span> <span class="n">matching</span> <span class="n">events</span> <span class="n">found</span>
+<span class="n">Applying</span> <span class="n">baseline</span> <span class="n">correction</span> <span class="p">(</span><span class="n">mode</span><span class="p">:</span> <span class="n">mean</span><span class="p">)</span>
+<span class="mi">4</span> <span class="n">projection</span> <span class="n">items</span> <span class="n">activated</span>
+<span class="n">Loading</span> <span class="n">data</span> <span class="k">for</span> <span class="mi">289</span> <span class="n">events</span> <span class="ow">and</span> <span class="mi">421</span> <span class="n">original</span> <span class="n">time</span> <span class="n">points</span> <span class="o">...</span>
+    <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="s1">u&#39;EOG 061&#39;</span><span class="p">]</span>
+    <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="s1">u&#39;EOG 061&#39;</span><span class="p">]</span>
+    <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="s1">u&#39;EOG 061&#39;</span><span class="p">]</span>
+    <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="s1">u&#39;EOG 061&#39;</span><span class="p">]</span>
+    <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="s1">u&#39;EOG 061&#39;</span><span class="p">]</span>
+    <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="s1">u&#39;EOG 061&#39;</span><span class="p">]</span>
+    <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="s1">u&#39;EOG 061&#39;</span><span class="p">]</span>
+    <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="s1">u&#39;EOG 061&#39;</span><span class="p">]</span>
+    <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="s1">u&#39;EOG 061&#39;</span><span class="p">]</span>
+    <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="s1">u&#39;EOG 061&#39;</span><span class="p">]</span>
+    <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="s1">u&#39;EOG 061&#39;</span><span class="p">]</span>
+    <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="s1">u&#39;EOG 061&#39;</span><span class="p">]</span>
+    <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="s1">u&#39;EOG 061&#39;</span><span class="p">]</span>
+    <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="s1">u&#39;EOG 061&#39;</span><span class="p">]</span>
+    <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="s1">u&#39;EOG 061&#39;</span><span class="p">]</span>
+    <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="s1">u&#39;EOG 061&#39;</span><span class="p">]</span>
+    <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="s1">u&#39;EOG 061&#39;</span><span class="p">]</span>
+    <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="s1">u&#39;EOG 061&#39;</span><span class="p">]</span>
+    <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="s1">u&#39;EOG 061&#39;</span><span class="p">]</span>
+    <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="s1">u&#39;EOG 061&#39;</span><span class="p">]</span>
+    <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="s1">u&#39;EOG 061&#39;</span><span class="p">]</span>
+    <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="s1">u&#39;EOG 061&#39;</span><span class="p">]</span>
+    <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="s1">u&#39;EOG 061&#39;</span><span class="p">]</span>
+    <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="s1">u&#39;EOG 061&#39;</span><span class="p">]</span>
+    <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="s1">u&#39;EOG 061&#39;</span><span class="p">]</span>
+    <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="s1">u&#39;EOG 061&#39;</span><span class="p">]</span>
+    <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="s1">u&#39;EOG 061&#39;</span><span class="p">]</span>
+    <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="s1">u&#39;EOG 061&#39;</span><span class="p">]</span>
+    <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="s1">u&#39;EOG 061&#39;</span><span class="p">]</span>
+    <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="s1">u&#39;EOG 061&#39;</span><span class="p">]</span>
+    <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="s1">u&#39;EOG 061&#39;</span><span class="p">]</span>
+    <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="s1">u&#39;EOG 061&#39;</span><span class="p">]</span>
+    <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="s1">u&#39;EOG 061&#39;</span><span class="p">]</span>
+    <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="s1">u&#39;EOG 061&#39;</span><span class="p">]</span>
+    <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="s1">u&#39;EOG 061&#39;</span><span class="p">]</span>
+    <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="s1">u&#39;EOG 061&#39;</span><span class="p">]</span>
+    <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="s1">u&#39;EOG 061&#39;</span><span class="p">]</span>
+    <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="s1">u&#39;EOG 061&#39;</span><span class="p">]</span>
+    <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="s1">u&#39;EOG 061&#39;</span><span class="p">]</span>
+    <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="s1">u&#39;EOG 061&#39;</span><span class="p">]</span>
+    <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="s1">u&#39;EOG 061&#39;</span><span class="p">]</span>
+    <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="s1">u&#39;EOG 061&#39;</span><span class="p">]</span>
+    <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="s1">u&#39;EOG 061&#39;</span><span class="p">]</span>
+    <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="s1">u&#39;EOG 061&#39;</span><span class="p">]</span>
+    <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="s1">u&#39;EOG 061&#39;</span><span class="p">]</span>
+    <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="s1">u&#39;EOG 061&#39;</span><span class="p">]</span>
+    <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="s1">u&#39;EOG 061&#39;</span><span class="p">]</span>
+    <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="s1">u&#39;EOG 061&#39;</span><span class="p">]</span>
+    <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="s1">u&#39;EOG 061&#39;</span><span class="p">]</span>
+    <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="s1">u&#39;EOG 061&#39;</span><span class="p">]</span>
+    <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="s1">u&#39;EOG 061&#39;</span><span class="p">]</span>
+    <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="s1">u&#39;EOG 061&#39;</span><span class="p">]</span>
+    <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="s1">u&#39;EOG 061&#39;</span><span class="p">]</span>
+<span class="mi">53</span> <span class="n">bad</span> <span class="n">epochs</span> <span class="n">dropped</span>
 </pre></div>
 </div>
 <p>We have to make sure all conditions have the same counts, as the ANOVA
 expects a fully balanced data matrix and does not forgive imbalances that
 generously (risk of type-I error).</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">epochs</span><span class="o">.</span><span class="n">equalize_event_counts</span><span class="p">(</span><span class="n">event_id</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
-<span class="c1"># Time vector</span>
-<span class="n">times</span> <span class="o">=</span> <span class="mf">1e3</span> <span class="o">*</span> <span class="n">epochs</span><span class="o">.</span><span class="n">times</span>  <span class="c1"># change unit to ms</span>
 
-<span class="c1"># Factor to down-sample the temporal dimension of the PSD computed by</span>
-<span class="c1"># single_trial_power.</span>
+<span class="c1"># Factor to down-sample the temporal dimension of the TFR computed by</span>
+<span class="c1"># tfr_morlet.</span>
 <span class="n">decim</span> <span class="o">=</span> <span class="mi">2</span>
 <span class="n">frequencies</span> <span class="o">=</span> <a href="http://docs.scipy.org/doc/numpy-1.10.1/reference/generated/numpy.arange.html#numpy.arange"><span class="n">np</span><span class="o">.</span><span class="n">arange</span></a><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>  <span class="c1"># define frequencies of interest</span>
-<span class="n">sfreq</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;sfreq&#39;</span><span class="p">]</span>  <span class="c1"># sampling in Hz</span>
 <span class="n">n_cycles</span> <span class="o">=</span> <span class="n">frequencies</span> <span class="o">/</span> <span class="n">frequencies</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-<span class="n">baseline_mask</span> <span class="o">=</span> <span class="n">times</span><span class="p">[::</span><span class="n">decim</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span>
+<span class="n">zero_mean</span> <span class="o">=</span> <span class="bp">False</span>  <span class="c1"># don&#39;t correct morlet wavelet to be of mean zero</span>
+<span class="c1"># To have a true wavelet zero_mean should be True but here for illustration</span>
+<span class="c1"># purposes it helps to spot the evoked response.</span>
 </pre></div>
 </div>
 <p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-python"><div class="highlight"><pre><span></span>Loading data for 289 events and 421 original time points ...
-    Rejecting  epoch based on EOG : [u&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [u&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [u&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [u&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [u&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [u&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [u&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [u&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [u&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [u&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [u&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [u&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [u&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [u&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [u&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [u&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [u&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [u&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [u&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [u&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [u&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [u&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [u&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [u&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [u&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [u&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [u&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [u&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [u&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [u&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [u&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [u&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [u&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [u&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [u&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [u&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [u&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [u&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [u&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [u&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [u&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [u&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [u&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [u&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [u&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [u&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [u&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [u&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [u&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [u&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [u&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [u&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [u&#39;EOG 061&#39;]
-53 bad epochs dropped
-Dropped 12 epochs
+<div class="sphx-glr-script-out highlight-default"><div class="highlight"><pre><span></span><span class="n">Dropped</span> <span class="mi">12</span> <span class="n">epochs</span>
 </pre></div>
 </div>
 </div>
 <div class="section" id="create-tfr-representations-for-all-conditions">
 <h2>Create TFR representations for all conditions<a class="headerlink" href="#create-tfr-representations-for-all-conditions" title="Permalink to this headline">¶</a></h2>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">epochs_power</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
-<span class="k">for</span> <span class="n">condition</span> <span class="ow">in</span> <span class="p">[</span><span class="n">epochs</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">get_data</span><span class="p">()[:,</span> <span class="mi">97</span><span class="p">:</span><span class="mi">98</span><span class="p">,</span> <span class="p">:]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">event_id</span><span class="p">]:</span>
-    <span class="n">this_power</span> <span class="o">=</span> <a href="../generated/mne.time_frequency.single_trial_power.html#mne.time_frequency.single_trial_power"><span class="n">single_trial_power</span></a><span class="p">(</span><span class="n">condition</span><span class="p">,</span> <span class="n">sfreq</span><span class="o">=</span><span class="n">sfreq</span><span class="p">,</span>
-                                    <span class="n">frequencies</span><span class="o">=</span><span class="n">frequencies</span><span class="p">,</span> <span class="n">n_cycles</span><span class="o">=</span><span class="n">n_cycles</span><span class="p">,</span>
-                                    <span class="n">decim</span><span class="o">=</span><span class="n">decim</span><span class="p">)</span>
-    <span class="n">this_power</span> <span class="o">=</span> <span class="n">this_power</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span>  <span class="c1"># we only have one channel.</span>
-    <span class="c1"># Compute ratio with baseline power (be sure to correct time vector with</span>
-    <span class="c1"># decimation factor)</span>
-    <span class="n">epochs_baseline</span> <span class="o">=</span> <a href="http://docs.scipy.org/doc/numpy-1.10.1/reference/generated/numpy.mean.html#numpy.mean"><span class="n">np</span><span class="o">.</span><span class="n">mean</span></a><span class="p">(</span><span class="n">this_power</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">baseline_mask</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-    <span class="n">this_power</span> <span class="o">/=</span> <span class="n">epochs_baseline</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <a href="http://docs.scipy.org/doc/numpy-1.10.1/reference/arrays.indexing.html#numpy.newaxis"><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span></a><span class="p">]</span>
+<span class="k">for</span> <span class="n">condition</span> <span class="ow">in</span> <span class="p">[</span><span class="n">epochs</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">event_id</span><span class="p">]:</span>
+    <span class="n">this_tfr</span> <span class="o">=</span> <a href="../generated/mne.time_frequency.tfr_morlet.html#mne.time_frequency.tfr_morlet"><span class="n">tfr_morlet</span></a><span class="p">(</span><span class="n">condition</span><span class="p">,</span> <span class="n">frequencies</span><span class="p">,</span> <span class="n">n_cycles</span><span class="o">=</span><span class="n">n_cycles</span><span class="p">,</span>
+                          <span class="n">decim</span><span class="o">=</span><span class="n">decim</span><span class="p">,</span> <span class="n">average</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">zero_mean</span><span class="o">=</span><span class="n">zero_mean</span><span class="p">,</span>
+                          <span class="n">return_itc</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+    <span class="n">this_tfr</span><span class="o">.</span><span class="n">apply_baseline</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s1">&#39;ratio&#39;</span><span class="p">,</span> <span class="n">baseline</span><span class="o">=</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+    <span class="n">this_power</span> <span class="o">=</span> <span class="n">this_tfr</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span>  <span class="c1"># we only have one channel.</span>
     <span class="n">epochs_power</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">this_power</span><span class="p">)</span>
 </pre></div>
 </div>
 <p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-python"><div class="highlight"><pre><span></span>Loading data for 56 events and 421 original time points ...
-Loading data for 56 events and 421 original time points ...
-Loading data for 56 events and 421 original time points ...
-Loading data for 56 events and 421 original time points ...
-Computing time-frequency power on single epochs...
-No baseline correction applied
-Computing time-frequency power on single epochs...
-No baseline correction applied
-Computing time-frequency power on single epochs...
-No baseline correction applied
-Computing time-frequency power on single epochs...
-No baseline correction applied
+<div class="sphx-glr-script-out highlight-default"><div class="highlight"><pre><span></span><span class="n">Applying</span> <span class="n">baseline</span> <span class="n">correction</span> <span class="p">(</span><span class="n">mode</span><span class="p">:</span> <span class="n">ratio</span><span class="p">)</span>
+<span class="n">Applying</span> <span class="n">baseline</span> <span class="n">correction</span> <span class="p">(</span><span class="n">mode</span><span class="p">:</span> <span class="n">ratio</span><span class="p">)</span>
+<span class="n">Applying</span> <span class="n">baseline</span> <span class="n">correction</span> <span class="p">(</span><span class="n">mode</span><span class="p">:</span> <span class="n">ratio</span><span class="p">)</span>
+<span class="n">Applying</span> <span class="n">baseline</span> <span class="n">correction</span> <span class="p">(</span><span class="n">mode</span><span class="p">:</span> <span class="n">ratio</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
@@ -416,7 +398,8 @@ factor levels for each factor.</p>
 <span class="c1"># or &#39;A:B&#39; for the interaction effect only (this notation is borrowed from the</span>
 <span class="c1"># R formula language)</span>
 <span class="n">n_frequencies</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">frequencies</span><span class="p">)</span>
-<span class="n">n_times</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">times</span><span class="p">[::</span><span class="n">decim</span><span class="p">])</span>
+<span class="n">times</span> <span class="o">=</span> <span class="mf">1e3</span> <span class="o">*</span> <span class="n">epochs</span><span class="o">.</span><span class="n">times</span><span class="p">[::</span><span class="n">decim</span><span class="p">]</span>
+<span class="n">n_times</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">times</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>Now we&#8217;ll assemble the data matrix and swap axes so the trial replications
@@ -430,13 +413,14 @@ are the first dimension and the conditions are the second dimension.</p>
 </pre></div>
 </div>
 <p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-python"><div class="highlight"><pre><span></span><span class="p">(</span><span class="mi">56</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">1688</span><span class="p">)</span>
+<div class="sphx-glr-script-out highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="mi">56</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">1688</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>While the iteration scheme used above for assembling the data matrix
 makes sure the first two dimensions are organized as expected (with A =
 modality and B = location):</p>
-<table border="1" class="docutils">
+<table border="1" class="docutils" id="id1">
+<caption><span class="caption-text">Sample data layout</span><a class="headerlink" href="#id1" title="Permalink to this table">¶</a></caption>
 <colgroup>
 <col width="24%" />
 <col width="19%" />
@@ -460,10 +444,10 @@ modality and B = location):</p>
 <td>1.74</td>
 </tr>
 <tr class="row-odd"><td>...</td>
-<td>&nbsp;</td>
-<td>&nbsp;</td>
-<td>&nbsp;</td>
-<td>&nbsp;</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
 </tr>
 <tr class="row-even"><td>56</td>
 <td>2.45</td>
@@ -495,7 +479,7 @@ are required.</p>
                <span class="n">times</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">frequencies</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">frequencies</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]],</span> <span class="n">aspect</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span>
                <span class="n">origin</span><span class="o">=</span><span class="s1">&#39;lower&#39;</span><span class="p">)</span>
     <a href="http://matplotlib.org/api/colorbar_api.html#matplotlib.colorbar"><span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span></a><span class="p">()</span>
-    <a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.xlabel"><span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span></a><span class="p">(</span><span class="s1">&#39;time (ms)&#39;</span><span class="p">)</span>
+    <a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.xlabel"><span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span></a><span class="p">(</span><span class="s1">&#39;Time (ms)&#39;</span><span class="p">)</span>
     <a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.ylabel"><span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span></a><span class="p">(</span><span class="s1">&#39;Frequency (Hz)&#39;</span><span class="p">)</span>
     <a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.title"><span class="n">plt</span><span class="o">.</span><span class="n">title</span></a><span class="p">(</span><span class="s2">r&quot;Time-locked response for &#39;</span><span class="si">%s</span><span class="s2">&#39; (</span><span class="si">%s</span><span class="s2">)&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">effect_label</span><span class="p">,</span> <span class="n">ch_name</span><span class="p">))</span>
     <a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.show"><span class="n">plt</span><span class="o">.</span><span class="n">show</span></a><span class="p">()</span>
@@ -527,8 +511,8 @@ the second dimension and finally calls the ANOVA function.</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">stat_fun</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
     <span class="k">return</span> <a href="../generated/mne.stats.f_mway_rm.html#mne.stats.f_mway_rm"><span class="n">f_mway_rm</span></a><span class="p">(</span><a href="http://docs.scipy.org/doc/numpy-1.10.1/reference/generated/numpy.swapaxes.html#numpy.swapaxes"><span class="n">np</span><span class="o">.</span><span class="n">swapaxes</span></a><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">factor_levels</span><span class="o">=</span><span class="n">factor_levels</span><span class="p">,</span>
                      <span class="n">effects</span><span class="o">=</span><span class="n">effects</span><span class="p">,</span> <span class="n">return_pvals</span><span class="o">=</span><span class="bp">False</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="c1"># The ANOVA returns a tuple f-values and p-values, we will pick the former.</span>
 
+<span class="c1"># The ANOVA returns a tuple f-values and p-values, we will pick the former.</span>
 <span class="n">pthresh</span> <span class="o">=</span> <span class="mf">0.00001</span>  <span class="c1"># set threshold rather high to save some time</span>
 <span class="n">f_thresh</span> <span class="o">=</span> <a href="../generated/mne.stats.f_threshold_mway_rm.html#mne.stats.f_threshold_mway_rm"><span class="n">f_threshold_mway_rm</span></a><span class="p">(</span><span class="n">n_replications</span><span class="p">,</span> <span class="n">factor_levels</span><span class="p">,</span> <span class="n">effects</span><span class="p">,</span>
                                <span class="n">pthresh</span><span class="p">)</span>
@@ -540,26 +524,24 @@ the second dimension and finally calls the ANOVA function.</p>
 </pre></div>
 </div>
 <p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-python"><div class="highlight"><pre><span></span>stat_fun(H1): min=0.000000 max=56.064254
-Running initial clustering
-Found 1 clusters
-Permuting ...
+<div class="sphx-glr-script-out highlight-default"><div class="highlight"><pre><span></span><span class="n">stat_fun</span><span class="p">(</span><span class="n">H1</span><span class="p">):</span> <span class="nb">min</span><span class="o">=</span><span class="mf">0.000000</span> <span class="nb">max</span><span class="o">=</span><span class="mf">58.040516</span>
+<span class="n">Running</span> <span class="n">initial</span> <span class="n">clustering</span>
+<span class="n">Found</span> <span class="mi">1</span> <span class="n">clusters</span>
+<span class="n">Permuting</span> <span class="o">...</span>
 
-[                                        ] 0.39062 |
-[.....                                   ] 12.50000 /
-[..........                              ] 25.00000 -
-[...............                         ] 37.50000 \
-[....................                    ] 50.00000 |
-[.........................               ] 62.50000 /
-[..............................          ] 75.00000 -
-[...................................     ] 87.50000 \
-[........................................] 100.00000 |    Computing cluster p-values
-Done.
+<span class="p">[</span>                                        <span class="p">]</span> <span class="mf">0.39062</span> <span class="o">|</span>
+<span class="p">[</span><span class="o">.....</span>                                   <span class="p">]</span> <span class="mf">12.50000</span> <span class="o">/</span>
+<span class="p">[</span><span class="o">..........</span>                              <span class="p">]</span> <span class="mf">25.00000</span> <span class="o">-</span>
+<span class="p">[</span><span class="o">...............</span>                         <span class="p">]</span> <span class="mf">37.50000</span> \
+<span class="p">[</span><span class="o">....................</span>                    <span class="p">]</span> <span class="mf">50.00000</span> <span class="o">|</span>
+<span class="p">[</span><span class="o">.........................</span>               <span class="p">]</span> <span class="mf">62.50000</span> <span class="o">/</span>
+<span class="p">[</span><span class="o">..............................</span>          <span class="p">]</span> <span class="mf">75.00000</span> <span class="o">-</span>
+<span class="p">[</span><span class="o">...................................</span>     <span class="p">]</span> <span class="mf">87.50000</span> \
+<span class="p">[</span><span class="o">........................................</span><span class="p">]</span> <span class="mf">100.00000</span> <span class="o">|</span>    <span class="n">Computing</span> <span class="n">cluster</span> <span class="n">p</span><span class="o">-</span><span class="n">values</span>
+<span class="n">Done</span><span class="o">.</span>
 </pre></div>
 </div>
-</div>
-<div class="section" id="create-new-stats-image-with-only-significant-clusters">
-<h2>Create new stats image with only significant clusters<a class="headerlink" href="#create-new-stats-image-with-only-significant-clusters" title="Permalink to this headline">¶</a></h2>
+<p>Create new stats image with only significant clusters:</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">good_clusers</span> <span class="o">=</span> <a href="http://docs.scipy.org/doc/numpy-1.10.1/reference/generated/numpy.where.html#numpy.where"><span class="n">np</span><span class="o">.</span><span class="n">where</span></a><span class="p">(</span><span class="n">cluster_p_values</span> <span class="o">&lt;</span> <span class="o">.</span><span class="mo">05</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
 <span class="n">T_obs_plot</span> <span class="o">=</span> <a href="http://docs.scipy.org/doc/numpy-1.10.1/reference/generated/numpy.ma.masked_array.all.html#numpy.ma.masked_array"><span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">masked_array</span></a><span class="p">(</span><span class="n">T_obs</span><span class="p">,</span>
                                 <a href="http://docs.scipy.org/doc/numpy-1.10.1/reference/generated/numpy.invert.html#numpy.invert"><span class="n">np</span><span class="o">.</span><span class="n">invert</span></a><span class="p">(</span><span class="n">clusters</span><span class="p">[</span><a href="http://docs.scipy.org/doc/numpy-1.10.1/reference/generated/numpy.squeeze.html#numpy.squeeze"><span class="n">np</span><span class="o">.</span><span class="n">squeeze</span></a><span class="p">(</span><span class="n">good_clusers</span><span class="p">)]))</span>
@@ -569,17 +551,15 @@ Done.
     <a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.imshow"><span class="n">plt</span><span class="o">.</span><span class="n">imshow</span></a><span class="p">(</span><span class="n">f_image</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="n">cmap</span><span class="p">,</span> <span class="n">extent</span><span class="o">=</span><span class="p">[</span><span class="n">times</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">times</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
                <span class="n">frequencies</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">frequencies</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]],</span> <span class="n">aspect</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span>
                <span class="n">origin</span><span class="o">=</span><span class="s1">&#39;lower&#39;</span><span class="p">)</span>
-<a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.xlabel"><span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span></a><span class="p">(</span><span class="s1">&#39;time (ms)&#39;</span><span class="p">)</span>
+<a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.xlabel"><span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span></a><span class="p">(</span><span class="s1">&#39;Time (ms)&#39;</span><span class="p">)</span>
 <a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.ylabel"><span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span></a><span class="p">(</span><span class="s1">&#39;Frequency (Hz)&#39;</span><span class="p">)</span>
-<a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.title"><span class="n">plt</span><span class="o">.</span><span class="n">title</span></a><span class="p">(</span><span class="s1">&#39;Time-locked response for </span><span class="se">\&#39;</span><span class="s1">modality by location</span><span class="se">\&#39;</span><span class="s1"> (</span><span class="si">%s</span><span class="s1">)</span><span class="se">\n</span><span class="s1">&#39;</span>
-          <span class="s1">&#39; cluster-level corrected (p &lt;= 0.05)&#39;</span> <span class="o">%</span> <span class="n">ch_name</span><span class="p">)</span>
+<a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.title"><span class="n">plt</span><span class="o">.</span><span class="n">title</span></a><span class="p">(</span><span class="s2">&quot;Time-locked response for &#39;modality by location&#39; (</span><span class="si">%s</span><span class="s2">)</span><span class="se">\n</span><span class="s2">&quot;</span>
+          <span class="s2">&quot; cluster-level corrected (p &lt;= 0.05)&quot;</span> <span class="o">%</span> <span class="n">ch_name</span><span class="p">)</span>
 <a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.show"><span class="n">plt</span><span class="o">.</span><span class="n">show</span></a><span class="p">()</span>
 </pre></div>
 </div>
 <img alt="../_images/sphx_glr_plot_stats_cluster_time_frequency_repeated_measures_anova_004.png" class="align-center" src="../_images/sphx_glr_plot_stats_cluster_time_frequency_repeated_measures_anova_004.png" />
-</div>
-<div class="section" id="now-using-fdr">
-<h2>Now using FDR<a class="headerlink" href="#now-using-fdr" title="Permalink to this headline">¶</a></h2>
+<p>Now using FDR:</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">mask</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <a href="../generated/mne.stats.fdr_correction.html#mne.stats.fdr_correction"><span class="n">fdr_correction</span></a><span class="p">(</span><span class="n">pvals</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
 <span class="n">T_obs_plot2</span> <span class="o">=</span> <a href="http://docs.scipy.org/doc/numpy-1.10.1/reference/generated/numpy.ma.masked_array.all.html#numpy.ma.masked_array"><span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">masked_array</span></a><span class="p">(</span><span class="n">T_obs</span><span class="p">,</span> <a href="http://docs.scipy.org/doc/numpy-1.10.1/reference/generated/numpy.invert.html#numpy.invert"><span class="n">np</span><span class="o">.</span><span class="n">invert</span></a><span class="p">(</span><span class="n">mask</span><span class="p">))</span>
 
@@ -589,23 +569,23 @@ Done.
                <span class="n">frequencies</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">frequencies</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]],</span> <span class="n">aspect</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span>
                <span class="n">origin</span><span class="o">=</span><span class="s1">&#39;lower&#39;</span><span class="p">)</span>
 
-<a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.xlabel"><span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span></a><span class="p">(</span><span class="s1">&#39;time (ms)&#39;</span><span class="p">)</span>
+<a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.xlabel"><span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span></a><span class="p">(</span><span class="s1">&#39;Time (ms)&#39;</span><span class="p">)</span>
 <a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.ylabel"><span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span></a><span class="p">(</span><span class="s1">&#39;Frequency (Hz)&#39;</span><span class="p">)</span>
-<a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.title"><span class="n">plt</span><span class="o">.</span><span class="n">title</span></a><span class="p">(</span><span class="s1">&#39;Time-locked response for </span><span class="se">\&#39;</span><span class="s1">modality by location</span><span class="se">\&#39;</span><span class="s1"> (</span><span class="si">%s</span><span class="s1">)</span><span class="se">\n</span><span class="s1">&#39;</span>
-          <span class="s1">&#39; FDR corrected (p &lt;= 0.05)&#39;</span> <span class="o">%</span> <span class="n">ch_name</span><span class="p">)</span>
+<a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.title"><span class="n">plt</span><span class="o">.</span><span class="n">title</span></a><span class="p">(</span><span class="s2">&quot;Time-locked response for &#39;modality by location&#39; (</span><span class="si">%s</span><span class="s2">)</span><span class="se">\n</span><span class="s2">&quot;</span>
+          <span class="s2">&quot; FDR corrected (p &lt;= 0.05)&quot;</span> <span class="o">%</span> <span class="n">ch_name</span><span class="p">)</span>
 <a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.show"><span class="n">plt</span><span class="o">.</span><span class="n">show</span></a><span class="p">()</span>
-
-<span class="c1"># Both, cluster level and FDR correction help getting rid of</span>
-<span class="c1"># putatively spots we saw in the naive f-images.</span>
 </pre></div>
 </div>
 <img alt="../_images/sphx_glr_plot_stats_cluster_time_frequency_repeated_measures_anova_005.png" class="align-center" src="../_images/sphx_glr_plot_stats_cluster_time_frequency_repeated_measures_anova_005.png" />
+<p>Both cluster level and FDR correction help get rid of
+putatively spots we saw in the naive f-images.</p>
 <p><strong>Total running time of the script:</strong>
-(0 minutes 8.826 seconds)</p>
+(0 minutes 8.855 seconds)</p>
 <div class="sphx-glr-download container">
-<strong>Download Python source code:</strong> <a class="reference download internal" href="../_downloads/plot_stats_cluster_time_frequency_repeated_measures_anova.py"><code class="xref download docutils literal"><span class="pre">plot_stats_cluster_time_frequency_repeated_measures_anova.py</span></code></a></div>
+<a class="reference download internal" href="../_downloads/plot_stats_cluster_time_frequency_repeated_measures_anova.py" download=""><code class="xref download docutils literal"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">plot_stats_cluster_time_frequency_repeated_measures_anova.py</span></code></a></div>
 <div class="sphx-glr-download container">
-<strong>Download IPython notebook:</strong> <a class="reference download internal" href="../_downloads/plot_stats_cluster_time_frequency_repeated_measures_anova.ipynb"><code class="xref download docutils literal"><span class="pre">plot_stats_cluster_time_frequency_repeated_measures_anova.ipynb</span></code></a></div>
+<a class="reference download internal" href="../_downloads/plot_stats_cluster_time_frequency_repeated_measures_anova.ipynb" download=""><code class="xref download docutils literal"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">plot_stats_cluster_time_frequency_repeated_measures_anova.ipynb</span></code></a></div>
+<p class="sphx-glr-signature"><a class="reference external" href="http://sphinx-gallery.readthedocs.io">Generated by Sphinx-Gallery</a></p>
 </div>
 </div>
 
@@ -624,7 +604,7 @@ Done.
       
     </p>
     <p>
-        &copy; Copyright 2012-2016, MNE Developers. Last updated on 2016-05-11.<br/>
+        &copy; Copyright 2012-2016, MNE Developers. Last updated on 2016-09-02.<br/>
     </p>
   </div>
 </footer>

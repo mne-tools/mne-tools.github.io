@@ -10,8 +10,6 @@ Compute ICA components on epochs
 ICA is fit to MEG raw data.
 We assume that the non-stationary EOG artifacts have already been removed.
 The sources matching the ECG are automatically found and displayed.
-Subsequently, artefact detection and rejection quality are assessed.
-Finally, the impact on the evoked ERF is visualized.
 
 Note that this example does quite a bit of processing, so even on a
 fast machine it can take about a minute to complete.
@@ -37,7 +35,13 @@ fast machine it can take about a minute to complete.
 
 
 
-Fit ICA model using the FastICA algorithm, detect and inspect components
+Read and preprocess the data. Preprocessing consists of:
+
+- meg channel selection
+
+- 1 - 30 Hz band-pass IIR filter
+
+- epoching -0.2 to 0.5 seconds with respect to events
 
 
 
@@ -48,24 +52,15 @@ Fit ICA model using the FastICA algorithm, detect and inspect components
     raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
 
     raw = mne.io.read_raw_fif(raw_fname, preload=True)
-    raw.filter(1, 30, method='iir')
     raw.pick_types(meg=True, eeg=False, exclude='bads', stim=True)
+    raw.filter(1, 30, method='iir')
 
     # longer + more epochs for more artifact exposure
     events = mne.find_events(raw, stim_channel='STI 014')
     epochs = mne.Epochs(raw, events, event_id=None, tmin=-0.2, tmax=0.5)
 
-    ica = ICA(n_components=0.95, method='fastica').fit(epochs)
-
-    ecg_epochs = create_ecg_epochs(raw, tmin=-.5, tmax=.5)
-    ecg_inds, scores = ica.find_bads_ecg(ecg_epochs)
-
-    ica.plot_components(ecg_inds)
 
 
-
-.. image:: /auto_examples/preprocessing/images/sphx_glr_plot_run_ica_001.png
-    :align: center
 
 
 .. rst-class:: sphx-glr-script-out
@@ -78,9 +73,9 @@ Fit ICA model using the FastICA algorithm, detect and inspect components
             PCA-v2 (1 x 102)  idle
             PCA-v3 (1 x 102)  idle
             Average EEG reference (1 x 60)  idle
-    Current compensation grade : 0
         Range : 6450 ... 48149 =     42.956 ...   320.665 secs
     Ready.
+    Current compensation grade : 0
     Reading 0 ... 41699  =      0.000 ...   277.709 secs...
     Band-pass filtering from 1 - 30 Hz
     319 events found
@@ -89,14 +84,43 @@ Fit ICA model using the FastICA algorithm, detect and inspect components
     Applying baseline correction (mode: mean)
     Created an SSP operator (subspace dimension = 3)
     4 projection items activated
+
+
+Fit ICA model using the FastICA algorithm, detect and plot components
+explaining ECG artifacts.
+
+
+
+.. code-block:: python
+
+
+    ica = ICA(n_components=0.95, method='fastica').fit(epochs)
+
+    ecg_epochs = create_ecg_epochs(raw, tmin=-.5, tmax=.5)
+    ecg_inds, scores = ica.find_bads_ecg(ecg_epochs)
+
+    ica.plot_components(ecg_inds)
+
+
+
+
+.. image:: /auto_examples/preprocessing/images/sphx_glr_plot_run_ica_001.png
+    :align: center
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
     Fitting ICA to data using 305 channels. 
     Please be patient, this may take some time
     Inferring max_pca_components from picks.
     Loading data for 319 events and 106 original time points ...
     0 bad epochs dropped
     Selection by explained variance: 120 components
+    Loading data for 319 events and 106 original time points ...
     Reconstructing ECG signal from Magnetometers
-    Reconstructing ECG signal from Magnetometers
+    Band-pass filtering from 8 - 16 Hz
     Number of ECG events detected : 284 (average pulse 61 / min.)
     Creating RawArray with float64 data, n_channels=1, n_times=41700
         Range : 0 ... 41699 =      0.000 ...   277.709 secs
@@ -106,19 +130,59 @@ Fit ICA model using the FastICA algorithm, detect and inspect components
     Created an SSP operator (subspace dimension = 3)
     Loading data for 284 events and 151 original time points ...
     0 bad epochs dropped
-    Reconstructing ECG signal from Magnetometers
+    Disabling interactive colorbar for multiple axes. Turn interactivity on explicitly by passing cmap as a tuple.
+
+
+Plot properties of ECG components:
+
+
+
+.. code-block:: python
+
+    ica.plot_properties(epochs, picks=ecg_inds)
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+    *
+
+      .. image:: /auto_examples/preprocessing/images/sphx_glr_plot_run_ica_002.png
+            :scale: 47
+
+    *
+
+      .. image:: /auto_examples/preprocessing/images/sphx_glr_plot_run_ica_003.png
+            :scale: 47
+
+    *
+
+      .. image:: /auto_examples/preprocessing/images/sphx_glr_plot_run_ica_004.png
+            :scale: 47
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    Loading data for 319 events and 106 original time points ...
 
 
 **Total running time of the script:**
-(1 minutes 14.999 seconds)
+(1 minutes 23.996 seconds)
 
 
 
 .. container:: sphx-glr-download
 
-    **Download Python source code:** :download:`plot_run_ica.py <plot_run_ica.py>`
+    :download:`Download Python source code: plot_run_ica.py <plot_run_ica.py>`
 
 
 .. container:: sphx-glr-download
 
-    **Download IPython notebook:** :download:`plot_run_ica.ipynb <plot_run_ica.ipynb>`
+    :download:`Download Jupyter notebook: plot_run_ica.ipynb <plot_run_ica.ipynb>`
+
+.. rst-class:: sphx-glr-signature
+
+    `Generated by Sphinx-Gallery <http://sphinx-gallery.readthedocs.io>`_

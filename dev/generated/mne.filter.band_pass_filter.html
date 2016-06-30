@@ -10,7 +10,7 @@
     <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="../_static/gallery.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/bootswatch-3.3.4/flatly/bootstrap.min.css" type="text/css" />
+    <link rel="stylesheet" href="../_static/bootswatch-3.3.6/flatly/bootstrap.min.css" type="text/css" />
     <link rel="stylesheet" href="../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../_static/style.css" type="text/css" />
     
@@ -29,7 +29,7 @@
     <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <script type="text/javascript" src="../_static/js/jquery-1.11.0.min.js"></script>
     <script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
-    <script type="text/javascript" src="../_static/bootstrap-3.3.4/js/bootstrap.min.js"></script>
+    <script type="text/javascript" src="../_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
     <link rel="shortcut icon" href="../_static/favicon.ico"/>
     <link rel="top" title="MNE 0.13.dev0 documentation" href="../index.html" />
@@ -91,7 +91,7 @@ This documentation is for the development version (0.13.dev0) - <a href="http://
           <span class="icon-bar"></span>
           <span class="icon-bar"></span>
         </button>
-        <a class="navbar-brand" href="../index.html"><img src="../_static/mne_logo_small.png">
+        <a class="navbar-brand" href="../index.html"><span><img src="../_static/mne_logo_small.png"></span>
            </a>
         <span class="navbar-text navbar-version pull-left"><b>0.13.dev0</b></span>
       </div>
@@ -203,7 +203,7 @@ This documentation is for the development version (0.13.dev0) - <a href="http://
 <h1>mne.filter.band_pass_filter<a class="headerlink" href="#mne-filter-band-pass-filter" title="Permalink to this headline">¶</a></h1>
 <dl class="function">
 <dt id="mne.filter.band_pass_filter">
-<code class="descclassname">mne.filter.</code><code class="descname">band_pass_filter</code><span class="sig-paren">(</span><em>x</em>, <em>Fs</em>, <em>Fp1</em>, <em>Fp2</em>, <em>filter_length='10s'</em>, <em>l_trans_bandwidth=0.5</em>, <em>h_trans_bandwidth=0.5</em>, <em>method='fft'</em>, <em>iir_params=None</em>, <em>picks=None</em>, <em>n_jobs=1</em>, <em>copy=True</em>, <em>verbose=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mne.filter.band_pass_filter" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">mne.filter.</code><code class="descname">band_pass_filter</code><span class="sig-paren">(</span><em>x</em>, <em>Fs</em>, <em>Fp1</em>, <em>Fp2</em>, <em>filter_length=''</em>, <em>l_trans_bandwidth=None</em>, <em>h_trans_bandwidth=None</em>, <em>method='fir'</em>, <em>iir_params=None</em>, <em>picks=None</em>, <em>n_jobs=1</em>, <em>copy=True</em>, <em>phase=''</em>, <em>fir_window=''</em>, <em>verbose=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mne.filter.band_pass_filter" title="Permalink to this definition">¶</a></dt>
 <dd><p>Bandpass filter for the signal x.</p>
 <p>Applies a zero-phase bandpass filter to the signal x, operating on the
 last dimension.</p>
@@ -227,29 +227,44 @@ last dimension.</p>
 <blockquote>
 <div><p>High cut-off frequency in Hz.</p>
 </div></blockquote>
-<p><strong>filter_length</strong> : str (Default: &#8216;10s&#8217;) | int | None</p>
+<p><strong>filter_length</strong> : str | int</p>
 <blockquote>
-<div><p>Length of the filter to use. If None or &#8220;len(x) &lt; filter_length&#8221;,
-the filter length used is len(x). Otherwise, if int, overlap-add
-filtering with a filter of the specified length in samples) is
-used (faster for long signals). If str, a human-readable time in
-units of &#8220;s&#8221; or &#8220;ms&#8221; (e.g., &#8220;10s&#8221; or &#8220;5500ms&#8221;) will be converted
-to the shortest power-of-two length at least that duration.
-Not used for &#8216;iir&#8217; filters.</p>
+<div><p>Length of the FIR filter to use (if applicable):</p>
+<blockquote>
+<div><ul class="simple">
+<li>int: specified length in samples.</li>
+<li>&#8216;auto&#8217; (default in 0.14): the filter length is chosen based
+on the size of the transition regions (6.6 times the reciprocal
+of the shortest transition band for fir_window=&#8217;hamming&#8217;).</li>
+<li>str: (default in 0.13 is &#8220;10s&#8221;) a human-readable time in
+units of &#8220;s&#8221; or &#8220;ms&#8221; (e.g., &#8220;10s&#8221; or &#8220;5500ms&#8221;) will be
+converted to that number of samples if <code class="docutils literal"><span class="pre">phase=&quot;zero&quot;</span></code>, or
+the shortest power-of-two length at least that duration for
+<code class="docutils literal"><span class="pre">phase=&quot;zero-double&quot;</span></code>.</li>
+</ul>
 </div></blockquote>
-<p><strong>l_trans_bandwidth</strong> : float</p>
-<blockquote>
-<div><p>Width of the transition band at the low cut-off frequency in Hz.
-Not used if &#8216;order&#8217; is specified in iir_params.</p>
 </div></blockquote>
-<p><strong>h_trans_bandwidth</strong> : float</p>
+<p><strong>l_trans_bandwidth</strong> : float | str</p>
 <blockquote>
-<div><p>Width of the transition band at the high cut-off frequency in Hz.
-Not used if &#8216;order&#8217; is specified in iir_params.</p>
+<div><p>Width of the transition band at the low cut-off frequency in Hz
+Can be &#8220;auto&#8221; (default in 0.14) to use a multiple of <code class="docutils literal"><span class="pre">l_freq</span></code>:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="nb">min</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">l_freq</span> <span class="o">*</span> <span class="mf">0.25</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">l_freq</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Only used for <code class="docutils literal"><span class="pre">method='fir'</span></code>.</p>
+</div></blockquote>
+<p><strong>h_trans_bandwidth</strong> : float | str</p>
+<blockquote>
+<div><p>Width of the transition band at the high cut-off frequency in Hz
+Can be &#8220;auto&#8221; (default in 0.14) to use a multiple of <code class="docutils literal"><span class="pre">h_freq</span></code>:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="nb">min</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">h_freq</span> <span class="o">*</span> <span class="mf">0.25</span><span class="p">,</span> <span class="mf">2.</span><span class="p">),</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;sfreq&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="mf">2.</span> <span class="o">-</span> <span class="n">h_freq</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Only used for <code class="docutils literal"><span class="pre">method='fir'</span></code>.</p>
 </div></blockquote>
 <p><strong>method</strong> : str</p>
 <blockquote>
-<div><p>&#8216;fft&#8217; will use overlap-add FIR filtering, &#8216;iir&#8217; will use IIR
+<div><p>&#8216;fir&#8217; will use overlap-add FIR filtering, &#8216;iir&#8217; will use IIR
 forward-backward filtering (via filtfilt).</p>
 </div></blockquote>
 <p><strong>iir_params</strong> : dict | None</p>
@@ -260,17 +275,39 @@ is None and method=&#8221;iir&#8221;, 4th order Butterworth will be used.</p>
 </div></blockquote>
 <p><strong>picks</strong> : array-like of int | None</p>
 <blockquote>
-<div><p>Indices to filter. If None all indices will be filtered.</p>
+<div><p>Indices of channels to filter. If None all channels will be
+filtered. Only supported for 2D (n_channels, n_times) and 3D
+(n_epochs, n_channels, n_times) data.</p>
 </div></blockquote>
 <p><strong>n_jobs</strong> : int | str</p>
 <blockquote>
 <div><p>Number of jobs to run in parallel. Can be &#8216;cuda&#8217; if scikits.cuda
-is installed properly, CUDA is initialized, and method=&#8217;fft&#8217;.</p>
+is installed properly, CUDA is initialized, and method=&#8217;fir&#8217;.</p>
 </div></blockquote>
 <p><strong>copy</strong> : bool</p>
 <blockquote>
 <div><p>If True, a copy of x, filtered, is returned. Otherwise, it operates
 on x in place.</p>
+</div></blockquote>
+<p><strong>phase</strong> : str</p>
+<blockquote>
+<div><p>Phase of the filter, only used if <code class="docutils literal"><span class="pre">method='fir'</span></code>.
+By default, a symmetric linear-phase FIR filter is constructed.
+If <code class="docutils literal"><span class="pre">phase='zero'</span></code> (default in 0.14), the delay of this filter
+is compensated for. If <code class="docutils literal"><span class="pre">phase=='zero-double'</span></code> (default in 0.13
+and before), then this filter is applied twice, once forward, and
+once backward.</p>
+<div class="versionadded">
+<p><span class="versionmodified">New in version 0.13.</span></p>
+</div>
+</div></blockquote>
+<p><strong>fir_window</strong> : str</p>
+<blockquote>
+<div><p>The window to use in FIR design, can be &#8220;hamming&#8221; (default in
+0.14), &#8220;hann&#8221; (default in 0.13), or &#8220;blackman&#8221;.</p>
+<div class="versionadded">
+<p><span class="versionmodified">New in version 0.13.</span></p>
+</div>
 </div></blockquote>
 <p><strong>verbose</strong> : bool, str, int, or None</p>
 <blockquote>
@@ -288,20 +325,23 @@ on x in place.</p>
 </table>
 <div class="admonition seealso">
 <p class="first admonition-title">See also</p>
-<p class="last"><a class="reference internal" href="mne.filter.low_pass_filter.html#mne.filter.low_pass_filter" title="mne.filter.low_pass_filter"><code class="xref py py-obj docutils literal"><span class="pre">low_pass_filter</span></code></a>, <a class="reference internal" href="mne.filter.high_pass_filter.html#mne.filter.high_pass_filter" title="mne.filter.high_pass_filter"><code class="xref py py-obj docutils literal"><span class="pre">high_pass_filter</span></code></a></p>
+<p class="last"><a class="reference internal" href="mne.filter.filter_data.html#mne.filter.filter_data" title="mne.filter.filter_data"><code class="xref py py-obj docutils literal"><span class="pre">filter_data</span></code></a>, <code class="xref py py-obj docutils literal"><span class="pre">band_stop_filter</span></code>, <a class="reference internal" href="mne.filter.high_pass_filter.html#mne.filter.high_pass_filter" title="mne.filter.high_pass_filter"><code class="xref py py-obj docutils literal"><span class="pre">high_pass_filter</span></code></a>, <a class="reference internal" href="mne.filter.low_pass_filter.html#mne.filter.low_pass_filter" title="mne.filter.low_pass_filter"><code class="xref py py-obj docutils literal"><span class="pre">low_pass_filter</span></code></a>, <a class="reference internal" href="mne.filter.notch_filter.html#mne.filter.notch_filter" title="mne.filter.notch_filter"><code class="xref py py-obj docutils literal"><span class="pre">notch_filter</span></code></a>, <code class="xref py py-obj docutils literal"><span class="pre">resample</span></code></p>
 </div>
 <p class="rubric">Notes</p>
 <p>The frequency response is (approximately) given by:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span>       ----------
-     /|         |                   / |         |                   /  |         |                   /   |         |          ----------    |         |     -----------------
-      |         |
-Fs1  Fp1       Fp2   Fs2
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="mi">1</span><span class="o">-|</span>               <span class="o">----------</span>
+  <span class="o">|</span>             <span class="o">/|</span>         <span class="o">|</span>      <span class="o">|</span><span class="n">H</span><span class="o">|</span> <span class="o">|</span>            <span class="o">/</span> <span class="o">|</span>         <span class="o">|</span>           <span class="o">|</span>           <span class="o">/</span>  <span class="o">|</span>         <span class="o">|</span>            <span class="o">|</span>          <span class="o">/</span>   <span class="o">|</span>         <span class="o">|</span>           <span class="mi">0</span><span class="o">-|----------</span>    <span class="o">|</span>         <span class="o">|</span>     <span class="o">--------------</span>
+  <span class="o">|</span>         <span class="o">|</span>    <span class="o">|</span>         <span class="o">|</span>     <span class="o">|</span>            <span class="o">|</span>
+  <span class="mi">0</span>        <span class="n">Fs1</span>  <span class="n">Fp1</span>       <span class="n">Fp2</span>   <span class="n">Fs2</span>          <span class="n">Nyq</span>
 </pre></div>
 </div>
 <p>Where:</p>
 <blockquote>
-<div>Fs1 = Fp1 - l_trans_bandwidth in Hz
-Fs2 = Fp2 + h_trans_bandwidth in Hz</div></blockquote>
+<div><ul class="simple">
+<li>Fs1 = Fp1 - l_trans_bandwidth in Hz</li>
+<li>Fs2 = Fp2 + h_trans_bandwidth in Hz</li>
+</ul>
+</div></blockquote>
 </dd></dl>
 
 <div style='clear:both'></div></div>
@@ -321,7 +361,7 @@ Fs2 = Fp2 + h_trans_bandwidth in Hz</div></blockquote>
       
     </p>
     <p>
-        &copy; Copyright 2012-2016, MNE Developers. Last updated on 2016-05-11.<br/>
+        &copy; Copyright 2012-2016, MNE Developers. Last updated on 2016-09-02.<br/>
     </p>
   </div>
 </footer>
