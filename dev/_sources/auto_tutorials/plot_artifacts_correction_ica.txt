@@ -82,6 +82,11 @@ ICA parameters:
     method = 'fastica'  # for comparison with EEGLAB try "extended-infomax" here
     decim = 3  # we need sufficient statistics, not all time points -> save time
 
+    # we will also set state of the random number generator - ICA is a
+    # non-deterministic algorithm, but we want to have the same decomposition
+    # and the same order of components each time this tutorial is run
+    random_state = 23
+
 
 
 
@@ -94,7 +99,7 @@ Define the ICA object instance
 
 .. code-block:: python
 
-    ica = ICA(n_components=n_components, method=method)
+    ica = ICA(n_components=n_components, method=method, random_state=random_state)
     print(ica)
 
 
@@ -165,6 +170,81 @@ Plot ICA components
             :scale: 47
 
 
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    Disabling interactive colorbar for multiple axes. Turn interactivity on explicitly by passing cmap as a tuple.
+    Disabling interactive colorbar for multiple axes. Turn interactivity on explicitly by passing cmap as a tuple.
+
+
+Component properties
+--------------------
+
+Let's take a closer look at three potential candidates for artifact-related
+components: IC 12, IC 15 and IC 21
+
+
+
+.. code-block:: python
+
+
+    # first, component 12:
+    ica.plot_properties(raw, picks=12, dB=True)
+
+
+
+
+.. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_003.png
+    :align: center
+
+
+
+
+it looks like a blink component, but because the data were filtered
+the spectrum plot is not very informative, let's change that:
+
+
+
+.. code-block:: python
+
+    ica.plot_properties(raw, picks=12, dB=True, psd_args={'fmax': 35.})
+
+
+
+
+.. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_004.png
+    :align: center
+
+
+
+
+now let's inspect properties of components 15 and 21 (cardiac activity):
+
+
+
+.. code-block:: python
+
+    ica.plot_properties(raw, picks=[15, 21], psd_args={'fmax': 35.})
+
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+    *
+
+      .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_005.png
+            :scale: 47
+
+    *
+
+      .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_006.png
+            :scale: 47
+
+
 
 
 Advanced artifact detection
@@ -199,12 +279,12 @@ Let's use a more efficient way to find artefacts
 
     *
 
-      .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_003.png
+      .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_007.png
             :scale: 47
 
     *
 
-      .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_004.png
+      .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_008.png
             :scale: 47
 
 
@@ -232,10 +312,31 @@ Let's use a more efficient way to find artefacts
     0 bad epochs dropped
 
 
-That component is also showing a prototypical average vertical EOG time
-course.
+We can take a look at the properties of that component again, now using the
+data epoched with respect to EOG events.
+We will also use a little bit of smoothing along the trials axis in the
+epochs image:
 
-Pay attention to the labels, a customized read-out of the ica.labels_
+
+
+.. code-block:: python
+
+    ica.plot_properties(eog_epochs, picks=eog_inds, dB=True,
+                        psd_args={'fmax': 35.}, image_args={'sigma': 1.})
+
+
+
+
+.. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_009.png
+    :align: center
+
+
+
+
+That component is showing a prototypical average vertical EOG time course.
+
+Pay attention to the labels, a customized read-out of the
+:attr:`ica.labels_ <mne.preprocessing.ICA.labels_>`
 
 
 
@@ -251,7 +352,7 @@ Pay attention to the labels, a customized read-out of the ica.labels_
 
  Out::
 
-    {u'eog/0/EOG 061': [17], 'eog': [17]}
+    {u'eog/0/EOG 061': [21], 'eog': [21]}
 
 
 These labels were used by the plotters and are added automatically
@@ -284,7 +385,7 @@ component from the data
 
 
 
-.. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_005.png
+.. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_010.png
     :align: center
 
 
@@ -431,15 +532,21 @@ Investigate our reference ICA, here we use the previous fit from above.
 
     *
 
-      .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_006.png
+      .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_011.png
             :scale: 47
 
     *
 
-      .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_007.png
+      .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_012.png
             :scale: 47
 
 
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    Disabling interactive colorbar for multiple axes. Turn interactivity on explicitly by passing cmap as a tuple.
+    Disabling interactive colorbar for multiple axes. Turn interactivity on explicitly by passing cmap as a tuple.
 
 
 Which one is the bad EOG component?
@@ -450,13 +557,12 @@ yourself in that situation where no other detection is available.
 
 .. code-block:: python
 
-
     reference_ica.plot_sources(eog_average, exclude=eog_inds)
 
 
 
 
-.. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_008.png
+.. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_013.png
     :align: center
 
 
@@ -464,12 +570,15 @@ yourself in that situation where no other detection is available.
 
 Indeed it looks like an EOG, also in the average time course.
 
-So our template shall be a tuple like (reference_run_index, component_index):
+We construct a list so that our reference run is the first element. Then we
+can detect similar components from the other runs using corrmap. So
+our template shall be a tuple like (reference_run_index, component_index):
 
 
 
 .. code-block:: python
 
+    icas = [reference_ica] + icas_from_other_data
     template = (0, eog_inds[0])
 
 
@@ -484,9 +593,8 @@ Now we can do the corrmap.
 
 .. code-block:: python
 
-    fig_template, fig_detected = corrmap(
-        icas_from_other_data, template=template, label="blinks", show=True,
-        threshold=.8, ch_type='mag')
+    fig_template, fig_detected = corrmap(icas, template=template, label="blinks",
+                                         show=True, threshold=.8, ch_type='mag')
 
 
 
@@ -496,12 +604,12 @@ Now we can do the corrmap.
 
     *
 
-      .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_009.png
+      .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_014.png
             :scale: 47
 
     *
 
-      .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_010.png
+      .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_015.png
             :scale: 47
 
 
@@ -509,9 +617,9 @@ Now we can do the corrmap.
 
  Out::
 
-    Median correlation with constructed map: 1.000
+    Median correlation with constructed map: 0.994
     Displaying selected ICs per subject.
-    No maps selected for subject(s) 1, 2, consider a more liberal threshold.
+    At least 1 IC detected for each subject.
 
 
 Nice, we have found similar ICs from the other runs!
@@ -524,7 +632,7 @@ See :ref:`tut_artifacts_correct_ssp`.
 
 
 **Total running time of the script:**
-(0 minutes 49.195 seconds)
+(1 minutes 1.303 seconds)
 
 
 
@@ -536,3 +644,7 @@ See :ref:`tut_artifacts_correct_ssp`.
 .. container:: sphx-glr-download
 
     **Download IPython notebook:** :download:`plot_artifacts_correction_ica.ipynb <plot_artifacts_correction_ica.ipynb>`
+
+.. rst-class:: sphx-glr-signature
+
+    `Generated by Sphinx-Gallery <http://sphinx-gallery.readthedocs.io>`_

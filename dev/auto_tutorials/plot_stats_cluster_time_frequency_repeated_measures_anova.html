@@ -149,8 +149,6 @@ This documentation is for the development version (0.13.dev0) - <a href="http://
 <li><a class="reference internal" href="#create-tfr-representations-for-all-conditions">Create TFR representations for all conditions</a></li>
 <li><a class="reference internal" href="#setup-repeated-measures-anova">Setup repeated measures ANOVA</a></li>
 <li><a class="reference internal" href="#account-for-multiple-comparisons-using-fdr-versus-permutation-clustering-test">Account for multiple comparisons using FDR versus permutation clustering test</a></li>
-<li><a class="reference internal" href="#create-new-stats-image-with-only-significant-clusters">Create new stats image with only significant clusters</a></li>
-<li><a class="reference internal" href="#now-using-fdr">Now using FDR</a></li>
 </ul>
 </li>
 </ul>
@@ -190,8 +188,6 @@ This documentation is for the development version (0.13.dev0) - <a href="http://
 <li><a class="reference internal" href="#create-tfr-representations-for-all-conditions">Create TFR representations for all conditions</a></li>
 <li><a class="reference internal" href="#setup-repeated-measures-anova">Setup repeated measures ANOVA</a></li>
 <li><a class="reference internal" href="#account-for-multiple-comparisons-using-fdr-versus-permutation-clustering-test">Account for multiple comparisons using FDR versus permutation clustering test</a></li>
-<li><a class="reference internal" href="#create-new-stats-image-with-only-significant-clusters">Create new stats image with only significant clusters</a></li>
-<li><a class="reference internal" href="#now-using-fdr">Now using FDR</a></li>
 </ul>
 </li>
 </ul>
@@ -436,7 +432,8 @@ are the first dimension and the conditions are the second dimension.</p>
 <p>While the iteration scheme used above for assembling the data matrix
 makes sure the first two dimensions are organized as expected (with A =
 modality and B = location):</p>
-<table border="1" class="docutils">
+<table border="1" class="docutils" id="id1">
+<caption><span class="caption-text">Sample data layout</span><a class="headerlink" href="#id1" title="Permalink to this table">¶</a></caption>
 <colgroup>
 <col width="24%" />
 <col width="19%" />
@@ -460,10 +457,10 @@ modality and B = location):</p>
 <td>1.74</td>
 </tr>
 <tr class="row-odd"><td>...</td>
-<td>&nbsp;</td>
-<td>&nbsp;</td>
-<td>&nbsp;</td>
-<td>&nbsp;</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
+<td>...</td>
 </tr>
 <tr class="row-even"><td>56</td>
 <td>2.45</td>
@@ -527,8 +524,8 @@ the second dimension and finally calls the ANOVA function.</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">stat_fun</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
     <span class="k">return</span> <a href="../generated/mne.stats.f_mway_rm.html#mne.stats.f_mway_rm"><span class="n">f_mway_rm</span></a><span class="p">(</span><a href="http://docs.scipy.org/doc/numpy-1.10.1/reference/generated/numpy.swapaxes.html#numpy.swapaxes"><span class="n">np</span><span class="o">.</span><span class="n">swapaxes</span></a><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">factor_levels</span><span class="o">=</span><span class="n">factor_levels</span><span class="p">,</span>
                      <span class="n">effects</span><span class="o">=</span><span class="n">effects</span><span class="p">,</span> <span class="n">return_pvals</span><span class="o">=</span><span class="bp">False</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
-    <span class="c1"># The ANOVA returns a tuple f-values and p-values, we will pick the former.</span>
 
+<span class="c1"># The ANOVA returns a tuple f-values and p-values, we will pick the former.</span>
 <span class="n">pthresh</span> <span class="o">=</span> <span class="mf">0.00001</span>  <span class="c1"># set threshold rather high to save some time</span>
 <span class="n">f_thresh</span> <span class="o">=</span> <a href="../generated/mne.stats.f_threshold_mway_rm.html#mne.stats.f_threshold_mway_rm"><span class="n">f_threshold_mway_rm</span></a><span class="p">(</span><span class="n">n_replications</span><span class="p">,</span> <span class="n">factor_levels</span><span class="p">,</span> <span class="n">effects</span><span class="p">,</span>
                                <span class="n">pthresh</span><span class="p">)</span>
@@ -557,9 +554,7 @@ Permuting ...
 Done.
 </pre></div>
 </div>
-</div>
-<div class="section" id="create-new-stats-image-with-only-significant-clusters">
-<h2>Create new stats image with only significant clusters<a class="headerlink" href="#create-new-stats-image-with-only-significant-clusters" title="Permalink to this headline">¶</a></h2>
+<p>Create new stats image with only significant clusters:</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">good_clusers</span> <span class="o">=</span> <a href="http://docs.scipy.org/doc/numpy-1.10.1/reference/generated/numpy.where.html#numpy.where"><span class="n">np</span><span class="o">.</span><span class="n">where</span></a><span class="p">(</span><span class="n">cluster_p_values</span> <span class="o">&lt;</span> <span class="o">.</span><span class="mo">05</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
 <span class="n">T_obs_plot</span> <span class="o">=</span> <a href="http://docs.scipy.org/doc/numpy-1.10.1/reference/generated/numpy.ma.masked_array.all.html#numpy.ma.masked_array"><span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">masked_array</span></a><span class="p">(</span><span class="n">T_obs</span><span class="p">,</span>
                                 <a href="http://docs.scipy.org/doc/numpy-1.10.1/reference/generated/numpy.invert.html#numpy.invert"><span class="n">np</span><span class="o">.</span><span class="n">invert</span></a><span class="p">(</span><span class="n">clusters</span><span class="p">[</span><a href="http://docs.scipy.org/doc/numpy-1.10.1/reference/generated/numpy.squeeze.html#numpy.squeeze"><span class="n">np</span><span class="o">.</span><span class="n">squeeze</span></a><span class="p">(</span><span class="n">good_clusers</span><span class="p">)]))</span>
@@ -577,9 +572,7 @@ Done.
 </pre></div>
 </div>
 <img alt="../_images/sphx_glr_plot_stats_cluster_time_frequency_repeated_measures_anova_004.png" class="align-center" src="../_images/sphx_glr_plot_stats_cluster_time_frequency_repeated_measures_anova_004.png" />
-</div>
-<div class="section" id="now-using-fdr">
-<h2>Now using FDR<a class="headerlink" href="#now-using-fdr" title="Permalink to this headline">¶</a></h2>
+<p>Now using FDR:</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">mask</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <a href="../generated/mne.stats.fdr_correction.html#mne.stats.fdr_correction"><span class="n">fdr_correction</span></a><span class="p">(</span><span class="n">pvals</span><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
 <span class="n">T_obs_plot2</span> <span class="o">=</span> <a href="http://docs.scipy.org/doc/numpy-1.10.1/reference/generated/numpy.ma.masked_array.all.html#numpy.ma.masked_array"><span class="n">np</span><span class="o">.</span><span class="n">ma</span><span class="o">.</span><span class="n">masked_array</span></a><span class="p">(</span><span class="n">T_obs</span><span class="p">,</span> <a href="http://docs.scipy.org/doc/numpy-1.10.1/reference/generated/numpy.invert.html#numpy.invert"><span class="n">np</span><span class="o">.</span><span class="n">invert</span></a><span class="p">(</span><span class="n">mask</span><span class="p">))</span>
 
@@ -594,18 +587,18 @@ Done.
 <a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.title"><span class="n">plt</span><span class="o">.</span><span class="n">title</span></a><span class="p">(</span><span class="s1">&#39;Time-locked response for </span><span class="se">\&#39;</span><span class="s1">modality by location</span><span class="se">\&#39;</span><span class="s1"> (</span><span class="si">%s</span><span class="s1">)</span><span class="se">\n</span><span class="s1">&#39;</span>
           <span class="s1">&#39; FDR corrected (p &lt;= 0.05)&#39;</span> <span class="o">%</span> <span class="n">ch_name</span><span class="p">)</span>
 <a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.show"><span class="n">plt</span><span class="o">.</span><span class="n">show</span></a><span class="p">()</span>
-
-<span class="c1"># Both, cluster level and FDR correction help getting rid of</span>
-<span class="c1"># putatively spots we saw in the naive f-images.</span>
 </pre></div>
 </div>
 <img alt="../_images/sphx_glr_plot_stats_cluster_time_frequency_repeated_measures_anova_005.png" class="align-center" src="../_images/sphx_glr_plot_stats_cluster_time_frequency_repeated_measures_anova_005.png" />
+<p>Both cluster level and FDR correction help get rid of
+putatively spots we saw in the naive f-images.</p>
 <p><strong>Total running time of the script:</strong>
-(0 minutes 8.826 seconds)</p>
+(0 minutes 8.968 seconds)</p>
 <div class="sphx-glr-download container">
 <strong>Download Python source code:</strong> <a class="reference download internal" href="../_downloads/plot_stats_cluster_time_frequency_repeated_measures_anova.py"><code class="xref download docutils literal"><span class="pre">plot_stats_cluster_time_frequency_repeated_measures_anova.py</span></code></a></div>
 <div class="sphx-glr-download container">
 <strong>Download IPython notebook:</strong> <a class="reference download internal" href="../_downloads/plot_stats_cluster_time_frequency_repeated_measures_anova.ipynb"><code class="xref download docutils literal"><span class="pre">plot_stats_cluster_time_frequency_repeated_measures_anova.ipynb</span></code></a></div>
+<p class="sphx-glr-signature"><a class="reference external" href="http://sphinx-gallery.readthedocs.io">Generated by Sphinx-Gallery</a></p>
 </div>
 </div>
 
@@ -624,7 +617,7 @@ Done.
       
     </p>
     <p>
-        &copy; Copyright 2012-2016, MNE Developers. Last updated on 2016-05-11.<br/>
+        &copy; Copyright 2012-2016, MNE Developers. Last updated on 2016-06-30.<br/>
     </p>
   </div>
 </footer>

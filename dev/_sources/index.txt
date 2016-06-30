@@ -1,5 +1,7 @@
 .. title:: MNE
 
+.. include:: links.inc
+
 .. raw:: html
 
     <div class="container"><div class="row">
@@ -32,9 +34,8 @@ providing comprehensive tools and workflows for
 6. Applying machine learning algorithms
 7. Visualization of sensor- and source-space data
 
-MNE includes a comprehensive `Python <https://www.python.org/>`_ package
-supplemented by tools compiled from C code for the LINUX and Mac OSX
-operating systems, as well as a MATLAB toolbox.
+MNE includes a comprehensive Python_ package supplemented by tools compiled
+from C code for the LINUX and Mac OSX operating systems, as well as a MATLAB toolbox.
 
 **From raw data to source estimates in about 30 lines of code** (:ref:`try it yourself! <getting_started>`):
 
@@ -123,7 +124,7 @@ Direct financial support for the project has been provided by:
 
    <h2>Community</h2>
 
-* `Analysis talk: join the MNE mailing list <MNE mailing list>`_
+* Analysis talk: join the `MNE mailing list`_
 
 * `Feature requests and bug reports on GitHub <https://github.com/mne-tools/mne-python/issues/>`_
 
