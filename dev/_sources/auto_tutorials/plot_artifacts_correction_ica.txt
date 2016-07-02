@@ -31,7 +31,7 @@ blink or heartbeat event.
     from mne.datasets import sample
 
     from mne.preprocessing import ICA
-    from mne.preprocessing import create_eog_epochs
+    from mne.preprocessing import create_eog_epochs, create_ecg_epochs
 
     # getting some data ready
     data_path = sample.data_path()
@@ -181,16 +181,15 @@ Plot ICA components
 Component properties
 --------------------
 
-Let's take a closer look at three potential candidates for artifact-related
-components: IC 12, IC 15 and IC 21
+Let's take a closer at properties of first three independent components
 
 
 
 .. code-block:: python
 
 
-    # first, component 12:
-    ica.plot_properties(raw, picks=12, dB=True)
+    # first, component 0:
+    ica.plot_properties(raw, picks=0)
 
 
 
@@ -201,14 +200,14 @@ components: IC 12, IC 15 and IC 21
 
 
 
-it looks like a blink component, but because the data were filtered
-the spectrum plot is not very informative, let's change that:
+we can see that the data were filtered so the spectrum plot is not
+very informative, let's change that:
 
 
 
 .. code-block:: python
 
-    ica.plot_properties(raw, picks=12, dB=True, psd_args={'fmax': 35.})
+    ica.plot_properties(raw, picks=0, psd_args={'fmax': 35.})
 
 
 
@@ -219,13 +218,13 @@ the spectrum plot is not very informative, let's change that:
 
 
 
-now let's inspect properties of components 15 and 21 (cardiac activity):
+we can also take a look at multiple different components at once:
 
 
 
 .. code-block:: python
 
-    ica.plot_properties(raw, picks=[15, 21], psd_args={'fmax': 35.})
+    ica.plot_properties(raw, picks=[1, 2], psd_args={'fmax': 35.})
 
 
 
@@ -312,7 +311,7 @@ Let's use a more efficient way to find artefacts
     0 bad epochs dropped
 
 
-We can take a look at the properties of that component again, now using the
+We can take a look at the properties of that component, now using the
 data epoched with respect to EOG events.
 We will also use a little bit of smoothing along the trials axis in the
 epochs image:
@@ -321,8 +320,8 @@ epochs image:
 
 .. code-block:: python
 
-    ica.plot_properties(eog_epochs, picks=eog_inds, dB=True,
-                        psd_args={'fmax': 35.}, image_args={'sigma': 1.})
+    ica.plot_properties(eog_epochs, picks=eog_inds, psd_args={'fmax': 35.},
+                        image_args={'sigma': 1.})
 
 
 
@@ -398,6 +397,55 @@ component from the data
 
 
 Exercise: find and remove ECG artifacts using ICA!
+
+
+
+.. code-block:: python
+
+    ecg_epochs = create_ecg_epochs(raw, tmin=-.5, tmax=.5)
+    ecg_inds, scores = ica.find_bads_ecg(ecg_epochs, method='ctps')
+    ica.plot_properties(ecg_epochs, picks=ecg_inds, psd_args={'fmax': 35.})
+
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+    *
+
+      .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_011.png
+            :scale: 47
+
+    *
+
+      .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_012.png
+            :scale: 47
+
+    *
+
+      .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_013.png
+            :scale: 47
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    Reconstructing ECG signal from Magnetometers
+    Reconstructing ECG signal from Magnetometers
+    Number of ECG events detected : 284 (average pulse 61 / min.)
+    Creating RawArray with float64 data, n_channels=1, n_times=41700
+        Range : 0 ... 41699 =      0.000 ...   277.709 secs
+    Ready.
+    284 matching events found
+    No baseline correction applied
+    Created an SSP operator (subspace dimension = 4)
+    Loading data for 284 events and 151 original time points ...
+    0 bad epochs dropped
+    Reconstructing ECG signal from Magnetometers
+
 
 What if we don't have an EOG channel?
 -------------------------------------
@@ -532,12 +580,12 @@ Investigate our reference ICA, here we use the previous fit from above.
 
     *
 
-      .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_011.png
+      .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_014.png
             :scale: 47
 
     *
 
-      .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_012.png
+      .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_015.png
             :scale: 47
 
 
@@ -562,7 +610,7 @@ yourself in that situation where no other detection is available.
 
 
 
-.. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_013.png
+.. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_016.png
     :align: center
 
 
@@ -604,12 +652,12 @@ Now we can do the corrmap.
 
     *
 
-      .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_014.png
+      .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_017.png
             :scale: 47
 
     *
 
-      .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_015.png
+      .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_018.png
             :scale: 47
 
 
@@ -632,7 +680,7 @@ See :ref:`tut_artifacts_correct_ssp`.
 
 
 **Total running time of the script:**
-(1 minutes 1.978 seconds)
+(1 minutes 7.053 seconds)
 
 
 
