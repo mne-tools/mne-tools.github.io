@@ -1506,14 +1506,17 @@ loaded. If None, defaults to:</p>
 <blockquote>
 <div><p>If True remove DC component when plotting data.</p>
 </div></blockquote>
-<p><strong>order</strong> : &#8216;type&#8217; | &#8216;original&#8217; | &#8216;selection&#8217; | &#8216;position&#8217; | array of int</p>
+<p><strong>order</strong> : str | array of int</p>
 <blockquote>
 <div><p>Order in which to plot data. &#8216;type&#8217; groups by channel type,
 &#8216;original&#8217; plots in the order of ch_names, &#8216;selection&#8217; uses
-Elekta&#8217;s channel groupings (only works for Neuromag data) and
-&#8216;positions&#8217; groups the channels by the positions of the sensors.
-If array, the order is determined by the indices in the array.
-Defaults to &#8216;type&#8217;.</p>
+Elekta&#8217;s channel groupings (only works for Neuromag data),
+&#8216;position&#8217; groups the channels by the positions of the sensors.
+&#8216;selection&#8217; and &#8216;position&#8217; modes allow custom selections by using
+lasso selector on the topomap. Pressing <code class="docutils literal"><span class="pre">ctrl</span></code> key while
+selecting allows appending to the current selection. If array, only
+the channels in the array are plotted in the given order. Defaults
+to &#8216;type&#8217;.</p>
 </div></blockquote>
 <p><strong>show_options</strong> : bool</p>
 <blockquote>
@@ -1802,7 +1805,7 @@ Defaults to black.</p>
 
 <dl class="method">
 <dt id="mne.io.RawArray.plot_sensors">
-<code class="descname">plot_sensors</code><span class="sig-paren">(</span><em>kind='topomap'</em>, <em>ch_type=None</em>, <em>title=None</em>, <em>show_names=False</em>, <em>ch_groups=None</em>, <em>axes=None</em>, <em>show=True</em><span class="sig-paren">)</span><a class="headerlink" href="#mne.io.RawArray.plot_sensors" title="Permalink to this definition">¶</a></dt>
+<code class="descname">plot_sensors</code><span class="sig-paren">(</span><em>kind='topomap'</em>, <em>ch_type=None</em>, <em>title=None</em>, <em>show_names=False</em>, <em>ch_groups=None</em>, <em>axes=None</em>, <em>block=False</em>, <em>show=True</em><span class="sig-paren">)</span><a class="headerlink" href="#mne.io.RawArray.plot_sensors" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot sensors positions.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -1810,13 +1813,19 @@ Defaults to black.</p>
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>kind</strong> : str</p>
 <blockquote>
-<div><p>Whether to plot the sensors as 3d or as topomap. Available options
-&#8216;topomap&#8217;, &#8216;3d&#8217;. Defaults to &#8216;topomap&#8217;.</p>
+<div><p>Whether to plot the sensors as 3d, topomap or as an interactive
+sensor selection dialog. Available options &#8216;topomap&#8217;, &#8216;3d&#8217;,
+&#8216;select&#8217;. If &#8216;select&#8217;, a set of channels can be selected
+interactively by using lasso selector or clicking while holding
+control key. The selected channels are returned along with the
+figure instance. Defaults to &#8216;topomap&#8217;.</p>
 </div></blockquote>
-<p><strong>ch_type</strong> : &#8216;mag&#8217; | &#8216;grad&#8217; | &#8216;eeg&#8217; | &#8216;seeg&#8217; | &#8216;ecog&#8217; | None</p>
+<p><strong>ch_type</strong> : None | str</p>
 <blockquote>
-<div><p>The channel type to plot. If None, then channels are chosen in the
-order given above.</p>
+<div><p>The channel type to plot. Available options &#8216;mag&#8217;, &#8216;grad&#8217;, &#8216;eeg&#8217;,
+&#8216;seeg&#8217;, &#8216;ecog&#8217;, &#8216;all&#8217;. If <code class="docutils literal"><span class="pre">'all'</span></code>, all the available mag, grad,
+eeg, seeg and ecog channels are plotted. If None (default), then
+channels are chosen in the order given above.</p>
 </div></blockquote>
 <p><strong>title</strong> : str | None</p>
 <blockquote>
@@ -1845,6 +1854,14 @@ instance of Axes3D. If None (default), a new axes will be created.</p>
 <p><span class="versionmodified">New in version 0.13.0.</span></p>
 </div>
 </div></blockquote>
+<p><strong>block</strong> : bool</p>
+<blockquote>
+<div><p>Whether to halt program execution until the figure is closed.
+Defaults to False.</p>
+<div class="versionadded">
+<p><span class="versionmodified">New in version 0.13.0.</span></p>
+</div>
+</div></blockquote>
 <p><strong>show</strong> : bool</p>
 <blockquote>
 <div><p>Show figure if True. Defaults to True.</p>
@@ -1852,8 +1869,12 @@ instance of Axes3D. If None (default), a new axes will be created.</p>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>fig</strong> : instance of matplotlib figure</p>
-<blockquote class="last">
+<blockquote>
 <div><p>Figure containing the sensor topography.</p>
+</div></blockquote>
+<p><strong>selection</strong> : list</p>
+<blockquote class="last">
+<div><p>A list of selected channels. Only returned if <code class="docutils literal"><span class="pre">kind=='select'</span></code>.</p>
 </div></blockquote>
 </td>
 </tr>
@@ -1935,7 +1956,7 @@ a power-of-two size (can be much faster).</p>
 <p><strong>window</strong> : string or tuple</p>
 <blockquote>
 <div><p>Frequency-domain window to use in resampling.
-See <a class="reference external" href="http://scipy.github.io/devdocs/generated/scipy.signal.resample.html#scipy.signal.resample" title="(in SciPy v0.19.0.dev0+90dd54e)"><code class="xref py py-func docutils literal"><span class="pre">scipy.signal.resample()</span></code></a>.</p>
+See <a class="reference external" href="http://scipy.github.io/devdocs/generated/scipy.signal.resample.html#scipy.signal.resample" title="(in SciPy v0.19.0.dev0+12bff57)"><code class="xref py py-func docutils literal"><span class="pre">scipy.signal.resample()</span></code></a>.</p>
 </div></blockquote>
 <p><strong>stim_picks</strong> : array of int | None</p>
 <blockquote>
@@ -2251,7 +2272,7 @@ human-readable.</p>
       
     </p>
     <p>
-        &copy; Copyright 2012-2016, MNE Developers. Last updated on 2016-07-08.<br/>
+        &copy; Copyright 2012-2016, MNE Developers. Last updated on 2016-07-14.<br/>
     </p>
   </div>
 </footer>
