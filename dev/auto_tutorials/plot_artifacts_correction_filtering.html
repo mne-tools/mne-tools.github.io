@@ -146,9 +146,9 @@ This documentation is for the development version (0.13.dev0) - <a href="http://
       aria-labelledby="dLabelLocalToc"><ul>
 <li><a class="reference internal" href="#">Filtering and resampling data</a><ul>
 <li><a class="reference internal" href="#removing-power-line-noise-with-notch-filtering">Removing power-line noise with notch filtering</a></li>
-<li><a class="reference internal" href="#removing-power-line-noise-with-low-pas-filtering">Removing power-line noise with low-pas filtering</a></li>
+<li><a class="reference internal" href="#removing-power-line-noise-with-low-pass-filtering">Removing power-line noise with low-pass filtering</a></li>
 <li><a class="reference internal" href="#high-pass-filtering-to-remove-slow-drifts">High-pass filtering to remove slow drifts</a></li>
-<li><a class="reference internal" href="#down-sampling-for-performance-reasons">Down-sampling (for performance reasons)</a></li>
+<li><a class="reference internal" href="#downsampling-and-decimation">Downsampling and decimation</a></li>
 </ul>
 </li>
 </ul>
@@ -185,9 +185,9 @@ This documentation is for the development version (0.13.dev0) - <a href="http://
             </a></p><ul>
 <li><a class="reference internal" href="#">Filtering and resampling data</a><ul>
 <li><a class="reference internal" href="#removing-power-line-noise-with-notch-filtering">Removing power-line noise with notch filtering</a></li>
-<li><a class="reference internal" href="#removing-power-line-noise-with-low-pas-filtering">Removing power-line noise with low-pas filtering</a></li>
+<li><a class="reference internal" href="#removing-power-line-noise-with-low-pass-filtering">Removing power-line noise with low-pass filtering</a></li>
 <li><a class="reference internal" href="#high-pass-filtering-to-remove-slow-drifts">High-pass filtering to remove slow drifts</a></li>
-<li><a class="reference internal" href="#down-sampling-for-performance-reasons">Down-sampling (for performance reasons)</a></li>
+<li><a class="reference internal" href="#downsampling-and-decimation">Downsampling and decimation</a></li>
 </ul>
 </li>
 </ul>
@@ -223,7 +223,7 @@ frequencies, i.e. the integer multiples of
 the power-line frequency, e.g. 100Hz, 150Hz, ... (or 120Hz, 180Hz, ...).</p>
 <p>This tutorial covers some basics of how to filter data in MNE-Python.
 For more in-depth information about filter design in general and in
-MNE-Python in particular, check out _tut_background_filtering_.</p>
+MNE-Python in particular, check out <a class="reference internal" href="plot_background_filtering.html#tut-background-filtering"><span class="std std-ref">Background information on filtering</span></a>.</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">mne</span>
 <span class="kn">from</span> <span class="nn">mne.datasets</span> <span class="kn">import</span> <span class="n">sample</span>
@@ -271,62 +271,91 @@ MNE-Python in particular, check out _tut_background_filtering_.</p>
 <h2>Removing power-line noise with notch filtering<a class="headerlink" href="#removing-power-line-noise-with-notch-filtering" title="Permalink to this headline">¶</a></h2>
 <p>Removing power-line noise can be done with a Notch filter, directly on the
 Raw object, specifying an array of frequency to be cut off:</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">raw</span><span class="o">.</span><span class="n">notch_filter</span><span class="p">(</span><a href="http://docs.scipy.org/doc/numpy-1.10.1/reference/generated/numpy.arange.html#numpy.arange"><span class="n">np</span><span class="o">.</span><span class="n">arange</span></a><span class="p">(</span><span class="mi">60</span><span class="p">,</span> <span class="mi">241</span><span class="p">,</span> <span class="mi">60</span><span class="p">),</span> <span class="n">picks</span><span class="o">=</span><span class="n">picks</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">raw</span><span class="o">.</span><span class="n">notch_filter</span><span class="p">(</span><a href="http://docs.scipy.org/doc/numpy-1.10.1/reference/generated/numpy.arange.html#numpy.arange"><span class="n">np</span><span class="o">.</span><span class="n">arange</span></a><span class="p">(</span><span class="mi">60</span><span class="p">,</span> <span class="mi">241</span><span class="p">,</span> <span class="mi">60</span><span class="p">),</span> <span class="n">picks</span><span class="o">=</span><span class="n">picks</span><span class="p">,</span> <span class="n">filter_length</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span>
+                 <span class="n">phase</span><span class="o">=</span><span class="s1">&#39;zero&#39;</span><span class="p">)</span>
 <span class="n">raw</span><span class="o">.</span><span class="n">plot_psd</span><span class="p">(</span><span class="n">area_mode</span><span class="o">=</span><span class="s1">&#39;range&#39;</span><span class="p">,</span> <span class="n">tmax</span><span class="o">=</span><span class="mf">10.0</span><span class="p">,</span> <span class="n">picks</span><span class="o">=</span><span class="n">picks</span><span class="p">)</span>
 </pre></div>
 </div>
 <img alt="../_images/sphx_glr_plot_artifacts_correction_filtering_002.png" class="align-center" src="../_images/sphx_glr_plot_artifacts_correction_filtering_002.png" />
 <p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-default"><div class="highlight"><pre><span></span><span class="n">Effective</span> <span class="n">window</span> <span class="n">size</span> <span class="p">:</span> <span class="mf">3.410</span> <span class="p">(</span><span class="n">s</span><span class="p">)</span>
+<div class="sphx-glr-script-out highlight-default"><div class="highlight"><pre><span></span><span class="n">Filter</span> <span class="n">length</span> <span class="n">of</span> <span class="mi">8409</span> <span class="n">samples</span> <span class="p">(</span><span class="mf">14.001</span> <span class="n">sec</span><span class="p">)</span> <span class="n">selected</span>
+<span class="n">Effective</span> <span class="n">window</span> <span class="n">size</span> <span class="p">:</span> <span class="mf">3.410</span> <span class="p">(</span><span class="n">s</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
-<div class="section" id="removing-power-line-noise-with-low-pas-filtering">
-<h2>Removing power-line noise with low-pas filtering<a class="headerlink" href="#removing-power-line-noise-with-low-pas-filtering" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="removing-power-line-noise-with-low-pass-filtering">
+<h2>Removing power-line noise with low-pass filtering<a class="headerlink" href="#removing-power-line-noise-with-low-pass-filtering" title="Permalink to this headline">¶</a></h2>
 <p>If you&#8217;re only interested in low frequencies, below the peaks of power-line
 noise you can simply low pass filter the data.</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">raw</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="mf">50.</span><span class="p">)</span>  <span class="c1"># low pass filtering below 50 Hz</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># low pass filtering below 50 Hz</span>
+<span class="n">raw</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="mf">50.</span><span class="p">,</span> <span class="n">h_trans_bandwidth</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="n">filter_length</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span>
+           <span class="n">phase</span><span class="o">=</span><span class="s1">&#39;zero&#39;</span><span class="p">)</span>
 <span class="n">raw</span><span class="o">.</span><span class="n">plot_psd</span><span class="p">(</span><span class="n">area_mode</span><span class="o">=</span><span class="s1">&#39;range&#39;</span><span class="p">,</span> <span class="n">tmax</span><span class="o">=</span><span class="mf">10.0</span><span class="p">,</span> <span class="n">picks</span><span class="o">=</span><span class="n">picks</span><span class="p">)</span>
 </pre></div>
 </div>
 <img alt="../_images/sphx_glr_plot_artifacts_correction_filtering_003.png" class="align-center" src="../_images/sphx_glr_plot_artifacts_correction_filtering_003.png" />
 <p class="sphx-glr-script-out">Out:</p>
 <div class="sphx-glr-script-out highlight-default"><div class="highlight"><pre><span></span><span class="n">Low</span><span class="o">-</span><span class="k">pass</span> <span class="n">filtering</span> <span class="n">at</span> <span class="mi">50</span> <span class="n">Hz</span>
+<span class="n">h_trans_bandwidth</span> <span class="n">chosen</span> <span class="n">to</span> <span class="n">be</span> <span class="mf">12.5</span> <span class="n">Hz</span>
+<span class="n">Filter</span> <span class="n">length</span> <span class="n">of</span> <span class="mi">336</span> <span class="n">samples</span> <span class="p">(</span><span class="mf">0.559</span> <span class="n">sec</span><span class="p">)</span> <span class="n">selected</span>
 <span class="n">Effective</span> <span class="n">window</span> <span class="n">size</span> <span class="p">:</span> <span class="mf">3.410</span> <span class="p">(</span><span class="n">s</span><span class="p">)</span>
 </pre></div>
 </div>
 </div>
 <div class="section" id="high-pass-filtering-to-remove-slow-drifts">
 <h2>High-pass filtering to remove slow drifts<a class="headerlink" href="#high-pass-filtering-to-remove-slow-drifts" title="Permalink to this headline">¶</a></h2>
-<p>If you&#8217;re only interested in low frequencies, below the peaks of power-line
-noise you can simply high pass filter the data.</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">raw</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="mf">1.</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>  <span class="c1"># low pass filtering above 1 Hz</span>
+<p>To remove slow drifts, you can high pass.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">There can be issues using high-passes greater than 0.1 Hz
+(see examples in <a class="reference internal" href="plot_background_filtering.html#tut-filtering-hp-problems"><span class="std std-ref">High-pass problems</span></a>),
+so apply high-pass filters with caution.</p>
+</div>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">raw</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="mf">1.</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="n">l_trans_bandwidth</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="n">filter_length</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span>
+           <span class="n">phase</span><span class="o">=</span><span class="s1">&#39;zero&#39;</span><span class="p">)</span>
 <span class="n">raw</span><span class="o">.</span><span class="n">plot_psd</span><span class="p">(</span><span class="n">area_mode</span><span class="o">=</span><span class="s1">&#39;range&#39;</span><span class="p">,</span> <span class="n">tmax</span><span class="o">=</span><span class="mf">10.0</span><span class="p">,</span> <span class="n">picks</span><span class="o">=</span><span class="n">picks</span><span class="p">)</span>
 </pre></div>
 </div>
 <img alt="../_images/sphx_glr_plot_artifacts_correction_filtering_004.png" class="align-center" src="../_images/sphx_glr_plot_artifacts_correction_filtering_004.png" />
 <p class="sphx-glr-script-out">Out:</p>
 <div class="sphx-glr-script-out highlight-default"><div class="highlight"><pre><span></span><span class="n">High</span><span class="o">-</span><span class="k">pass</span> <span class="n">filtering</span> <span class="n">at</span> <span class="mi">1</span> <span class="n">Hz</span>
+<span class="n">l_trans_bandwidth</span> <span class="n">chosen</span> <span class="n">to</span> <span class="n">be</span> <span class="mf">1.0</span> <span class="n">Hz</span>
+<span class="n">Filter</span> <span class="n">length</span> <span class="n">of</span> <span class="mi">4204</span> <span class="n">samples</span> <span class="p">(</span><span class="mf">6.999</span> <span class="n">sec</span><span class="p">)</span> <span class="n">selected</span>
 <span class="n">Effective</span> <span class="n">window</span> <span class="n">size</span> <span class="p">:</span> <span class="mf">3.410</span> <span class="p">(</span><span class="n">s</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>To do the low-pass and high-pass filtering in one step you can do
-a so-called <em>band-pass</em> filter by running</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">raw</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="mf">1.</span><span class="p">,</span> <span class="mf">50.</span><span class="p">)</span>  <span class="c1"># band-pass filtering in the range 1 Hz - 50 Hz</span>
+a so-called <em>band-pass</em> filter by running the following:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># band-pass filtering in the range 1 Hz - 50 Hz</span>
+<span class="n">raw</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mf">50.</span><span class="p">,</span> <span class="n">l_trans_bandwidth</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="n">h_trans_bandwidth</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span>
+           <span class="n">filter_length</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="n">phase</span><span class="o">=</span><span class="s1">&#39;zero&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p class="sphx-glr-script-out">Out:</p>
 <div class="sphx-glr-script-out highlight-default"><div class="highlight"><pre><span></span><span class="n">Band</span><span class="o">-</span><span class="k">pass</span> <span class="n">filtering</span> <span class="kn">from</span> <span class="mi">1</span> <span class="o">-</span> <span class="mi">50</span> <span class="n">Hz</span>
+<span class="n">l_trans_bandwidth</span> <span class="n">chosen</span> <span class="n">to</span> <span class="n">be</span> <span class="mf">1.0</span> <span class="n">Hz</span>
+<span class="n">h_trans_bandwidth</span> <span class="n">chosen</span> <span class="n">to</span> <span class="n">be</span> <span class="mf">12.5</span> <span class="n">Hz</span>
+<span class="n">Filter</span> <span class="n">length</span> <span class="n">of</span> <span class="mi">4204</span> <span class="n">samples</span> <span class="p">(</span><span class="mf">6.999</span> <span class="n">sec</span><span class="p">)</span> <span class="n">selected</span>
 </pre></div>
 </div>
 </div>
-<div class="section" id="down-sampling-for-performance-reasons">
-<h2>Down-sampling (for performance reasons)<a class="headerlink" href="#down-sampling-for-performance-reasons" title="Permalink to this headline">¶</a></h2>
+<div class="section" id="downsampling-and-decimation">
+<h2>Downsampling and decimation<a class="headerlink" href="#downsampling-and-decimation" title="Permalink to this headline">¶</a></h2>
 <p>When performing experiments where timing is critical, a signal with a high
 sampling rate is desired. However, having a signal with a much higher
 sampling rate than necessary needlessly consumes memory and slows down
-computations operating on the data. To avoid that, you can down-sample
-your time series.</p>
+computations operating on the data. To avoid that, you can downsample
+your time series. Since downsampling raw data reduces the timing precision
+of events, it is recommended only for use in procedures that do not require
+optimal precision, e.g. computing EOG or ECG projectors on long recordings.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">A <em>downsampling</em> operation performs a low-pass (to prevent
+aliasing) followed by <em>decimation</em>, which selects every
+<span class="math">\(N^{th}\)</span> sample from the signal. See
+<a class="reference external" href="http://scipy.github.io/devdocs/generated/scipy.signal.resample.html#scipy.signal.resample" title="(in SciPy v0.19.0.dev0+901ea9f)"><code class="xref py py-func docutils literal"><span class="pre">scipy.signal.resample()</span></code></a> and
+<a class="reference external" href="http://scipy.github.io/devdocs/generated/scipy.signal.resample_poly.html#scipy.signal.resample_poly" title="(in SciPy v0.19.0.dev0+901ea9f)"><code class="xref py py-func docutils literal"><span class="pre">scipy.signal.resample_poly()</span></code></a> for examples.</p>
+</div>
 <p>Data resampling can be done with <em>resample</em> methods.</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">raw</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="n">npad</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">)</span>  <span class="c1"># set sampling frequency to 100Hz</span>
 <span class="n">raw</span><span class="o">.</span><span class="n">plot_psd</span><span class="p">(</span><span class="n">area_mode</span><span class="o">=</span><span class="s1">&#39;range&#39;</span><span class="p">,</span> <span class="n">tmax</span><span class="o">=</span><span class="mf">10.0</span><span class="p">,</span> <span class="n">picks</span><span class="o">=</span><span class="n">picks</span><span class="p">)</span>
@@ -341,11 +370,23 @@ your time series.</p>
 <span class="n">Effective</span> <span class="n">window</span> <span class="n">size</span> <span class="p">:</span> <span class="mf">10.010</span> <span class="p">(</span><span class="n">s</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Since down-sampling reduces the timing precision of events, you might want to
-first extract epochs and down-sampling the Epochs object. You can do this
-using the <a class="reference internal" href="../generated/mne.Epochs.html#mne.Epochs.resample" title="mne.Epochs.resample"><code class="xref py py-func docutils literal"><span class="pre">mne.Epochs.resample()</span></code></a> method.</p>
+<p>To avoid this reduction in precision, the suggested pipeline for
+processing final data to be analyzed is:</p>
+<blockquote>
+<div><ol class="arabic simple">
+<li>low-pass the data with <a class="reference internal" href="../generated/mne.io.Raw.html#mne.io.Raw.filter" title="mne.io.Raw.filter"><code class="xref py py-meth docutils literal"><span class="pre">mne.io.Raw.filter()</span></code></a>.</li>
+<li>Extract epochs with <a class="reference internal" href="../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal"><span class="pre">mne.Epochs</span></code></a>.</li>
+<li>Decimate the Epochs object using <a class="reference internal" href="../generated/mne.Epochs.html#mne.Epochs.decimate" title="mne.Epochs.decimate"><code class="xref py py-meth docutils literal"><span class="pre">mne.Epochs.decimate()</span></code></a> or the
+<code class="docutils literal"><span class="pre">decim</span></code> argument to the <a class="reference internal" href="../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal"><span class="pre">mne.Epochs</span></code></a> object.</li>
+</ol>
+</div></blockquote>
+<p>We also provide the convenience methods <a class="reference internal" href="../generated/mne.Epochs.html#mne.Epochs.resample" title="mne.Epochs.resample"><code class="xref py py-meth docutils literal"><span class="pre">mne.Epochs.resample()</span></code></a> and
+<a class="reference internal" href="../generated/mne.Evoked.html#mne.Evoked.resample" title="mne.Evoked.resample"><code class="xref py py-meth docutils literal"><span class="pre">mne.Evoked.resample()</span></code></a> to downsample or upsample data, but these are
+less optimal because they will introduce edge artifacts into every epoch,
+whereas filtering the raw data will only introduce edge artifacts only at
+the start and end of the recording.</p>
 <p><strong>Total running time of the script:</strong>
-(0 minutes 5.084 seconds)</p>
+(0 minutes 2.576 seconds)</p>
 <div class="sphx-glr-download container">
 <strong>Download Python source code:</strong> <a class="reference download internal" href="../_downloads/plot_artifacts_correction_filtering.py" download=""><code class="xref download docutils literal"><span class="pre">plot_artifacts_correction_filtering.py</span></code></a></div>
 <div class="sphx-glr-download container">
@@ -369,7 +410,7 @@ using the <a class="reference internal" href="../generated/mne.Epochs.html#mne.E
       
     </p>
     <p>
-        &copy; Copyright 2012-2016, MNE Developers. Last updated on 2016-07-28.<br/>
+        &copy; Copyright 2012-2016, MNE Developers. Last updated on 2016-07-30.<br/>
     </p>
   </div>
 </footer>

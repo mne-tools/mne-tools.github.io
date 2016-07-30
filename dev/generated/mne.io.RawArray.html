@@ -748,7 +748,7 @@ final analyses.</p>
 
 <dl class="method">
 <dt id="mne.io.RawArray.apply_hilbert">
-<code class="descname">apply_hilbert</code><span class="sig-paren">(</span><em>picks</em>, <em>envelope=False</em>, <em>n_jobs=1</em>, <em>n_fft=None</em>, <em>verbose=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mne.io.RawArray.apply_hilbert" title="Permalink to this definition">¶</a></dt>
+<code class="descname">apply_hilbert</code><span class="sig-paren">(</span><em>picks</em>, <em>envelope=False</em>, <em>n_jobs=1</em>, <em>n_fft=''</em>, <em>verbose=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mne.io.RawArray.apply_hilbert" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute analytic signal or envelope for a subset of channels.</p>
 <p>If envelope=False, the analytic signal for the channels defined in
 &#8220;picks&#8221; is computed and the data of the Raw object is converted to
@@ -784,11 +784,12 @@ be temporaily stored in memory.</p>
 <blockquote>
 <div><p>Number of jobs to run in parallel.</p>
 </div></blockquote>
-<p><strong>n_fft</strong> : int &gt; self.n_times | None</p>
+<p><strong>n_fft</strong> : int | None | str</p>
 <blockquote>
 <div><p>Points to use in the FFT for Hilbert transformation. The signal
 will be padded with zeros before computing Hilbert, then cut back
-to original length. If None, n == self.n_times.</p>
+to original length. If None, n == self.n_times. If &#8216;auto&#8217;,
+the next highest fast FFT length will be use.</p>
 </div></blockquote>
 <p><strong>verbose</strong> : bool, str, int, or None</p>
 <blockquote class="last">
@@ -1051,7 +1052,7 @@ to tell whether or not projectors have been applied previously.</p>
 
 <dl class="method">
 <dt id="mne.io.RawArray.filter">
-<code class="descname">filter</code><span class="sig-paren">(</span><em>l_freq</em>, <em>h_freq</em>, <em>picks=None</em>, <em>filter_length='10s'</em>, <em>l_trans_bandwidth=0.5</em>, <em>h_trans_bandwidth=0.5</em>, <em>n_jobs=1</em>, <em>method='fft'</em>, <em>iir_params=None</em>, <em>verbose=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mne.io.RawArray.filter" title="Permalink to this definition">¶</a></dt>
+<code class="descname">filter</code><span class="sig-paren">(</span><em>l_freq</em>, <em>h_freq</em>, <em>picks=None</em>, <em>filter_length=''</em>, <em>l_trans_bandwidth=None</em>, <em>h_trans_bandwidth=None</em>, <em>n_jobs=1</em>, <em>method='fir'</em>, <em>iir_params=None</em>, <em>phase=''</em>, <em>verbose=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mne.io.RawArray.filter" title="Permalink to this definition">¶</a></dt>
 <dd><p>Filter a subset of channels.</p>
 <p>Applies a zero-phase low-pass, high-pass, band-pass, or band-stop
 filter to the channels selected by <code class="docutils literal"><span class="pre">picks</span></code>. By default the data
@@ -1094,33 +1095,51 @@ high-passed.</p>
 <div><p>Indices of channels to filter. If None only the data (MEG/EEG)
 channels will be filtered.</p>
 </div></blockquote>
-<p><strong>filter_length</strong> : str (Default: &#8216;10s&#8217;) | int | None</p>
+<p><strong>filter_length</strong> : str | int</p>
 <blockquote>
-<div><p>Length of the filter to use. If None or <code class="docutils literal"><span class="pre">len(x)</span> <span class="pre">&lt;</span> <span class="pre">filter_length</span></code>,
-the filter length used is <code class="docutils literal"><span class="pre">len(x)</span></code>. If int, a filter of the
-specified length in samples is used. If str, a human-readable time
-in units of &#8220;s&#8221; or &#8220;ms&#8221; (e.g., &#8220;10s&#8221; or &#8220;5500ms&#8221;) will be converted
-to the shortest power-of-two length at least that duration.
-Not used for &#8216;iir&#8217; filters.</p>
+<div><p>Length of the FIR filter to use (if applicable):</p>
+<blockquote>
+<div><ul class="simple">
+<li>int: specified length in samples.</li>
+<li>&#8216;auto&#8217; (default in 0.14): the filter length is chosen based
+on the size of the transition regions (7 times the reciprocal
+of the shortest transition band).</li>
+<li>str: (default in 0.13 is &#8220;10s&#8221;) a human-readable time in
+units of &#8220;s&#8221; or &#8220;ms&#8221; (e.g., &#8220;10s&#8221; or &#8220;5500ms&#8221;) will be
+converted to that number of samples if <code class="docutils literal"><span class="pre">phase=&quot;zero&quot;</span></code>, or
+the shortest power-of-two length at least that duration for
+<code class="docutils literal"><span class="pre">phase=&quot;zero-double&quot;</span></code>.</li>
+</ul>
 </div></blockquote>
-<p><strong>l_trans_bandwidth</strong> : float</p>
+</div></blockquote>
+<p><strong>l_trans_bandwidth</strong> : float | str</p>
 <blockquote>
 <div><p>Width of the transition band at the low cut-off frequency in Hz
-(high pass or cutoff 1 in bandpass). Not used for &#8216;iir&#8217; filters.</p>
+(high pass or cutoff 1 in bandpass). Can be &#8220;auto&#8221;
+(default in 0.14) to use a multiple of <code class="docutils literal"><span class="pre">l_freq</span></code>:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="nb">min</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">l_freq</span> <span class="o">*</span> <span class="mf">0.25</span><span class="p">,</span> <span class="mi">2</span><span class="p">),</span> <span class="n">l_freq</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Only used for <code class="docutils literal"><span class="pre">method='fir'</span></code>.</p>
 </div></blockquote>
-<p><strong>h_trans_bandwidth</strong> : float</p>
+<p><strong>h_trans_bandwidth</strong> : float | str</p>
 <blockquote>
 <div><p>Width of the transition band at the high cut-off frequency in Hz
-(low pass or cutoff 2 in bandpass). Not used for &#8216;iir&#8217; filters.</p>
+(low pass or cutoff 2 in bandpass). Can be &#8220;auto&#8221;
+(default in 0.14) to use a multiple of <code class="docutils literal"><span class="pre">h_freq</span></code>:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="nb">min</span><span class="p">(</span><span class="nb">max</span><span class="p">(</span><span class="n">h_freq</span> <span class="o">*</span> <span class="mf">0.25</span><span class="p">,</span> <span class="mf">2.</span><span class="p">),</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;sfreq&#39;</span><span class="p">]</span> <span class="o">/</span> <span class="mf">2.</span> <span class="o">-</span> <span class="n">h_freq</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Only used for <code class="docutils literal"><span class="pre">method='fir'</span></code>.</p>
 </div></blockquote>
 <p><strong>n_jobs</strong> : int | str</p>
 <blockquote>
 <div><p>Number of jobs to run in parallel. Can be &#8216;cuda&#8217; if scikits.cuda
-is installed properly, CUDA is initialized, and method=&#8217;fft&#8217;.</p>
+is installed properly, CUDA is initialized, and method=&#8217;fir&#8217;.</p>
 </div></blockquote>
 <p><strong>method</strong> : str</p>
 <blockquote>
-<div><p>&#8216;fft&#8217; will use overlap-add FIR filtering, &#8216;iir&#8217; will use IIR
+<div><p>&#8216;fir&#8217; will use overlap-add FIR filtering, &#8216;iir&#8217; will use IIR
 forward-backward filtering (via filtfilt).</p>
 </div></blockquote>
 <p><strong>iir_params</strong> : dict | None</p>
@@ -1128,6 +1147,15 @@ forward-backward filtering (via filtfilt).</p>
 <div><p>Dictionary of parameters to use for IIR filtering.
 See mne.filter.construct_iir_filter for details. If iir_params
 is None and method=&#8221;iir&#8221;, 4th order Butterworth will be used.</p>
+</div></blockquote>
+<p><strong>phase</strong> : str</p>
+<blockquote>
+<div><p>Phase of the filter, only used if <code class="docutils literal"><span class="pre">method='fir'</span></code>.
+By default, a symmetric linear-phase FIR filter is constructed.
+If <code class="docutils literal"><span class="pre">phase='zero'</span></code> (default in 0.14), the delay of this filter
+is compensated for. If <code class="docutils literal"><span class="pre">phase=='zero-double'</span></code> (default in 0.13
+and before), then this filter is applied twice, once forward, and
+once backward.</p>
 </div></blockquote>
 <p><strong>verbose</strong> : bool, str, int, or None</p>
 <blockquote>
@@ -1254,7 +1282,7 @@ If data were already preloaded, it will do nothing.</p>
 
 <dl class="method">
 <dt id="mne.io.RawArray.notch_filter">
-<code class="descname">notch_filter</code><span class="sig-paren">(</span><em>freqs</em>, <em>picks=None</em>, <em>filter_length='10s'</em>, <em>notch_widths=None</em>, <em>trans_bandwidth=1.0</em>, <em>n_jobs=1</em>, <em>method='fft'</em>, <em>iir_params=None</em>, <em>mt_bandwidth=None</em>, <em>p_value=0.05</em>, <em>verbose=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mne.io.RawArray.notch_filter" title="Permalink to this definition">¶</a></dt>
+<code class="descname">notch_filter</code><span class="sig-paren">(</span><em>freqs</em>, <em>picks=None</em>, <em>filter_length=''</em>, <em>notch_widths=None</em>, <em>trans_bandwidth=1.0</em>, <em>n_jobs=1</em>, <em>method='fft'</em>, <em>iir_params=None</em>, <em>mt_bandwidth=None</em>, <em>p_value=0.05</em>, <em>phase=''</em>, <em>verbose=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mne.io.RawArray.notch_filter" title="Permalink to this definition">¶</a></dt>
 <dd><p>Notch filter a subset of channels.</p>
 <p>Applies a zero-phase notch filter to the channels selected by
 &#8220;picks&#8221;. By default the data of the Raw object is modified inplace.</p>
@@ -1282,15 +1310,22 @@ where an F test is used to find sinusoidal components.</p>
 <div><p>Indices of channels to filter. If None only the data (MEG/EEG)
 channels will be filtered.</p>
 </div></blockquote>
-<p><strong>filter_length</strong> : str (Default: &#8216;10s&#8217;) | int | None</p>
+<p><strong>filter_length</strong> : str | int</p>
 <blockquote>
-<div><p>Length of the filter to use. If None or &#8220;len(x) &lt; filter_length&#8221;,
-the filter length used is len(x). Otherwise, if int, overlap-add
-filtering with a filter of the specified length in samples) is
-used (faster for long signals). If str, a human-readable time in
-units of &#8220;s&#8221; or &#8220;ms&#8221; (e.g., &#8220;10s&#8221; or &#8220;5500ms&#8221;) will be converted
-to the shortest power-of-two length at least that duration.
-Not used for &#8216;iir&#8217; filters.</p>
+<div><p>Length of the FIR filter to use (if applicable):</p>
+<blockquote>
+<div><ul class="simple">
+<li>int: specified length in samples.</li>
+<li>&#8216;auto&#8217; (default in 0.14): the filter length is chosen based
+on the size of the transition regions (7 times the reciprocal
+of the shortest transition band).</li>
+<li>str: (default in 0.13 is &#8220;10s&#8221;) a human-readable time in
+units of &#8220;s&#8221; or &#8220;ms&#8221; (e.g., &#8220;10s&#8221; or &#8220;5500ms&#8221;) will be
+converted to that number of samples if <code class="docutils literal"><span class="pre">phase=&quot;zero&quot;</span></code>, or
+the shortest power-of-two length at least that duration for
+<code class="docutils literal"><span class="pre">phase=&quot;zero-double&quot;</span></code>.</li>
+</ul>
+</div></blockquote>
 </div></blockquote>
 <p><strong>notch_widths</strong> : float | array of float | None</p>
 <blockquote>
@@ -1299,16 +1334,17 @@ If None, freqs / 200 is used.</p>
 </div></blockquote>
 <p><strong>trans_bandwidth</strong> : float</p>
 <blockquote>
-<div><p>Width of the transition band in Hz.</p>
+<div><p>Width of the transition band in Hz.
+Only used for <code class="docutils literal"><span class="pre">method='fir'</span></code>.</p>
 </div></blockquote>
 <p><strong>n_jobs</strong> : int | str</p>
 <blockquote>
 <div><p>Number of jobs to run in parallel. Can be &#8216;cuda&#8217; if scikits.cuda
-is installed properly, CUDA is initialized, and method=&#8217;fft&#8217;.</p>
+is installed properly, CUDA is initialized, and method=&#8217;fir&#8217;.</p>
 </div></blockquote>
 <p><strong>method</strong> : str</p>
 <blockquote>
-<div><p>&#8216;fft&#8217; will use overlap-add FIR filtering, &#8216;iir&#8217; will use IIR
+<div><p>&#8216;fir&#8217; will use overlap-add FIR filtering, &#8216;iir&#8217; will use IIR
 forward-backward filtering (via filtfilt). &#8216;spectrum_fit&#8217; will
 use multi-taper estimation of sinusoidal components.</p>
 </div></blockquote>
@@ -1329,6 +1365,15 @@ Only used in &#8216;spectrum_fit&#8217; mode.</p>
 sinusoidal components to remove when method=&#8217;spectrum_fit&#8217; and
 freqs=None. Note that this will be Bonferroni corrected for the
 number of frequencies, so large p-values may be justified.</p>
+</div></blockquote>
+<p><strong>phase</strong> : str</p>
+<blockquote>
+<div><p>Phase of the filter, only used if <code class="docutils literal"><span class="pre">method='fir'</span></code>.
+By default, a symmetric linear-phase FIR filter is constructed.
+If <code class="docutils literal"><span class="pre">phase='zero'</span></code> (default in 0.14), the delay of this filter
+is compensated for. If <code class="docutils literal"><span class="pre">phase=='zero-double'</span></code> (default in 0.13
+and before), then this filter is applied twice, once forward, and
+once backward.</p>
 </div></blockquote>
 <p><strong>verbose</strong> : bool, str, int, or None</p>
 <blockquote>
@@ -2006,7 +2051,7 @@ a power-of-two size (can be much faster).</p>
 <p><strong>window</strong> : string or tuple</p>
 <blockquote>
 <div><p>Frequency-domain window to use in resampling.
-See <a class="reference external" href="http://scipy.github.io/devdocs/generated/scipy.signal.resample.html#scipy.signal.resample" title="(in SciPy v0.19.0.dev0+bfce074)"><code class="xref py py-func docutils literal"><span class="pre">scipy.signal.resample()</span></code></a>.</p>
+See <a class="reference external" href="http://scipy.github.io/devdocs/generated/scipy.signal.resample.html#scipy.signal.resample" title="(in SciPy v0.19.0.dev0+901ea9f)"><code class="xref py py-func docutils literal"><span class="pre">scipy.signal.resample()</span></code></a>.</p>
 </div></blockquote>
 <p><strong>stim_picks</strong> : array of int | None</p>
 <blockquote>
@@ -2322,7 +2367,7 @@ human-readable.</p>
       
     </p>
     <p>
-        &copy; Copyright 2012-2016, MNE Developers. Last updated on 2016-07-28.<br/>
+        &copy; Copyright 2012-2016, MNE Developers. Last updated on 2016-07-30.<br/>
     </p>
   </div>
 </footer>
