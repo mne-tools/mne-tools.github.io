@@ -209,8 +209,8 @@ This documentation is for the development version (0.13.dev0) - <a href="http://
 <h1>mne.time_frequency.tfr_multitaper<a class="headerlink" href="#mne-time-frequency-tfr-multitaper" title="Permalink to this headline">¶</a></h1>
 <dl class="function">
 <dt id="mne.time_frequency.tfr_multitaper">
-<code class="descclassname">mne.time_frequency.</code><code class="descname">tfr_multitaper</code><span class="sig-paren">(</span><em>inst</em>, <em>freqs</em>, <em>n_cycles</em>, <em>time_bandwidth=4.0</em>, <em>use_fft=True</em>, <em>return_itc=True</em>, <em>decim=1</em>, <em>n_jobs=1</em>, <em>picks=None</em>, <em>verbose=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mne.time_frequency.tfr_multitaper" title="Permalink to this definition">¶</a></dt>
-<dd><p>Compute Time-Frequency Representation (TFR) using DPSS wavelets</p>
+<code class="descclassname">mne.time_frequency.</code><code class="descname">tfr_multitaper</code><span class="sig-paren">(</span><em>inst</em>, <em>freqs</em>, <em>n_cycles</em>, <em>time_bandwidth=4.0</em>, <em>use_fft=True</em>, <em>return_itc=True</em>, <em>decim=1</em>, <em>n_jobs=1</em>, <em>picks=None</em>, <em>average=True</em>, <em>verbose=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mne.time_frequency.tfr_multitaper" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute Time-Frequency Representation (TFR) using DPSS tapers.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -228,57 +228,60 @@ This documentation is for the development version (0.13.dev0) - <a href="http://
 <div><p>The number of cycles globally or for each frequency.
 The time-window length is thus T = n_cycles / freq.</p>
 </div></blockquote>
-<p><strong>time_bandwidth</strong> : float, (optional)</p>
+<p><strong>time_bandwidth</strong> : float, (optional), defaults to 4.0 (3 good tapers).</p>
 <blockquote>
 <div><p>Time x (Full) Bandwidth product. Should be &gt;= 2.0.
 Choose this along with n_cycles to get desired frequency resolution.
 The number of good tapers (least leakage from far away frequencies)
 is chosen automatically based on this to floor(time_bandwidth - 1).
-Default is 4.0 (3 good tapers).
 E.g., With freq = 20 Hz and n_cycles = 10, we get time = 0.5 s.
 If time_bandwidth = 4., then frequency smoothing is (4 / time) = 8 Hz.</p>
 </div></blockquote>
-<p><strong>use_fft</strong> : bool</p>
+<p><strong>use_fft</strong> : bool, defaults to True</p>
 <blockquote>
-<div><p>The fft based convolution or not.
-Defaults to True.</p>
+<div><p>The fft based convolution or not.</p>
 </div></blockquote>
-<p><strong>return_itc</strong> : bool</p>
+<p><strong>return_itc</strong> : bool, defaults to True</p>
 <blockquote>
-<div><p>Return intertrial coherence (ITC) as well as averaged power.
-Defaults to True.</p>
+<div><p>Return inter-trial coherence (ITC) as well as averaged power.</p>
 </div></blockquote>
-<p><strong>decim</strong> : int | slice</p>
+<p><strong>decim</strong> : int | slice, defaults to 1</p>
 <blockquote>
 <div><p>To reduce memory usage, decimation factor after time-frequency
 decomposition.
 If <cite>int</cite>, returns tfr[..., ::decim].
-If <cite>slice</cite> returns tfr[..., decim].
-Note that decimation may create aliasing artifacts.
-Defaults to 1.</p>
+If <cite>slice</cite>, returns tfr[..., decim].
+.. note: Decimation may create aliasing artifacts.</p>
 </div></blockquote>
-<p><strong>n_jobs</strong> : int</p>
+<p><strong>n_jobs</strong> : int,  defaults to 1</p>
 <blockquote>
-<div><p>The number of jobs to run in parallel. Defaults to 1.</p>
+<div><p>The number of jobs to run in parallel.</p>
 </div></blockquote>
-<p><strong>picks</strong> : array-like of int | None</p>
+<p><strong>picks</strong> : array-like of int | None, defaults to None</p>
 <blockquote>
-<div><p>The indices of the channels to plot. If None all available
+<div><p>The indices of the channels to plot. If None, all available
 channels are displayed.</p>
 </div></blockquote>
-<p><strong>verbose</strong> : bool, str, int, or None</p>
+<p><strong>average</strong> : bool, defaults to True</p>
+<blockquote>
+<div><p>If True average across Epochs.</p>
+<div class="versionadded">
+<p><span class="versionmodified">New in version 0.13.0.</span></p>
+</div>
+</div></blockquote>
+<p><strong>verbose</strong> : bool, str, int, or None, defaults to None</p>
 <blockquote>
 <div><p>If not None, override default verbose level (see mne.verbose).</p>
 </div></blockquote>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>power</strong> : AverageTFR</p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>power</strong> : AverageTFR | EpochsTFR</p>
 <blockquote>
 <div><p>The averaged power.</p>
 </div></blockquote>
-<p><strong>itc</strong> : AverageTFR</p>
+<p><strong>itc</strong> : AverageTFR | EpochsTFR</p>
 <blockquote class="last">
-<div><p>The intertrial coherence (ITC). Only returned if return_itc
+<div><p>The inter-trial coherence (ITC). Only returned if return_itc
 is True.</p>
 </div></blockquote>
 </td>
@@ -319,7 +322,7 @@ is True.</p>
       
     </p>
     <p>
-        &copy; Copyright 2012-2016, MNE Developers. Last updated on 2016-08-02.<br/>
+        &copy; Copyright 2012-2016, MNE Developers. Last updated on 2016-08-03.<br/>
     </p>
   </div>
 </footer>

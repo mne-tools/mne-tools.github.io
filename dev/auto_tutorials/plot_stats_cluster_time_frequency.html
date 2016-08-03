@@ -144,7 +144,11 @@ This documentation is for the development version (0.13.dev0) - <a href="http://
   <ul class="dropdown-menu localtoc"
       role="menu"
       aria-labelledby="dLabelLocalToc"><ul>
-<li><a class="reference internal" href="#">Non-parametric between conditions cluster statistic on single trial power</a></li>
+<li><a class="reference internal" href="#">Non-parametric between conditions cluster statistic on single trial power</a><ul>
+<li><a class="reference internal" href="#compute-statistic">Compute statistic</a></li>
+<li><a class="reference internal" href="#view-time-frequency-plots">View time-frequency plots</a></li>
+</ul>
+</li>
 </ul>
 </ul>
 </li>
@@ -177,7 +181,11 @@ This documentation is for the development version (0.13.dev0) - <a href="http://
             <p class="logo"><a href="../index.html">
               <img class="logo" src="../_static/mne_logo_small.png" alt="Logo"/>
             </a></p><ul>
-<li><a class="reference internal" href="#">Non-parametric between conditions cluster statistic on single trial power</a></li>
+<li><a class="reference internal" href="#">Non-parametric between conditions cluster statistic on single trial power</a><ul>
+<li><a class="reference internal" href="#compute-statistic">Compute statistic</a></li>
+<li><a class="reference internal" href="#view-time-frequency-plots">View time-frequency plots</a></li>
+</ul>
+</li>
 </ul>
 
   <li>
@@ -223,8 +231,7 @@ between conditions.</li>
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
 
 <span class="kn">import</span> <span class="nn">mne</span>
-<span class="kn">from</span> <span class="nn">mne</span> <span class="kn">import</span> <span class="n">io</span>
-<span class="kn">from</span> <span class="nn">mne.time_frequency</span> <span class="kn">import</span> <a href="../generated/mne.time_frequency.single_trial_power.html#mne.time_frequency.single_trial_power"><span class="n">single_trial_power</span></a>
+<span class="kn">from</span> <span class="nn">mne.time_frequency</span> <span class="kn">import</span> <a href="../generated/mne.time_frequency.tfr_morlet.html#mne.time_frequency.tfr_morlet"><span class="n">tfr_morlet</span></a>
 <span class="kn">from</span> <span class="nn">mne.stats</span> <span class="kn">import</span> <a href="../generated/mne.stats.permutation_cluster_test.html#mne.stats.permutation_cluster_test"><span class="n">permutation_cluster_test</span></a>
 <span class="kn">from</span> <span class="nn">mne.datasets</span> <span class="kn">import</span> <span class="n">sample</span>
 
@@ -235,12 +242,10 @@ between conditions.</li>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">data_path</span> <span class="o">=</span> <a href="../generated/mne.datasets.sample.data_path.html#mne.datasets.sample.data_path"><span class="n">sample</span><span class="o">.</span><span class="n">data_path</span></a><span class="p">()</span>
 <span class="n">raw_fname</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis_raw.fif&#39;</span>
 <span class="n">event_fname</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis_raw-eve.fif&#39;</span>
-<span class="n">event_id</span> <span class="o">=</span> <span class="mi">1</span>
-<span class="n">tmin</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.2</span>
-<span class="n">tmax</span> <span class="o">=</span> <span class="mf">0.5</span>
+<span class="n">tmin</span><span class="p">,</span> <span class="n">tmax</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.5</span>
 
 <span class="c1"># Setup for reading the raw data</span>
-<span class="n">raw</span> <span class="o">=</span> <a href="../generated/mne.io.read_raw_fif.html#mne.io.read_raw_fif"><span class="n">io</span><span class="o">.</span><span class="n">read_raw_fif</span></a><span class="p">(</span><span class="n">raw_fname</span><span class="p">)</span>
+<span class="n">raw</span> <span class="o">=</span> <span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read_raw_fif</span><span class="p">(</span><span class="n">raw_fname</span><span class="p">)</span>
 <span class="n">events</span> <span class="o">=</span> <a href="../generated/mne.read_events.html#mne.read_events"><span class="n">mne</span><span class="o">.</span><span class="n">read_events</span></a><span class="p">(</span><span class="n">event_fname</span><span class="p">)</span>
 
 <span class="n">include</span> <span class="o">=</span> <span class="p">[]</span>
@@ -250,31 +255,22 @@ between conditions.</li>
 <span class="n">picks</span> <span class="o">=</span> <a href="../generated/mne.pick_types.html#mne.pick_types"><span class="n">mne</span><span class="o">.</span><span class="n">pick_types</span></a><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">meg</span><span class="o">=</span><span class="s1">&#39;grad&#39;</span><span class="p">,</span> <span class="n">eeg</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">eog</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
                        <span class="n">stim</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">include</span><span class="o">=</span><span class="n">include</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="s1">&#39;bads&#39;</span><span class="p">)</span>
 
-<span class="n">ch_name</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;ch_names&#39;</span><span class="p">][</span><span class="n">picks</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
+<span class="n">ch_name</span> <span class="o">=</span> <span class="s1">&#39;MEG 1332&#39;</span>  <span class="c1"># restrict example to one channel</span>
 
 <span class="c1"># Load condition 1</span>
 <span class="n">reject</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">grad</span><span class="o">=</span><span class="mf">4000e-13</span><span class="p">,</span> <span class="n">eog</span><span class="o">=</span><span class="mf">150e-6</span><span class="p">)</span>
 <span class="n">event_id</span> <span class="o">=</span> <span class="mi">1</span>
 <span class="n">epochs_condition_1</span> <span class="o">=</span> <a href="../generated/mne.Epochs.html#mne.Epochs"><span class="n">mne</span><span class="o">.</span><span class="n">Epochs</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">event_id</span><span class="p">,</span> <span class="n">tmin</span><span class="p">,</span> <span class="n">tmax</span><span class="p">,</span>
                                 <span class="n">picks</span><span class="o">=</span><span class="n">picks</span><span class="p">,</span> <span class="n">baseline</span><span class="o">=</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
-                                <span class="n">reject</span><span class="o">=</span><span class="n">reject</span><span class="p">)</span>
-<span class="n">data_condition_1</span> <span class="o">=</span> <span class="n">epochs_condition_1</span><span class="o">.</span><span class="n">get_data</span><span class="p">()</span>  <span class="c1"># as 3D matrix</span>
-<span class="n">data_condition_1</span> <span class="o">*=</span> <span class="mf">1e13</span>  <span class="c1"># change unit to fT / cm</span>
+                                <span class="n">reject</span><span class="o">=</span><span class="n">reject</span><span class="p">,</span> <span class="n">preload</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">epochs_condition_1</span><span class="o">.</span><span class="n">pick_channels</span><span class="p">([</span><span class="n">ch_name</span><span class="p">])</span>
 
 <span class="c1"># Load condition 2</span>
 <span class="n">event_id</span> <span class="o">=</span> <span class="mi">2</span>
 <span class="n">epochs_condition_2</span> <span class="o">=</span> <a href="../generated/mne.Epochs.html#mne.Epochs"><span class="n">mne</span><span class="o">.</span><span class="n">Epochs</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">event_id</span><span class="p">,</span> <span class="n">tmin</span><span class="p">,</span> <span class="n">tmax</span><span class="p">,</span>
                                 <span class="n">picks</span><span class="o">=</span><span class="n">picks</span><span class="p">,</span> <span class="n">baseline</span><span class="o">=</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span>
-                                <span class="n">reject</span><span class="o">=</span><span class="n">reject</span><span class="p">)</span>
-<span class="n">data_condition_2</span> <span class="o">=</span> <span class="n">epochs_condition_2</span><span class="o">.</span><span class="n">get_data</span><span class="p">()</span>  <span class="c1"># as 3D matrix</span>
-<span class="n">data_condition_2</span> <span class="o">*=</span> <span class="mf">1e13</span>  <span class="c1"># change unit to fT / cm</span>
-
-<span class="c1"># Take only one channel</span>
-<span class="n">data_condition_1</span> <span class="o">=</span> <span class="n">data_condition_1</span><span class="p">[:,</span> <span class="mi">97</span><span class="p">:</span><span class="mi">98</span><span class="p">,</span> <span class="p">:]</span>
-<span class="n">data_condition_2</span> <span class="o">=</span> <span class="n">data_condition_2</span><span class="p">[:,</span> <span class="mi">97</span><span class="p">:</span><span class="mi">98</span><span class="p">,</span> <span class="p">:]</span>
-
-<span class="c1"># Time vector</span>
-<span class="n">times</span> <span class="o">=</span> <span class="mf">1e3</span> <span class="o">*</span> <span class="n">epochs_condition_1</span><span class="o">.</span><span class="n">times</span>  <span class="c1"># change unit to ms</span>
+                                <span class="n">reject</span><span class="o">=</span><span class="n">reject</span><span class="p">,</span> <span class="n">preload</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">epochs_condition_2</span><span class="o">.</span><span class="n">pick_channels</span><span class="p">([</span><span class="n">ch_name</span><span class="p">])</span>
 </pre></div>
 </div>
 <p class="sphx-glr-script-out">Out:</p>
@@ -329,45 +325,37 @@ between conditions.</li>
 <span class="mi">13</span> <span class="n">bad</span> <span class="n">epochs</span> <span class="n">dropped</span>
 </pre></div>
 </div>
-<p>Factor to downsample the temporal dimension of the PSD computed by
-single_trial_power.  Decimation occurs after frequency decomposition and can
+<p>Factor to downsample the temporal dimension of the TFR computed by
+tfr_morlet. Decimation occurs after frequency decomposition and can
 be used to reduce memory usage (and possibly comptuational time of downstream
 operations such as nonparametric statistics) if you don&#8217;t need high
 spectrotemporal resolution.</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">decim</span> <span class="o">=</span> <span class="mi">2</span>
 <span class="n">frequencies</span> <span class="o">=</span> <a href="http://docs.scipy.org/doc/numpy-1.10.1/reference/generated/numpy.arange.html#numpy.arange"><span class="n">np</span><span class="o">.</span><span class="n">arange</span></a><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>  <span class="c1"># define frequencies of interest</span>
-<span class="n">sfreq</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;sfreq&#39;</span><span class="p">]</span>  <span class="c1"># sampling in Hz</span>
 <span class="n">n_cycles</span> <span class="o">=</span> <span class="mf">1.5</span>
 
-<span class="n">epochs_power_1</span> <span class="o">=</span> <a href="../generated/mne.time_frequency.single_trial_power.html#mne.time_frequency.single_trial_power"><span class="n">single_trial_power</span></a><span class="p">(</span><span class="n">data_condition_1</span><span class="p">,</span> <span class="n">sfreq</span><span class="o">=</span><span class="n">sfreq</span><span class="p">,</span>
-                                    <span class="n">frequencies</span><span class="o">=</span><span class="n">frequencies</span><span class="p">,</span>
-                                    <span class="n">n_cycles</span><span class="o">=</span><span class="n">n_cycles</span><span class="p">,</span> <span class="n">decim</span><span class="o">=</span><span class="n">decim</span><span class="p">)</span>
+<span class="n">tfr_epochs_1</span> <span class="o">=</span> <a href="../generated/mne.time_frequency.tfr_morlet.html#mne.time_frequency.tfr_morlet"><span class="n">tfr_morlet</span></a><span class="p">(</span><span class="n">epochs_condition_1</span><span class="p">,</span> <span class="n">frequencies</span><span class="p">,</span>
+                          <span class="n">n_cycles</span><span class="o">=</span><span class="n">n_cycles</span><span class="p">,</span> <span class="n">decim</span><span class="o">=</span><span class="n">decim</span><span class="p">,</span>
+                          <span class="n">return_itc</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">average</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
 
-<span class="n">epochs_power_2</span> <span class="o">=</span> <a href="../generated/mne.time_frequency.single_trial_power.html#mne.time_frequency.single_trial_power"><span class="n">single_trial_power</span></a><span class="p">(</span><span class="n">data_condition_2</span><span class="p">,</span> <span class="n">sfreq</span><span class="o">=</span><span class="n">sfreq</span><span class="p">,</span>
-                                    <span class="n">frequencies</span><span class="o">=</span><span class="n">frequencies</span><span class="p">,</span>
-                                    <span class="n">n_cycles</span><span class="o">=</span><span class="n">n_cycles</span><span class="p">,</span> <span class="n">decim</span><span class="o">=</span><span class="n">decim</span><span class="p">)</span>
+<span class="n">tfr_epochs_2</span> <span class="o">=</span> <a href="../generated/mne.time_frequency.tfr_morlet.html#mne.time_frequency.tfr_morlet"><span class="n">tfr_morlet</span></a><span class="p">(</span><span class="n">epochs_condition_2</span><span class="p">,</span> <span class="n">frequencies</span><span class="p">,</span>
+                          <span class="n">n_cycles</span><span class="o">=</span><span class="n">n_cycles</span><span class="p">,</span> <span class="n">decim</span><span class="o">=</span><span class="n">decim</span><span class="p">,</span>
+                          <span class="n">return_itc</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">average</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
 
-<span class="n">epochs_power_1</span> <span class="o">=</span> <span class="n">epochs_power_1</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span>  <span class="c1"># only 1 channel to get 3D matrix</span>
-<span class="n">epochs_power_2</span> <span class="o">=</span> <span class="n">epochs_power_2</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span>  <span class="c1"># only 1 channel to get 3D matrix</span>
+<span class="n">tfr_epochs_1</span><span class="o">.</span><span class="n">apply_baseline</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s1">&#39;ratio&#39;</span><span class="p">,</span> <span class="n">baseline</span><span class="o">=</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+<span class="n">tfr_epochs_2</span><span class="o">.</span><span class="n">apply_baseline</span><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s1">&#39;ratio&#39;</span><span class="p">,</span> <span class="n">baseline</span><span class="o">=</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+
+<span class="n">epochs_power_1</span> <span class="o">=</span> <span class="n">tfr_epochs_1</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span>  <span class="c1"># only 1 channel as 3D matrix</span>
+<span class="n">epochs_power_2</span> <span class="o">=</span> <span class="n">tfr_epochs_2</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span>  <span class="c1"># only 1 channel as 3D matrix</span>
 </pre></div>
 </div>
 <p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-default"><div class="highlight"><pre><span></span><span class="n">Computing</span> <span class="n">time</span><span class="o">-</span><span class="n">frequency</span> <span class="n">power</span> <span class="n">on</span> <span class="n">single</span> <span class="n">epochs</span><span class="o">...</span>
-<span class="n">No</span> <span class="n">baseline</span> <span class="n">correction</span> <span class="n">applied</span>
-<span class="n">Computing</span> <span class="n">time</span><span class="o">-</span><span class="n">frequency</span> <span class="n">power</span> <span class="n">on</span> <span class="n">single</span> <span class="n">epochs</span><span class="o">...</span>
-<span class="n">No</span> <span class="n">baseline</span> <span class="n">correction</span> <span class="n">applied</span>
+<div class="sphx-glr-script-out highlight-default"><div class="highlight"><pre><span></span><span class="n">Applying</span> <span class="n">baseline</span> <span class="n">correction</span> <span class="p">(</span><span class="n">mode</span><span class="p">:</span> <span class="n">ratio</span><span class="p">)</span>
+<span class="n">Applying</span> <span class="n">baseline</span> <span class="n">correction</span> <span class="p">(</span><span class="n">mode</span><span class="p">:</span> <span class="n">ratio</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Compute ratio with baseline power (be sure to correct time vector with
-decimation factor)</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">baseline_mask</span> <span class="o">=</span> <span class="n">times</span><span class="p">[::</span><span class="n">decim</span><span class="p">]</span> <span class="o">&lt;</span> <span class="mi">0</span>
-<span class="n">epochs_baseline_1</span> <span class="o">=</span> <a href="http://docs.scipy.org/doc/numpy-1.10.1/reference/generated/numpy.mean.html#numpy.mean"><span class="n">np</span><span class="o">.</span><span class="n">mean</span></a><span class="p">(</span><span class="n">epochs_power_1</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">baseline_mask</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-<span class="n">epochs_power_1</span> <span class="o">/=</span> <span class="n">epochs_baseline_1</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <a href="http://docs.scipy.org/doc/numpy-1.10.1/reference/arrays.indexing.html#numpy.newaxis"><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span></a><span class="p">]</span>
-<span class="n">epochs_baseline_2</span> <span class="o">=</span> <a href="http://docs.scipy.org/doc/numpy-1.10.1/reference/generated/numpy.mean.html#numpy.mean"><span class="n">np</span><span class="o">.</span><span class="n">mean</span></a><span class="p">(</span><span class="n">epochs_power_2</span><span class="p">[:,</span> <span class="p">:,</span> <span class="n">baseline_mask</span><span class="p">],</span> <span class="n">axis</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
-<span class="n">epochs_power_2</span> <span class="o">/=</span> <span class="n">epochs_baseline_2</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <a href="http://docs.scipy.org/doc/numpy-1.10.1/reference/arrays.indexing.html#numpy.newaxis"><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span></a><span class="p">]</span>
-</pre></div>
-</div>
-<p>Compute statistic</p>
+<div class="section" id="compute-statistic">
+<h2>Compute statistic<a class="headerlink" href="#compute-statistic" title="Permalink to this headline">¶</a></h2>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">threshold</span> <span class="o">=</span> <span class="mf">6.0</span>
 <span class="n">T_obs</span><span class="p">,</span> <span class="n">clusters</span><span class="p">,</span> <span class="n">cluster_p_values</span><span class="p">,</span> <span class="n">H0</span> <span class="o">=</span> \
     <a href="../generated/mne.stats.permutation_cluster_test.html#mne.stats.permutation_cluster_test"><span class="n">permutation_cluster_test</span></a><span class="p">([</span><span class="n">epochs_power_1</span><span class="p">,</span> <span class="n">epochs_power_2</span><span class="p">],</span>
@@ -375,9 +363,9 @@ decimation factor)</p>
 </pre></div>
 </div>
 <p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-default"><div class="highlight"><pre><span></span><span class="n">stat_fun</span><span class="p">(</span><span class="n">H1</span><span class="p">):</span> <span class="nb">min</span><span class="o">=</span><span class="mf">0.000000</span> <span class="nb">max</span><span class="o">=</span><span class="mf">18.051130</span>
+<div class="sphx-glr-script-out highlight-default"><div class="highlight"><pre><span></span><span class="n">stat_fun</span><span class="p">(</span><span class="n">H1</span><span class="p">):</span> <span class="nb">min</span><span class="o">=</span><span class="mf">0.000000</span> <span class="nb">max</span><span class="o">=</span><span class="mf">13.566824</span>
 <span class="n">Running</span> <span class="n">initial</span> <span class="n">clustering</span>
-<span class="n">Found</span> <span class="mi">4</span> <span class="n">clusters</span>
+<span class="n">Found</span> <span class="mi">6</span> <span class="n">clusters</span>
 <span class="n">Permuting</span> <span class="o">...</span>
 
 <span class="p">[</span>                                        <span class="p">]</span> <span class="mf">1.00000</span> <span class="o">|</span>
@@ -387,20 +375,17 @@ decimation factor)</p>
 <span class="n">Done</span><span class="o">.</span>
 </pre></div>
 </div>
-<p>View time-frequency plots</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.clf"><span class="n">plt</span><span class="o">.</span><span class="n">clf</span></a><span class="p">()</span>
-<span class="n">plt</span><span class="o">.</span><span class="n">subplots_adjust</span><span class="p">(</span><span class="mf">0.12</span><span class="p">,</span> <span class="mf">0.08</span><span class="p">,</span> <span class="mf">0.96</span><span class="p">,</span> <span class="mf">0.94</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.43</span><span class="p">)</span>
+</div>
+<div class="section" id="view-time-frequency-plots">
+<h2>View time-frequency plots<a class="headerlink" href="#view-time-frequency-plots" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">times</span> <span class="o">=</span> <span class="mf">1e3</span> <span class="o">*</span> <span class="n">epochs_condition_1</span><span class="o">.</span><span class="n">times</span>  <span class="c1"># change unit to ms</span>
+<span class="n">evoked_condition_1</span> <span class="o">=</span> <span class="n">epochs_condition_1</span><span class="o">.</span><span class="n">average</span><span class="p">()</span>
+<span class="n">evoked_condition_2</span> <span class="o">=</span> <span class="n">epochs_condition_2</span><span class="o">.</span><span class="n">average</span><span class="p">()</span>
+
+<a href="http://matplotlib.org/api/figure_api.html#matplotlib.figure"><span class="n">plt</span><span class="o">.</span><span class="n">figure</span></a><span class="p">()</span>
+<a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.subplots_adjust"><span class="n">plt</span><span class="o">.</span><span class="n">subplots_adjust</span></a><span class="p">(</span><span class="mf">0.12</span><span class="p">,</span> <span class="mf">0.08</span><span class="p">,</span> <span class="mf">0.96</span><span class="p">,</span> <span class="mf">0.94</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.43</span><span class="p">)</span>
+
 <a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.subplot"><span class="n">plt</span><span class="o">.</span><span class="n">subplot</span></a><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
-<span class="n">evoked_contrast</span> <span class="o">=</span> <a href="http://docs.scipy.org/doc/numpy-1.10.1/reference/generated/numpy.mean.html#numpy.mean"><span class="n">np</span><span class="o">.</span><span class="n">mean</span></a><span class="p">(</span><span class="n">data_condition_1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="o">-</span> <a href="http://docs.scipy.org/doc/numpy-1.10.1/reference/generated/numpy.mean.html#numpy.mean"><span class="n">np</span><span class="o">.</span><span class="n">mean</span></a><span class="p">(</span><span class="n">data_condition_2</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
-<a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.plot"><span class="n">plt</span><span class="o">.</span><span class="n">plot</span></a><span class="p">(</span><span class="n">times</span><span class="p">,</span> <span class="n">evoked_contrast</span><span class="o">.</span><span class="n">T</span><span class="p">)</span>
-<a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.title"><span class="n">plt</span><span class="o">.</span><span class="n">title</span></a><span class="p">(</span><span class="s1">&#39;Contrast of evoked response (</span><span class="si">%s</span><span class="s1">)&#39;</span> <span class="o">%</span> <span class="n">ch_name</span><span class="p">)</span>
-<a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.xlabel"><span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span></a><span class="p">(</span><span class="s1">&#39;time (ms)&#39;</span><span class="p">)</span>
-<a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.ylabel"><span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span></a><span class="p">(</span><span class="s1">&#39;Magnetic Field (fT/cm)&#39;</span><span class="p">)</span>
-<a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.xlim"><span class="n">plt</span><span class="o">.</span><span class="n">xlim</span></a><span class="p">(</span><span class="n">times</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">times</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">])</span>
-<a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.ylim"><span class="n">plt</span><span class="o">.</span><span class="n">ylim</span></a><span class="p">(</span><span class="o">-</span><span class="mi">100</span><span class="p">,</span> <span class="mi">200</span><span class="p">)</span>
-
-<a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.subplot"><span class="n">plt</span><span class="o">.</span><span class="n">subplot</span></a><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
-
 <span class="c1"># Create new stats image with only significant clusters</span>
 <span class="n">T_obs_plot</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">nan</span> <span class="o">*</span> <a href="http://docs.scipy.org/doc/numpy-1.10.1/reference/generated/numpy.ones_like.html#numpy.ones_like"><span class="n">np</span><span class="o">.</span><span class="n">ones_like</span></a><span class="p">(</span><span class="n">T_obs</span><span class="p">)</span>
 <span class="k">for</span> <span class="n">c</span><span class="p">,</span> <span class="n">p_val</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">clusters</span><span class="p">,</span> <span class="n">cluster_p_values</span><span class="p">):</span>
@@ -409,25 +394,32 @@ decimation factor)</p>
 
 <a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.imshow"><span class="n">plt</span><span class="o">.</span><span class="n">imshow</span></a><span class="p">(</span><span class="n">T_obs</span><span class="p">,</span>
            <span class="n">extent</span><span class="o">=</span><span class="p">[</span><span class="n">times</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">times</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">frequencies</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">frequencies</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]],</span>
-           <span class="n">aspect</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="n">origin</span><span class="o">=</span><span class="s1">&#39;lower&#39;</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;RdBu_r&#39;</span><span class="p">)</span>
+           <span class="n">aspect</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="n">origin</span><span class="o">=</span><span class="s1">&#39;lower&#39;</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">)</span>
 <a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.imshow"><span class="n">plt</span><span class="o">.</span><span class="n">imshow</span></a><span class="p">(</span><span class="n">T_obs_plot</span><span class="p">,</span>
            <span class="n">extent</span><span class="o">=</span><span class="p">[</span><span class="n">times</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">times</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">frequencies</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">frequencies</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]],</span>
            <span class="n">aspect</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="n">origin</span><span class="o">=</span><span class="s1">&#39;lower&#39;</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;RdBu_r&#39;</span><span class="p">)</span>
 
-<a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.xlabel"><span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span></a><span class="p">(</span><span class="s1">&#39;time (ms)&#39;</span><span class="p">)</span>
+<a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.xlabel"><span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span></a><span class="p">(</span><span class="s1">&#39;Time (ms)&#39;</span><span class="p">)</span>
 <a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.ylabel"><span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span></a><span class="p">(</span><span class="s1">&#39;Frequency (Hz)&#39;</span><span class="p">)</span>
 <a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.title"><span class="n">plt</span><span class="o">.</span><span class="n">title</span></a><span class="p">(</span><span class="s1">&#39;Induced power (</span><span class="si">%s</span><span class="s1">)&#39;</span> <span class="o">%</span> <span class="n">ch_name</span><span class="p">)</span>
+
+<span class="n">ax2</span> <span class="o">=</span> <a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.subplot"><span class="n">plt</span><span class="o">.</span><span class="n">subplot</span></a><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">evoked_contrast</span> <span class="o">=</span> <a href="../generated/mne.combine_evoked.html#mne.combine_evoked"><span class="n">mne</span><span class="o">.</span><span class="n">combine_evoked</span></a><span class="p">([</span><span class="n">evoked_condition_1</span><span class="p">,</span> <span class="n">evoked_condition_2</span><span class="p">],</span>
+                                     <span class="n">weights</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+<span class="n">evoked_contrast</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">axes</span><span class="o">=</span><span class="n">ax2</span><span class="p">)</span>
+
 <a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.show"><span class="n">plt</span><span class="o">.</span><span class="n">show</span></a><span class="p">()</span>
 </pre></div>
 </div>
 <img alt="../_images/sphx_glr_plot_stats_cluster_time_frequency_001.png" class="align-center" src="../_images/sphx_glr_plot_stats_cluster_time_frequency_001.png" />
 <p><strong>Total running time of the script:</strong>
-(0 minutes 1.217 seconds)</p>
+(0 minutes 1.254 seconds)</p>
 <div class="sphx-glr-download container">
 <strong>Download Python source code:</strong> <a class="reference download internal" href="../_downloads/plot_stats_cluster_time_frequency.py" download=""><code class="xref download docutils literal"><span class="pre">plot_stats_cluster_time_frequency.py</span></code></a></div>
 <div class="sphx-glr-download container">
 <strong>Download IPython notebook:</strong> <a class="reference download internal" href="../_downloads/plot_stats_cluster_time_frequency.ipynb" download=""><code class="xref download docutils literal"><span class="pre">plot_stats_cluster_time_frequency.ipynb</span></code></a></div>
 <p class="sphx-glr-signature"><a class="reference external" href="http://sphinx-gallery.readthedocs.io">Generated by Sphinx-Gallery</a></p>
+</div>
 </div>
 
 
@@ -445,7 +437,7 @@ decimation factor)</p>
       
     </p>
     <p>
-        &copy; Copyright 2012-2016, MNE Developers. Last updated on 2016-08-02.<br/>
+        &copy; Copyright 2012-2016, MNE Developers. Last updated on 2016-08-03.<br/>
     </p>
   </div>
 </footer>
