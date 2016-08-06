@@ -786,14 +786,19 @@ Or another one stored in the same file:
     Applying baseline correction (mode: mean)
 
 
-Compute a contrast:
+Two evoked objects can be contrasted using :func:`mne.combine_evoked`.
+This function can use ``weights='equal'``, which provides a simple
+element-by-element subtraction (and sets the
+:attr:`mne.Evoked.nave` attribute properly based on the underlying number
+of trials) using either equivalent call:
 
 
 
 .. code-block:: python
 
 
-    contrast = evoked1 - evoked2
+    contrast = mne.combine_evoked([evoked1, evoked2], weights=[0.5, -0.5])
+    contrast = mne.combine_evoked([evoked1, -evoked2], weights='equal')
     print(contrast)
 
 
@@ -804,7 +809,62 @@ Compute a contrast:
 
  Out::
 
-    <Evoked  |  comment : 'Left Auditory - Right Auditory', kind : average, time : [-0.199795, 0.499488], n_epochs : 116, n_channels x n_times : 376 x 421, ~4.9 MB>
+    <Evoked  |  comment : '0.500 * Left Auditory + 0.500 * -Right Auditory', kind : average, time : [-0.199795, 0.499488], n_epochs : 116, n_channels x n_times : 376 x 421, ~4.9 MB>
+
+
+To do a weighted sum based on the number of averages, which will give
+you what you would have gotten from pooling all trials together in
+:class:`mne.Epochs` before creating the :class:`mne.Evoked` instance,
+you can use ``weights='nave'``:
+
+
+
+.. code-block:: python
+
+
+    average = mne.combine_evoked([evoked1, evoked2], weights='nave')
+    print(contrast)
+
+
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    <Evoked  |  comment : '0.500 * Left Auditory + 0.500 * -Right Auditory', kind : average, time : [-0.199795, 0.499488], n_epochs : 116, n_channels x n_times : 376 x 421, ~4.9 MB>
+
+
+Instead of dealing with mismatches in the number of averages, we can use
+trial-count equalization before computing a contrast, which can have some
+benefits in inverse imaging (note that here ``weights='nave'`` will
+give the same result as ``weights='equal'``):
+
+
+
+.. code-block:: python
+
+
+    epochs_eq = epochs.copy().equalize_event_counts(['aud_l', 'aud_r'])[0]
+    evoked1, evoked2 = epochs_eq['aud_l'].average(), epochs_eq['aud_r'].average()
+    print(evoked1)
+    print(evoked2)
+    contrast = mne.combine_evoked([evoked1, -evoked2], weights='equal')
+    print(contrast)
+
+
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    Dropped 6 epochs
+    <Evoked  |  comment : 'aud_l', kind : average, time : [-0.199795, 0.499488], n_epochs : 55, n_channels x n_times : 364 x 106, ~4.0 MB>
+    <Evoked  |  comment : 'aud_r', kind : average, time : [-0.199795, 0.499488], n_epochs : 55, n_channels x n_times : 364 x 106, ~4.0 MB>
+    <Evoked  |  comment : '0.500 * aud_l + 0.500 * -aud_r', kind : average, time : [-0.199795, 0.499488], n_epochs : 110, n_channels x n_times : 364 x 106, ~4.0 MB>
 
 
 Time-Frequency: Induced power and inter trial coherence
@@ -1108,7 +1168,7 @@ Browse `the examples gallery <auto_examples/index.html>`_.
 
 
 **Total running time of the script:**
-(0 minutes 14.689 seconds)
+(0 minutes 17.055 seconds)
 
 
 

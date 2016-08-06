@@ -554,7 +554,8 @@ difference ERPs.
 
     left, right = epochs["left"].average(), epochs["right"].average()
 
-    (left - right).plot_joint()  # create and plot difference ERP
+    # create and plot difference ERP
+    mne.combine_evoked([left, -right], weights='equal').plot_joint()
 
 
 
@@ -617,10 +618,10 @@ difference ERPs.
     Disabling interactive colorbar for multiple axes. Turn interactivity on explicitly by passing cmap as a tuple.
 
 
-Note that by default, this is a trial-weighted average. If you have
-imbalanced trial numbers, consider either equalizing the number of events per
-condition (using ``Epochs.equalize_event_counts``), or the ``combine_evoked``
-function.
+This is an equal-weighting difference. If you have imbalanced trial numbers,
+you could also consider either equalizing the number of events per
+condition (using
+:meth:``epochs.equalize_epochs_counts <mne.Epochs.equalize_event_counts`).
 As an example, first, we create individual ERPs for each condition.
 
 
@@ -634,18 +635,10 @@ As an example, first, we create individual ERPs for each condition.
     vis_r = epochs["visual", "right"].average()
 
     all_evokeds = [aud_l, aud_r, vis_l, vis_r]
-
-    # This could have been much simplified with a list comprehension:
-    # all_evokeds = [epochs[cond] for cond in event_id]
-
-    # Then, we construct and plot an unweighted average of left vs. right trials.
-    mne.combine_evoked(all_evokeds, weights=(1, -1, 1, -1)).plot_joint()
+    print(all_evokeds)
 
 
 
-
-.. image:: /auto_tutorials/images/sphx_glr_plot_eeg_erp_010.png
-    :align: center
 
 
 .. rst-class:: sphx-glr-script-out
@@ -699,6 +692,82 @@ As an example, first, we create individual ERPs for each condition.
         Rejecting  epoch based on EOG : ['EOG']
         Rejecting  epoch based on EOG : ['EOG']
         Rejecting  epoch based on EOG : ['EOG']
+    [<Evoked  |  comment : 'left/auditory', kind : average, time : [-0.199795, 0.499488], n_epochs : 56, n_channels x n_times : 59 x 106, ~3.1 MB>, <Evoked  |  comment : 'right/auditory', kind : average, time : [-0.199795, 0.499488], n_epochs : 62, n_channels x n_times : 59 x 106, ~3.1 MB>, <Evoked  |  comment : 'left/visual', kind : average, time : [-0.199795, 0.499488], n_epochs : 67, n_channels x n_times : 59 x 106, ~3.1 MB>, <Evoked  |  comment : 'right/visual', kind : average, time : [-0.199795, 0.499488], n_epochs : 56, n_channels x n_times : 59 x 106, ~3.1 MB>]
+
+
+This can be simplified with a Python list comprehension:
+
+
+
+.. code-block:: python
+
+    all_evokeds = [epochs[cond].average() for cond in sorted(event_id.keys())]
+    print(all_evokeds)
+
+    # Then, we construct and plot an unweighted average of left vs. right trials
+    # this way, too:
+    mne.combine_evoked(all_evokeds,
+                       weights=(0.25, -0.25, 0.25, -0.25)).plot_joint()
+
+
+
+
+.. image:: /auto_tutorials/images/sphx_glr_plot_eeg_erp_010.png
+    :align: center
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    Rejecting  epoch based on EOG : ['EOG']
+        Rejecting  epoch based on EOG : ['EOG']
+        Rejecting  epoch based on EOG : ['EOG']
+        Rejecting  epoch based on EOG : ['EOG']
+        Rejecting  epoch based on EOG : ['EOG']
+        Rejecting  epoch based on EOG : ['EOG']
+        Rejecting  epoch based on EOG : ['EOG']
+        Rejecting  epoch based on EOG : ['EOG']
+        Rejecting  epoch based on EOG : ['EOG']
+        Rejecting  epoch based on EOG : ['EOG']
+        Rejecting  epoch based on EOG : ['EOG']
+        Rejecting  epoch based on EOG : ['EOG']
+        Rejecting  epoch based on EOG : ['EOG']
+        Rejecting  epoch based on EOG : ['EOG']
+        Rejecting  epoch based on EOG : ['EOG']
+        Rejecting  epoch based on EOG : ['EOG']
+        Rejecting  epoch based on EOG : ['EOG']
+        Rejecting  epoch based on EOG : ['EOG']
+        Rejecting  epoch based on EOG : ['EOG']
+        Rejecting  epoch based on EOG : ['EOG']
+        Rejecting  epoch based on EOG : ['EOG']
+        Rejecting  epoch based on EOG : ['EOG']
+        Rejecting  epoch based on EOG : ['EOG']
+        Rejecting  epoch based on EEG : [u'EEG 001']
+        Rejecting  epoch based on EOG : ['EOG']
+        Rejecting  epoch based on EOG : ['EOG']
+        Rejecting  epoch based on EOG : ['EOG']
+        Rejecting  epoch based on EOG : ['EOG']
+        Rejecting  epoch based on EOG : ['EOG']
+        Rejecting  epoch based on EOG : ['EOG']
+        Rejecting  epoch based on EOG : ['EOG']
+        Rejecting  epoch based on EOG : ['EOG']
+        Rejecting  epoch based on EOG : ['EOG']
+        Rejecting  epoch based on EOG : ['EOG']
+        Rejecting  epoch based on EOG : ['EOG']
+        Rejecting  epoch based on EOG : ['EOG']
+        Rejecting  epoch based on EOG : ['EOG']
+        Rejecting  epoch based on EOG : ['EOG']
+        Rejecting  epoch based on EOG : ['EOG']
+        Rejecting  epoch based on EOG : ['EOG']
+        Rejecting  epoch based on EOG : ['EOG']
+        Rejecting  epoch based on EOG : ['EOG']
+        Rejecting  epoch based on EOG : ['EOG']
+        Rejecting  epoch based on EOG : ['EOG']
+        Rejecting  epoch based on EOG : ['EOG']
+        Rejecting  epoch based on EOG : ['EOG']
+        Rejecting  epoch based on EOG : ['EOG']
+    [<Evoked  |  comment : 'left/auditory', kind : average, time : [-0.199795, 0.499488], n_epochs : 56, n_channels x n_times : 59 x 106, ~3.1 MB>, <Evoked  |  comment : 'left/visual', kind : average, time : [-0.199795, 0.499488], n_epochs : 67, n_channels x n_times : 59 x 106, ~3.1 MB>, <Evoked  |  comment : 'right/auditory', kind : average, time : [-0.199795, 0.499488], n_epochs : 62, n_channels x n_times : 59 x 106, ~3.1 MB>, <Evoked  |  comment : 'right/visual', kind : average, time : [-0.199795, 0.499488], n_epochs : 56, n_channels x n_times : 59 x 106, ~3.1 MB>]
     Disabling interactive colorbar for multiple axes. Turn interactivity on explicitly by passing cmap as a tuple.
 
 
@@ -810,7 +879,7 @@ either different conditions, or different subjects.
 
 
 **Total running time of the script:**
-(0 minutes 13.300 seconds)
+(0 minutes 14.106 seconds)
 
 
 
