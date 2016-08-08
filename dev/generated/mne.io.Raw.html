@@ -326,7 +326,7 @@ present).</p>
 <td>Add SSP projection vectors</td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#mne.io.Raw.anonymize" title="mne.io.Raw.anonymize"><code class="xref py py-obj docutils literal"><span class="pre">anonymize</span></code></a>()</td>
-<td>Anonymize data.</td>
+<td>Anonymize measurement information in place.</td>
 </tr>
 <tr class="row-even"><td><a class="reference internal" href="#mne.io.Raw.append" title="mne.io.Raw.append"><code class="xref py py-obj docutils literal"><span class="pre">append</span></code></a>(raws[,&nbsp;preload])</td>
 <td>Concatenate raw instances as if they were continuous</td>
@@ -649,21 +649,28 @@ to &#8216;STI 014&#8217;.</p>
 <dl class="method">
 <dt id="mne.io.Raw.anonymize">
 <code class="descname">anonymize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#mne.io.Raw.anonymize" title="Permalink to this definition">¶</a></dt>
-<dd><p>Anonymize data.</p>
-<p>This function will remove &#8216;subject_info&#8217;, &#8216;meas_date&#8217;, &#8216;file_id&#8217;,
-&#8216;meas_id&#8217; if they exist in <code class="docutils literal"><span class="pre">raw.info</span></code>.</p>
+<dd><p>Anonymize measurement information in place.</p>
+<p>Reset &#8216;subject_info&#8217;, &#8216;meas_date&#8217;, &#8216;file_id&#8217;, and &#8216;meas_id&#8217; keys if they
+exist in <code class="docutils literal"><span class="pre">info</span></code>.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>raw</strong> : instance of Raw</p>
+<tr class="field-odd field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>info</strong> : instance of Info</p>
 <blockquote class="last">
-<div><p>The raw object. Operates in place.</p>
+<div><p>Measurement information for the dataset.</p>
 </div></blockquote>
 </td>
 </tr>
 </tbody>
 </table>
+<p class="rubric">Notes</p>
+<p>Operates in place.</p>
+<blockquote>
+<div><div class="versionadded">
+<p><span class="versionmodified">New in version 0.13.0.</span></p>
+</div>
+</div></blockquote>
 </dd></dl>
 
 <dl class="method">
@@ -1277,7 +1284,7 @@ to upgrade the data files to use the true coil type.</p>
 <p class="first admonition-title">Note</p>
 <p class="last">The effect of the difference between the coil sizes on the
 current estimates computed by the MNE software is very small.
-Therefore the use of this function is not mandatory.</p>
+Therefore the use of mne_fix_mag_coil_types is not mandatory.</p>
 </div>
 </dd></dl>
 
@@ -1544,7 +1551,7 @@ Defaults to self.verbose.</p>
 
 <dl class="method">
 <dt id="mne.io.Raw.pick_types">
-<code class="descname">pick_types</code><span class="sig-paren">(</span><em>meg=True</em>, <em>eeg=False</em>, <em>stim=False</em>, <em>eog=False</em>, <em>ecg=False</em>, <em>emg=False</em>, <em>ref_meg='auto'</em>, <em>misc=False</em>, <em>resp=False</em>, <em>chpi=False</em>, <em>exci=False</em>, <em>ias=False</em>, <em>syst=False</em>, <em>seeg=False</em>, <em>bio=False</em>, <em>ecog=False</em>, <em>include=[]</em>, <em>exclude='bads'</em>, <em>selection=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mne.io.Raw.pick_types" title="Permalink to this definition">¶</a></dt>
+<code class="descname">pick_types</code><span class="sig-paren">(</span><em>meg=True</em>, <em>eeg=False</em>, <em>stim=False</em>, <em>eog=False</em>, <em>ecg=False</em>, <em>emg=False</em>, <em>ref_meg='auto'</em>, <em>misc=False</em>, <em>resp=False</em>, <em>chpi=False</em>, <em>exci=False</em>, <em>ias=False</em>, <em>syst=False</em>, <em>seeg=False</em>, <em>dipole=False</em>, <em>gof=False</em>, <em>bio=False</em>, <em>ecog=False</em>, <em>include=[]</em>, <em>exclude='bads'</em>, <em>selection=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mne.io.Raw.pick_types" title="Permalink to this definition">¶</a></dt>
 <dd><p>Pick some channels by type and names</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -1611,6 +1618,14 @@ is separate from the stim channel.</p>
 <blockquote>
 <div><p>Stereotactic EEG channels.</p>
 </div></blockquote>
+<p><strong>dipole</strong> : bool</p>
+<blockquote>
+<div><p>Dipole time course channels.</p>
+</div></blockquote>
+<p><strong>gof</strong> : bool</p>
+<blockquote>
+<div><p>Dipole goodness of fit channels.</p>
+</div></blockquote>
 <p><strong>bio</strong> : bool</p>
 <blockquote>
 <div><p>Bio channels.</p>
@@ -1663,7 +1678,8 @@ in <code class="docutils literal"><span class="pre">info['bads']</span></code>.<
 </div></blockquote>
 <p><strong>duration</strong> : float</p>
 <blockquote>
-<div><p>Time window (sec) to plot in a given time.</p>
+<div><p>Time window (sec) to plot. The lesser of this value and the duration
+of the raw file will be used.</p>
 </div></blockquote>
 <p><strong>start</strong> : float</p>
 <blockquote>
@@ -1671,8 +1687,8 @@ in <code class="docutils literal"><span class="pre">info['bads']</span></code>.<
 </div></blockquote>
 <p><strong>n_channels</strong> : int</p>
 <blockquote>
-<div><p>Number of channels to plot at once. Defaults to 20. Has no effect
-if <code class="docutils literal"><span class="pre">order</span></code> is &#8216;position&#8217; or &#8216;selection&#8217;.</p>
+<div><p>Number of channels to plot at once. Defaults to 20. Has no effect if
+<code class="docutils literal"><span class="pre">order</span></code> is &#8216;position&#8217; or &#8216;selection&#8217;.</p>
 </div></blockquote>
 <p><strong>bgcolor</strong> : color object</p>
 <blockquote>
@@ -1681,7 +1697,7 @@ if <code class="docutils literal"><span class="pre">order</span></code> is &#821
 <p><strong>color</strong> : dict | color object | None</p>
 <blockquote>
 <div><p>Color for the data traces. If None, defaults to:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="nb">dict</span><span class="p">(</span><span class="n">mag</span><span class="o">=</span><span class="s1">&#39;darkblue&#39;</span><span class="p">,</span> <span class="n">grad</span><span class="o">=</span><span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="n">eeg</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">eog</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">ecg</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="nb">dict</span><span class="p">(</span><span class="n">mag</span><span class="o">=</span><span class="s1">&#39;darkblue&#39;</span><span class="p">,</span> <span class="n">grad</span><span class="o">=</span><span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="n">eeg</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">eog</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">ecg</span><span class="o">=</span><span class="s1">&#39;m&#39;</span><span class="p">,</span>
      <span class="n">emg</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">ref_meg</span><span class="o">=</span><span class="s1">&#39;steelblue&#39;</span><span class="p">,</span> <span class="n">misc</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">stim</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span>
      <span class="n">resp</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">chpi</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">)</span>
 </pre></div>
@@ -1691,18 +1707,19 @@ if <code class="docutils literal"><span class="pre">order</span></code> is &#821
 <blockquote>
 <div><p>Color to make bad channels.</p>
 </div></blockquote>
-<p><strong>event_color</strong> : color object</p>
+<p><strong>event_color</strong> : color object | dict</p>
 <blockquote>
-<div><p>Color to use for events.</p>
+<div><p>Color to use for events. Can also be a dict with
+<code class="docutils literal"><span class="pre">{event_number:</span> <span class="pre">color}</span></code> pairings. Use <code class="docutils literal"><span class="pre">event_number==-1</span></code> for
+any event numbers in the events list that are not in the dictionary.</p>
 </div></blockquote>
 <p><strong>scalings</strong> : dict | None</p>
 <blockquote>
-<div><p>Scaling factors for the traces. If any fields in scalings are
-&#8216;auto&#8217;, the scaling factor is set to match the 99.5th percentile of
-a subset of the corresponding data. If scalings == &#8216;auto&#8217;, all
-scalings fields are set to &#8216;auto&#8217;. If any fields are &#8216;auto&#8217; and
-data is not preloaded, a subset of times up to 100mb will be
-loaded. If None, defaults to:</p>
+<div><p>Scaling factors for the traces. If any fields in scalings are &#8216;auto&#8217;,
+the scaling factor is set to match the 99.5th percentile of a subset of
+the corresponding data. If scalings == &#8216;auto&#8217;, all scalings fields are
+set to &#8216;auto&#8217;. If any fields are &#8216;auto&#8217; and data is not preloaded, a
+subset of times up to 100mb will be loaded. If None, defaults to:</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="nb">dict</span><span class="p">(</span><span class="n">mag</span><span class="o">=</span><span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">12</span><span class="p">,</span> <span class="n">grad</span><span class="o">=</span><span class="mi">4</span><span class="n">e</span><span class="o">-</span><span class="mi">11</span><span class="p">,</span> <span class="n">eeg</span><span class="o">=</span><span class="mi">20</span><span class="n">e</span><span class="o">-</span><span class="mi">6</span><span class="p">,</span> <span class="n">eog</span><span class="o">=</span><span class="mi">150</span><span class="n">e</span><span class="o">-</span><span class="mi">6</span><span class="p">,</span> <span class="n">ecg</span><span class="o">=</span><span class="mi">5</span><span class="n">e</span><span class="o">-</span><span class="mi">4</span><span class="p">,</span>
      <span class="n">emg</span><span class="o">=</span><span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">3</span><span class="p">,</span> <span class="n">ref_meg</span><span class="o">=</span><span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">12</span><span class="p">,</span> <span class="n">misc</span><span class="o">=</span><span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">3</span><span class="p">,</span> <span class="n">stim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
      <span class="n">resp</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">chpi</span><span class="o">=</span><span class="mi">1</span><span class="n">e</span><span class="o">-</span><span class="mi">4</span><span class="p">)</span>
@@ -1715,15 +1732,14 @@ loaded. If None, defaults to:</p>
 </div></blockquote>
 <p><strong>order</strong> : str | array of int</p>
 <blockquote>
-<div><p>Order in which to plot data. &#8216;type&#8217; groups by channel type,
-&#8216;original&#8217; plots in the order of ch_names, &#8216;selection&#8217; uses
-Elekta&#8217;s channel groupings (only works for Neuromag data),
-&#8216;position&#8217; groups the channels by the positions of the sensors.
-&#8216;selection&#8217; and &#8216;position&#8217; modes allow custom selections by using
-lasso selector on the topomap. Pressing <code class="docutils literal"><span class="pre">ctrl</span></code> key while
-selecting allows appending to the current selection. If array, only
-the channels in the array are plotted in the given order. Defaults
-to &#8216;type&#8217;.</p>
+<div><p>Order in which to plot data. &#8216;type&#8217; groups by channel type, &#8216;original&#8217;
+plots in the order of ch_names, &#8216;selection&#8217; uses Elekta&#8217;s channel
+groupings (only works for Neuromag data), &#8216;position&#8217; groups the
+channels by the positions of the sensors. &#8216;selection&#8217; and &#8216;position&#8217;
+modes allow custom selections by using lasso selector on the topomap.
+Pressing <code class="docutils literal"><span class="pre">ctrl</span></code> key while selecting allows appending to the current
+selection. If array, only the channels in the array are plotted in the
+given order. Defaults to &#8216;type&#8217;.</p>
 </div></blockquote>
 <p><strong>show_options</strong> : bool</p>
 <blockquote>
@@ -1736,12 +1752,12 @@ raw object or &#8216;&lt;unknown&gt;&#8217; will be displayed as title.</p>
 </div></blockquote>
 <p><strong>show</strong> : bool</p>
 <blockquote>
-<div><p>Show figures if True</p>
+<div><p>Show figure if True.</p>
 </div></blockquote>
 <p><strong>block</strong> : bool</p>
 <blockquote>
 <div><p>Whether to halt program execution until the figure is closed.
-Useful for setting bad channels on the fly (click on line).
+Useful for setting bad channels on the fly by clicking on a line.
 May not work on all systems / platforms.</p>
 </div></blockquote>
 <p><strong>highpass</strong> : float | None</p>
@@ -1781,13 +1797,12 @@ then excessive values are not shown, creating gaps in the traces.</p>
 <p class="rubric">Notes</p>
 <p>The arrow keys (up/down/left/right) can typically be used to navigate
 between channels and time ranges, but this depends on the backend
-matplotlib is configured to use (e.g., mpl.use(&#8216;TkAgg&#8217;) should work).
-The scaling can be adjusted with - and + (or =) keys. The viewport
-dimensions can be adjusted with page up/page down and home/end keys.
-Full screen mode can be to toggled with f11 key. To mark or un-mark a
-channel as bad, click on the rather flat segments of a channel&#8217;s time
-series. The changes will be reflected immediately in the raw object&#8217;s
-<code class="docutils literal"><span class="pre">raw.info['bads']</span></code> entry.</p>
+matplotlib is configured to use (e.g., mpl.use(&#8216;TkAgg&#8217;) should work). The
+scaling can be adjusted with - and + (or =) keys. The viewport dimensions
+can be adjusted with page up/page down and home/end keys. Full screen mode
+can be to toggled with f11 key. To mark or un-mark a channel as bad, click
+on the rather flat segments of a channel&#8217;s time series. The changes will be
+reflected immediately in the raw object&#8217;s <code class="docutils literal"><span class="pre">raw.info['bads']</span></code> entry.</p>
 </dd></dl>
 
 <dl class="method">
@@ -1866,9 +1881,9 @@ there must be only one projector. Defaults to None.</p>
 </div></blockquote>
 <p><strong>picks</strong> : array-like of int | None</p>
 <blockquote>
-<div><p>List of channels to use. Cannot be None if <cite>ax</cite> is supplied. If
-both <cite>picks</cite> and <cite>ax</cite> are None, separate subplots will be created
-for each standard channel type (<cite>mag</cite>, <cite>grad</cite>, and <cite>eeg</cite>).</p>
+<div><p>List of channels to use. Cannot be None if <cite>ax</cite> is supplied. If both
+<cite>picks</cite> and <cite>ax</cite> are None, separate subplots will be created for
+each standard channel type (<cite>mag</cite>, <cite>grad</cite>, and <cite>eeg</cite>).</p>
 </div></blockquote>
 <p><strong>ax</strong> : instance of matplotlib Axes | None</p>
 <blockquote>
@@ -1880,10 +1895,10 @@ for each standard channel type (<cite>mag</cite>, <cite>grad</cite>, and <cite>e
 </div></blockquote>
 <p><strong>area_mode</strong> : str | None</p>
 <blockquote>
-<div><p>How to plot area. If &#8216;std&#8217;, the mean +/- 1 STD (across channels)
-will be plotted. If &#8216;range&#8217;, the min and max (across channels)
-will be plotted. Bad channels will be excluded from these
-calculations. If None, no area will be plotted.</p>
+<div><p>Mode for plotting area. If &#8216;std&#8217;, the mean +/- 1 STD (across channels)
+will be plotted. If &#8216;range&#8217;, the min and max (across channels) will be
+plotted. Bad channels will be excluded from these calculations.
+If None, no area will be plotted.</p>
 </div></blockquote>
 <p><strong>area_alpha</strong> : float</p>
 <blockquote>
@@ -1900,7 +1915,7 @@ is 0 (no overlap).</p>
 </div></blockquote>
 <p><strong>show</strong> : bool</p>
 <blockquote>
-<div><p>Call pyplot.show() at the end.</p>
+<div><p>Show figure if True.</p>
 </div></blockquote>
 <p><strong>n_jobs</strong> : int</p>
 <blockquote>
@@ -1924,7 +1939,7 @@ is 0 (no overlap).</p>
 
 <dl class="method">
 <dt id="mne.io.Raw.plot_psd_topo">
-<code class="descname">plot_psd_topo</code><span class="sig-paren">(</span><em>tmin=0.0</em>, <em>tmax=None</em>, <em>fmin=0</em>, <em>fmax=100</em>, <em>proj=False</em>, <em>n_fft=2048</em>, <em>n_overlap=0</em>, <em>layout=None</em>, <em>color='w'</em>, <em>fig_facecolor='k'</em>, <em>axis_facecolor='k'</em>, <em>dB=True</em>, <em>show=True</em>, <em>n_jobs=1</em>, <em>verbose=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mne.io.Raw.plot_psd_topo" title="Permalink to this definition">¶</a></dt>
+<code class="descname">plot_psd_topo</code><span class="sig-paren">(</span><em>tmin=0.0</em>, <em>tmax=None</em>, <em>fmin=0</em>, <em>fmax=100</em>, <em>proj=False</em>, <em>n_fft=2048</em>, <em>n_overlap=0</em>, <em>layout=None</em>, <em>color='w'</em>, <em>fig_facecolor='k'</em>, <em>axis_facecolor='k'</em>, <em>dB=True</em>, <em>show=True</em>, <em>block=False</em>, <em>n_jobs=1</em>, <em>verbose=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mne.io.Raw.plot_psd_topo" title="Permalink to this definition">¶</a></dt>
 <dd><p>Function for plotting channel wise frequency spectra as topography.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -1936,8 +1951,7 @@ is 0 (no overlap).</p>
 </div></blockquote>
 <p><strong>tmax</strong> : float | None</p>
 <blockquote>
-<div><p>End time for calculations. If None (default), the end of data is
-used.</p>
+<div><p>End time for calculations. If None (default), the end of data is used.</p>
 </div></blockquote>
 <p><strong>fmin</strong> : float</p>
 <blockquote>
@@ -1953,8 +1967,7 @@ used.</p>
 </div></blockquote>
 <p><strong>n_fft</strong> : int</p>
 <blockquote>
-<div><p>Number of points to use in Welch FFT calculations. Defaults to
-2048.</p>
+<div><p>Number of points to use in Welch FFT calculations. Defaults to 2048.</p>
 </div></blockquote>
 <p><strong>n_overlap</strong> : int</p>
 <blockquote>
@@ -1963,14 +1976,13 @@ used.</p>
 </div></blockquote>
 <p><strong>layout</strong> : instance of Layout | None</p>
 <blockquote>
-<div><p>Layout instance specifying sensor positions (does not need to
-be specified for Neuromag data). If None (default), the correct
-layout is inferred from the data.</p>
+<div><p>Layout instance specifying sensor positions (does not need to be
+specified for Neuromag data). If None (default), the correct layout is
+inferred from the data.</p>
 </div></blockquote>
 <p><strong>color</strong> : str | tuple</p>
 <blockquote>
-<div><p>A matplotlib-compatible color to use for the curves. Defaults to
-white.</p>
+<div><p>A matplotlib-compatible color to use for the curves. Defaults to white.</p>
 </div></blockquote>
 <p><strong>fig_facecolor</strong> : str | tuple</p>
 <blockquote>
@@ -1989,6 +2001,11 @@ Defaults to black.</p>
 <p><strong>show</strong> : bool</p>
 <blockquote>
 <div><p>Show figure if True. Defaults to True.</p>
+</div></blockquote>
+<p><strong>block</strong> : bool</p>
+<blockquote>
+<div><p>Whether to halt program execution until the figure is closed.
+May not work on all systems / platforms. Defaults to False.</p>
 </div></blockquote>
 <p><strong>n_jobs</strong> : int</p>
 <blockquote>
@@ -2036,8 +2053,8 @@ channels are chosen in the order given above.</p>
 </div></blockquote>
 <p><strong>title</strong> : str | None</p>
 <blockquote>
-<div><p>Title for the figure. If None (default), equals to
-<code class="docutils literal"><span class="pre">'Sensor</span> <span class="pre">positions</span> <span class="pre">(%s)'</span> <span class="pre">%</span> <span class="pre">ch_type</span></code>.</p>
+<div><p>Title for the figure. If None (default), equals to <code class="docutils literal"><span class="pre">'Sensor</span>
+<span class="pre">positions</span> <span class="pre">(%s)'</span> <span class="pre">%</span> <span class="pre">ch_type</span></code>.</p>
 </div></blockquote>
 <p><strong>show_names</strong> : bool</p>
 <blockquote>
