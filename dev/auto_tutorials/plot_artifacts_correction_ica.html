@@ -322,7 +322,7 @@ dominate the variance and decomposition</p>
 </div>
 <div class="section" id="component-properties">
 <h2>Component properties<a class="headerlink" href="#component-properties" title="Permalink to this headline">¶</a></h2>
-<p>Let&#8217;s take a closer at properties of first three independent components</p>
+<p>Let&#8217;s take a closer look at properties of first three independent components.</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># first, component 0:</span>
 <span class="n">ica</span><span class="o">.</span><span class="n">plot_properties</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">picks</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 </pre></div>
@@ -344,6 +344,15 @@ very informative, let&#8217;s change that:</p>
 <li><a class="first reference internal image-reference" href="../_images/sphx_glr_plot_artifacts_correction_ica_006.png"><img alt="../_images/sphx_glr_plot_artifacts_correction_ica_006.png" src="../_images/sphx_glr_plot_artifacts_correction_ica_006.png" style="width: 329.0px; height: 282.0px;" /></a>
 </li>
 </ul>
+<p>Instead of opening individual figures with component properties, we can
+also pass an instance of Raw or Epochs in <code class="docutils literal"><span class="pre">inst</span></code> arument to
+<code class="docutils literal"><span class="pre">ica.plot_components</span></code>. This would allow us to open component properties
+interactively by clicking on individual component topomaps. In the notebook
+this woks only when running matplotlib in interactive mode (<code class="docutils literal"><span class="pre">%matplotlib</span></code>).</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># uncomment the code below to test the inteactive mode of plot_components:</span>
+<span class="c1"># ica.plot_components(picks=range(10), inst=raw)</span>
+</pre></div>
+</div>
 </div>
 <div class="section" id="advanced-artifact-detection">
 <h2>Advanced artifact detection<a class="headerlink" href="#advanced-artifact-detection" title="Permalink to this headline">¶</a></h2>
@@ -416,8 +425,8 @@ epochs image:</p>
 <p>These labels were used by the plotters and are added automatically
 by artifact detection functions. You can also manually edit them to annotate
 components.</p>
-<p>Now let&#8217;s see how we would modify our signals if we would remove this
-component from the data</p>
+<p>Now let&#8217;s see how we would modify our signals if we removed this component
+from the data</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">ica</span><span class="o">.</span><span class="n">plot_overlay</span><span class="p">(</span><span class="n">eog_average</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="n">eog_inds</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
 <span class="c1"># red -&gt; before, black -&gt; after. Yes! We remove quite a lot!</span>
 
@@ -473,28 +482,34 @@ component from the data</p>
 </div>
 <div class="section" id="what-if-we-don-t-have-an-eog-channel">
 <h2>What if we don&#8217;t have an EOG channel?<a class="headerlink" href="#what-if-we-don-t-have-an-eog-channel" title="Permalink to this headline">¶</a></h2>
-<p>1) make a bipolar reference from frontal EEG sensors and use as virtual EOG
+<p>We could either:</p>
+<ol class="arabic simple">
+<li>make a bipolar reference from frontal EEG sensors and use as virtual EOG
 channel. This can be tricky though as you can only hope that the frontal
 EEG channels only reflect EOG and not brain dynamics in the prefrontal
-cortex.
-2) Go for a semi-automated approach, using template matching.
-In MNE-Python option 2 is easily achievable and it might be better,
+cortex.</li>
+<li>go for a semi-automated approach, using template matching.</li>
+</ol>
+<p>In MNE-Python option 2 is easily achievable and it might give better results,
 so let&#8217;s have a look at it.</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">mne.preprocessing.ica</span> <span class="kn">import</span> <span class="n">corrmap</span>  <span class="c1"># noqa</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">mne.preprocessing.ica</span> <span class="kn">import</span> <a href="../generated/mne.preprocessing.corrmap.html#mne.preprocessing.corrmap"><span class="n">corrmap</span></a>  <span class="c1"># noqa</span>
 </pre></div>
 </div>
 <p>The idea behind corrmap is that artefact patterns are similar across subjects
 and can thus be identified by correlating the different patterns resulting
 from each solution with a template. The procedure is therefore
-semi-automatic. Corrmap hence takes at least a list of ICA solutions and a
-template, that can be an index or an array. As we don&#8217;t have different
-subjects or runs available today, here we will fit ICA models to different
-parts of the recording and then use as a user-defined template the ICA
-that we just fitted for detecting corresponding components in the three &#8220;new&#8221;
-ICAs. The following block of code addresses this point and should not be
-copied, ok?
-We&#8217;ll start by simulating a group of subjects or runs from a subject</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">start</span><span class="p">,</span> <span class="n">stop</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">times</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
+semi-automatic. <a class="reference internal" href="../generated/mne.preprocessing.corrmap.html#mne.preprocessing.corrmap" title="mne.preprocessing.corrmap"><code class="xref py py-func docutils literal"><span class="pre">mne.preprocessing.corrmap()</span></code></a> hence takes a list of
+ICA solutions and a template, that can be an index or an array.</p>
+<p>As we don&#8217;t have different subjects or runs available today, here we will
+simulate ICA solutions from different subjects by fitting ICA models to
+different parts of the same recording. Then we will use one of the components
+from our original ICA as a template in order to detect sufficiently similar
+components in the simulated ICAs.</p>
+<p>The following block of code simulates having ICA solutions from different
+runs/subjects so it should not be used in real analysis - use independent
+data sets instead.</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># We&#39;ll start by simulating a group of subjects or runs from a subject</span>
+<span class="n">start</span><span class="p">,</span> <span class="n">stop</span> <span class="o">=</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">times</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">]</span>
 <span class="n">intervals</span> <span class="o">=</span> <a href="http://docs.scipy.org/doc/numpy-1.10.1/reference/generated/numpy.linspace.html#numpy.linspace"><span class="n">np</span><span class="o">.</span><span class="n">linspace</span></a><span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
 <span class="n">icas_from_other_data</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
 <span class="n">raw</span><span class="o">.</span><span class="n">pick_types</span><span class="p">(</span><span class="n">meg</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">eeg</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>  <span class="c1"># take only MEG channels</span>
@@ -529,8 +544,8 @@ We&#8217;ll start by simulating a group of subjects or runs from a subject</p>
 <span class="n">Selection</span> <span class="n">by</span> <span class="n">number</span><span class="p">:</span> <span class="mi">25</span> <span class="n">components</span>
 </pre></div>
 </div>
-<p>Do not copy this at home! You start by reading in a collections of ICA
-solutions, something like</p>
+<p>Remember, don&#8217;t do this at home! Start by reading in a collection of ICA
+solutions instead. Something like:</p>
 <p><code class="docutils literal"><span class="pre">icas</span> <span class="pre">=</span> <span class="pre">[mne.preprocessing.read_ica(fname)</span> <span class="pre">for</span> <span class="pre">fname</span> <span class="pre">in</span> <span class="pre">ica_fnames]</span></code></p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="n">icas_from_other_data</span><span class="p">)</span>
 </pre></div>
@@ -539,11 +554,11 @@ solutions, something like</p>
 <div class="sphx-glr-script-out highlight-default"><div class="highlight"><pre><span></span><span class="p">[</span><span class="o">&lt;</span><a href="../generated/mne.preprocessing.ICA.html#mne.preprocessing.ICA"><span class="n">ICA</span></a>  <span class="o">|</span>  <span class="n">raw</span> <span class="n">data</span> <span class="n">decomposition</span><span class="p">,</span> <span class="n">fit</span> <span class="p">(</span><span class="n">fastica</span><span class="p">):</span> <span class="mi">13545</span> <span class="n">samples</span><span class="p">,</span> <span class="mi">25</span> <span class="n">components</span><span class="p">,</span> <span class="n">channels</span> <span class="n">used</span><span class="p">:</span> <span class="s2">&quot;mag&quot;</span><span class="p">;</span> <span class="s2">&quot;grad&quot;</span><span class="o">&gt;</span><span class="p">,</span> <span class="o">&lt;</span><a href="../generated/mne.preprocessing.ICA.html#mne.preprocessing.ICA"><span class="n">ICA</span></a>  <span class="o">|</span>  <span class="n">raw</span> <span class="n">data</span> <span class="n">decomposition</span><span class="p">,</span> <span class="n">fit</span> <span class="p">(</span><span class="n">fastica</span><span class="p">):</span> <span class="mi">13545</span> <span class="n">samples</span><span class="p">,</span> <span class="mi">25</span> <span class="n">components</span><span class="p">,</span> <span class="n">channels</span> <span class="n">used</span><span class="p">:</span> <span class="s2">&quot;mag&quot;</span><span class="p">;</span> <span class="s2">&quot;grad&quot;</span><span class="o">&gt;</span><span class="p">,</span> <span class="o">&lt;</span><a href="../generated/mne.preprocessing.ICA.html#mne.preprocessing.ICA"><span class="n">ICA</span></a>  <span class="o">|</span>  <span class="n">raw</span> <span class="n">data</span> <span class="n">decomposition</span><span class="p">,</span> <span class="n">fit</span> <span class="p">(</span><span class="n">fastica</span><span class="p">):</span> <span class="mi">13846</span> <span class="n">samples</span><span class="p">,</span> <span class="mi">25</span> <span class="n">components</span><span class="p">,</span> <span class="n">channels</span> <span class="n">used</span><span class="p">:</span> <span class="s2">&quot;mag&quot;</span><span class="p">;</span> <span class="s2">&quot;grad&quot;</span><span class="o">&gt;</span><span class="p">]</span>
 </pre></div>
 </div>
-<p>use our previous ICA as reference.</p>
+<p>We use our original ICA as reference.</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">reference_ica</span> <span class="o">=</span> <span class="n">ica</span>
 </pre></div>
 </div>
-<p>Investigate our reference ICA, here we use the previous fit from above.</p>
+<p>Investigate our reference ICA:</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">reference_ica</span><span class="o">.</span><span class="n">plot_components</span><span class="p">()</span>
 </pre></div>
 </div>
@@ -559,22 +574,23 @@ solutions, something like</p>
 </pre></div>
 </div>
 <p>Which one is the bad EOG component?
-Here we rely on our previous detection algorithm. You will need to decide
-yourself in that situation where no other detection is available.</p>
+Here we rely on our previous detection algorithm. You would need to decide
+yourself if no automatic detection was available.</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">reference_ica</span><span class="o">.</span><span class="n">plot_sources</span><span class="p">(</span><span class="n">eog_average</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="n">eog_inds</span><span class="p">)</span>
 </pre></div>
 </div>
 <img alt="../_images/sphx_glr_plot_artifacts_correction_ica_016.png" class="align-center" src="../_images/sphx_glr_plot_artifacts_correction_ica_016.png" />
 <p>Indeed it looks like an EOG, also in the average time course.</p>
-<p>We construct a list so that our reference run is the first element. Then we
-can detect similar components from the other runs using corrmap. So
-our template shall be a tuple like (reference_run_index, component_index):</p>
+<p>We construct a list where our reference run is the first element. Then we
+can detect similar components from the other runs using
+<a class="reference internal" href="../generated/mne.preprocessing.corrmap.html#mne.preprocessing.corrmap" title="mne.preprocessing.corrmap"><code class="xref py py-func docutils literal"><span class="pre">mne.preprocessing.corrmap()</span></code></a>. So our template must be a tuple like
+(reference_run_index, component_index):</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">icas</span> <span class="o">=</span> <span class="p">[</span><span class="n">reference_ica</span><span class="p">]</span> <span class="o">+</span> <span class="n">icas_from_other_data</span>
 <span class="n">template</span> <span class="o">=</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">eog_inds</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
 </pre></div>
 </div>
 <p>Now we can do the corrmap.</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">fig_template</span><span class="p">,</span> <span class="n">fig_detected</span> <span class="o">=</span> <span class="n">corrmap</span><span class="p">(</span><span class="n">icas</span><span class="p">,</span> <span class="n">template</span><span class="o">=</span><span class="n">template</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;blinks&quot;</span><span class="p">,</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">fig_template</span><span class="p">,</span> <span class="n">fig_detected</span> <span class="o">=</span> <a href="../generated/mne.preprocessing.corrmap.html#mne.preprocessing.corrmap"><span class="n">corrmap</span></a><span class="p">(</span><span class="n">icas</span><span class="p">,</span> <span class="n">template</span><span class="o">=</span><span class="n">template</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s2">&quot;blinks&quot;</span><span class="p">,</span>
                                      <span class="n">show</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=.</span><span class="mi">8</span><span class="p">,</span> <span class="n">ch_type</span><span class="o">=</span><span class="s1">&#39;mag&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -590,14 +606,14 @@ our template shall be a tuple like (reference_run_index, component_index):</p>
 <span class="n">At</span> <span class="n">least</span> <span class="mi">1</span> <span class="n">IC</span> <span class="n">detected</span> <span class="k">for</span> <span class="n">each</span> <span class="n">subject</span><span class="o">.</span>
 </pre></div>
 </div>
-<p>Nice, we have found similar ICs from the other runs!
+<p>Nice, we have found similar ICs from the other (simulated) runs!
 This is even nicer if we have 20 or 100 ICA solutions in a list.</p>
-<p>You can also use SSP for correcting for artifacts. It is a bit simpler,
-faster but is less precise than ICA. And it requires that you
-know the event timing of your artifact.
+<p>You can also use SSP to correct for artifacts. It is a bit simpler and
+faster but also less precise than ICA and requires that you know the event
+timing of your artifact.
 See <a class="reference internal" href="plot_artifacts_correction_ssp.html#tut-artifacts-correct-ssp"><span class="std std-ref">Artifact Correction with SSP</span></a>.</p>
 <p><strong>Total running time of the script:</strong>
-(1 minutes 6.122 seconds)</p>
+(1 minutes 8.640 seconds)</p>
 <div class="sphx-glr-download container">
 <a class="reference download internal" href="../_downloads/plot_artifacts_correction_ica.py" download=""><code class="xref download docutils literal"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">plot_artifacts_correction_ica.py</span></code></a></div>
 <div class="sphx-glr-download container">
@@ -621,7 +637,7 @@ See <a class="reference internal" href="plot_artifacts_correction_ssp.html#tut-a
       
     </p>
     <p>
-        &copy; Copyright 2012-2016, MNE Developers. Last updated on 2016-08-13.<br/>
+        &copy; Copyright 2012-2016, MNE Developers. Last updated on 2016-08-15.<br/>
     </p>
   </div>
 </footer>
