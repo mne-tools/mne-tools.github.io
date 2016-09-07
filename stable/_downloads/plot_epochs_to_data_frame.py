@@ -103,6 +103,7 @@ raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
 event_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw-eve.fif'
 
 raw = mne.io.read_raw_fif(raw_fname)
+raw.set_eeg_reference()  # set EEG average reference
 
 # For simplicity we will only consider the first 10 epochs
 events = mne.read_events(event_fname)[:10]
@@ -203,7 +204,7 @@ print(max_latency)
 df.condition = df.condition.apply(lambda name: name + ' ')
 
 plt.figure()
-max_latency.plot(kind='barh', title='Latency of Maximum Reponse',
+max_latency.plot(kind='barh', title='Latency of Maximum Response',
                  color=['steelblue'])
 mne.viz.tight_layout()
 

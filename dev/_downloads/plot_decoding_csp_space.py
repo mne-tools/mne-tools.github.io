@@ -6,12 +6,14 @@ Decoding in sensor space data using the Common Spatial Pattern (CSP)
 Decoding applied to MEG data in sensor space decomposed using CSP.
 Here the classifier is applied to features extracted on CSP filtered signals.
 
-See http://en.wikipedia.org/wiki/Common_spatial_pattern and [1]
+See http://en.wikipedia.org/wiki/Common_spatial_pattern and [1]_.
 
-[1] Zoltan J. Koles. The quantitative extraction and topographic mapping
-    of the abnormal components in the clinical EEG. Electroencephalography
-    and Clinical Neurophysiology, 79(6):440--447, December 1991.
+References
+----------
 
+.. [1] Zoltan J. Koles. The quantitative extraction and topographic mapping
+       of the abnormal components in the clinical EEG. Electroencephalography
+       and Clinical Neurophysiology, 79(6):440--447, December 1991.
 """
 # Authors: Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 #          Romain Trachel <romain.trachel@inria.fr>
@@ -38,7 +40,7 @@ event_id = dict(aud_l=1, vis_l=3)
 
 # Setup for reading the raw data
 raw = io.read_raw_fif(raw_fname, preload=True)
-raw.filter(2, None, method='iir')  # replace baselining with high-pass
+raw.filter(2, None)  # replace baselining with high-pass
 events = mne.read_events(event_fname)
 
 raw.info['bads'] = ['MEG 2443']  # set bad channels

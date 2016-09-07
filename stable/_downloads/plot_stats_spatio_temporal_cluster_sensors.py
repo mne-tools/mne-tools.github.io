@@ -40,7 +40,8 @@ tmax = 0.5
 
 # Setup for reading the raw data
 raw = mne.io.read_raw_fif(raw_fname, preload=True)
-raw.filter(1, 30)
+raw.filter(1, 30, l_trans_bandwidth='auto', h_trans_bandwidth='auto',
+           filter_length='auto', phase='zero')
 events = mne.read_events(event_fname)
 
 ###############################################################################
@@ -54,7 +55,7 @@ epochs = mne.Epochs(raw, events, event_id, tmin, tmax, picks=picks,
                     baseline=None, reject=reject, preload=True)
 
 epochs.drop_channels(['EOG 061'])
-epochs.equalize_event_counts(event_id, copy=False)
+epochs.equalize_event_counts(event_id)
 
 condition_names = 'Aud_L', 'Aud_R', 'Vis_L', 'Vis_R'
 X = [epochs[k].get_data() for k in condition_names]  # as 3D matrix

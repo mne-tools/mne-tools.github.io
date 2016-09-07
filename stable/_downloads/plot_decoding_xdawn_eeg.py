@@ -9,14 +9,15 @@ to create features vectors that will be fed into a Logistic Regression.
 
 References
 ----------
-[1] Rivet, B., Souloumiac, A., Attina, V., & Gibert, G. (2009). xDAWN
-algorithm to enhance evoked potentials: application to brain-computer
-interface. Biomedical Engineering, IEEE Transactions on, 56(8), 2035-2043.
 
-[2] Rivet, B., Cecotti, H., Souloumiac, A., Maby, E., & Mattout, J. (2011,
-August). Theoretical analysis of xDAWN algorithm: application to an
-efficient sensor selection in a P300 BCI. In Signal Processing Conference,
-2011 19th European (pp. 1382-1386). IEEE.
+.. [1] Rivet, B., Souloumiac, A., Attina, V., & Gibert, G. (2009). xDAWN
+       algorithm to enhance evoked potentials: application to brain-computer
+       interface. Biomedical Engineering, IEEE Transactions on, 56(8),
+       2035-2043.
+.. [2] Rivet, B., Cecotti, H., Souloumiac, A., Maby, E., & Mattout, J. (2011,
+       August). Theoretical analysis of xDAWN algorithm: application to an
+       efficient sensor selection in a P300 BCI. In Signal Processing
+       Conference, 2011 19th European (pp. 1382-1386). IEEE.
 """
 # Authors: Alexandre Barachant <alexandre.barachant@gmail.com>
 #
@@ -34,7 +35,7 @@ from sklearn.preprocessing import MinMaxScaler
 from mne import io, pick_types, read_events, Epochs
 from mne.datasets import sample
 from mne.preprocessing import Xdawn
-from mne.decoding import EpochsVectorizer
+from mne.decoding import Vectorizer
 from mne.viz import tight_layout
 
 
@@ -51,7 +52,7 @@ event_id = dict(aud_l=1, aud_r=2, vis_l=3, vis_r=4)
 
 # Setup for reading the raw data
 raw = io.read_raw_fif(raw_fname, preload=True)
-raw.filter(1, 20, method='iir')
+raw.filter(1, 20)
 events = read_events(event_fname)
 
 picks = pick_types(raw.info, meg=False, eeg=True, stim=False, eog=False,
@@ -59,11 +60,11 @@ picks = pick_types(raw.info, meg=False, eeg=True, stim=False, eog=False,
 
 epochs = Epochs(raw, events, event_id, tmin, tmax, proj=False,
                 picks=picks, baseline=None, preload=True,
-                add_eeg_ref=False, verbose=False)
+                verbose=False)
 
 # Create classification pipeline
 clf = make_pipeline(Xdawn(n_components=3),
-                    EpochsVectorizer(),
+                    Vectorizer(),
                     MinMaxScaler(),
                     LogisticRegression(penalty='l1'))
 

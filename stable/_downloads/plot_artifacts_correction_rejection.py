@@ -13,6 +13,7 @@ from mne.datasets import sample
 data_path = sample.data_path()
 raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
 raw = mne.io.read_raw_fif(raw_fname)
+raw.set_eeg_reference()
 
 ###############################################################################
 # .. _marking_bad_channels:
@@ -127,10 +128,14 @@ n_blinks = len(eog_events)
 # Center to cover the whole blink with full duration of 0.5s:
 onset = eog_events[:, 0] / raw.info['sfreq'] - 0.25
 duration = np.repeat(0.5, n_blinks)
-raw.annotations = mne.Annotations(onset, duration, ['bad blink'] * n_blinks)
+raw.annotations = mne.Annotations(onset, duration, ['bad blink'] * n_blinks,
+                                  orig_time=raw.info['meas_date'])
 raw.plot(events=eog_events)  # To see the annotated segments.
 
 ###############################################################################
+# It is also possible to draw bad segments interactively using
+# :meth:`raw.plot <mne.io.Raw.plot>` (see :ref:`tut_viz_raw`).
+#
 # As the data is epoched, all the epochs overlapping with segments whose
 # description starts with 'bad' are rejected by default. To turn rejection off,
 # use keyword argument ``reject_by_annotation=False`` when constructing

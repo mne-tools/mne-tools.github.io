@@ -48,7 +48,7 @@ References
     from mne.minimum_norm import apply_inverse
     from mne.datasets.brainstorm import bst_auditory
     from mne.io import read_raw_ctf
-    from mne.filter import notch_filter, low_pass_filter
+    from mne.filter import notch_filter, filter_data
 
     print(__doc__)
 
@@ -328,9 +328,7 @@ them to the raw data. The projectors are added to both runs.
 
     16 matching events found
     Applying baseline correction (mode: mean)
-    Adding average EEG reference projection.
-    Created an SSP operator (subspace dimension = 1)
-    1 projection items activated
+    0 projection items activated
     Loading data for 16 events and 1201 original time points ...
     1 bad epochs dropped
     No gradiometers found. Forcing n_grad to 0
@@ -376,10 +374,10 @@ usually would do.
 
     if not use_precomputed:
         meg_picks = mne.pick_types(raw.info, meg=True, eeg=False)
-        raw.plot_psd(picks=meg_picks)
+        raw.plot_psd(tmax=np.inf, picks=meg_picks)
         notches = np.arange(60, 181, 60)
         raw.notch_filter(notches)
-        raw.plot_psd(picks=meg_picks)
+        raw.plot_psd(tmax=np.inf, picks=meg_picks)
 
 
 
@@ -601,22 +599,31 @@ of this tutorial, we do it at evoked stage.
 
     if use_precomputed:
         sfreq = evoked_std.info['sfreq']
-        nchan = evoked_std.info['nchan']
         notches = [60, 120, 180]
-        for ch_idx in range(nchan):
-            evoked_std.data[ch_idx] = notch_filter(evoked_std.data[ch_idx], sfreq,
-                                                   notches, verbose='ERROR')
-            evoked_dev.data[ch_idx] = notch_filter(evoked_dev.data[ch_idx], sfreq,
-                                                   notches, verbose='ERROR')
-            evoked_std.data[ch_idx] = low_pass_filter(evoked_std.data[ch_idx],
-                                                      sfreq, 100, verbose='ERROR')
-            evoked_dev.data[ch_idx] = low_pass_filter(evoked_dev.data[ch_idx],
-                                                      sfreq, 100, verbose='ERROR')
+        for evoked in (evoked_std, evoked_dev):
+            evoked.data[:] = notch_filter(evoked.data, sfreq, notches)
+            evoked.data[:] = filter_data(evoked_std.data, sfreq, None, 100)
 
 
 
 
 
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    Setting up band-stop filter
+    Filter length of 7920 samples (13.200 sec) selected
+    filter_length (7921) is longer than the signal (360), distortion is likely. Reduce filter length or filter a longer signal.
+    Setting up low-pass filter at 1e+02 Hz
+    h_trans_bandwidth chosen to be 25.0 Hz
+    Filter length of 158 samples (0.263 sec) selected
+    Setting up band-stop filter
+    Filter length of 7920 samples (13.200 sec) selected
+    filter_length (7921) is longer than the signal (360), distortion is likely. Reduce filter length or filter a longer signal.
+    Setting up low-pass filter at 1e+02 Hz
+    h_trans_bandwidth chosen to be 25.0 Hz
+    Filter length of 158 samples (0.263 sec) selected
 
 
 Here we plot the ERF of standard and deviant conditions. In both conditions
@@ -680,12 +687,6 @@ Show activations as topography figures.
             :scale: 47
 
 
-.. rst-class:: sphx-glr-script-out
-
- Out::
-
-    Disabling interactive colorbar for multiple axes. Turn interactivity on explicitly by passing cmap as a tuple.
-    Disabling interactive colorbar for multiple axes. Turn interactivity on explicitly by passing cmap as a tuple.
 
 
 We can see the MMN effect more clearly by looking at the difference between
@@ -893,7 +894,7 @@ Standard condition.
     Smoothing matrix creation, step 8
     Smoothing matrix creation, step 9
     Smoothing matrix creation, step 10
-    colormap: fmin=4.74e+00 fmid=5.61e+00 fmax=1.57e+01 transparent=1
+    colormap: fmin=4.75e+00 fmid=5.62e+00 fmax=1.57e+01 transparent=1
 
 
 Deviant condition.
@@ -943,7 +944,7 @@ Deviant condition.
     Smoothing matrix creation, step 8
     Smoothing matrix creation, step 9
     Smoothing matrix creation, step 10
-    colormap: fmin=7.00e+00 fmid=8.16e+00 fmax=1.83e+01 transparent=1
+    colormap: fmin=4.60e+00 fmid=5.44e+00 fmax=1.52e+01 transparent=1
 
 
 Difference.
@@ -991,22 +992,25 @@ Difference.
     Smoothing matrix creation, step 8
     Smoothing matrix creation, step 9
     Smoothing matrix creation, step 10
-    colormap: fmin=4.90e+00 fmid=5.73e+00 fmax=1.48e+01 transparent=1
+    colormap: fmin=6.42e-02 fmid=7.10e-02 fmax=1.45e-01 transparent=1
 
 
-**Total running time of the script:**
-(5 minutes 22.114 seconds)
+**Total running time of the script:** ( 1 minutes  38.386 seconds)
 
 
 
-.. container:: sphx-glr-download
-
-    :download:`Download Python source code: plot_brainstorm_auditory.py <plot_brainstorm_auditory.py>`
+.. container:: sphx-glr-footer
 
 
-.. container:: sphx-glr-download
+  .. container:: sphx-glr-download
 
-    :download:`Download Jupyter notebook: plot_brainstorm_auditory.ipynb <plot_brainstorm_auditory.ipynb>`
+     :download:`Download Python source code: plot_brainstorm_auditory.py <plot_brainstorm_auditory.py>`
+
+
+
+  .. container:: sphx-glr-download
+
+     :download:`Download Jupyter notebook: plot_brainstorm_auditory.ipynb <plot_brainstorm_auditory.ipynb>`
 
 .. rst-class:: sphx-glr-signature
 

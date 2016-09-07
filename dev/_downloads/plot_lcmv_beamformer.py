@@ -3,9 +3,9 @@
 Compute LCMV beamformer on evoked data
 ======================================
 
-Compute LCMV beamformer solutions on evoked dataset for three different choices
-of source orientation and stores the solutions in stc files for visualisation.
-
+Compute LCMV beamformer solutions on an evoked dataset for three different
+choices of source orientation and store the solutions in stc files for
+visualisation.
 """
 # Author: Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
 #
@@ -33,7 +33,7 @@ subjects_dir = data_path + '/subjects'
 event_id, tmin, tmax = 1, -0.2, 0.5
 
 # Setup for reading the raw data
-raw = mne.io.read_raw_fif(raw_fname, preload=True, proj=True)
+raw = mne.io.read_raw_fif(raw_fname, preload=True)
 raw.info['bads'] = ['MEG 2443', 'EEG 053']  # 2 bads channels
 events = mne.read_events(event_fname)
 
@@ -48,9 +48,8 @@ raw.pick_channels([raw.ch_names[pick] for pick in picks])
 raw.info.normalize_proj()
 
 # Read epochs
-proj = False  # already applied
 epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
-                    baseline=(None, 0), preload=True, proj=proj,
+                    baseline=(None, 0), preload=True, proj=True,
                     reject=dict(grad=4000e-13, mag=4e-12, eog=150e-6))
 evoked = epochs.average()
 
@@ -70,7 +69,7 @@ descriptions = ['Free orientation', 'Normal orientation', 'Max-power '
 colors = ['b', 'k', 'r']
 
 for pick_ori, name, desc, color in zip(pick_oris, names, descriptions, colors):
-    stc = lcmv(evoked, forward, noise_cov, data_cov, reg=0.01,
+    stc = lcmv(evoked, forward, noise_cov, data_cov, reg=0.05,
                pick_ori=pick_ori)
 
     # View activation time-series

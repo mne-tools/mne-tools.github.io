@@ -7,6 +7,7 @@ EEG processing and Event Related Potentials (ERPs)
 For a generic introduction to the computation of ERP and ERF
 see :ref:`tut_epoching_and_averaging`. Here we cover the specifics
 of EEG, namely:
+
     - setting the reference
     - using standard montages :func:`mne.channels.Montage`
     - Evoked arithmetic (e.g. differences)
@@ -21,7 +22,8 @@ from mne.datasets import sample
 data_path = sample.data_path()
 raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
 event_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw-eve.fif'
-raw = mne.io.read_raw_fif(raw_fname, add_eeg_ref=True, preload=True)
+raw = mne.io.read_raw_fif(raw_fname, preload=True)
+raw.set_eeg_reference()  # set EEG average reference
 
 ###############################################################################
 # Let's restrict the data to the EEG channels
@@ -74,7 +76,7 @@ montage = mne.channels.read_montage('standard_1020')
 print(montage)
 
 ###############################################################################
-# To apply a montage on your data use the :func:`mne.io.set_montage`
+# To apply a montage on your data use the ``set_montage`` method.
 # function. Here don't actually call this function as our demo dataset
 # already contains good EEG channel locations.
 #
@@ -89,7 +91,7 @@ print(montage)
 # This explicitly prevents MNE from adding a default EEG average reference
 # required for source localization.
 
-raw_no_ref, _ = mne.io.set_eeg_reference(raw, [])
+raw_no_ref, _ = mne.set_eeg_reference(raw, [])
 
 ###############################################################################
 # We next define Epochs and compute an ERP for the left auditory condition.
@@ -109,7 +111,7 @@ evoked_no_ref.plot_topomap(times=[0.1], size=3., title=title)
 ###############################################################################
 # **Average reference**: This is normally added by default, but can also
 # be added explicitly.
-raw_car, _ = mne.io.set_eeg_reference(raw)
+raw_car, _ = mne.set_eeg_reference(raw)
 evoked_car = mne.Epochs(raw_car, **epochs_params).average()
 del raw_car  # save memory
 
@@ -120,7 +122,7 @@ evoked_car.plot_topomap(times=[0.1], size=3., title=title)
 ###############################################################################
 # **Custom reference**: Use the mean of channels EEG 001 and EEG 002 as
 # a reference
-raw_custom, _ = mne.io.set_eeg_reference(raw, ['EEG 001', 'EEG 002'])
+raw_custom, _ = mne.set_eeg_reference(raw, ['EEG 001', 'EEG 002'])
 evoked_custom = mne.Epochs(raw_custom, **epochs_params).average()
 del raw_custom  # save memory
 
@@ -151,13 +153,14 @@ print(epochs)
 
 left, right = epochs["left"].average(), epochs["right"].average()
 
-(left - right).plot_joint()  # create and plot difference ERP
+# create and plot difference ERP
+mne.combine_evoked([left, -right], weights='equal').plot_joint()
 
 ###############################################################################
-# Note that by default, this is a trial-weighted average. If you have
-# imbalanced trial numbers, consider either equalizing the number of events per
-# condition (using ``Epochs.equalize_event_counts``), or the ``combine_evoked``
-# function.
+# This is an equal-weighting difference. If you have imbalanced trial numbers,
+# you could also consider either equalizing the number of events per
+# condition (using
+# :meth:`epochs.equalize_event_counts <mne.Epochs.equalize_event_counts>`).
 # As an example, first, we create individual ERPs for each condition.
 
 aud_l = epochs["auditory", "left"].average()
@@ -166,12 +169,17 @@ vis_l = epochs["visual", "left"].average()
 vis_r = epochs["visual", "right"].average()
 
 all_evokeds = [aud_l, aud_r, vis_l, vis_r]
+print(all_evokeds)
 
-# This could have been much simplified with a list comprehension:
-# all_evokeds = [epochs[cond] for cond in event_id]
+###############################################################################
+# This can be simplified with a Python list comprehension:
+all_evokeds = [epochs[cond].average() for cond in sorted(event_id.keys())]
+print(all_evokeds)
 
-# Then, we construct and plot an unweighted average of left vs. right trials.
-mne.combine_evoked(all_evokeds, weights=(1, -1, 1, -1)).plot_joint()
+# Then, we construct and plot an unweighted average of left vs. right trials
+# this way, too:
+mne.combine_evoked(all_evokeds,
+                   weights=(0.25, -0.25, 0.25, -0.25)).plot_joint()
 
 ###############################################################################
 # Often, it makes sense to store Evoked objects in a dictionary or a list -

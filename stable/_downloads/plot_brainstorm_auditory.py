@@ -5,18 +5,19 @@ Brainstorm auditory tutorial dataset
 ====================================
 
 Here we compute the evoked from raw for the auditory Brainstorm
-tutorial dataset. For comparison, see [1]_ and
-http://neuroimage.usc.edu/brainstorm/Tutorials/Auditory
+tutorial dataset. For comparison, see [1]_ and:
+
+    http://neuroimage.usc.edu/brainstorm/Tutorials/Auditory
 
 Experiment:
-    - One subject 2 acquisition runs 6 minutes each.
+
+    - One subject, 2 acquisition runs 6 minutes each.
     - Each run contains 200 regular beeps and 40 easy deviant beeps.
     - Random ISI: between 0.7s and 1.7s seconds, uniformly distributed.
     - Button pressed when detecting a deviant with the right index finger.
 
-The specifications of this dataset were discussed initially on the FieldTrip
-bug tracker:
-http://bugzilla.fcdonders.nl/show_bug.cgi?id=2300
+The specifications of this dataset were discussed initially on the
+`FieldTrip bug tracker <http://bugzilla.fcdonders.nl/show_bug.cgi?id=2300>`_.
 
 References
 ----------
@@ -41,7 +42,7 @@ from mne import combine_evoked
 from mne.minimum_norm import apply_inverse
 from mne.datasets.brainstorm import bst_auditory
 from mne.io import read_raw_ctf
-from mne.filter import notch_filter, low_pass_filter
+from mne.filter import notch_filter, filter_data
 
 print(__doc__)
 
@@ -82,6 +83,7 @@ raw_erm = read_raw_ctf(erm_fname, preload=preload)
 # Data channel array consisted of 274 MEG axial gradiometers, 26 MEG reference
 # sensors and 2 EEG electrodes (Cz and Pz).
 # In addition:
+#
 #   - 1 stim channel for marking presentation times for the stimuli
 #   - 1 audio channel for the sent signal
 #   - 1 response channel for recording the button presses
@@ -89,6 +91,7 @@ raw_erm = read_raw_ctf(erm_fname, preload=preload)
 #   - 2 EOG bipolar (vertical and horizontal)
 #   - 12 head tracking channels
 #   - 20 unused channels
+#
 # The head tracking channels and the unused channels are marked as misc
 # channels. Here we define the EOG and ECG channels.
 raw.set_channel_types({'HEOG': 'eog', 'VEOG': 'eog', 'ECG': 'ecg'})
@@ -123,7 +126,7 @@ saccades_events = df[df['label'] == 'saccade'].values[:, :3].astype(int)
 # Conversion from samples to times:
 onsets = annotations_df['onset'].values / raw.info['sfreq']
 durations = annotations_df['duration'].values / raw.info['sfreq']
-descriptions = map(str, annotations_df['label'].values)
+descriptions = annotations_df['label'].values
 
 annotations = mne.Annotations(onsets, durations, descriptions)
 raw.annotations = annotations
@@ -166,15 +169,16 @@ raw.plot(block=True)
 # usually would do.
 if not use_precomputed:
     meg_picks = mne.pick_types(raw.info, meg=True, eeg=False)
-    raw.plot_psd(picks=meg_picks)
+    raw.plot_psd(tmax=np.inf, picks=meg_picks)
     notches = np.arange(60, 181, 60)
     raw.notch_filter(notches)
-    raw.plot_psd(picks=meg_picks)
+    raw.plot_psd(tmax=np.inf, picks=meg_picks)
 
 ###############################################################################
 # We also lowpass filter the data at 100 Hz to remove the hf components.
 if not use_precomputed:
-    raw.filter(None, 100.)
+    raw.filter(None, 100., h_trans_bandwidth=0.5, filter_length='10s',
+               phase='zero-double')
 
 ###############################################################################
 # Epoching and averaging.
@@ -251,17 +255,11 @@ del epochs_standard, epochs_deviant
 # of this tutorial, we do it at evoked stage.
 if use_precomputed:
     sfreq = evoked_std.info['sfreq']
-    nchan = evoked_std.info['nchan']
     notches = [60, 120, 180]
-    for ch_idx in range(nchan):
-        evoked_std.data[ch_idx] = notch_filter(evoked_std.data[ch_idx], sfreq,
-                                               notches, verbose='ERROR')
-        evoked_dev.data[ch_idx] = notch_filter(evoked_dev.data[ch_idx], sfreq,
-                                               notches, verbose='ERROR')
-        evoked_std.data[ch_idx] = low_pass_filter(evoked_std.data[ch_idx],
-                                                  sfreq, 100, verbose='ERROR')
-        evoked_dev.data[ch_idx] = low_pass_filter(evoked_dev.data[ch_idx],
-                                                  sfreq, 100, verbose='ERROR')
+    for evoked in (evoked_std, evoked_dev):
+        evoked.data[:] = notch_filter(evoked.data, sfreq, notches)
+        evoked.data[:] = filter_data(evoked.data, sfreq, l_freq=None,
+                                     h_freq=100.)
 
 ###############################################################################
 # Here we plot the ERF of standard and deviant conditions. In both conditions
@@ -274,6 +272,7 @@ if use_precomputed:
 evoked_std.plot(window_title='Standard', gfp=True)
 evoked_dev.plot(window_title='Deviant', gfp=True)
 
+
 ###############################################################################
 # Show activations as topography figures.
 times = np.arange(0.05, 0.301, 0.025)
@@ -284,7 +283,7 @@ evoked_dev.plot_topomap(times=times, title='Deviant')
 # We can see the MMN effect more clearly by looking at the difference between
 # the two conditions. P50 and N100 are no longer visible, but MMN/P200 and
 # P300 are emphasised.
-evoked_difference = combine_evoked([evoked_dev, evoked_std], weights=[1, -1])
+evoked_difference = combine_evoked([evoked_dev, -evoked_std], weights='equal')
 evoked_difference.plot(window_title='Difference', gfp=True)
 
 ###############################################################################
@@ -310,7 +309,7 @@ trans = mne.read_trans(trans_fname)
 # forward solution from scratch. The head surfaces for constructing a BEM
 # solution are read from a file. Since the data only contains MEG channels, we
 # only need the inner skull surface for making the forward solution. For more
-# information: :ref:`CHDBBCEJ`, :class:`mne.setup_source_space`,
+# information: :ref:`CHDBBCEJ`, :func:`mne.setup_source_space`,
 # :ref:`create_bem_model`, :func:`mne.bem.make_watershed_bem`.
 if use_precomputed:
     fwd_fname = op.join(data_path, 'MEG', 'bst_auditory',
@@ -337,21 +336,21 @@ del fwd
 # Standard condition.
 stc_standard = mne.minimum_norm.apply_inverse(evoked_std, inv, lambda2, 'dSPM')
 brain = stc_standard.plot(subjects_dir=subjects_dir, subject=subject,
-                          surface='inflated', time_viewer=False, hemi='lh')
-brain.set_data_time_index(120)
-del stc_standard, evoked_std, brain
+                          surface='inflated', time_viewer=False, hemi='lh',
+                          initial_time=0.1, time_unit='s')
+del stc_standard, brain
 
 ###############################################################################
 # Deviant condition.
 stc_deviant = mne.minimum_norm.apply_inverse(evoked_dev, inv, lambda2, 'dSPM')
 brain = stc_deviant.plot(subjects_dir=subjects_dir, subject=subject,
-                         surface='inflated', time_viewer=False, hemi='lh')
-brain.set_data_time_index(120)
-del stc_deviant, evoked_dev, brain
+                         surface='inflated', time_viewer=False, hemi='lh',
+                         initial_time=0.1, time_unit='s')
+del stc_deviant, brain
 
 ###############################################################################
 # Difference.
 stc_difference = apply_inverse(evoked_difference, inv, lambda2, 'dSPM')
 brain = stc_difference.plot(subjects_dir=subjects_dir, subject=subject,
-                            surface='inflated', time_viewer=False, hemi='lh')
-brain.set_data_time_index(150)
+                            surface='inflated', time_viewer=False, hemi='lh',
+                            initial_time=0.15, time_unit='s')

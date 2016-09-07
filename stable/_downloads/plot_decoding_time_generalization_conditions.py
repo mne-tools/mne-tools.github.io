@@ -3,20 +3,17 @@
 Decoding sensor space data with generalization across time and conditions
 =========================================================================
 
-This example runs the analysis computed in:
+This example runs the analysis described in [1]_. It illustrates how one can
+fit a linear classifier to identify a discriminatory topography at a given time
+instant and subsequently assess whether this linear model can accurately
+predict all of the time samples of a second set of conditions.
 
-Jean-Remi King, Alexandre Gramfort, Aaron Schurger, Lionel Naccache
-and Stanislas Dehaene, "Two distinct dynamic modes subtend the detection of
-unexpected sounds", PLOS ONE, 2013,
-http://www.ncbi.nlm.nih.gov/pubmed/24475052
+References
+----------
 
-King & Dehaene (2014) 'Characterizing the dynamics of mental
-representations: the temporal generalization method', Trends In Cognitive
-Sciences, 18(4), 203-210.
-http://www.ncbi.nlm.nih.gov/pubmed/24593982
-
-The idea is to learn at one time instant and assess if the decoder
-can predict accurately over time and on a second set of conditions.
+.. [1] King & Dehaene (2014) 'Characterizing the dynamics of mental
+       representations: the temporal generalization method', Trends In
+       Cognitive Sciences, 18(4), 203-210. doi: 10.1016/j.tics.2014.01.002.
 """
 # Authors: Jean-Remi King <jeanremi.king@gmail.com>
 #          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
@@ -71,5 +68,4 @@ gat.fit(epochs[('AudL', 'VisL')], y=viz_vs_auditory_l)
 viz_vs_auditory_r = (triggers[np.in1d(triggers, (2, 4))] == 4).astype(int)
 
 gat.score(epochs[('AudR', 'VisR')], y=viz_vs_auditory_r)
-gat.plot(
-    title="Generalization Across Time (visual vs auditory): left to right")
+gat.plot(title="Temporal Generalization (visual vs auditory): left to right")
