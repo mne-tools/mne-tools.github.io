@@ -40,7 +40,8 @@ Setup for reading the raw data
     data_path = sample.data_path()
     raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
     event_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw-eve.fif'
-    raw = mne.io.read_raw_fif(raw_fname, add_eeg_ref=True, preload=True)
+    raw = mne.io.read_raw_fif(raw_fname, add_eeg_ref=False, preload=True)
+    raw.set_eeg_reference()  # set EEG average reference
 
 
 
@@ -60,6 +61,7 @@ Setup for reading the raw data
     Ready.
     Current compensation grade : 0
     Reading 0 ... 41699  =      0.000 ...   277.709 secs...
+    An average reference projection was already added. The data has been left untouched.
 
 
 Let's restrict the data to the EEG channels
@@ -338,7 +340,7 @@ We next define Epochs and compute an ERP for the left auditory condition.
     event_id, tmin, tmax = {'left/auditory': 1}, -0.2, 0.5
     events = mne.read_events(event_fname)
     epochs_params = dict(events=events, event_id=event_id, tmin=tmin, tmax=tmax,
-                         reject=reject)
+                         reject=reject, add_eeg_ref=False)
 
     evoked_no_ref = mne.Epochs(raw_no_ref, **epochs_params).average()
     del raw_no_ref  # save memory
@@ -537,6 +539,7 @@ First, we create an Epochs object containing 4 conditions.
 
     288 matching events found
     Applying baseline correction (mode: mean)
+    add_eeg_ref defaults to True in 0.13, will default to False in 0.14, and will be removed in 0.15. We recommend to use add_eeg_ref=False and set_eeg_reference() instead.
     Created an SSP operator (subspace dimension = 1)
     4 projection items activated
     <Epochs  |  n_events : 288 (good & bad), tmin : -0.199795213158 (s), tmax : 0.499488032896 (s), baseline : (None, 0), ~3.1 MB, data not loaded,
@@ -615,7 +618,6 @@ difference ERPs.
         Rejecting  epoch based on EOG : ['EOG']
         Rejecting  epoch based on EOG : ['EOG']
         Rejecting  epoch based on EOG : ['EOG']
-    Disabling interactive colorbar for multiple axes. Turn interactivity on explicitly by passing cmap as a tuple.
 
 
 This is an equal-weighting difference. If you have imbalanced trial numbers,
@@ -768,7 +770,6 @@ This can be simplified with a Python list comprehension:
         Rejecting  epoch based on EOG : ['EOG']
         Rejecting  epoch based on EOG : ['EOG']
     [<Evoked  |  comment : 'left/auditory', kind : average, time : [-0.199795, 0.499488], n_epochs : 56, n_channels x n_times : 59 x 106, ~3.1 MB>, <Evoked  |  comment : 'left/visual', kind : average, time : [-0.199795, 0.499488], n_epochs : 67, n_channels x n_times : 59 x 106, ~3.1 MB>, <Evoked  |  comment : 'right/auditory', kind : average, time : [-0.199795, 0.499488], n_epochs : 62, n_channels x n_times : 59 x 106, ~3.1 MB>, <Evoked  |  comment : 'right/visual', kind : average, time : [-0.199795, 0.499488], n_epochs : 56, n_channels x n_times : 59 x 106, ~3.1 MB>]
-    Disabling interactive colorbar for multiple axes. Turn interactivity on explicitly by passing cmap as a tuple.
 
 
 Often, it makes sense to store Evoked objects in a dictionary or a list -
@@ -872,13 +873,9 @@ either different conditions, or different subjects.
         Rejecting  epoch based on EOG : ['EOG']
         Rejecting  epoch based on EOG : ['EOG']
     <Evoked  |  comment : 'left/auditory', kind : average, time : [-0.199795, 0.499488], n_epochs : 56, n_channels x n_times : 59 x 106, ~3.1 MB>
-    Disabling interactive colorbar for multiple axes. Turn interactivity on explicitly by passing cmap as a tuple.
-    Disabling interactive colorbar for multiple axes. Turn interactivity on explicitly by passing cmap as a tuple.
-    Disabling interactive colorbar for multiple axes. Turn interactivity on explicitly by passing cmap as a tuple.
-    Disabling interactive colorbar for multiple axes. Turn interactivity on explicitly by passing cmap as a tuple.
 
 
-**Total running time of the script:** ( 0 minutes  13.509 seconds)
+**Total running time of the script:** ( 0 minutes  13.572 seconds)
 
 
 
