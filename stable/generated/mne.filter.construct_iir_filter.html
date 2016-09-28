@@ -5,7 +5,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mne.filter.construct_iir_filter &mdash; MNE 0.12.0 documentation</title>
+    <title>mne.filter.construct_iir_filter &#8212; MNE 0.13 documentation</title>
     
     <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.12.0',
+        VERSION:     '0.13',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -32,9 +32,9 @@
     <script type="text/javascript" src="../_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
     <link rel="shortcut icon" href="../_static/favicon.ico"/>
-    <link rel="top" title="MNE 0.12.0 documentation" href="../index.html" />
+    <link rel="top" title="MNE 0.13 documentation" href="../index.html" />
     <link rel="up" title="Python API Reference" href="../python_reference.html" />
-    <link rel="next" title="mne.filter.high_pass_filter" href="mne.filter.high_pass_filter.html" />
+    <link rel="next" title="mne.filter.estimate_ringing_samples" href="mne.filter.estimate_ringing_samples.html" />
     <link rel="prev" title="mne.filter.band_pass_filter" href="mne.filter.band_pass_filter.html" />
 
 <link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,700italic,400,700' rel='stylesheet' type='text/css'>
@@ -89,7 +89,7 @@
         </button>
         <a class="navbar-brand" href="../index.html"><span><img src="../_static/mne_logo_small.png"></span>
            </a>
-        <span class="navbar-text navbar-version pull-left"><b>0.12.0</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.13</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -181,7 +181,7 @@
     </a>
   </li>
   <li>
-    <a href="mne.filter.high_pass_filter.html" title="Next Chapter: mne.filter.high_pass_filter"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">mne.filter.hi... &raquo;</span>
+    <a href="mne.filter.estimate_ringing_samples.html" title="Next Chapter: mne.filter.estimate_ringing_samples"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">mne.filter.es... &raquo;</span>
     </a>
   </li>
 <form action="../search.html" method="get">
@@ -199,7 +199,7 @@
 <h1>mne.filter.construct_iir_filter<a class="headerlink" href="#mne-filter-construct-iir-filter" title="Permalink to this headline">¶</a></h1>
 <dl class="function">
 <dt id="mne.filter.construct_iir_filter">
-<code class="descclassname">mne.filter.</code><code class="descname">construct_iir_filter</code><span class="sig-paren">(</span><em>iir_params={'a': [1, 0], 'padlen': 0, 'b': [1, 0]}, f_pass=None, f_stop=None, sfreq=None, btype=None, return_copy=True</em><span class="sig-paren">)</span><a class="headerlink" href="#mne.filter.construct_iir_filter" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">mne.filter.</code><code class="descname">construct_iir_filter</code><span class="sig-paren">(</span><em>iir_params</em>, <em>f_pass=None</em>, <em>f_stop=None</em>, <em>sfreq=None</em>, <em>btype=None</em>, <em>return_copy=True</em><span class="sig-paren">)</span><a class="headerlink" href="#mne.filter.construct_iir_filter" title="Permalink to this definition">¶</a></dt>
 <dd><p>Use IIR parameters to get filtering coefficients</p>
 <p>This function works like a wrapper for iirdesign and iirfilter in
 scipy.signal to make filter coefficients for IIR filtering. It also
@@ -207,22 +207,51 @@ estimates the number of padding samples based on the filter ringing.
 It creates a new iir_params dict (or updates the one passed to the
 function) with the filter coefficients (&#8216;b&#8217; and &#8216;a&#8217;) and an estimate
 of the padding necessary (&#8216;padlen&#8217;) so IIR filtering can be performed.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">As of 0.14, second-order sections will be used in filter
+design by default (replacing <code class="docutils literal"><span class="pre">output='ba'</span></code> by
+<code class="docutils literal"><span class="pre">output='sos'</span></code>) to help ensure filter stability and
+reduce numerical error. Second-order sections filtering
+requires SciPy &gt;= 16.0.</p>
+</div>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>iir_params</strong> : dict</p>
 <blockquote>
-<div><p>Dictionary of parameters to use for IIR filtering.
-If iir_params[&#8216;b&#8217;] and iir_params[&#8216;a&#8217;] exist, these will be used
-as coefficients to perform IIR filtering. Otherwise, if
-iir_params[&#8216;order&#8217;] and iir_params[&#8216;ftype&#8217;] exist, these will be
-used with scipy.signal.iirfilter to make a filter. Otherwise, if
-iir_params[&#8216;gpass&#8217;] and iir_params[&#8216;gstop&#8217;] exist, these will be
-used with scipy.signal.iirdesign to design a filter.
-iir_params[&#8216;padlen&#8217;] defines the number of samples to pad (and
-an estimate will be calculated if it is not given). See Notes for
-more details.</p>
+<div><p>Dictionary of parameters to use for IIR filtering.</p>
+<blockquote>
+<div><ul>
+<li><p class="first">If <code class="docutils literal"><span class="pre">iir_params['sos']</span></code> exists, it will be used as
+second-order sections to perform IIR filtering.</p>
+<div class="versionadded">
+<p><span class="versionmodified">New in version 0.13.</span></p>
+</div>
+</li>
+<li><p class="first">Otherwise, if <code class="docutils literal"><span class="pre">iir_params['b']</span></code> and <code class="docutils literal"><span class="pre">iir_params['a']</span></code>
+exist, these will be used as coefficients to perform IIR
+filtering.</p>
+</li>
+<li><p class="first">Otherwise, if <code class="docutils literal"><span class="pre">iir_params['order']</span></code> and
+<code class="docutils literal"><span class="pre">iir_params['ftype']</span></code> exist, these will be used with
+<cite>scipy.signal.iirfilter</cite> to make a filter.</p>
+</li>
+<li><p class="first">Otherwise, if <code class="docutils literal"><span class="pre">iir_params['gpass']</span></code> and
+<code class="docutils literal"><span class="pre">iir_params['gstop']</span></code> exist, these will be used with
+<cite>scipy.signal.iirdesign</cite> to design a filter.</p>
+</li>
+<li><p class="first"><code class="docutils literal"><span class="pre">iir_params['padlen']</span></code> defines the number of samples to pad
+(and an estimate will be calculated if it is not given).
+See Notes for more details.</p>
+</li>
+<li><p class="first"><code class="docutils literal"><span class="pre">iir_params['output']</span></code> defines the system output kind when
+designing filters, either &#8220;sos&#8221; or &#8220;ba&#8221;. For 0.13 the
+default is &#8216;ba&#8217; but will change to &#8216;sos&#8217; in 0.14.</p>
+</li>
+</ul>
+</div></blockquote>
 </div></blockquote>
 <p><strong>f_pass</strong> : float or list of float</p>
 <blockquote>
@@ -241,49 +270,56 @@ specified in iir_params.</p>
 <p><strong>btype</strong> : str</p>
 <blockquote>
 <div><p>Type of filter. Should be &#8216;lowpass&#8217;, &#8216;highpass&#8217;, or &#8216;bandpass&#8217;
-(or analogous string representations known to scipy.signal).</p>
+(or analogous string representations known to
+<a class="reference external" href="http://scipy.github.io/devdocs/generated/scipy.signal.iirfilter.html#scipy.signal.iirfilter" title="(in SciPy v0.19.0.dev0+a96e09b)"><code class="xref py py-func docutils literal"><span class="pre">scipy.signal.iirfilter()</span></code></a>).</p>
 </div></blockquote>
 <p><strong>return_copy</strong> : bool</p>
 <blockquote>
-<div><p>If False, the &#8216;b&#8217;, &#8216;a&#8217;, and &#8216;padlen&#8217; entries in iir_params will be
-set inplace (if they weren&#8217;t already). Otherwise, a new iir_params
-instance will be created and returned with these entries.</p>
+<div><p>If False, the &#8216;sos&#8217;, &#8216;b&#8217;, &#8216;a&#8217;, and &#8216;padlen&#8217; entries in
+<code class="docutils literal"><span class="pre">iir_params</span></code> will be set inplace (if they weren&#8217;t already).
+Otherwise, a new <code class="docutils literal"><span class="pre">iir_params</span></code> instance will be created and
+returned with these entries.</p>
 </div></blockquote>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>iir_params</strong> : dict</p>
 <blockquote class="last">
 <div><p>Updated iir_params dict, with the entries (set only if they didn&#8217;t
-exist before) for &#8216;b&#8217;, &#8216;a&#8217;, and &#8216;padlen&#8217; for IIR filtering.</p>
+exist before) for &#8216;sos&#8217; (or &#8216;b&#8217;, &#8216;a&#8217;), and &#8216;padlen&#8217; for
+IIR filtering.</p>
 </div></blockquote>
 </td>
 </tr>
 </tbody>
 </table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="mne.filter.filter_data.html#mne.filter.filter_data" title="mne.filter.filter_data"><code class="xref py py-obj docutils literal"><span class="pre">mne.filter.filter_data</span></code></a>, <a class="reference internal" href="mne.io.Raw.html#mne.io.Raw.filter" title="mne.io.Raw.filter"><code class="xref py py-obj docutils literal"><span class="pre">mne.io.Raw.filter</span></code></a></p>
+</div>
 <p class="rubric">Notes</p>
-<p>This function triages calls to scipy.signal.iirfilter and iirdesign
-based on the input arguments (see descriptions of these functions
-and scipy&#8217;s scipy.signal.filter_design documentation for details).</p>
+<p>This function triages calls to <a class="reference external" href="http://scipy.github.io/devdocs/generated/scipy.signal.iirfilter.html#scipy.signal.iirfilter" title="(in SciPy v0.19.0.dev0+a96e09b)"><code class="xref py py-func docutils literal"><span class="pre">scipy.signal.iirfilter()</span></code></a> and
+<a class="reference external" href="http://scipy.github.io/devdocs/generated/scipy.signal.iirdesign.html#scipy.signal.iirdesign" title="(in SciPy v0.19.0.dev0+a96e09b)"><code class="xref py py-func docutils literal"><span class="pre">scipy.signal.iirdesign()</span></code></a> based on the input arguments (see
+linked functions for more details).</p>
 <p class="rubric">Examples</p>
 <p>iir_params can have several forms. Consider constructing a low-pass
 filter at 40 Hz with 1000 Hz sampling rate.</p>
 <p>In the most basic (2-parameter) form of iir_params, the order of the
 filter &#8216;N&#8217; and the type of filtering &#8216;ftype&#8217; are specified. To get
 coefficients for a 4th-order Butterworth filter, this would be:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">iir_params</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">order</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">ftype</span><span class="o">=</span><span class="s1">&#39;butter&#39;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">iir_params</span> <span class="o">=</span> <span class="n">construct_iir_filter</span><span class="p">(</span><span class="n">iir_params</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">1000</span><span class="p">,</span> <span class="s1">&#39;low&#39;</span><span class="p">,</span> <span class="n">return_copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">iir_params</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]),</span> <span class="nb">len</span><span class="p">(</span><span class="n">iir_params</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]),</span> <span class="n">iir_params</span><span class="p">[</span><span class="s1">&#39;padlen&#39;</span><span class="p">]))</span>
-<span class="go">(5, 5, 82)</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">iir_params</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">order</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">ftype</span><span class="o">=</span><span class="s1">&#39;butter&#39;</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="s1">&#39;sos&#39;</span><span class="p">)</span>  
+<span class="gp">&gt;&gt;&gt; </span><span class="n">iir_params</span> <span class="o">=</span> <span class="n">construct_iir_filter</span><span class="p">(</span><span class="n">iir_params</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="mi">1000</span><span class="p">,</span> <span class="s1">&#39;low&#39;</span><span class="p">,</span> <span class="n">return_copy</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>  
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">((</span><span class="mi">2</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">iir_params</span><span class="p">[</span><span class="s1">&#39;sos&#39;</span><span class="p">]),</span> <span class="n">iir_params</span><span class="p">[</span><span class="s1">&#39;padlen&#39;</span><span class="p">]))</span>  
+<span class="go">(4, 82)</span>
 </pre></div>
 </div>
 <p>Filters can also be constructed using filter design methods. To get a
 40 Hz Chebyshev type 1 lowpass with specific gain characteristics in the
 pass and stop bands (assuming the desired stop band is at 45 Hz), this
 would be a filter with much longer ringing:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">iir_params</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">ftype</span><span class="o">=</span><span class="s1">&#39;cheby1&#39;</span><span class="p">,</span> <span class="n">gpass</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">gstop</span><span class="o">=</span><span class="mi">20</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="n">iir_params</span> <span class="o">=</span> <span class="n">construct_iir_filter</span><span class="p">(</span><span class="n">iir_params</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="mi">1000</span><span class="p">,</span> <span class="s1">&#39;low&#39;</span><span class="p">)</span>
-<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">((</span><span class="nb">len</span><span class="p">(</span><span class="n">iir_params</span><span class="p">[</span><span class="s1">&#39;b&#39;</span><span class="p">]),</span> <span class="nb">len</span><span class="p">(</span><span class="n">iir_params</span><span class="p">[</span><span class="s1">&#39;a&#39;</span><span class="p">]),</span> <span class="n">iir_params</span><span class="p">[</span><span class="s1">&#39;padlen&#39;</span><span class="p">]))</span>
-<span class="go">(6, 6, 439)</span>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">iir_params</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">ftype</span><span class="o">=</span><span class="s1">&#39;cheby1&#39;</span><span class="p">,</span> <span class="n">gpass</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">gstop</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="s1">&#39;sos&#39;</span><span class="p">)</span>  
+<span class="gp">&gt;&gt;&gt; </span><span class="n">iir_params</span> <span class="o">=</span> <span class="n">construct_iir_filter</span><span class="p">(</span><span class="n">iir_params</span><span class="p">,</span> <span class="mi">40</span><span class="p">,</span> <span class="mi">50</span><span class="p">,</span> <span class="mi">1000</span><span class="p">,</span> <span class="s1">&#39;low&#39;</span><span class="p">)</span>  
+<span class="gp">&gt;&gt;&gt; </span><span class="nb">print</span><span class="p">((</span><span class="mi">2</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">iir_params</span><span class="p">[</span><span class="s1">&#39;sos&#39;</span><span class="p">]),</span> <span class="n">iir_params</span><span class="p">[</span><span class="s1">&#39;padlen&#39;</span><span class="p">]))</span>  
+<span class="go">(6, 439)</span>
 </pre></div>
 </div>
 <p>Padding and/or filter coefficients can also be manually specified. For
@@ -295,6 +331,8 @@ one can just do:</p>
 <span class="go">(array([ 1.,  1.,  1.,  1.,  1.,  1.,  1.,  1.,  1.,  1.]), [1, 0], 0)</span>
 </pre></div>
 </div>
+<p>For more information, see the tutorials <a class="reference internal" href="../auto_tutorials/plot_background_filtering.html#tut-background-filtering"><span class="std std-ref">Background information on filtering</span></a>
+and <a class="reference internal" href="../auto_tutorials/plot_artifacts_correction_filtering.html#tut-artifacts-filter"><span class="std std-ref">Filtering and resampling data</span></a>.</p>
 </dd></dl>
 
 <div style='clear:both'></div></div>
@@ -314,7 +352,7 @@ one can just do:</p>
       
     </p>
     <p>
-        &copy; Copyright 2012-2016, MNE Developers. Last updated on 2016-09-05.<br/>
+        &copy; Copyright 2012-2016, MNE Developers. Last updated on 2016-09-28.<br/>
     </p>
   </div>
 </footer>

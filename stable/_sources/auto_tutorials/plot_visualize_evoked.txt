@@ -57,6 +57,7 @@ Here we read the evoked object from a file. Check out
             0 CTF compensation matrices available
             nave = 55 - aspect type = 100
     Projections have already been applied. Setting proj attribute to True.
+    No baseline correction applied
     Applying baseline correction (mode: mean)
         Read a total of 4 projection items:
             PCA-v1 (1 x 102) active
@@ -68,6 +69,7 @@ Here we read the evoked object from a file. Check out
             0 CTF compensation matrices available
             nave = 61 - aspect type = 100
     Projections have already been applied. Setting proj attribute to True.
+    No baseline correction applied
     Applying baseline correction (mode: mean)
         Read a total of 4 projection items:
             PCA-v1 (1 x 102) active
@@ -79,6 +81,7 @@ Here we read the evoked object from a file. Check out
             0 CTF compensation matrices available
             nave = 67 - aspect type = 100
     Projections have already been applied. Setting proj attribute to True.
+    No baseline correction applied
     Applying baseline correction (mode: mean)
         Read a total of 4 projection items:
             PCA-v1 (1 x 102) active
@@ -90,13 +93,14 @@ Here we read the evoked object from a file. Check out
             0 CTF compensation matrices available
             nave = 58 - aspect type = 100
     Projections have already been applied. Setting proj attribute to True.
+    No baseline correction applied
     Applying baseline correction (mode: mean)
-    [<Evoked  |  comment : 'Left Auditory', kind : average, time : [-0.199795, 0.499488], n_epochs : 55, n_channels x n_times : 376 x 421>, <Evoked  |  comment : 'Right Auditory', kind : average, time : [-0.199795, 0.499488], n_epochs : 61, n_channels x n_times : 376 x 421>, <Evoked  |  comment : 'Left visual', kind : average, time : [-0.199795, 0.499488], n_epochs : 67, n_channels x n_times : 376 x 421>, <Evoked  |  comment : 'Right visual', kind : average, time : [-0.199795, 0.499488], n_epochs : 58, n_channels x n_times : 376 x 421>]
+    [<Evoked  |  comment : 'Left Auditory', kind : average, time : [-0.199795, 0.499488], n_epochs : 55, n_channels x n_times : 376 x 421, ~4.9 MB>, <Evoked  |  comment : 'Right Auditory', kind : average, time : [-0.199795, 0.499488], n_epochs : 61, n_channels x n_times : 376 x 421, ~4.9 MB>, <Evoked  |  comment : 'Left visual', kind : average, time : [-0.199795, 0.499488], n_epochs : 67, n_channels x n_times : 376 x 421, ~4.9 MB>, <Evoked  |  comment : 'Right visual', kind : average, time : [-0.199795, 0.499488], n_epochs : 58, n_channels x n_times : 376 x 421, ~4.9 MB>]
 
 
-Notice that ``evoked`` is a list of evoked instances. You can read only one
-of the categories by passing the argument ``condition`` to
-:func:`mne.read_evokeds`. To make things more simple for this tutorial, we
+Notice that ``evoked`` is a list of :class:`evoked <mne.Evoked>` instances.
+You can read only one of the categories by passing the argument ``condition``
+to :func:`mne.read_evokeds`. To make things more simple for this tutorial, we
 read each instance to a variable.
 
 
@@ -322,6 +326,104 @@ shown, sensors are not plotted, and the Global Field Power is shown:
 
 
 
+Sometimes, you may want to compare two conditions at a selection of sensors,
+or e.g. for the Global Field Power. For this, you can use the function
+:func:`mne.viz.plot_compare_evokeds`. The easiest way is to create a  Python
+dictionary, where the keys are condition names and the values are
+:class:`mne.Evoked` objects. If you provide lists of :class:`mne.Evoked`
+objects, such as those for multiple subjects, the grand average is plotted,
+along with a confidence interval band - this can be used to contrast
+conditions for a whole experiment.
+First, we load in the evoked objects into a dictionary, setting the keys to
+'/'-separated tags. Then, we plot with :func:`mne.viz.plot_compare_evokeds`.
+The plot is styled with dictionary arguments, again using "/"-separated tags.
+We plot a MEG channel with a strong auditory response.
+
+
+
+.. code-block:: python
+
+    conditions = ["Left Auditory", "Right Auditory", "Left visual", "Right visual"]
+    evoked_dict = dict()
+    for condition in conditions:
+        evoked_dict[condition.replace(" ", "/")] = mne.read_evokeds(
+            fname, baseline=(None, 0), proj=True, condition=condition)
+    print(evoked_dict)
+
+    colors = dict(Left="Crimson", Right="CornFlowerBlue")
+    linestyles = dict(Auditory='-', visual='--')
+    pick = evoked_dict["Left/Auditory"].ch_names.index('MEG 1811')
+
+    mne.viz.plot_compare_evokeds(evoked_dict, picks=pick,
+                                 colors=colors, linestyles=linestyles)
+
+
+
+
+.. image:: /auto_tutorials/images/sphx_glr_plot_visualize_evoked_010.png
+    :align: center
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    Reading /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis-ave.fif ...
+        Read a total of 4 projection items:
+            PCA-v1 (1 x 102) active
+            PCA-v2 (1 x 102) active
+            PCA-v3 (1 x 102) active
+            Average EEG reference (1 x 60) active
+        Found the data of interest:
+            t =    -199.80 ...     499.49 ms (Left Auditory)
+            0 CTF compensation matrices available
+            nave = 55 - aspect type = 100
+    Projections have already been applied. Setting proj attribute to True.
+    No baseline correction applied
+    Applying baseline correction (mode: mean)
+    Reading /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis-ave.fif ...
+        Read a total of 4 projection items:
+            PCA-v1 (1 x 102) active
+            PCA-v2 (1 x 102) active
+            PCA-v3 (1 x 102) active
+            Average EEG reference (1 x 60) active
+        Found the data of interest:
+            t =    -199.80 ...     499.49 ms (Right Auditory)
+            0 CTF compensation matrices available
+            nave = 61 - aspect type = 100
+    Projections have already been applied. Setting proj attribute to True.
+    No baseline correction applied
+    Applying baseline correction (mode: mean)
+    Reading /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis-ave.fif ...
+        Read a total of 4 projection items:
+            PCA-v1 (1 x 102) active
+            PCA-v2 (1 x 102) active
+            PCA-v3 (1 x 102) active
+            Average EEG reference (1 x 60) active
+        Found the data of interest:
+            t =    -199.80 ...     499.49 ms (Left visual)
+            0 CTF compensation matrices available
+            nave = 67 - aspect type = 100
+    Projections have already been applied. Setting proj attribute to True.
+    No baseline correction applied
+    Applying baseline correction (mode: mean)
+    Reading /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis-ave.fif ...
+        Read a total of 4 projection items:
+            PCA-v1 (1 x 102) active
+            PCA-v2 (1 x 102) active
+            PCA-v3 (1 x 102) active
+            Average EEG reference (1 x 60) active
+        Found the data of interest:
+            t =    -199.80 ...     499.49 ms (Right visual)
+            0 CTF compensation matrices available
+            nave = 58 - aspect type = 100
+    Projections have already been applied. Setting proj attribute to True.
+    No baseline correction applied
+    Applying baseline correction (mode: mean)
+    {'Left/Auditory': <Evoked  |  comment : 'Left Auditory', kind : average, time : [-0.199795, 0.499488], n_epochs : 55, n_channels x n_times : 376 x 421, ~4.9 MB>, 'Left/visual': <Evoked  |  comment : 'Left visual', kind : average, time : [-0.199795, 0.499488], n_epochs : 67, n_channels x n_times : 376 x 421, ~4.9 MB>, 'Right/Auditory': <Evoked  |  comment : 'Right Auditory', kind : average, time : [-0.199795, 0.499488], n_epochs : 61, n_channels x n_times : 376 x 421, ~4.9 MB>, 'Right/visual': <Evoked  |  comment : 'Right visual', kind : average, time : [-0.199795, 0.499488], n_epochs : 58, n_channels x n_times : 376 x 421, ~4.9 MB>}
+    In 0.13 the default is weights="nave", but in 0.14 the default will be removed and it will have to be explicitly set
+
+
 We can also plot the activations as images. The time runs along the x-axis
 and the channels along the y-axis. The amplitudes are color coded so that
 the amplitudes from negative to positive translates to shift from blue to
@@ -337,7 +439,7 @@ the color map yourself. The accepted values include all matplotlib colormaps.
 
 
 
-.. image:: /auto_tutorials/images/sphx_glr_plot_visualize_evoked_010.png
+.. image:: /auto_tutorials/images/sphx_glr_plot_visualize_evoked_011.png
     :align: center
 
 
@@ -365,12 +467,12 @@ figure for comparison. Click on the individual plots to open them bigger.
 
     *
 
-      .. image:: /auto_tutorials/images/sphx_glr_plot_visualize_evoked_011.png
+      .. image:: /auto_tutorials/images/sphx_glr_plot_visualize_evoked_012.png
             :scale: 47
 
     *
 
-      .. image:: /auto_tutorials/images/sphx_glr_plot_visualize_evoked_012.png
+      .. image:: /auto_tutorials/images/sphx_glr_plot_visualize_evoked_013.png
             :scale: 47
 
 
@@ -404,7 +506,7 @@ Here we just illustrate usage.
 
 
 
-.. image:: /auto_tutorials/images/sphx_glr_plot_visualize_evoked_013.png
+.. image:: /auto_tutorials/images/sphx_glr_plot_visualize_evoked_014.png
     :align: center
 
 
@@ -433,19 +535,22 @@ Here we just illustrate usage.
     If trans_fname is set to None then only MEG estimates can be visualized.
 
 
-**Total running time of the script:**
-(0 minutes 25.162 seconds)
+**Total running time of the script:** ( 0 minutes  27.398 seconds)
 
 
 
-.. container:: sphx-glr-download
-
-    :download:`Download Python source code: plot_visualize_evoked.py <plot_visualize_evoked.py>`
+.. container:: sphx-glr-footer
 
 
-.. container:: sphx-glr-download
+  .. container:: sphx-glr-download
 
-    :download:`Download Jupyter notebook: plot_visualize_evoked.ipynb <plot_visualize_evoked.ipynb>`
+     :download:`Download Python source code: plot_visualize_evoked.py <plot_visualize_evoked.py>`
+
+
+
+  .. container:: sphx-glr-download
+
+     :download:`Download Jupyter notebook: plot_visualize_evoked.ipynb <plot_visualize_evoked.ipynb>`
 
 .. rst-class:: sphx-glr-signature
 

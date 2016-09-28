@@ -5,7 +5,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mne.Annotations &mdash; MNE 0.12.0 documentation</title>
+    <title>mne.Annotations &#8212; MNE 0.13 documentation</title>
     
     <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.12.0',
+        VERSION:     '0.13',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -32,9 +32,9 @@
     <script type="text/javascript" src="../_static/bootstrap-3.3.6/js/bootstrap.min.js"></script>
     <script type="text/javascript" src="../_static/bootstrap-sphinx.js"></script>
     <link rel="shortcut icon" href="../_static/favicon.ico"/>
-    <link rel="top" title="MNE 0.12.0 documentation" href="../index.html" />
+    <link rel="top" title="MNE 0.13 documentation" href="../index.html" />
     <link rel="up" title="Python API Reference" href="../python_reference.html" />
-    <link rel="next" title="mne.Epochs" href="mne.Epochs.html" />
+    <link rel="next" title="mne.AcqParserFIF" href="mne.AcqParserFIF.html" />
     <link rel="prev" title="mne.io.RawArray" href="mne.io.RawArray.html" />
 
 <link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,700italic,400,700' rel='stylesheet' type='text/css'>
@@ -89,7 +89,7 @@
         </button>
         <a class="navbar-brand" href="../index.html"><span><img src="../_static/mne_logo_small.png"></span>
            </a>
-        <span class="navbar-text navbar-version pull-left"><b>0.12.0</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.13</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -181,7 +181,7 @@
     </a>
   </li>
   <li>
-    <a href="mne.Epochs.html" title="Next Chapter: mne.Epochs"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">mne.Epochs &raquo;</span>
+    <a href="mne.AcqParserFIF.html" title="Next Chapter: mne.AcqParserFIF"><span class="glyphicon glyphicon-chevron-right visible-sm"></span><span class="hidden-sm hidden-tablet">mne.AcqParserFIF &raquo;</span>
     </a>
   </li>
 <form action="../search.html" method="get">
@@ -201,22 +201,42 @@
 <dt id="mne.Annotations">
 <em class="property">class </em><code class="descclassname">mne.</code><code class="descname">Annotations</code><span class="sig-paren">(</span><em>onset</em>, <em>duration</em>, <em>description</em>, <em>orig_time=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mne.Annotations" title="Permalink to this definition">¶</a></dt>
 <dd><p>Annotation object for annotating segments of raw data.</p>
+<p>Annotations are added to instance of <a class="reference internal" href="mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-class docutils literal"><span class="pre">mne.io.Raw</span></code></a> as an attribute
+named <code class="docutils literal"><span class="pre">annotations</span></code>. See the example below. To reject bad epochs using
+annotations, use annotation description starting with &#8216;bad&#8217; keyword. The
+epochs with overlapping bad segments are then rejected automatically by
+default.</p>
+<dl class="docutils">
+<dt>To remove epochs with blinks you can do::</dt>
+<dd><div class="first last highlight-default"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">eog_events</span> <span class="o">=</span> <span class="n">mne</span><span class="o">.</span><span class="n">preprocessing</span><span class="o">.</span><span class="n">find_eog_events</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>  
+<span class="gp">&gt;&gt;&gt; </span><span class="n">n_blinks</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">eog_events</span><span class="p">)</span>  
+<span class="gp">&gt;&gt;&gt; </span><span class="n">onset</span> <span class="o">=</span> <span class="n">eog_events</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;sfreq&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="mf">0.25</span>  
+<span class="gp">&gt;&gt;&gt; </span><span class="n">duration</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">repeat</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">n_blinks</span><span class="p">)</span>  
+<span class="gp">&gt;&gt;&gt; </span><span class="n">description</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;bad blink&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">n_blinks</span>  
+<span class="gp">&gt;&gt;&gt; </span><span class="n">annotations</span> <span class="o">=</span> <span class="n">mne</span><span class="o">.</span><span class="n">Annotations</span><span class="p">(</span><span class="n">onset</span><span class="p">,</span> <span class="n">duration</span><span class="p">,</span> <span class="n">description</span><span class="p">)</span>  
+<span class="gp">&gt;&gt;&gt; </span><span class="n">raw</span><span class="o">.</span><span class="n">annotations</span> <span class="o">=</span> <span class="n">annotations</span>  
+<span class="gp">&gt;&gt;&gt; </span><span class="n">epochs</span> <span class="o">=</span> <span class="n">mne</span><span class="o">.</span><span class="n">Epochs</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">event_id</span><span class="p">,</span> <span class="n">tmin</span><span class="p">,</span> <span class="n">tmax</span><span class="p">)</span>  
+</pre></div>
+</div>
+</dd>
+</dl>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>onset</strong> : array of float, shape (n_annotations,)</p>
 <blockquote>
-<div><p>Annotation time onsets from the beginning of the recording.</p>
+<div><p>Annotation time onsets from the beginning of the recording in seconds.</p>
 </div></blockquote>
 <p><strong>duration</strong> : array of float, shape (n_annotations,)</p>
 <blockquote>
-<div><p>Durations of the annotations.</p>
+<div><p>Durations of the annotations in seconds.</p>
 </div></blockquote>
 <p><strong>description</strong> : array of str, shape (n_annotations,) | str</p>
 <blockquote>
 <div><p>Array of strings containing description for each annotation. If a
-string, all the annotations are given the same description.</p>
+string, all the annotations are given the same description. To reject
+epochs, use description starting with keyword &#8216;bad&#8217;. See example above.</p>
 </div></blockquote>
 <p><strong>orig_time</strong> : float | int | instance of datetime | array of int | None</p>
 <blockquote class="last">
@@ -233,9 +253,26 @@ same time.</p>
 </tbody>
 </table>
 <p class="rubric">Notes</p>
-<p>Annotations are synced to sample 0. <code class="docutils literal"><span class="pre">raw.first_samp</span></code> is taken
-into account in the same way as with events.
-.. automethod:: __init__</p>
+<p>If <code class="docutils literal"><span class="pre">orig_time</span></code> is None, the annotations are synced to the start of the
+data (0 seconds). Otherwise the annotations are synced to sample 0 and
+<code class="docutils literal"><span class="pre">raw.first_samp</span></code> is taken into account the same way as with events.</p>
+<p class="rubric">Methods</p>
+<table border="1" class="longtable docutils">
+<colgroup>
+<col width="10%" />
+<col width="90%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><a class="reference internal" href="#mne.Annotations.__hash__" title="mne.Annotations.__hash__"><code class="xref py py-obj docutils literal"><span class="pre">__hash__</span></code></a>()&nbsp;&lt;==&gt;&nbsp;hash(x)</td>
+<td></td>
+</tr>
+</tbody>
+</table>
+<dl class="attribute">
+<dt id="mne.Annotations.__hash__">
+<code class="descname">__hash__</code><span class="sig-paren">(</span><em>) &lt;==&gt; hash(x</em><span class="sig-paren">)</span><a class="headerlink" href="#mne.Annotations.__hash__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
+
 </dd></dl>
 
 </div>
@@ -255,7 +292,7 @@ into account in the same way as with events.
       
     </p>
     <p>
-        &copy; Copyright 2012-2016, MNE Developers. Last updated on 2016-09-05.<br/>
+        &copy; Copyright 2012-2016, MNE Developers. Last updated on 2016-09-28.<br/>
     </p>
   </div>
 </footer>
