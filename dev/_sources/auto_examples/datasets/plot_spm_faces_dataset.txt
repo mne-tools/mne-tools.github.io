@@ -32,7 +32,7 @@ Runs a full pipeline using MNE-Python:
     import mne
     from mne.datasets import spm_face
     from mne.preprocessing import ICA, create_eog_epochs
-    from mne import io
+    from mne import io, combine_evoked
     from mne.minimum_norm import make_inverse_operator, apply_inverse
 
     print(__doc__)
@@ -91,7 +91,7 @@ Load and filter data, set up epochs
 
     evoked = [epochs[k].average() for k in event_ids]
 
-    contrast = evoked[1] - evoked[0]
+    contrast = combine_evoked(evoked, weights=[-1, 1])  # Faces - scrambled
 
     evoked.append(contrast)
 
@@ -166,7 +166,7 @@ Load and filter data, set up epochs
         1 x 324474 = 324474 samples from 340 chs
     Current compensation grade : 3
     Reading 0 ... 324473  =      0.000 ...   675.985 secs...
-    Band-pass filtering from 1 - 30 Hz
+    Setting up band-pass filter from 1 - 30 Hz
     172 events found
     Events id: [1 2 3]
     168 matching events found
@@ -192,8 +192,8 @@ Load and filter data, set up epochs
     Using channel MRT31-2908 as EOG channel
     EOG channel index for this subject is: [274]
     Filtering the data to remove DC offset to help distinguish blinks from saccades
-    Band-pass filtering from 2 - 45 Hz
-    Band-pass filtering from 1 - 10 Hz
+    Setting up band-pass filter from 2 - 45 Hz
+    Setting up band-pass filter from 1 - 10 Hz
     Now detecting blinks and generating corresponding events
     Number of EOG events detected : 148
     148 matching events found
@@ -410,9 +410,8 @@ Compute inverse solution
     # stc.save('spm_%s_dSPM_inverse' % constrast.comment)
 
     # Plot contrast in 3D with PySurfer if available
-    brain = stc.plot(hemi='both', subjects_dir=subjects_dir)
-    brain.set_time(170.0)  # milliseconds
-    brain.show_view('ventral')
+    brain = stc.plot(hemi='both', subjects_dir=subjects_dir, initial_time=0.170,
+                     views=['ven'])
     # brain.save_image('dSPM_map.png')
 
 
@@ -443,7 +442,7 @@ Compute inverse solution
         largest singular value = 10.3261
         scaling factor to adjust the trace = 3.95372e+19
     Preparing the inverse operator for use...
-        Scaled noise and source covariance from nave = 1 to nave = 167
+        Scaled noise and source covariance from nave = 1 to nave = 42
         Created the regularized inverter
         The projection vectors do not apply to these channels.
         Created the whitener using a full noise covariance matrix (0 small eigenvalues omitted)
@@ -466,7 +465,7 @@ Compute inverse solution
     Smoothing matrix creation, step 8
     Smoothing matrix creation, step 9
     Smoothing matrix creation, step 10
-    colormap: fmin=2.68e+00 fmid=3.01e+00 fmax=6.07e+00 transparent=1
+    colormap: fmin=2.68e+00 fmid=3.01e+00 fmax=6.06e+00 transparent=1
     Updating smoothing matrix, be patient..
     Smoothing matrix creation, step 1
     Smoothing matrix creation, step 2
@@ -478,10 +477,10 @@ Compute inverse solution
     Smoothing matrix creation, step 8
     Smoothing matrix creation, step 9
     Smoothing matrix creation, step 10
-    colormap: fmin=2.68e+00 fmid=3.01e+00 fmax=6.07e+00 transparent=1
+    colormap: fmin=2.68e+00 fmid=3.01e+00 fmax=6.06e+00 transparent=1
 
 
-**Total running time of the script:** ( 14 minutes  22.645 seconds)
+**Total running time of the script:** ( 13 minutes  54.803 seconds)
 
 
 
