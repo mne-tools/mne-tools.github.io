@@ -25,7 +25,7 @@ import matplotlib.pyplot as plt
 import mne
 from mne.datasets import spm_face
 from mne.preprocessing import ICA, create_eog_epochs
-from mne import io, combine_evoked
+from mne import io
 from mne.minimum_norm import make_inverse_operator, apply_inverse
 
 print(__doc__)
@@ -74,7 +74,7 @@ ica.apply(epochs)  # clean data, default in place
 
 evoked = [epochs[k].average() for k in event_ids]
 
-contrast = combine_evoked(evoked, weights=[-1, 1])  # Faces - scrambled
+contrast = evoked[1] - evoked[0]
 
 evoked.append(contrast)
 
@@ -128,6 +128,7 @@ stc = apply_inverse(contrast, inverse_operator, lambda2, method, pick_ori=None)
 # stc.save('spm_%s_dSPM_inverse' % constrast.comment)
 
 # Plot contrast in 3D with PySurfer if available
-brain = stc.plot(hemi='both', subjects_dir=subjects_dir, initial_time=0.170,
-                 views=['ven'])
+brain = stc.plot(hemi='both', subjects_dir=subjects_dir)
+brain.set_time(170.0)  # milliseconds
+brain.show_view('ventral')
 # brain.save_image('dSPM_map.png')

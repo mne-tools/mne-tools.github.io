@@ -12,8 +12,7 @@ from mne.datasets import sample
 
 data_path = sample.data_path()
 raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
-raw = mne.io.read_raw_fif(raw_fname, add_eeg_ref=False)
-raw.set_eeg_reference()
+raw = mne.io.read_raw_fif(raw_fname)
 
 ###############################################################################
 # .. _marking_bad_channels:
@@ -128,8 +127,7 @@ n_blinks = len(eog_events)
 # Center to cover the whole blink with full duration of 0.5s:
 onset = eog_events[:, 0] / raw.info['sfreq'] - 0.25
 duration = np.repeat(0.5, n_blinks)
-raw.annotations = mne.Annotations(onset, duration, ['bad blink'] * n_blinks,
-                                  orig_time=raw.info['meas_date'])
+raw.annotations = mne.Annotations(onset, duration, ['bad blink'] * n_blinks)
 raw.plot(events=eog_events)  # To see the annotated segments.
 
 ###############################################################################
@@ -178,7 +176,7 @@ picks_meg = mne.pick_types(raw.info, meg=True, eeg=False, eog=True,
                            stim=False, exclude='bads')
 epochs = mne.Epochs(raw, events, event_id, tmin, tmax, proj=True,
                     picks=picks_meg, baseline=baseline, reject=reject,
-                    reject_by_annotation=True, add_eeg_ref=False)
+                    reject_by_annotation=True)
 
 ###############################################################################
 # We then drop/reject the bad epochs

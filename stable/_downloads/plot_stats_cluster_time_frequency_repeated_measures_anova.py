@@ -30,7 +30,8 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 import mne
-from mne.time_frequency import tfr_morlet
+from mne import io
+from mne.time_frequency import single_trial_power
 from mne.stats import f_threshold_mway_rm, f_mway_rm, fdr_correction
 from mne.datasets import sample
 
@@ -42,10 +43,12 @@ print(__doc__)
 data_path = sample.data_path()
 raw_fname = data_path + '/MEG/sample/sample_audvis_raw.fif'
 event_fname = data_path + '/MEG/sample/sample_audvis_raw-eve.fif'
-tmin, tmax = -0.2, 0.5
+event_id = 1
+tmin = -0.2
+tmax = 0.5
 
 # Setup for reading the raw data
-raw = mne.io.read_raw_fif(raw_fname)
+raw = io.read_raw_fif(raw_fname)
 events = mne.read_events(event_fname)
 
 include = []
@@ -55,41 +58,44 @@ raw.info['bads'] += ['MEG 2443']  # bads
 picks = mne.pick_types(raw.info, meg='grad', eeg=False, eog=True,
                        stim=False, include=include, exclude='bads')
 
-ch_name = 'MEG 1332'
+ch_name = raw.info['ch_names'][picks[0]]
 
 # Load conditions
 reject = dict(grad=4000e-13, eog=150e-6)
 event_id = dict(aud_l=1, aud_r=2, vis_l=3, vis_r=4)
 epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
-                    picks=picks, baseline=(None, 0), preload=True,
+                    picks=picks, baseline=(None, 0),
                     reject=reject)
-epochs.pick_channels([ch_name])  # restrict example to one channel
 
 ###############################################################################
 # We have to make sure all conditions have the same counts, as the ANOVA
 # expects a fully balanced data matrix and does not forgive imbalances that
 # generously (risk of type-I error).
 epochs.equalize_event_counts(event_id, copy=False)
+# Time vector
+times = 1e3 * epochs.times  # change unit to ms
 
-# Factor to down-sample the temporal dimension of the TFR computed by
-# tfr_morlet.
+# Factor to down-sample the temporal dimension of the PSD computed by
+# single_trial_power.
 decim = 2
 frequencies = np.arange(7, 30, 3)  # define frequencies of interest
+sfreq = raw.info['sfreq']  # sampling in Hz
 n_cycles = frequencies / frequencies[0]
-zero_mean = False  # don't correct morlet wavelet to be of mean zero
-# To have a true wavelet zero_mean should be True but here for illustration
-# purposes it helps to spot the evoked response.
+baseline_mask = times[::decim] < 0
 
 ###############################################################################
 # Create TFR representations for all conditions
 # ---------------------------------------------
 epochs_power = list()
-for condition in [epochs[k] for k in event_id]:
-    this_tfr = tfr_morlet(condition, frequencies, n_cycles=n_cycles,
-                          decim=decim, average=False, zero_mean=zero_mean,
-                          return_itc=False)
-    this_tfr.apply_baseline(mode='ratio', baseline=(None, 0))
-    this_power = this_tfr.data[:, 0, :, :]  # we only have one channel.
+for condition in [epochs[k].get_data()[:, 97:98, :] for k in event_id]:
+    this_power = single_trial_power(condition, sfreq=sfreq,
+                                    frequencies=frequencies, n_cycles=n_cycles,
+                                    decim=decim)
+    this_power = this_power[:, 0, :, :]  # we only have one channel.
+    # Compute ratio with baseline power (be sure to correct time vector with
+    # decimation factor)
+    epochs_baseline = np.mean(this_power[:, :, baseline_mask], axis=2)
+    this_power /= epochs_baseline[..., np.newaxis]
     epochs_power.append(this_power)
 
 ###############################################################################
@@ -109,8 +115,7 @@ effects = 'A*B'  # this is the default signature for computing all effects
 # or 'A:B' for the interaction effect only (this notation is borrowed from the
 # R formula language)
 n_frequencies = len(frequencies)
-times = 1e3 * epochs.times[::decim]
-n_times = len(times)
+n_times = len(times[::decim])
 
 ###############################################################################
 # Now we'll assemble the data matrix and swap axes so the trial replications
@@ -127,15 +132,15 @@ print(data.shape)
 # makes sure the first two dimensions are organized as expected (with A =
 # modality and B = location):
 #
-# .. table:: Sample data layout
+# .. table::
 #
-#    ===== ==== ==== ==== ====
-#    trial A1B1 A1B2 A2B1 B2B2
-#    ===== ==== ==== ==== ====
-#    1     1.34 2.53 0.97 1.74
-#    ...   ...  ...  ...  ...
-#    56    2.45 7.90 3.09 4.76
-#    ===== ==== ==== ==== ====
+# ===== ==== ==== ==== ====
+# trial A1B1 A1B2 A2B1 B2B2
+# ===== ==== ==== ==== ====
+# 1     1.34 2.53 0.97 1.74
+# ...   .... .... .... ....
+# 56    2.45 7.90 3.09 4.76
+# ===== ==== ==== ==== ====
 #
 # Now we're ready to run our repeated measures ANOVA.
 #
@@ -161,7 +166,7 @@ for effect, sig, effect_label in zip(fvals, pvals, effect_labels):
                times[-1], frequencies[0], frequencies[-1]], aspect='auto',
                origin='lower')
     plt.colorbar()
-    plt.xlabel('Time (ms)')
+    plt.xlabel('time (ms)')
     plt.ylabel('Frequency (Hz)')
     plt.title(r"Time-locked response for '%s' (%s)" % (effect_label, ch_name))
     plt.show()
@@ -187,8 +192,8 @@ effects = 'A:B'
 def stat_fun(*args):
     return f_mway_rm(np.swapaxes(args, 1, 0), factor_levels=factor_levels,
                      effects=effects, return_pvals=False)[0]
+    # The ANOVA returns a tuple f-values and p-values, we will pick the former.
 
-# The ANOVA returns a tuple f-values and p-values, we will pick the former.
 pthresh = 0.00001  # set threshold rather high to save some time
 f_thresh = f_threshold_mway_rm(n_replications, factor_levels, effects,
                                pthresh)
@@ -199,8 +204,8 @@ T_obs, clusters, cluster_p_values, h0 = mne.stats.permutation_cluster_test(
     n_permutations=n_permutations, buffer_size=None)
 
 ###############################################################################
-# Create new stats image with only significant clusters:
-
+# Create new stats image with only significant clusters
+# -----------------------------------------------------
 good_clusers = np.where(cluster_p_values < .05)[0]
 T_obs_plot = np.ma.masked_array(T_obs,
                                 np.invert(clusters[np.squeeze(good_clusers)]))
@@ -210,15 +215,15 @@ for f_image, cmap in zip([T_obs, T_obs_plot], [plt.cm.gray, 'RdBu_r']):
     plt.imshow(f_image, cmap=cmap, extent=[times[0], times[-1],
                frequencies[0], frequencies[-1]], aspect='auto',
                origin='lower')
-plt.xlabel('Time (ms)')
+plt.xlabel('time (ms)')
 plt.ylabel('Frequency (Hz)')
-plt.title("Time-locked response for 'modality by location' (%s)\n"
-          " cluster-level corrected (p <= 0.05)" % ch_name)
+plt.title('Time-locked response for \'modality by location\' (%s)\n'
+          ' cluster-level corrected (p <= 0.05)' % ch_name)
 plt.show()
 
 ###############################################################################
-# Now using FDR:
-
+# Now using FDR
+# -------------
 mask, _ = fdr_correction(pvals[2])
 T_obs_plot2 = np.ma.masked_array(T_obs, np.invert(mask))
 
@@ -228,12 +233,11 @@ for f_image, cmap in zip([T_obs, T_obs_plot2], [plt.cm.gray, 'RdBu_r']):
                frequencies[0], frequencies[-1]], aspect='auto',
                origin='lower')
 
-plt.xlabel('Time (ms)')
+plt.xlabel('time (ms)')
 plt.ylabel('Frequency (Hz)')
-plt.title("Time-locked response for 'modality by location' (%s)\n"
-          " FDR corrected (p <= 0.05)" % ch_name)
+plt.title('Time-locked response for \'modality by location\' (%s)\n'
+          ' FDR corrected (p <= 0.05)' % ch_name)
 plt.show()
 
-###############################################################################
-# Both cluster level and FDR correction help get rid of
+# Both, cluster level and FDR correction help getting rid of
 # putatively spots we saw in the naive f-images.

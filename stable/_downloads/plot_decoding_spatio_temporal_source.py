@@ -148,5 +148,6 @@ stc_feat = mne.SourceEstimate(feature_weights, vertices=vertices,
                               tmin=stc.tmin, tstep=stc.tstep,
                               subject='sample')
 
-brain = stc_feat.plot(views=['lat'], transparent=True,
-                      initial_time=0.1, time_unit='s')
+brain = stc_feat.plot()
+brain.set_time(100)
+brain.show_view('l')  # take the medial view to further explore visual areas

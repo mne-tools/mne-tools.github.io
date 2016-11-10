@@ -18,9 +18,7 @@ Visualize Raw data
     import mne
 
     data_path = op.join(mne.datasets.sample.data_path(), 'MEG', 'sample')
-    raw = mne.io.read_raw_fif(op.join(data_path, 'sample_audvis_raw.fif'),
-                              add_eeg_ref=False)
-    raw.set_eeg_reference()  # set EEG average reference
+    raw = mne.io.read_raw_fif(op.join(data_path, 'sample_audvis_raw.fif'))
     events = mne.read_events(op.join(data_path, 'sample_audvis_raw-eve.fif'))
 
 
@@ -36,9 +34,9 @@ Visualize Raw data
             PCA-v1 (1 x 102)  idle
             PCA-v2 (1 x 102)  idle
             PCA-v3 (1 x 102)  idle
+    Current compensation grade : 0
         Range : 25800 ... 192599 =     42.956 ...   320.670 secs
     Ready.
-    Current compensation grade : 0
     Adding average EEG reference projection.
     1 projection items deactivated
 
@@ -57,7 +55,7 @@ To visually inspect your raw data, you can use the python equivalent of
 
 .. code-block:: python
 
-    raw.plot(block=True)
+    raw.plot(block=True, events=events)
 
 
 
@@ -70,55 +68,19 @@ To visually inspect your raw data, you can use the python equivalent of
 
 The channels are color coded by channel type. Generally MEG channels are
 colored in different shades of blue, whereas EEG channels are black. The
-scrollbar on right side of the browser window also tells us that two of the
-channels are marked as ``bad``. Bad channels are color coded gray. By
-clicking the lines or channel names on the left, you can mark or unmark a bad
-channel interactively. You can use +/- keys to adjust the scale (also = works
-for magnifying the data). Note that the initial scaling factors can be set
-with parameter ``scalings``. If you don't know the scaling factor for
-channels, you can automatically set them by passing scalings='auto'. With
-``pageup/pagedown`` and ``home/end`` keys you can adjust the amount of data
-viewed at once. To see all the interactive features, hit ``?`` or click
-``help`` in the lower left corner of the browser window.
-
-The channels are sorted by channel type by default. You can use the ``order``
-parameter of :func:`raw.plot <mne.io.Raw.plot>` to group the channels in a
-different way. ``order='selection'`` uses the same channel groups as MNE-C's
-mne_browse_raw (see :ref:`CACCJEJD`). The selections are defined in
-``mne-python/mne/data/mne_analyze.sel`` and by modifying the channels there,
-you can define your own selection groups. Notice that this also affects the
-selections returned by :func:`mne.read_selection`. By default the selections
-only work for Neuromag data, but ``order='position'`` tries to mimic this
-behavior for any data with sensor positions available. The channels are
-grouped by sensor positions to 8 evenly sized regions. Notice that for this
-to work effectively, all the data channels in the channel array must be
-present. The ``order`` parameter can also be passed as an array of ints
-(picks) to plot the channels in the given order.
-
-
-
-.. code-block:: python
-
-    raw.plot(order='selection')
-
-
-
-
-.. rst-class:: sphx-glr-horizontal
-
-
-    *
-
-      .. image:: /auto_tutorials/images/sphx_glr_plot_visualize_raw_002.png
-            :scale: 47
-
-    *
-
-      .. image:: /auto_tutorials/images/sphx_glr_plot_visualize_raw_003.png
-            :scale: 47
-
-
-
+channels are also sorted by channel type by default. If you want to use a
+custom order for the channels, you can use ``order`` parameter of
+:func:`raw.plot`. The scrollbar on right side of the browser window also
+tells us that two of the channels are marked as ``bad``. Bad channels are
+color coded gray. By clicking the lines or channel names on the left, you can
+mark or unmark a bad channel interactively. You can use +/- keys to adjust
+the scale (also = works for magnifying the data). Note that the initial
+scaling factors can be set with parameter ``scalings``. If you don't know the
+scaling factor for channels, you can automatically set them by passing
+scalings='auto'. With ``pageup/pagedown`` and ``home/end`` keys you can
+adjust the amount of data viewed at once. To see all the interactive
+features, hit ``?`` or click ``help`` in the lower left corner of the
+browser window.
 
 We read the events from a file and passed it as a parameter when calling the
 method. The events are plotted as vertical lines so you can see how they
@@ -132,21 +94,16 @@ any MNE data container where the channel information is available.
 
 .. code-block:: python
 
-    raw.plot_sensors(kind='3d', ch_type='mag', ch_groups='position')
+    raw.plot_sensors(kind='3d', ch_type='mag')
 
 
 
 
-.. image:: /auto_tutorials/images/sphx_glr_plot_visualize_raw_004.png
+.. image:: /auto_tutorials/images/sphx_glr_plot_visualize_raw_002.png
     :align: center
 
 
 
-
-We used ``ch_groups='position'`` to color code the different regions. It uses
-the same algorithm for dividing the regions as ``order='position'`` of
-:func:`raw.plot <mne.io.Raw.plot>`. You can also pass a list of picks to
-color any channel group with different colors.
 
 Now let's add some ssp projectors to the raw data. Here we read them from a
 file and plot them.
@@ -162,7 +119,7 @@ file and plot them.
 
 
 
-.. image:: /auto_tutorials/images/sphx_glr_plot_visualize_raw_005.png
+.. image:: /auto_tutorials/images/sphx_glr_plot_visualize_raw_003.png
     :align: center
 
 
@@ -196,7 +153,7 @@ again.
 
 
 
-.. image:: /auto_tutorials/images/sphx_glr_plot_visualize_raw_006.png
+.. image:: /auto_tutorials/images/sphx_glr_plot_visualize_raw_004.png
     :align: center
 
 
@@ -223,7 +180,7 @@ See the API documentation for more info.
 
 
 
-.. image:: /auto_tutorials/images/sphx_glr_plot_visualize_raw_007.png
+.. image:: /auto_tutorials/images/sphx_glr_plot_visualize_raw_005.png
     :align: center
 
 
@@ -236,7 +193,7 @@ See the API documentation for more info.
     Effective window size : 3.410 (s)
 
 
-Plotting channel-wise power spectra is just as easy. The layout is inferred
+Plotting channel wise power spectra is just as easy. The layout is inferred
 from the data by default when plotting topo plots. This works for most data,
 but it is also possible to define the layouts by hand. Here we select a
 layout with only magnetometer channels and plot it. Then we plot the channel
@@ -257,12 +214,12 @@ wise spectra of first 30 seconds of the data.
 
     *
 
-      .. image:: /auto_tutorials/images/sphx_glr_plot_visualize_raw_008.png
+      .. image:: /auto_tutorials/images/sphx_glr_plot_visualize_raw_006.png
             :scale: 47
 
     *
 
-      .. image:: /auto_tutorials/images/sphx_glr_plot_visualize_raw_009.png
+      .. image:: /auto_tutorials/images/sphx_glr_plot_visualize_raw_007.png
             :scale: 47
 
 
@@ -273,7 +230,7 @@ wise spectra of first 30 seconds of the data.
     Effective window size : 1.705 (s)
 
 
-**Total running time of the script:** ( 0 minutes  17.304 seconds)
+**Total running time of the script:** ( 0 minutes  16.721 seconds)
 
 
 

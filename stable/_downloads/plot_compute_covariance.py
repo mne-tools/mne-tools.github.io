@@ -17,10 +17,9 @@ from mne.datasets import sample
 data_path = sample.data_path()
 raw_empty_room_fname = op.join(
     data_path, 'MEG', 'sample', 'ernoise_raw.fif')
-raw_empty_room = mne.io.read_raw_fif(raw_empty_room_fname, add_eeg_ref=False)
+raw_empty_room = mne.io.read_raw_fif(raw_empty_room_fname)
 raw_fname = op.join(data_path, 'MEG', 'sample', 'sample_audvis_raw.fif')
-raw = mne.io.read_raw_fif(raw_fname, add_eeg_ref=False)
-raw.set_eeg_reference()
+raw = mne.io.read_raw_fif(raw_fname)
 raw.info['bads'] += ['EEG 053']  # bads + 1 more
 
 ###############################################################################
@@ -136,4 +135,4 @@ evoked.plot_white(covs)
 #     vol. 108, 328-342, NeuroImage.
 #
 # .. [2] Taulu, S., Simola, J., Kajola, M., 2005. Applications of the signal
-#    space separation method. IEEE Trans. Signal Proc. 53, 3359-3372.
+#    space separation method. IEEE Trans. Signal Proc. 53, 3359–3372.

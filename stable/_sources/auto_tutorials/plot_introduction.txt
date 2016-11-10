@@ -8,8 +8,6 @@
 Basic MEG and EEG data processing
 =================================
 
-.. image:: http://mne-tools.github.io/stable/_static/mne_logo.png
-
 MNE-Python reimplements most of MNE-C's (the original MNE command line utils)
 functionality and offers transparent scripting.
 On top of that it extends MNE-C's functionality considerably
@@ -84,15 +82,12 @@ From raw data to evoked data
 
 .. _ipython: http://ipython.scipy.org/
 
-Now, launch `ipython`_ (Advanced Python shell) using the QT backend, which
-is best supported across systems::
+Now, launch `ipython`_ (Advanced Python shell) using the QT backend which best
+supported across systems::
 
   $ ipython --matplotlib=qt
 
 First, load the mne package:
-
-.. note:: In IPython, you can press **shift-enter** with a given cell
-          selected to execute it and advance to the next cell:
 
 
 
@@ -145,7 +140,7 @@ You can set the default level by setting the environment variable
 .. code-block:: python
 
 
-    mne.set_config('MNE_LOGGING_LEVEL', 'WARNING', set_env=True)
+    mne.set_config('MNE_LOGGING_LEVEL', 'WARNING')
 
 
 
@@ -206,7 +201,7 @@ Read data from file:
 .. code-block:: python
 
 
-    raw = mne.io.read_raw_fif(raw_fname, add_eeg_ref=False)
+    raw = mne.io.read_raw_fif(raw_fname)
     print(raw)
     print(raw.info)
 
@@ -224,10 +219,10 @@ Read data from file:
             PCA-v2 (1 x 102)  idle
             PCA-v3 (1 x 102)  idle
             Average EEG reference (1 x 60)  idle
+    Current compensation grade : 0
         Range : 6450 ... 48149 =     42.956 ...   320.665 secs
     Ready.
-    Current compensation grade : 0
-    <Raw  |  sample_audvis_filt-0-40_raw.fif, n_channels x n_times : 376 x 41700 (277.7 sec), ~3.7 MB, data not loaded>
+    <Raw  |  sample_audvis_filt-0-40_raw.fif, n_channels x n_times : 376 x 41700 (277.7 sec)>
     <Info | 20 non-empty fields
         bads : list | MEG 2443, EEG 053
         buffer_size_sec : numpy.float64 | 13.3196808772
@@ -256,7 +251,6 @@ Read data from file:
         dev_ctf_t : NoneType
         experimenter : NoneType
         hpi_subsystem : NoneType
-        kit_system_id : NoneType
         line_freq : NoneType
         proj_id : NoneType
         proj_name : NoneType
@@ -347,6 +341,9 @@ Save a segment of 150s of raw data (MEG only):
     Writing ...
     Writing ...
     Writing ...
+    Writing ...
+    Writing ...
+    Writing ...
     Closing /home/ubuntu/mne-python/tutorials/sample_audvis_meg_raw.fif [done]
 
 
@@ -389,7 +386,7 @@ use the following to set the default stim channel to use for finding events:
 .. code-block:: python
 
 
-    mne.set_config('MNE_STIM_CHANNEL', 'STI101', set_env=True)
+    mne.set_config('MNE_STIM_CHANNEL', 'STI101')
 
 
 
@@ -506,8 +503,7 @@ Read epochs:
 
 
     epochs = mne.Epochs(raw, events, event_id, tmin, tmax, proj=True, picks=picks,
-                        baseline=baseline, preload=False, reject=reject,
-                        add_eeg_ref=False)
+                        baseline=baseline, preload=False, reject=reject)
     print(epochs)
 
 
@@ -522,7 +518,7 @@ Read epochs:
     Applying baseline correction (mode: mean)
     Created an SSP operator (subspace dimension = 4)
     4 projection items activated
-    <Epochs  |  n_events : 145 (good & bad), tmin : -0.199795213158 (s), tmax : 0.499488032896 (s), baseline : (None, 0), ~3.7 MB, data not loaded,
+    <Epochs  |  n_events : 145 (good & bad), tmin : -0.199795213158 (s), tmax : 0.499488032896 (s), baseline : (None, 0),
      'aud_l': 72, 'aud_r': 73>
 
 
@@ -696,7 +692,7 @@ Compute evoked responses for auditory responses by averaging and plot it:
 
  Out::
 
-    <Evoked  |  comment : 'aud_l', kind : average, time : [-0.199795, 0.499488], n_epochs : 55, n_channels x n_times : 364 x 106, ~4.0 MB>
+    <Evoked  |  comment : 'aud_l', kind : average, time : [-0.199795, 0.499488], n_epochs : 55, n_channels x n_times : 364 x 106>
 
 
 .. topic:: Exercise
@@ -752,7 +748,6 @@ It is also possible to read evoked data stored in a fif file:
             0 CTF compensation matrices available
             nave = 55 - aspect type = 100
     Projections have already been applied. Setting proj attribute to True.
-    No baseline correction applied
     Applying baseline correction (mode: mean)
 
 
@@ -785,23 +780,17 @@ Or another one stored in the same file:
             0 CTF compensation matrices available
             nave = 61 - aspect type = 100
     Projections have already been applied. Setting proj attribute to True.
-    No baseline correction applied
     Applying baseline correction (mode: mean)
 
 
-Two evoked objects can be contrasted using :func:`mne.combine_evoked`.
-This function can use ``weights='equal'``, which provides a simple
-element-by-element subtraction (and sets the
-:attr:`mne.Evoked.nave` attribute properly based on the underlying number
-of trials) using either equivalent call:
+Compute a contrast:
 
 
 
 .. code-block:: python
 
 
-    contrast = mne.combine_evoked([evoked1, evoked2], weights=[0.5, -0.5])
-    contrast = mne.combine_evoked([evoked1, -evoked2], weights='equal')
+    contrast = evoked1 - evoked2
     print(contrast)
 
 
@@ -812,62 +801,7 @@ of trials) using either equivalent call:
 
  Out::
 
-    <Evoked  |  comment : '0.500 * Left Auditory + 0.500 * -Right Auditory', kind : average, time : [-0.199795, 0.499488], n_epochs : 116, n_channels x n_times : 376 x 421, ~4.9 MB>
-
-
-To do a weighted sum based on the number of averages, which will give
-you what you would have gotten from pooling all trials together in
-:class:`mne.Epochs` before creating the :class:`mne.Evoked` instance,
-you can use ``weights='nave'``:
-
-
-
-.. code-block:: python
-
-
-    average = mne.combine_evoked([evoked1, evoked2], weights='nave')
-    print(contrast)
-
-
-
-
-
-.. rst-class:: sphx-glr-script-out
-
- Out::
-
-    <Evoked  |  comment : '0.500 * Left Auditory + 0.500 * -Right Auditory', kind : average, time : [-0.199795, 0.499488], n_epochs : 116, n_channels x n_times : 376 x 421, ~4.9 MB>
-
-
-Instead of dealing with mismatches in the number of averages, we can use
-trial-count equalization before computing a contrast, which can have some
-benefits in inverse imaging (note that here ``weights='nave'`` will
-give the same result as ``weights='equal'``):
-
-
-
-.. code-block:: python
-
-
-    epochs_eq = epochs.copy().equalize_event_counts(['aud_l', 'aud_r'])[0]
-    evoked1, evoked2 = epochs_eq['aud_l'].average(), epochs_eq['aud_r'].average()
-    print(evoked1)
-    print(evoked2)
-    contrast = mne.combine_evoked([evoked1, -evoked2], weights='equal')
-    print(contrast)
-
-
-
-
-
-.. rst-class:: sphx-glr-script-out
-
- Out::
-
-    Dropped 6 epochs
-    <Evoked  |  comment : 'aud_l', kind : average, time : [-0.199795, 0.499488], n_epochs : 55, n_channels x n_times : 364 x 106, ~4.0 MB>
-    <Evoked  |  comment : 'aud_r', kind : average, time : [-0.199795, 0.499488], n_epochs : 55, n_channels x n_times : 364 x 106, ~4.0 MB>
-    <Evoked  |  comment : '0.500 * aud_l + 0.500 * -aud_r', kind : average, time : [-0.199795, 0.499488], n_epochs : 110, n_channels x n_times : 364 x 106, ~4.0 MB>
+    <Evoked  |  comment : 'Left Auditory - Right Auditory', kind : average, time : [-0.199795, 0.499488], n_epochs : 116, n_channels x n_times : 376 x 421>
 
 
 Time-Frequency: Induced power and inter trial coherence
@@ -900,13 +834,10 @@ Compute induced power and phase-locking values and plot gradiometers:
     from mne.time_frequency import tfr_morlet  # noqa
     power, itc = tfr_morlet(epochs, freqs=freqs, n_cycles=n_cycles,
                             return_itc=True, decim=3, n_jobs=1)
-    power.plot([power.ch_names.index('MEG 1332')])
+    # power.plot()
 
 
 
-
-.. image:: /auto_tutorials/images/sphx_glr_plot_introduction_003.png
-    :align: center
 
 
 .. rst-class:: sphx-glr-script-out
@@ -914,7 +845,6 @@ Compute induced power and phase-locking values and plot gradiometers:
  Out::
 
     Loading data for 116 events and 106 original time points ...
-    No baseline correction applied
 
 
 Inverse modeling: MNE and dSPM on evoked and raw data
@@ -1174,7 +1104,7 @@ Browse `the examples gallery <auto_examples/index.html>`_.
     Done!
 
 
-**Total running time of the script:** ( 0 minutes  16.339 seconds)
+**Total running time of the script:** ( 0 minutes  15.437 seconds)
 
 
 

@@ -11,7 +11,6 @@ EEG processing and Event Related Potentials (ERPs)
 For a generic introduction to the computation of ERP and ERF
 see :ref:`tut_epoching_and_averaging`. Here we cover the specifics
 of EEG, namely:
-
     - setting the reference
     - using standard montages :func:`mne.channels.Montage`
     - Evoked arithmetic (e.g. differences)
@@ -40,8 +39,7 @@ Setup for reading the raw data
     data_path = sample.data_path()
     raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
     event_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw-eve.fif'
-    raw = mne.io.read_raw_fif(raw_fname, add_eeg_ref=False, preload=True)
-    raw.set_eeg_reference()  # set EEG average reference
+    raw = mne.io.read_raw_fif(raw_fname, add_eeg_ref=True, preload=True)
 
 
 
@@ -57,11 +55,10 @@ Setup for reading the raw data
             PCA-v2 (1 x 102)  idle
             PCA-v3 (1 x 102)  idle
             Average EEG reference (1 x 60)  idle
+    Current compensation grade : 0
         Range : 6450 ... 48149 =     42.956 ...   320.665 secs
     Ready.
-    Current compensation grade : 0
     Reading 0 ... 41699  =      0.000 ...   277.709 secs...
-    An average reference projection was already added. The data has been left untouched.
 
 
 Let's restrict the data to the EEG channels
@@ -123,7 +120,6 @@ By looking at the measurement info you will see that we have now
         dev_ctf_t : NoneType
         experimenter : NoneType
         hpi_subsystem : NoneType
-        kit_system_id : NoneType
         line_freq : NoneType
         proj_id : NoneType
         proj_name : NoneType
@@ -180,7 +176,6 @@ to treat an EOG channel as EEG you can change its type using
         dev_ctf_t : NoneType
         experimenter : NoneType
         hpi_subsystem : NoneType
-        kit_system_id : NoneType
         line_freq : NoneType
         proj_id : NoneType
         proj_name : NoneType
@@ -340,7 +335,7 @@ We next define Epochs and compute an ERP for the left auditory condition.
     event_id, tmin, tmax = {'left/auditory': 1}, -0.2, 0.5
     events = mne.read_events(event_fname)
     epochs_params = dict(events=events, event_id=event_id, tmin=tmin, tmax=tmax,
-                         reject=reject, add_eeg_ref=False)
+                         reject=reject)
 
     evoked_no_ref = mne.Epochs(raw_no_ref, **epochs_params).average()
     del raw_no_ref  # save memory
@@ -539,10 +534,9 @@ First, we create an Epochs object containing 4 conditions.
 
     288 matching events found
     Applying baseline correction (mode: mean)
-    add_eeg_ref defaults to True in 0.13, will default to False in 0.14, and will be removed in 0.15. We recommend to use add_eeg_ref=False and set_eeg_reference() instead.
     Created an SSP operator (subspace dimension = 1)
     4 projection items activated
-    <Epochs  |  n_events : 288 (good & bad), tmin : -0.199795213158 (s), tmax : 0.499488032896 (s), baseline : (None, 0), ~3.1 MB, data not loaded,
+    <Epochs  |  n_events : 288 (good & bad), tmin : -0.199795213158 (s), tmax : 0.499488032896 (s), baseline : (None, 0),
      'left/auditory': 72, 'left/visual': 73, 'right/auditory': 73, 'right/visual': 70>
 
 
@@ -557,8 +551,7 @@ difference ERPs.
 
     left, right = epochs["left"].average(), epochs["right"].average()
 
-    # create and plot difference ERP
-    mne.combine_evoked([left, -right], weights='equal').plot_joint()
+    (left - right).plot_joint()  # create and plot difference ERP
 
 
 
@@ -620,10 +613,10 @@ difference ERPs.
         Rejecting  epoch based on EOG : ['EOG']
 
 
-This is an equal-weighting difference. If you have imbalanced trial numbers,
-you could also consider either equalizing the number of events per
-condition (using
-:meth:`epochs.equalize_epochs_counts <mne.Epochs.equalize_event_counts`).
+Note that by default, this is a trial-weighted average. If you have
+imbalanced trial numbers, consider either equalizing the number of events per
+condition (using ``Epochs.equalize_event_counts``), or the ``combine_evoked``
+function.
 As an example, first, we create individual ERPs for each condition.
 
 
@@ -637,173 +630,12 @@ As an example, first, we create individual ERPs for each condition.
     vis_r = epochs["visual", "right"].average()
 
     all_evokeds = [aud_l, aud_r, vis_l, vis_r]
-    print(all_evokeds)
 
+    # This could have been much simplified with a list comprehension:
+    # all_evokeds = [epochs[cond] for cond in event_id]
 
-
-
-
-.. rst-class:: sphx-glr-script-out
-
- Out::
-
-    Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EEG : [u'EEG 001']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EEG : [u'EEG 001']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EEG : [u'EEG 001']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-    [<Evoked  |  comment : 'auditory+left', kind : average, time : [-0.199795, 0.499488], n_epochs : 185, n_channels x n_times : 59 x 106, ~3.1 MB>, <Evoked  |  comment : 'auditory+right', kind : average, time : [-0.199795, 0.499488], n_epochs : 174, n_channels x n_times : 59 x 106, ~3.1 MB>, <Evoked  |  comment : 'visual+left', kind : average, time : [-0.199795, 0.499488], n_epochs : 179, n_channels x n_times : 59 x 106, ~3.1 MB>, <Evoked  |  comment : 'visual+right', kind : average, time : [-0.199795, 0.499488], n_epochs : 185, n_channels x n_times : 59 x 106, ~3.1 MB>]
-
-
-This can be simplified with a Python list comprehension:
-
-
-
-.. code-block:: python
-
-    all_evokeds = [epochs[cond].average() for cond in sorted(event_id.keys())]
-    print(all_evokeds)
-
-    # Then, we construct and plot an unweighted average of left vs. right trials
-    # this way, too:
-    mne.combine_evoked(all_evokeds,
-                       weights=(0.25, -0.25, 0.25, -0.25)).plot_joint()
+    # Then, we construct and plot an unweighted average of left vs. right trials.
+    mne.combine_evoked(all_evokeds, weights=(1, -1, 1, -1)).plot_joint()
 
 
 
@@ -833,12 +665,6 @@ This can be simplified with a Python list comprehension:
         Rejecting  epoch based on EOG : ['EOG']
         Rejecting  epoch based on EOG : ['EOG']
         Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
-        Rejecting  epoch based on EOG : ['EOG']
         Rejecting  epoch based on EEG : [u'EEG 001']
         Rejecting  epoch based on EOG : ['EOG']
         Rejecting  epoch based on EOG : ['EOG']
@@ -863,7 +689,12 @@ This can be simplified with a Python list comprehension:
         Rejecting  epoch based on EOG : ['EOG']
         Rejecting  epoch based on EOG : ['EOG']
         Rejecting  epoch based on EOG : ['EOG']
-    [<Evoked  |  comment : 'left/auditory', kind : average, time : [-0.199795, 0.499488], n_epochs : 56, n_channels x n_times : 59 x 106, ~3.1 MB>, <Evoked  |  comment : 'left/visual', kind : average, time : [-0.199795, 0.499488], n_epochs : 67, n_channels x n_times : 59 x 106, ~3.1 MB>, <Evoked  |  comment : 'right/auditory', kind : average, time : [-0.199795, 0.499488], n_epochs : 62, n_channels x n_times : 59 x 106, ~3.1 MB>, <Evoked  |  comment : 'right/visual', kind : average, time : [-0.199795, 0.499488], n_epochs : 56, n_channels x n_times : 59 x 106, ~3.1 MB>]
+        Rejecting  epoch based on EOG : ['EOG']
+        Rejecting  epoch based on EOG : ['EOG']
+        Rejecting  epoch based on EOG : ['EOG']
+        Rejecting  epoch based on EOG : ['EOG']
+        Rejecting  epoch based on EOG : ['EOG']
+        Rejecting  epoch based on EOG : ['EOG']
 
 
 Often, it makes sense to store Evoked objects in a dictionary or a list -
@@ -966,10 +797,10 @@ either different conditions, or different subjects.
         Rejecting  epoch based on EOG : ['EOG']
         Rejecting  epoch based on EOG : ['EOG']
         Rejecting  epoch based on EOG : ['EOG']
-    <Evoked  |  comment : 'left/auditory', kind : average, time : [-0.199795, 0.499488], n_epochs : 56, n_channels x n_times : 59 x 106, ~3.1 MB>
+    <Evoked  |  comment : 'left/auditory', kind : average, time : [-0.199795, 0.499488], n_epochs : 56, n_channels x n_times : 59 x 106>
 
 
-**Total running time of the script:** ( 0 minutes  15.057 seconds)
+**Total running time of the script:** ( 0 minutes  14.239 seconds)
 
 
 
