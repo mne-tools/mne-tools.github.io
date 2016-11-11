@@ -196,11 +196,13 @@ NEO file format is used as a source for the data.</p>
 <span class="n">ch_names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;sin&#39;</span><span class="p">,</span> <span class="s1">&#39;cos&#39;</span><span class="p">,</span> <span class="s1">&#39;sinX2&#39;</span><span class="p">,</span> <span class="s1">&#39;cosX2&#39;</span><span class="p">]</span>
 </pre></div>
 </div>
-<p>Creation of info dictionary.</p>
+<p>Create an <code class="xref py py-class docutils literal"><span class="pre">info</span></code> object.</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># It is also possible to use info from another raw object.</span>
 <span class="n">info</span> <span class="o">=</span> <a href="../../generated/mne.create_info.html#mne.create_info" class="sphx-glr-code-links" tooltip="Link to documentation for mne.create_info"><span class="n">mne</span><span class="o">.</span><span class="n">create_info</span></a><span class="p">(</span><span class="n">ch_names</span><span class="o">=</span><span class="n">ch_names</span><span class="p">,</span> <span class="n">sfreq</span><span class="o">=</span><span class="n">sfreq</span><span class="p">,</span> <span class="n">ch_types</span><span class="o">=</span><span class="n">ch_types</span><span class="p">)</span>
-
-<span class="n">raw</span> <span class="o">=</span> <span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">RawArray</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">info</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Create a dummy <a class="reference internal" href="../../generated/mne.io.RawArray.html#mne.io.RawArray" title="mne.io.RawArray"><code class="xref py py-class docutils literal"><span class="pre">mne.io.RawArray</span></code></a> object</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">raw</span> <span class="o">=</span> <span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">RawArray</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">info</span><span class="p">)</span>
 
 <span class="c1"># Scaling of the figure.</span>
 <span class="c1"># For actual EEG/MEG data different scaling factors should be used.</span>
@@ -229,7 +231,8 @@ NEO file format is used as a source for the data.</p>
 </pre></div>
 </div>
 <p>EpochsArray</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">event_id</span> <span class="o">=</span> <span class="mi">1</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">event_id</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># This is used to identify the events.</span>
+<span class="c1"># First column is for the sample number.</span>
 <span class="n">events</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="mi">200</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">event_id</span><span class="p">],</span>
                    <span class="p">[</span><span class="mi">1200</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">event_id</span><span class="p">],</span>
                    <span class="p">[</span><span class="mi">2000</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">event_id</span><span class="p">]])</span>  <span class="c1"># List of three arbitrary events</span>
@@ -272,6 +275,88 @@ NEO file format is used as a source for the data.</p>
 </pre></div>
 </div>
 <img alt="../../_images/sphx_glr_plot_objects_from_arrays_004.png" class="align-center" src="../../_images/sphx_glr_plot_objects_from_arrays_004.png" />
+<p>Create epochs by windowing the raw data.</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># The events are spaced evenly every 1 second.</span>
+<span class="n">duration</span> <span class="o">=</span> <span class="mf">1.</span>
+
+<span class="c1"># create a fixed size events array</span>
+<span class="c1"># start=0 and stop=None by default</span>
+<span class="n">events</span> <span class="o">=</span> <a href="../../generated/mne.make_fixed_length_events.html#mne.make_fixed_length_events" class="sphx-glr-code-links" tooltip="Link to documentation for mne.make_fixed_length_events"><span class="n">mne</span><span class="o">.</span><span class="n">make_fixed_length_events</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">event_id</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="n">duration</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">events</span><span class="p">)</span>
+
+<span class="c1"># for fixed size events no start time before and after event</span>
+<span class="n">tmin</span> <span class="o">=</span> <span class="mf">0.</span>
+<span class="n">tmax</span> <span class="o">=</span> <span class="mf">0.99</span>  <span class="c1"># inclusive tmax, 1 second epochs</span>
+
+<span class="c1"># create :class:`Epochs &lt;mne.Epochs&gt;` object</span>
+<span class="n">epochs</span> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs" class="sphx-glr-code-links" tooltip="Link to documentation for mne.Epochs"><span class="n">mne</span><span class="o">.</span><span class="n">Epochs</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">events</span><span class="o">=</span><span class="n">events</span><span class="p">,</span> <span class="n">event_id</span><span class="o">=</span><span class="n">event_id</span><span class="p">,</span> <span class="n">tmin</span><span class="o">=</span><span class="n">tmin</span><span class="p">,</span>
+                    <span class="n">tmax</span><span class="o">=</span><span class="n">tmax</span><span class="p">,</span> <span class="n">baseline</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">epochs</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">scalings</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="../../_images/sphx_glr_plot_objects_from_arrays_005.png" class="align-center" src="../../_images/sphx_glr_plot_objects_from_arrays_005.png" />
+<p class="sphx-glr-script-out">Out:</p>
+<div class="sphx-glr-script-out highlight-default"><div class="highlight"><pre><span></span><span class="p">[[</span>   <span class="mi">0</span>    <span class="mi">0</span>    <span class="mi">1</span><span class="p">]</span>
+ <span class="p">[</span><span class="mi">1000</span>    <span class="mi">0</span>    <span class="mi">1</span><span class="p">]</span>
+ <span class="p">[</span><span class="mi">2000</span>    <span class="mi">0</span>    <span class="mi">1</span><span class="p">]</span>
+ <span class="p">[</span><span class="mi">3000</span>    <span class="mi">0</span>    <span class="mi">1</span><span class="p">]</span>
+ <span class="p">[</span><span class="mi">4000</span>    <span class="mi">0</span>    <span class="mi">1</span><span class="p">]</span>
+ <span class="p">[</span><span class="mi">5000</span>    <span class="mi">0</span>    <span class="mi">1</span><span class="p">]</span>
+ <span class="p">[</span><span class="mi">6000</span>    <span class="mi">0</span>    <span class="mi">1</span><span class="p">]</span>
+ <span class="p">[</span><span class="mi">7000</span>    <span class="mi">0</span>    <span class="mi">1</span><span class="p">]</span>
+ <span class="p">[</span><span class="mi">8000</span>    <span class="mi">0</span>    <span class="mi">1</span><span class="p">]</span>
+ <span class="p">[</span><span class="mi">9000</span>    <span class="mi">0</span>    <span class="mi">1</span><span class="p">]]</span>
+<span class="mi">10</span> <span class="n">matching</span> <span class="n">events</span> <span class="n">found</span>
+<span class="n">No</span> <span class="n">baseline</span> <span class="n">correction</span> <span class="n">applied</span>
+<span class="mi">0</span> <span class="n">projection</span> <span class="n">items</span> <span class="n">activated</span>
+<span class="n">Loading</span> <span class="n">data</span> <span class="k">for</span> <span class="mi">10</span> <span class="n">events</span> <span class="ow">and</span> <span class="mi">991</span> <span class="n">original</span> <span class="n">time</span> <span class="n">points</span> <span class="o">...</span>
+<span class="mi">0</span> <span class="n">bad</span> <span class="n">epochs</span> <span class="n">dropped</span>
+<span class="n">Loading</span> <span class="n">data</span> <span class="k">for</span> <span class="mi">10</span> <span class="n">events</span> <span class="ow">and</span> <span class="mi">991</span> <span class="n">original</span> <span class="n">time</span> <span class="n">points</span> <span class="o">...</span>
+<span class="n">Loading</span> <span class="n">data</span> <span class="k">for</span> <span class="mi">10</span> <span class="n">events</span> <span class="ow">and</span> <span class="mi">991</span> <span class="n">original</span> <span class="n">time</span> <span class="n">points</span> <span class="o">...</span>
+</pre></div>
+</div>
+<p>Create overlapping epochs using <a class="reference internal" href="../../generated/mne.make_fixed_length_events.html#mne.make_fixed_length_events" title="mne.make_fixed_length_events"><code class="xref py py-func docutils literal"><span class="pre">mne.make_fixed_length_events()</span></code></a> (50 %
+overlap). This also roughly doubles the amount of events compared to the
+previous event list.</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">duration</span> <span class="o">=</span> <span class="mf">0.5</span>
+<span class="n">events</span> <span class="o">=</span> <a href="../../generated/mne.make_fixed_length_events.html#mne.make_fixed_length_events" class="sphx-glr-code-links" tooltip="Link to documentation for mne.make_fixed_length_events"><span class="n">mne</span><span class="o">.</span><span class="n">make_fixed_length_events</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">event_id</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="n">duration</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">events</span><span class="p">)</span>
+<span class="n">epochs</span> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs" class="sphx-glr-code-links" tooltip="Link to documentation for mne.Epochs"><span class="n">mne</span><span class="o">.</span><span class="n">Epochs</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">events</span><span class="o">=</span><span class="n">events</span><span class="p">,</span> <span class="n">tmin</span><span class="o">=</span><span class="n">tmin</span><span class="p">,</span> <span class="n">tmax</span><span class="o">=</span><span class="n">tmax</span><span class="p">,</span> <span class="n">baseline</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                    <span class="n">verbose</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">epochs</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">scalings</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="../../_images/sphx_glr_plot_objects_from_arrays_006.png" class="align-center" src="../../_images/sphx_glr_plot_objects_from_arrays_006.png" />
+<p class="sphx-glr-script-out">Out:</p>
+<div class="sphx-glr-script-out highlight-default"><div class="highlight"><pre><span></span><span class="p">[[</span>   <span class="mi">0</span>    <span class="mi">0</span>    <span class="mi">1</span><span class="p">]</span>
+ <span class="p">[</span> <span class="mi">500</span>    <span class="mi">0</span>    <span class="mi">1</span><span class="p">]</span>
+ <span class="p">[</span><span class="mi">1000</span>    <span class="mi">0</span>    <span class="mi">1</span><span class="p">]</span>
+ <span class="p">[</span><span class="mi">1500</span>    <span class="mi">0</span>    <span class="mi">1</span><span class="p">]</span>
+ <span class="p">[</span><span class="mi">2000</span>    <span class="mi">0</span>    <span class="mi">1</span><span class="p">]</span>
+ <span class="p">[</span><span class="mi">2500</span>    <span class="mi">0</span>    <span class="mi">1</span><span class="p">]</span>
+ <span class="p">[</span><span class="mi">3000</span>    <span class="mi">0</span>    <span class="mi">1</span><span class="p">]</span>
+ <span class="p">[</span><span class="mi">3500</span>    <span class="mi">0</span>    <span class="mi">1</span><span class="p">]</span>
+ <span class="p">[</span><span class="mi">4000</span>    <span class="mi">0</span>    <span class="mi">1</span><span class="p">]</span>
+ <span class="p">[</span><span class="mi">4500</span>    <span class="mi">0</span>    <span class="mi">1</span><span class="p">]</span>
+ <span class="p">[</span><span class="mi">5000</span>    <span class="mi">0</span>    <span class="mi">1</span><span class="p">]</span>
+ <span class="p">[</span><span class="mi">5500</span>    <span class="mi">0</span>    <span class="mi">1</span><span class="p">]</span>
+ <span class="p">[</span><span class="mi">6000</span>    <span class="mi">0</span>    <span class="mi">1</span><span class="p">]</span>
+ <span class="p">[</span><span class="mi">6500</span>    <span class="mi">0</span>    <span class="mi">1</span><span class="p">]</span>
+ <span class="p">[</span><span class="mi">7000</span>    <span class="mi">0</span>    <span class="mi">1</span><span class="p">]</span>
+ <span class="p">[</span><span class="mi">7500</span>    <span class="mi">0</span>    <span class="mi">1</span><span class="p">]</span>
+ <span class="p">[</span><span class="mi">8000</span>    <span class="mi">0</span>    <span class="mi">1</span><span class="p">]</span>
+ <span class="p">[</span><span class="mi">8500</span>    <span class="mi">0</span>    <span class="mi">1</span><span class="p">]</span>
+ <span class="p">[</span><span class="mi">9000</span>    <span class="mi">0</span>    <span class="mi">1</span><span class="p">]</span>
+ <span class="p">[</span><span class="mi">9500</span>    <span class="mi">0</span>    <span class="mi">1</span><span class="p">]]</span>
+<span class="mi">20</span> <span class="n">matching</span> <span class="n">events</span> <span class="n">found</span>
+<span class="n">No</span> <span class="n">baseline</span> <span class="n">correction</span> <span class="n">applied</span>
+<span class="mi">0</span> <span class="n">projection</span> <span class="n">items</span> <span class="n">activated</span>
+<span class="n">Loading</span> <span class="n">data</span> <span class="k">for</span> <span class="mi">20</span> <span class="n">events</span> <span class="ow">and</span> <span class="mi">991</span> <span class="n">original</span> <span class="n">time</span> <span class="n">points</span> <span class="o">...</span>
+<span class="mi">1</span> <span class="n">bad</span> <span class="n">epochs</span> <span class="n">dropped</span>
+<span class="n">Loading</span> <span class="n">data</span> <span class="k">for</span> <span class="mi">19</span> <span class="n">events</span> <span class="ow">and</span> <span class="mi">991</span> <span class="n">original</span> <span class="n">time</span> <span class="n">points</span> <span class="o">...</span>
+<span class="n">Loading</span> <span class="n">data</span> <span class="k">for</span> <span class="mi">19</span> <span class="n">events</span> <span class="ow">and</span> <span class="mi">991</span> <span class="n">original</span> <span class="n">time</span> <span class="n">points</span> <span class="o">...</span>
+</pre></div>
+</div>
 <p>Extracting data from NEO file</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># The example here uses the ExampleIO object for creating fake data.</span>
 <span class="c1"># For actual data and different file formats, consult the NEO documentation.</span>
@@ -300,14 +385,14 @@ NEO file format is used as a source for the data.</p>
          <span class="n">show</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">clipping</span><span class="o">=</span><span class="s1">&#39;clamp&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<img alt="../../_images/sphx_glr_plot_objects_from_arrays_005.png" class="align-center" src="../../_images/sphx_glr_plot_objects_from_arrays_005.png" />
+<img alt="../../_images/sphx_glr_plot_objects_from_arrays_007.png" class="align-center" src="../../_images/sphx_glr_plot_objects_from_arrays_007.png" />
 <p class="sphx-glr-script-out">Out:</p>
 <div class="sphx-glr-script-out highlight-default"><div class="highlight"><pre><span></span><span class="n">Creating</span> <span class="n">RawArray</span> <span class="k">with</span> <span class="n">float64</span> <span class="n">data</span><span class="p">,</span> <span class="n">n_channels</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">n_times</span><span class="o">=</span><span class="mi">150000</span>
     <span class="n">Range</span> <span class="p">:</span> <span class="mi">0</span> <span class="o">...</span> <span class="mi">149999</span> <span class="o">=</span>      <span class="mf">0.000</span> <span class="o">...</span>    <span class="mf">15.000</span> <span class="n">secs</span>
 <span class="n">Ready</span><span class="o">.</span>
 </pre></div>
 </div>
-<p><strong>Total running time of the script:</strong> ( 0 minutes  2.431 seconds)</p>
+<p><strong>Total running time of the script:</strong> ( 0 minutes  3.420 seconds)</p>
 <div class="sphx-glr-footer container">
 <div class="sphx-glr-download container">
 <a class="reference download internal" href="../../_downloads/plot_objects_from_arrays.py" download=""><code class="xref download docutils literal"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">plot_objects_from_arrays.py</span></code></a></div>
@@ -329,7 +414,7 @@ NEO file format is used as a source for the data.</p>
       
     </p>
     <p>
-        &copy; Copyright 2012-2016, MNE Developers. Last updated on 2016-11-08.<br/>
+        &copy; Copyright 2012-2016, MNE Developers. Last updated on 2016-11-11.<br/>
     </p>
   </div>
 </footer>
