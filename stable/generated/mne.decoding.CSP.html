@@ -5,7 +5,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>mne.decoding.CSP &#8212; MNE 0.12.0 documentation</title>
+    <title>mne.decoding.CSP &#8212; MNE 0.13 documentation</title>
     
     <link rel="stylesheet" href="../_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../',
-        VERSION:     '0.12.0',
+        VERSION:     '0.13',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -34,7 +34,7 @@
     <link rel="shortcut icon" href="../_static/favicon.ico"/>
     <link rel="index" title="Index" href="../genindex.html" />
     <link rel="search" title="Search" href="../search.html" />
-    <link rel="top" title="MNE 0.12.0 documentation" href="../index.html" />
+    <link rel="top" title="MNE 0.13 documentation" href="../index.html" />
     <link rel="up" title="Python API Reference" href="../python_reference.html" />
     <link rel="next" title="mne.decoding.EpochsVectorizer" href="mne.decoding.EpochsVectorizer.html" />
     <link rel="prev" title="mne.preprocessing.Xdawn" href="mne.preprocessing.Xdawn.html" />
@@ -91,7 +91,7 @@
         </button>
         <a class="navbar-brand" href="../index.html"><span><img src="../_static/mne_logo_small.png"></span>
            </a>
-        <span class="navbar-text navbar-version pull-left"><b>0.12.0</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.13</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -201,57 +201,47 @@
 <h1>mne.decoding.CSP<a class="headerlink" href="#mne-decoding-csp" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="mne.decoding.CSP">
-<em class="property">class </em><code class="descclassname">mne.decoding.</code><code class="descname">CSP</code><span class="sig-paren">(</span><em>n_components=4</em>, <em>reg=None</em>, <em>log=True</em>, <em>cov_est='concat'</em><span class="sig-paren">)</span><a class="headerlink" href="#mne.decoding.CSP" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">mne.decoding.</code><code class="descname">CSP</code><span class="sig-paren">(</span><em>n_components=4</em>, <em>reg=None</em>, <em>log=None</em>, <em>cov_est='concat'</em>, <em>transform_into='average_power'</em><span class="sig-paren">)</span><a class="headerlink" href="#mne.decoding.CSP" title="Permalink to this definition">¶</a></dt>
 <dd><p>M/EEG signal decomposition using the Common Spatial Patterns (CSP).</p>
 <p>This object can be used as a supervised decomposition to estimate
 spatial filters for feature extraction in a 2 class decoding problem.
 CSP in the context of EEG was first described in [1]; a comprehensive
-tutorial on CSP can be found in [2].</p>
+tutorial on CSP can be found in [2]. Multiclass solving is implemented
+from [3].</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>n_components</strong> : int (default 4)</p>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>n_components</strong> : int, defaults to 4</p>
 <blockquote>
 <div><p>The number of components to decompose M/EEG signals.
 This number should be set by cross-validation.</p>
 </div></blockquote>
-<p><strong>reg</strong> : float | str | None (default None)</p>
+<p><strong>reg</strong> : float | str | None, defaults to None</p>
 <blockquote>
 <div><p>if not None, allow regularization for covariance estimation
 if float, shrinkage covariance is used (0 &lt;= shrinkage &lt;= 1).
 if str, optimal shrinkage using Ledoit-Wolf Shrinkage (&#8216;ledoit_wolf&#8217;)
 or Oracle Approximating Shrinkage (&#8216;oas&#8217;).</p>
 </div></blockquote>
-<p><strong>log</strong> : bool (default True)</p>
+<p><strong>log</strong> : None | bool, defaults to None</p>
 <blockquote>
-<div><p>If true, apply log to standardize the features.
-If false, features are just z-scored.</p>
+<div><p>If transform_into == &#8216;average_power&#8217; and log is None or True, then
+applies a log transform to standardize the features, else the features
+are z-scored. If transform_into == &#8216;csp_space&#8217;, then log must be None.</p>
 </div></blockquote>
-<p><strong>cov_est</strong> : str (default &#8216;concat&#8217;)</p>
+<p><strong>cov_est</strong> : &#8216;concat&#8217; | &#8216;epoch&#8217;, defaults to &#8216;concat&#8217;</p>
 <blockquote>
 <div><p>If &#8216;concat&#8217;, covariance matrices are estimated on concatenated epochs
 for each class.
 If &#8216;epoch&#8217;, covariance matrices are estimated on each epoch separately
 and then averaged over each class.</p>
 </div></blockquote>
-</td>
-</tr>
-<tr class="field-even field"><th class="field-name">Attributes:</th><td class="field-body"><p class="first"><strong>filters_</strong> : ndarray, shape (n_channels, n_channels)</p>
-<blockquote>
-<div><p>If fit, the CSP components used to decompose the data, else None.</p>
-</div></blockquote>
-<p><strong>patterns_</strong> : ndarray, shape (n_channels, n_channels)</p>
-<blockquote>
-<div><p>If fit, the CSP patterns used to restore M/EEG signals, else None.</p>
-</div></blockquote>
-<p><strong>mean_</strong> : ndarray, shape (n_channels,)</p>
-<blockquote>
-<div><p>If fit, the mean squared power for each component.</p>
-</div></blockquote>
-<p><strong>std_</strong> : ndarray, shape (n_channels,)</p>
+<p><strong>transform_into</strong> : {&#8216;average_power&#8217;, &#8216;csp_space&#8217;}</p>
 <blockquote class="last">
-<div><p>If fit, the std squared power for each component.</p>
+<div><p>If &#8216;average_power&#8217; then self.transform will return the average power of
+each spatial filter. If &#8216;csp_space&#8217; self.transform will return the data
+in CSP space. Defaults to &#8216;average_power&#8217;.</p>
 </div></blockquote>
 </td>
 </tr>
@@ -266,7 +256,31 @@ Topography 2(4), 275-284, 1990.</dd>
 <dd>Klaus-Robert Müller. Optimizing Spatial Filters for Robust EEG
 Single-Trial Analysis. IEEE Signal Processing Magazine 25(1), 41-56,
 2008.</dd>
+<dt>[3] Grosse-Wentrup, Moritz, and Martin Buss. Multiclass common spatial</dt>
+<dd>patterns and information theoretic feature extraction. IEEE
+Transactions on Biomedical Engineering, Vol 55, no. 8, 2008.</dd>
 </dl>
+<p class="rubric">Attributes</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="11%" />
+<col width="89%" />
+</colgroup>
+<tbody valign="top">
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">filters_</span></code></td>
+<td>(ndarray, shape (n_channels, n_channels)) If fit, the CSP components used to decompose the data, else None.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">patterns_</span></code></td>
+<td>(ndarray, shape (n_channels, n_channels)) If fit, the CSP patterns used to restore M/EEG signals, else None.</td>
+</tr>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">mean_</span></code></td>
+<td>(ndarray, shape (n_components,)) If fit, the mean squared power for each component.</td>
+</tr>
+<tr class="row-even"><td><code class="docutils literal"><span class="pre">std_</span></code></td>
+<td>(ndarray, shape (n_components,)) If fit, the std squared power for each component.</td>
+</tr>
+</tbody>
+</table>
 <p class="rubric">Methods</p>
 <table border="1" class="longtable docutils">
 <colgroup>
@@ -274,46 +288,48 @@ Single-Trial Analysis. IEEE Signal Processing Magazine 25(1), 41-56,
 <col width="90%" />
 </colgroup>
 <tbody valign="top">
-<tr class="row-odd"><td><a class="reference internal" href="#mne.decoding.CSP.fit" title="mne.decoding.CSP.fit"><code class="xref py py-obj docutils literal"><span class="pre">fit</span></code></a>(epochs_data,&nbsp;y)</td>
+<tr class="row-odd"><td><a class="reference internal" href="#mne.decoding.CSP.__hash__" title="mne.decoding.CSP.__hash__"><code class="xref py py-obj docutils literal"><span class="pre">__hash__</span></code></a>()&nbsp;&lt;==&gt;&nbsp;hash(x)</td>
+<td></td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#mne.decoding.CSP.fit" title="mne.decoding.CSP.fit"><code class="xref py py-obj docutils literal"><span class="pre">fit</span></code></a>(X,&nbsp;y[,&nbsp;epochs_data])</td>
 <td>Estimate the CSP decomposition on epochs.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#mne.decoding.CSP.fit_transform" title="mne.decoding.CSP.fit_transform"><code class="xref py py-obj docutils literal"><span class="pre">fit_transform</span></code></a>(X[,&nbsp;y])</td>
+<tr class="row-odd"><td><a class="reference internal" href="#mne.decoding.CSP.fit_transform" title="mne.decoding.CSP.fit_transform"><code class="xref py py-obj docutils literal"><span class="pre">fit_transform</span></code></a>(X[,&nbsp;y])</td>
 <td>Fit to data, then transform it</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#mne.decoding.CSP.get_params" title="mne.decoding.CSP.get_params"><code class="xref py py-obj docutils literal"><span class="pre">get_params</span></code></a>([deep])</td>
-<td>Return all parameters (mimics sklearn API).</td>
+<tr class="row-even"><td><a class="reference internal" href="#mne.decoding.CSP.get_params" title="mne.decoding.CSP.get_params"><code class="xref py py-obj docutils literal"><span class="pre">get_params</span></code></a>([deep])</td>
+<td>Get parameters for this estimator.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#mne.decoding.CSP.plot_filters" title="mne.decoding.CSP.plot_filters"><code class="xref py py-obj docutils literal"><span class="pre">plot_filters</span></code></a>(info[,&nbsp;components,&nbsp;ch_type,&nbsp;...])</td>
+<tr class="row-odd"><td><a class="reference internal" href="#mne.decoding.CSP.plot_filters" title="mne.decoding.CSP.plot_filters"><code class="xref py py-obj docutils literal"><span class="pre">plot_filters</span></code></a>(info[,&nbsp;components,&nbsp;ch_type,&nbsp;...])</td>
 <td>Plot topographic filters of CSP components.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#mne.decoding.CSP.plot_patterns" title="mne.decoding.CSP.plot_patterns"><code class="xref py py-obj docutils literal"><span class="pre">plot_patterns</span></code></a>(info[,&nbsp;components,&nbsp;ch_type,&nbsp;...])</td>
+<tr class="row-even"><td><a class="reference internal" href="#mne.decoding.CSP.plot_patterns" title="mne.decoding.CSP.plot_patterns"><code class="xref py py-obj docutils literal"><span class="pre">plot_patterns</span></code></a>(info[,&nbsp;components,&nbsp;ch_type,&nbsp;...])</td>
 <td>Plot topographic patterns of CSP components.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#mne.decoding.CSP.set_params" title="mne.decoding.CSP.set_params"><code class="xref py py-obj docutils literal"><span class="pre">set_params</span></code></a>(\*\*params)</td>
-<td>Set parameters (mimics sklearn API).</td>
+<tr class="row-odd"><td><a class="reference internal" href="#mne.decoding.CSP.set_params" title="mne.decoding.CSP.set_params"><code class="xref py py-obj docutils literal"><span class="pre">set_params</span></code></a>(\*\*params)</td>
+<td>Set the parameters of this estimator.</td>
 </tr>
-<tr class="row-odd"><td><a class="reference internal" href="#mne.decoding.CSP.transform" title="mne.decoding.CSP.transform"><code class="xref py py-obj docutils literal"><span class="pre">transform</span></code></a>(epochs_data[,&nbsp;y])</td>
+<tr class="row-even"><td><a class="reference internal" href="#mne.decoding.CSP.transform" title="mne.decoding.CSP.transform"><code class="xref py py-obj docutils literal"><span class="pre">transform</span></code></a>(X[,&nbsp;epochs_data])</td>
 <td>Estimate epochs sources given the CSP filters.</td>
 </tr>
 </tbody>
 </table>
-<dl class="method">
-<dt id="mne.decoding.CSP.__init__">
-<code class="descname">__init__</code><span class="sig-paren">(</span><em>n_components=4</em>, <em>reg=None</em>, <em>log=True</em>, <em>cov_est='concat'</em><span class="sig-paren">)</span><a class="headerlink" href="#mne.decoding.CSP.__init__" title="Permalink to this definition">¶</a></dt>
-<dd><p>Init of CSP.</p>
-</dd></dl>
+<dl class="attribute">
+<dt id="mne.decoding.CSP.__hash__">
+<code class="descname">__hash__</code><span class="sig-paren">(</span><em>) &lt;==&gt; hash(x</em><span class="sig-paren">)</span><a class="headerlink" href="#mne.decoding.CSP.__hash__" title="Permalink to this definition">¶</a></dt>
+<dd></dd></dl>
 
 <dl class="method">
 <dt id="mne.decoding.CSP.fit">
-<code class="descname">fit</code><span class="sig-paren">(</span><em>epochs_data</em>, <em>y</em><span class="sig-paren">)</span><a class="headerlink" href="#mne.decoding.CSP.fit" title="Permalink to this definition">¶</a></dt>
+<code class="descname">fit</code><span class="sig-paren">(</span><em>X</em>, <em>y</em>, <em>epochs_data=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mne.decoding.CSP.fit" title="Permalink to this definition">¶</a></dt>
 <dd><p>Estimate the CSP decomposition on epochs.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>epochs_data</strong> : ndarray, shape (n_epochs, n_channels, n_times)</p>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>X</strong> : ndarray, shape (n_epochs, n_channels, n_times)</p>
 <blockquote>
-<div><p>The data to estimate the CSP on.</p>
+<div><p>The data on which to estimate the CSP.</p>
 </div></blockquote>
 <p><strong>y</strong> : array, shape (n_epochs,)</p>
 <blockquote>
@@ -364,15 +380,21 @@ and returns a transformed version of X.</p>
 <dl class="method">
 <dt id="mne.decoding.CSP.get_params">
 <code class="descname">get_params</code><span class="sig-paren">(</span><em>deep=True</em><span class="sig-paren">)</span><a class="headerlink" href="#mne.decoding.CSP.get_params" title="Permalink to this definition">¶</a></dt>
-<dd><p>Return all parameters (mimics sklearn API).</p>
+<dd><p>Get parameters for this estimator.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>deep: boolean, optional</strong> :</p>
-<blockquote class="last">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>deep</strong> : boolean, optional</p>
+<blockquote>
 <div><p>If True, will return the parameters for this estimator and
 contained subobjects that are estimators.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>params</strong> : mapping of string to any</p>
+<blockquote class="last">
+<div><p>Parameter names mapped to their values.</p>
 </div></blockquote>
 </td>
 </tr>
@@ -426,10 +448,22 @@ If None, the maximum absolute value is used. If vmin is None,
 but vmax is not, defaults to np.min(data).
 If callable, the output equals vmax(data).</p>
 </div></blockquote>
-<p><strong>cmap</strong> : matplotlib colormap</p>
+<p><strong>cmap</strong> : matplotlib colormap | (colormap, bool) | &#8216;interactive&#8217; | None</p>
 <blockquote>
-<div><p>Colormap. For magnetometers and eeg defaults to &#8216;RdBu_r&#8217;, else
-&#8216;Reds&#8217;.</p>
+<div><p>Colormap to use. If tuple, the first value indicates the colormap
+to use and the second value is a boolean defining interactivity. In
+interactive mode the colors are adjustable by clicking and dragging
+the colorbar with left and right mouse button. Left mouse button
+moves the scale up and down and right mouse button adjusts the
+range. Hitting space bar resets the range. Up and down arrows can
+be used to change the colormap. If None, &#8216;Reds&#8217; is used for all
+positive data, otherwise defaults to &#8216;RdBu_r&#8217;. If &#8216;interactive&#8217;,
+translates to (None, True). Defaults to &#8216;RdBu_r&#8217;.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">Interactive mode works smoothly only for a small
+amount of topomaps.</p>
+</div>
 </div></blockquote>
 <p><strong>sensors</strong> : bool | str</p>
 <blockquote>
@@ -602,10 +636,22 @@ If None, the maximum absolute value is used. If vmin is None,
 but vmax is not, defaults to np.min(data).
 If callable, the output equals vmax(data).</p>
 </div></blockquote>
-<p><strong>cmap</strong> : matplotlib colormap</p>
+<p><strong>cmap</strong> : matplotlib colormap | (colormap, bool) | &#8216;interactive&#8217; | None</p>
 <blockquote>
-<div><p>Colormap. For magnetometers and eeg defaults to &#8216;RdBu_r&#8217;, else
-&#8216;Reds&#8217;.</p>
+<div><p>Colormap to use. If tuple, the first value indicates the colormap
+to use and the second value is a boolean defining interactivity. In
+interactive mode the colors are adjustable by clicking and dragging
+the colorbar with left and right mouse button. Left mouse button
+moves the scale up and down and right mouse button adjusts the
+range. Hitting space bar resets the range. Up and down arrows can
+be used to change the colormap. If None, &#8216;Reds&#8217; is used for all
+positive data, otherwise defaults to &#8216;RdBu_r&#8217;. If &#8216;interactive&#8217;,
+translates to (None, True). Defaults to &#8216;RdBu_r&#8217;.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">Interactive mode works smoothly only for a small
+amount of topomaps.</p>
+</div>
 </div></blockquote>
 <p><strong>sensors</strong> : bool | str</p>
 <blockquote>
@@ -735,30 +781,36 @@ should be relative to the electrode locations.</p>
 <dl class="method">
 <dt id="mne.decoding.CSP.set_params">
 <code class="descname">set_params</code><span class="sig-paren">(</span><em>**params</em><span class="sig-paren">)</span><a class="headerlink" href="#mne.decoding.CSP.set_params" title="Permalink to this definition">¶</a></dt>
-<dd><p>Set parameters (mimics sklearn API).</p>
+<dd><p>Set the parameters of this estimator.
+The method works on simple estimators as well as on nested objects
+(such as pipelines). The former have parameters of the form
+<code class="docutils literal"><span class="pre">&lt;component&gt;__&lt;parameter&gt;</span></code> so that it&#8217;s possible to update each
+component of a nested object.
+Returns
+&#8212;&#8212;-
+self</p>
 </dd></dl>
 
 <dl class="method">
 <dt id="mne.decoding.CSP.transform">
-<code class="descname">transform</code><span class="sig-paren">(</span><em>epochs_data</em>, <em>y=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mne.decoding.CSP.transform" title="Permalink to this definition">¶</a></dt>
+<code class="descname">transform</code><span class="sig-paren">(</span><em>X</em>, <em>epochs_data=None</em><span class="sig-paren">)</span><a class="headerlink" href="#mne.decoding.CSP.transform" title="Permalink to this definition">¶</a></dt>
 <dd><p>Estimate epochs sources given the CSP filters.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>epochs_data</strong> : array, shape (n_epochs, n_channels, n_times)</p>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>X</strong> : array, shape (n_epochs, n_channels, n_times)</p>
 <blockquote>
 <div><p>The data.</p>
 </div></blockquote>
-<p><strong>y</strong> : None</p>
-<blockquote>
-<div><p>Not used.</p>
-</div></blockquote>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>X</strong> : ndarray of shape (n_epochs, n_sources)</p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>X</strong> : ndarray</p>
 <blockquote class="last">
-<div><p>The CSP features averaged over time.</p>
+<div><p>If self.transform_into == &#8216;average_power&#8217; then returns the power of
+CSP features averaged over time and shape (n_epochs, n_sources)
+If self.transform_into == &#8216;csp_space&#8217; then returns the data in CSP
+space and shape is (n_epochs, n_sources, n_times)</p>
 </div></blockquote>
 </td>
 </tr>
@@ -785,7 +837,7 @@ should be relative to the electrode locations.</p>
       
     </p>
     <p>
-        &copy; Copyright 2012-2016, MNE Developers. Last updated on 2016-11-10.<br/>
+        &copy; Copyright 2012-2016, MNE Developers. Last updated on 2016-11-13.<br/>
     </p>
   </div>
 </footer>

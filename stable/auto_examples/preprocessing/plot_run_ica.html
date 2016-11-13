@@ -5,7 +5,7 @@
   <head>
     <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
     
-    <title>Compute ICA components on epochs &#8212; MNE 0.12.0 documentation</title>
+    <title>Compute ICA components on epochs &#8212; MNE 0.13 documentation</title>
     
     <link rel="stylesheet" href="../../_static/basic.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
@@ -17,7 +17,7 @@
     <script type="text/javascript">
       var DOCUMENTATION_OPTIONS = {
         URL_ROOT:    '../../',
-        VERSION:     '0.12.0',
+        VERSION:     '0.13',
         COLLAPSE_INDEX: false,
         FILE_SUFFIX: '.html',
         HAS_SOURCE:  true
@@ -34,7 +34,7 @@
     <link rel="shortcut icon" href="../../_static/favicon.ico"/>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="top" title="MNE 0.12.0 documentation" href="../../index.html" />
+    <link rel="top" title="MNE 0.13 documentation" href="../../index.html" />
     <link rel="up" title="Examples Gallery" href="../index.html" />
     <link rel="next" title="Find EOG artifacts" href="plot_find_eog_artifacts.html" />
     <link rel="prev" title="Remap MEG channel types" href="plot_virtual_evoked.html" />
@@ -91,7 +91,7 @@
         </button>
         <a class="navbar-brand" href="../../index.html"><span><img src="../../_static/mne_logo_small.png"></span>
            </a>
-        <span class="navbar-text navbar-version pull-left"><b>0.12.0</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.13</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -201,9 +201,7 @@
 <span id="sphx-glr-auto-examples-preprocessing-plot-run-ica-py"></span><h1>Compute ICA components on epochs<a class="headerlink" href="#compute-ica-components-on-epochs" title="Permalink to this headline">¶</a></h1>
 <p>ICA is fit to MEG raw data.
 We assume that the non-stationary EOG artifacts have already been removed.
-The sources matching the ECG are automatically found and displayed.
-Subsequently, artefact detection and rejection quality are assessed.
-Finally, the impact on the evoked ERF is visualized.</p>
+The sources matching the ECG are automatically found and displayed.</p>
 <p>Note that this example does quite a bit of processing, so even on a
 fast machine it can take about a minute to complete.</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># Authors: Denis Engemann &lt;denis.engemann@gmail.com&gt;</span>
@@ -217,19 +215,48 @@ fast machine it can take about a minute to complete.</p>
 <span class="k">print</span><span class="p">(</span><span class="n">__doc__</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Fit ICA model using the FastICA algorithm, detect and inspect components</p>
+<p>Read and preprocess the data. Preprocessing consists of:</p>
+<ul class="simple">
+<li>meg channel selection</li>
+<li>1 - 30 Hz band-pass IIR filter</li>
+<li>epoching -0.2 to 0.5 seconds with respect to events</li>
+</ul>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">data_path</span> <span class="o">=</span> <a href="../../generated/mne.datasets.sample.data_path.html#mne.datasets.sample.data_path" class="sphx-glr-code-links" tooltip="Link to documentation for mne.datasets.sample.data_path"><span class="n">sample</span><span class="o">.</span><span class="n">data_path</span></a><span class="p">()</span>
 <span class="n">raw_fname</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis_filt-0-40_raw.fif&#39;</span>
 
 <span class="n">raw</span> <span class="o">=</span> <span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read_raw_fif</span><span class="p">(</span><span class="n">raw_fname</span><span class="p">,</span> <span class="n">preload</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-<span class="n">raw</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;iir&#39;</span><span class="p">)</span>
 <span class="n">raw</span><span class="o">.</span><span class="n">pick_types</span><span class="p">(</span><span class="n">meg</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">eeg</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="s1">&#39;bads&#39;</span><span class="p">,</span> <span class="n">stim</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">raw</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;iir&#39;</span><span class="p">)</span>
 
 <span class="c1"># longer + more epochs for more artifact exposure</span>
 <span class="n">events</span> <span class="o">=</span> <a href="../../generated/mne.find_events.html#mne.find_events" class="sphx-glr-code-links" tooltip="Link to documentation for mne.find_events"><span class="n">mne</span><span class="o">.</span><span class="n">find_events</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">stim_channel</span><span class="o">=</span><span class="s1">&#39;STI 014&#39;</span><span class="p">)</span>
 <span class="n">epochs</span> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs" class="sphx-glr-code-links" tooltip="Link to documentation for mne.Epochs"><span class="n">mne</span><span class="o">.</span><span class="n">Epochs</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">event_id</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">tmin</span><span class="o">=-</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">tmax</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
-
-<span class="n">ica</span> <span class="o">=</span> <a href="../../generated/mne.preprocessing.ICA.html#mne.preprocessing.ICA" class="sphx-glr-code-links" tooltip="Link to documentation for mne.preprocessing.ICA"><span class="n">ICA</span></a><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="mf">0.95</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;fastica&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">epochs</span><span class="p">)</span>
+</pre></div>
+</div>
+<p class="sphx-glr-script-out">Out:</p>
+<div class="sphx-glr-script-out highlight-default"><div class="highlight"><pre><span></span><span class="n">Opening</span> <span class="n">raw</span> <span class="n">data</span> <span class="n">file</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">ubuntu</span><span class="o">/</span><span class="n">mne_data</span><span class="o">/</span><span class="n">MNE</span><span class="o">-</span><span class="n">sample</span><span class="o">-</span><span class="n">data</span><span class="o">/</span><span class="n">MEG</span><span class="o">/</span><span class="n">sample</span><span class="o">/</span><span class="n">sample_audvis_filt</span><span class="o">-</span><span class="mi">0</span><span class="o">-</span><span class="mi">40</span><span class="n">_raw</span><span class="o">.</span><span class="n">fif</span><span class="o">...</span>
+    <span class="n">Read</span> <span class="n">a</span> <span class="n">total</span> <span class="n">of</span> <span class="mi">4</span> <span class="n">projection</span> <span class="n">items</span><span class="p">:</span>
+        <span class="n">PCA</span><span class="o">-</span><span class="n">v1</span> <span class="p">(</span><span class="mi">1</span> <span class="n">x</span> <span class="mi">102</span><span class="p">)</span>  <span class="n">idle</span>
+        <span class="n">PCA</span><span class="o">-</span><span class="n">v2</span> <span class="p">(</span><span class="mi">1</span> <span class="n">x</span> <span class="mi">102</span><span class="p">)</span>  <span class="n">idle</span>
+        <span class="n">PCA</span><span class="o">-</span><span class="n">v3</span> <span class="p">(</span><span class="mi">1</span> <span class="n">x</span> <span class="mi">102</span><span class="p">)</span>  <span class="n">idle</span>
+        <span class="n">Average</span> <span class="n">EEG</span> <span class="n">reference</span> <span class="p">(</span><span class="mi">1</span> <span class="n">x</span> <span class="mi">60</span><span class="p">)</span>  <span class="n">idle</span>
+    <span class="n">Range</span> <span class="p">:</span> <span class="mi">6450</span> <span class="o">...</span> <span class="mi">48149</span> <span class="o">=</span>     <span class="mf">42.956</span> <span class="o">...</span>   <span class="mf">320.665</span> <span class="n">secs</span>
+<span class="n">Ready</span><span class="o">.</span>
+<span class="n">Current</span> <span class="n">compensation</span> <span class="n">grade</span> <span class="p">:</span> <span class="mi">0</span>
+<span class="n">add_eeg_ref</span> <span class="n">defaults</span> <span class="n">to</span> <span class="kc">True</span> <span class="ow">in</span> <span class="mf">0.13</span><span class="p">,</span> <span class="n">will</span> <span class="n">default</span> <span class="n">to</span> <span class="kc">False</span> <span class="ow">in</span> <span class="mf">0.14</span><span class="p">,</span> <span class="ow">and</span> <span class="n">will</span> <span class="n">be</span> <span class="n">removed</span> <span class="ow">in</span> <span class="mf">0.15</span><span class="o">.</span> <span class="n">We</span> <span class="n">recommend</span> <span class="n">to</span> <span class="n">use</span> <span class="n">add_eeg_ref</span><span class="o">=</span><span class="kc">False</span> <span class="ow">and</span> <span class="n">set_eeg_reference</span><span class="p">()</span> <span class="n">instead</span><span class="o">.</span>
+<span class="n">Reading</span> <span class="mi">0</span> <span class="o">...</span> <span class="mi">41699</span>  <span class="o">=</span>      <span class="mf">0.000</span> <span class="o">...</span>   <span class="mf">277.709</span> <span class="n">secs</span><span class="o">...</span>
+<span class="n">Band</span><span class="o">-</span><span class="k">pass</span> <span class="n">filtering</span> <span class="kn">from</span> <span class="mi">1</span> <span class="o">-</span> <span class="mi">30</span> <span class="n">Hz</span>
+<span class="mi">319</span> <span class="n">events</span> <span class="n">found</span>
+<span class="n">Events</span> <span class="nb">id</span><span class="p">:</span> <span class="p">[</span> <span class="mi">1</span>  <span class="mi">2</span>  <span class="mi">3</span>  <span class="mi">4</span>  <span class="mi">5</span> <span class="mi">32</span><span class="p">]</span>
+<span class="mi">319</span> <span class="n">matching</span> <span class="n">events</span> <span class="n">found</span>
+<span class="n">Applying</span> <span class="n">baseline</span> <span class="n">correction</span> <span class="p">(</span><span class="n">mode</span><span class="p">:</span> <span class="n">mean</span><span class="p">)</span>
+<span class="n">Created</span> <span class="n">an</span> <span class="n">SSP</span> <span class="n">operator</span> <span class="p">(</span><span class="n">subspace</span> <span class="n">dimension</span> <span class="o">=</span> <span class="mi">3</span><span class="p">)</span>
+<span class="mi">4</span> <span class="n">projection</span> <span class="n">items</span> <span class="n">activated</span>
+</pre></div>
+</div>
+<p>Fit ICA model using the FastICA algorithm, detect and plot components
+explaining ECG artifacts.</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">ica</span> <span class="o">=</span> <a href="../../generated/mne.preprocessing.ICA.html#mne.preprocessing.ICA" class="sphx-glr-code-links" tooltip="Link to documentation for mne.preprocessing.ICA"><span class="n">ICA</span></a><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="mf">0.95</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;fastica&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">epochs</span><span class="p">)</span>
 
 <span class="n">ecg_epochs</span> <span class="o">=</span> <a href="../../generated/mne.preprocessing.create_ecg_epochs.html#mne.preprocessing.create_ecg_epochs" class="sphx-glr-code-links" tooltip="Link to documentation for mne.preprocessing.create_ecg_epochs"><span class="n">create_ecg_epochs</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">tmin</span><span class="o">=-.</span><span class="mi">5</span><span class="p">,</span> <span class="n">tmax</span><span class="o">=.</span><span class="mi">5</span><span class="p">)</span>
 <span class="n">ecg_inds</span><span class="p">,</span> <span class="n">scores</span> <span class="o">=</span> <span class="n">ica</span><span class="o">.</span><span class="n">find_bads_ecg</span><span class="p">(</span><span class="n">ecg_epochs</span><span class="p">)</span>
@@ -239,31 +266,15 @@ fast machine it can take about a minute to complete.</p>
 </div>
 <img alt="../../_images/sphx_glr_plot_run_ica_001.png" class="align-center" src="../../_images/sphx_glr_plot_run_ica_001.png" />
 <p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-default"><div class="highlight"><pre><span></span><span class="n">Opening</span> <span class="n">raw</span> <span class="n">data</span> <span class="n">file</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">ubuntu</span><span class="o">/</span><span class="n">mne_data</span><span class="o">/</span><span class="n">MNE</span><span class="o">-</span><span class="n">sample</span><span class="o">-</span><span class="n">data</span><span class="o">/</span><span class="n">MEG</span><span class="o">/</span><span class="n">sample</span><span class="o">/</span><span class="n">sample_audvis_filt</span><span class="o">-</span><span class="mi">0</span><span class="o">-</span><span class="mi">40</span><span class="n">_raw</span><span class="o">.</span><span class="n">fif</span><span class="o">...</span>
-    <span class="n">Read</span> <span class="n">a</span> <span class="n">total</span> <span class="n">of</span> <span class="mi">4</span> <span class="n">projection</span> <span class="n">items</span><span class="p">:</span>
-        <span class="n">PCA</span><span class="o">-</span><span class="n">v1</span> <span class="p">(</span><span class="mi">1</span> <span class="n">x</span> <span class="mi">102</span><span class="p">)</span>  <span class="n">idle</span>
-        <span class="n">PCA</span><span class="o">-</span><span class="n">v2</span> <span class="p">(</span><span class="mi">1</span> <span class="n">x</span> <span class="mi">102</span><span class="p">)</span>  <span class="n">idle</span>
-        <span class="n">PCA</span><span class="o">-</span><span class="n">v3</span> <span class="p">(</span><span class="mi">1</span> <span class="n">x</span> <span class="mi">102</span><span class="p">)</span>  <span class="n">idle</span>
-        <span class="n">Average</span> <span class="n">EEG</span> <span class="n">reference</span> <span class="p">(</span><span class="mi">1</span> <span class="n">x</span> <span class="mi">60</span><span class="p">)</span>  <span class="n">idle</span>
-<span class="n">Current</span> <span class="n">compensation</span> <span class="n">grade</span> <span class="p">:</span> <span class="mi">0</span>
-    <span class="n">Range</span> <span class="p">:</span> <span class="mi">6450</span> <span class="o">...</span> <span class="mi">48149</span> <span class="o">=</span>     <span class="mf">42.956</span> <span class="o">...</span>   <span class="mf">320.665</span> <span class="n">secs</span>
-<span class="n">Ready</span><span class="o">.</span>
-<span class="n">Reading</span> <span class="mi">0</span> <span class="o">...</span> <span class="mi">41699</span>  <span class="o">=</span>      <span class="mf">0.000</span> <span class="o">...</span>   <span class="mf">277.709</span> <span class="n">secs</span><span class="o">...</span>
-<span class="n">Band</span><span class="o">-</span><span class="k">pass</span> <span class="n">filtering</span> <span class="kn">from</span> <span class="mi">1</span> <span class="o">-</span> <span class="mi">30</span> <span class="n">Hz</span>
-<span class="mi">319</span> <span class="n">events</span> <span class="n">found</span>
-<span class="n">Events</span> <span class="nb">id</span><span class="p">:</span> <span class="p">[</span> <span class="mi">1</span>  <span class="mi">2</span>  <span class="mi">3</span>  <span class="mi">4</span>  <span class="mi">5</span> <span class="mi">32</span><span class="p">]</span>
-<span class="mi">319</span> <span class="n">matching</span> <span class="n">events</span> <span class="n">found</span>
-<span class="n">Applying</span> <span class="n">baseline</span> <span class="n">correction</span> <span class="p">(</span><span class="n">mode</span><span class="p">:</span> <span class="n">mean</span><span class="p">)</span>
-<span class="n">Created</span> <span class="n">an</span> <span class="n">SSP</span> <span class="n">operator</span> <span class="p">(</span><span class="n">subspace</span> <span class="n">dimension</span> <span class="o">=</span> <span class="mi">3</span><span class="p">)</span>
-<span class="mi">4</span> <span class="n">projection</span> <span class="n">items</span> <span class="n">activated</span>
-<span class="n">Fitting</span> <a href="../../generated/mne.preprocessing.ICA.html#mne.preprocessing.ICA" class="sphx-glr-code-links" tooltip="Link to documentation for mne.preprocessing.ICA"><span class="n">ICA</span></a> <span class="n">to</span> <span class="n">data</span> <span class="n">using</span> <span class="mi">305</span> <span class="n">channels</span><span class="o">.</span>
+<div class="sphx-glr-script-out highlight-default"><div class="highlight"><pre><span></span><span class="n">Fitting</span> <a href="../../generated/mne.preprocessing.ICA.html#mne.preprocessing.ICA" class="sphx-glr-code-links" tooltip="Link to documentation for mne.preprocessing.ICA"><span class="n">ICA</span></a> <span class="n">to</span> <span class="n">data</span> <span class="n">using</span> <span class="mi">305</span> <span class="n">channels</span><span class="o">.</span>
 <span class="n">Please</span> <span class="n">be</span> <span class="n">patient</span><span class="p">,</span> <span class="n">this</span> <span class="n">may</span> <span class="n">take</span> <span class="n">some</span> <span class="n">time</span>
 <span class="n">Inferring</span> <span class="n">max_pca_components</span> <span class="kn">from</span> <span class="nn">picks.</span>
 <span class="n">Loading</span> <span class="n">data</span> <span class="k">for</span> <span class="mi">319</span> <span class="n">events</span> <span class="ow">and</span> <span class="mi">106</span> <span class="n">original</span> <span class="n">time</span> <span class="n">points</span> <span class="o">...</span>
 <span class="mi">0</span> <span class="n">bad</span> <span class="n">epochs</span> <span class="n">dropped</span>
 <span class="n">Selection</span> <span class="n">by</span> <span class="n">explained</span> <span class="n">variance</span><span class="p">:</span> <span class="mi">120</span> <span class="n">components</span>
+<span class="n">Loading</span> <span class="n">data</span> <span class="k">for</span> <span class="mi">319</span> <span class="n">events</span> <span class="ow">and</span> <span class="mi">106</span> <span class="n">original</span> <span class="n">time</span> <span class="n">points</span> <span class="o">...</span>
 <span class="n">Reconstructing</span> <span class="n">ECG</span> <span class="n">signal</span> <span class="kn">from</span> <span class="nn">Magnetometers</span>
-<span class="n">Reconstructing</span> <span class="n">ECG</span> <span class="n">signal</span> <span class="kn">from</span> <span class="nn">Magnetometers</span>
+<span class="n">Band</span><span class="o">-</span><span class="k">pass</span> <span class="n">filtering</span> <span class="kn">from</span> <span class="mi">8</span> <span class="o">-</span> <span class="mi">16</span> <span class="n">Hz</span>
 <span class="n">Number</span> <span class="n">of</span> <span class="n">ECG</span> <span class="n">events</span> <span class="n">detected</span> <span class="p">:</span> <span class="mi">284</span> <span class="p">(</span><span class="n">average</span> <span class="n">pulse</span> <span class="mi">61</span> <span class="o">/</span> <span class="nb">min</span><span class="o">.</span><span class="p">)</span>
 <span class="n">Creating</span> <span class="n">RawArray</span> <span class="k">with</span> <span class="n">float64</span> <span class="n">data</span><span class="p">,</span> <span class="n">n_channels</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_times</span><span class="o">=</span><span class="mi">41700</span>
     <span class="n">Range</span> <span class="p">:</span> <span class="mi">0</span> <span class="o">...</span> <span class="mi">41699</span> <span class="o">=</span>      <span class="mf">0.000</span> <span class="o">...</span>   <span class="mf">277.709</span> <span class="n">secs</span>
@@ -273,10 +284,25 @@ fast machine it can take about a minute to complete.</p>
 <span class="n">Created</span> <span class="n">an</span> <span class="n">SSP</span> <span class="n">operator</span> <span class="p">(</span><span class="n">subspace</span> <span class="n">dimension</span> <span class="o">=</span> <span class="mi">3</span><span class="p">)</span>
 <span class="n">Loading</span> <span class="n">data</span> <span class="k">for</span> <span class="mi">284</span> <span class="n">events</span> <span class="ow">and</span> <span class="mi">151</span> <span class="n">original</span> <span class="n">time</span> <span class="n">points</span> <span class="o">...</span>
 <span class="mi">0</span> <span class="n">bad</span> <span class="n">epochs</span> <span class="n">dropped</span>
-<span class="n">Reconstructing</span> <span class="n">ECG</span> <span class="n">signal</span> <span class="kn">from</span> <span class="nn">Magnetometers</span>
 </pre></div>
 </div>
-<p><strong>Total running time of the script:</strong> ( 1 minutes  20.309 seconds)</p>
+<p>Plot properties of ECG components:</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">ica</span><span class="o">.</span><span class="n">plot_properties</span><span class="p">(</span><span class="n">epochs</span><span class="p">,</span> <span class="n">picks</span><span class="o">=</span><span class="n">ecg_inds</span><span class="p">)</span>
+</pre></div>
+</div>
+<ul class="sphx-glr-horizontal">
+<li><a class="first reference internal image-reference" href="../../_images/sphx_glr_plot_run_ica_002.png"><img alt="../../_images/sphx_glr_plot_run_ica_002.png" src="../../_images/sphx_glr_plot_run_ica_002.png" style="width: 329.0px; height: 282.0px;" /></a>
+</li>
+<li><a class="first reference internal image-reference" href="../../_images/sphx_glr_plot_run_ica_003.png"><img alt="../../_images/sphx_glr_plot_run_ica_003.png" src="../../_images/sphx_glr_plot_run_ica_003.png" style="width: 329.0px; height: 282.0px;" /></a>
+</li>
+<li><a class="first reference internal image-reference" href="../../_images/sphx_glr_plot_run_ica_004.png"><img alt="../../_images/sphx_glr_plot_run_ica_004.png" src="../../_images/sphx_glr_plot_run_ica_004.png" style="width: 329.0px; height: 282.0px;" /></a>
+</li>
+</ul>
+<p class="sphx-glr-script-out">Out:</p>
+<div class="sphx-glr-script-out highlight-default"><div class="highlight"><pre><span></span><span class="n">Loading</span> <span class="n">data</span> <span class="k">for</span> <span class="mi">319</span> <span class="n">events</span> <span class="ow">and</span> <span class="mi">106</span> <span class="n">original</span> <span class="n">time</span> <span class="n">points</span> <span class="o">...</span>
+</pre></div>
+</div>
+<p><strong>Total running time of the script:</strong> ( 1 minutes  21.099 seconds)</p>
 <div class="sphx-glr-footer container">
 <div class="sphx-glr-download container">
 <a class="reference download internal" href="../../_downloads/plot_run_ica.py" download=""><code class="xref download docutils literal"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">plot_run_ica.py</span></code></a></div>
@@ -301,7 +327,7 @@ fast machine it can take about a minute to complete.</p>
       
     </p>
     <p>
-        &copy; Copyright 2012-2016, MNE Developers. Last updated on 2016-11-10.<br/>
+        &copy; Copyright 2012-2016, MNE Developers. Last updated on 2016-11-13.<br/>
     </p>
   </div>
 </footer>
