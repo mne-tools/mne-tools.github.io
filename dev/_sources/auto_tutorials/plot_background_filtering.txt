@@ -99,7 +99,7 @@ In MNE-Python we default to using FIR filtering. As noted in Widmann *et al.*
 
     Despite IIR filters often being considered as computationally more
     efficient, they are recommended only when high throughput and sharp
-    cutoffs are required (Ifeachor and Jervis, 2002[2]_, p. 321),
+    cutoffs are required (Ifeachor and Jervis, 2002 [2]_, p. 321),
     ...FIR filters are easier to control, are always stable, have a
     well-defined passband, can be corrected to zero-phase without
     additional computations, and can be converted to minimum-phase.
@@ -409,6 +409,46 @@ something more like a 25 Hz transition band (0.2 sec = 5 cycles @ 25 Hz):
 
 
 
+So far we have only discussed *acausal* filtering, which means that each
+sample at each time point :math:`t` is filtered using samples that come
+after (:math:`t + \Delta t`) *and* before (:math:`t - \Delta t`) :math:`t`.
+In this sense, each sample is influenced by samples that come both before
+and after it. This is useful in many cases, espcially because it does not
+delay the timing of events.
+
+However, sometimes it can be beneficial to use *causal* filtering,
+whereby each sample :math:`t` is filtered only using time points that came
+after it.
+
+Note that the delay is variable (whereas for linear/zero-phase filters it
+is constant) but small in the pass-band. Unlike zero-phase filters, which
+require time-shifting backward the output of a linear-phase filtering stage
+(and thus becoming acausal), minimum-phase filters do not require any
+compensation to achieve small delays in the passband. Note that as an
+artifact of the minimum phase filter construction step, the filter does
+not end up being as steep as the linear/zero-phase version.
+
+We can construct a minimum-phase filter from our existing linear-phase
+filter with the ``minimum_phase`` function (that will be in SciPy 0.19's
+:mod:`scipy.signal`), and note that the falloff is not as steep:
+
+
+
+.. code-block:: python
+
+
+    h_min = mne.fixes.minimum_phase(h)
+    plot_filter(h_min, sfreq, freq, gain, 'Minimum-phase', flim=flim)
+
+
+
+
+.. image:: /auto_tutorials/images/sphx_glr_plot_background_filtering_010.png
+    :align: center
+
+
+
+
 .. _tut_effect_on_signals:
 
 Applying FIR filters
@@ -474,7 +514,7 @@ compensate for the constant filter delay):
 
 
 
-.. image:: /auto_tutorials/images/sphx_glr_plot_background_filtering_010.png
+.. image:: /auto_tutorials/images/sphx_glr_plot_background_filtering_011.png
     :align: center
 
 
@@ -516,7 +556,7 @@ long-duration, steep cutoff FIR that gets applied twice:
 
 
 
-.. image:: /auto_tutorials/images/sphx_glr_plot_background_filtering_011.png
+.. image:: /auto_tutorials/images/sphx_glr_plot_background_filtering_012.png
     :align: center
 
 
@@ -527,9 +567,8 @@ long-duration, steep cutoff FIR that gets applied twice:
     Setting up low-pass filter at 40 Hz
 
 
-Finally, Let's also filter it with the
-MNE-C default, which is a long-duration steep-slope FIR filter designed
-using frequency-domain techniques:
+Let's also filter it with the MNE-C default, which is a long-duration
+steep-slope FIR filter designed using frequency-domain techniques:
 
 
 
@@ -548,7 +587,7 @@ using frequency-domain techniques:
 
 
 
-.. image:: /auto_tutorials/images/sphx_glr_plot_background_filtering_012.png
+.. image:: /auto_tutorials/images/sphx_glr_plot_background_filtering_013.png
     :align: center
 
 
@@ -557,6 +596,41 @@ using frequency-domain techniques:
  Out::
 
     filter :   0.000 ...   42.5 Hz   bins : 0 ... 348 of 4097 hpw : 3 lpw : 20
+
+
+And now an example of a minimum-phase filter:
+
+
+
+.. code-block:: python
+
+
+    h = mne.filter.create_filter(x, sfreq, l_freq=None, h_freq=f_p,
+                                 phase='minimum')
+    x_min = np.convolve(h, x)
+    transition_band = 0.25 * f_p
+    f_s = f_p + transition_band
+    filter_dur = 6.6 / transition_band  # sec
+    n = int(sfreq * filter_dur)
+    freq = [0., f_p, f_s, sfreq / 2.]
+    gain = [1., 1., 0., 0.]
+    plot_filter(h, sfreq, freq, gain, 'Minimum-phase filter', flim=flim)
+
+
+
+
+
+.. image:: /auto_tutorials/images/sphx_glr_plot_background_filtering_014.png
+    :align: center
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    Setting up low-pass filter at 40 Hz
+    h_trans_bandwidth chosen to be 10.0 Hz
+    Filter length of 660 samples (0.660 sec) selected
 
 
 Both the MNE-Python 0.13 and MNE-C filhters have excellent frequency
@@ -587,16 +661,17 @@ long-duration filter than the shorter, shallower-slope filter:
         axes[1].plot(freqs, 20 * np.log10(np.abs(X)))
         axes[1].set(xlim=flim)
 
-    yticks = np.arange(5) / -30.
+    yticks = np.arange(6) / -30.
     yticklabels = ['Original', 'Noisy', 'FIR-shallow (0.14)', 'FIR-steep (0.13)',
-                   'FIR-steep (MNE-C)']
+                   'FIR-steep (MNE-C)', 'Minimum-phase']
     plot_signal(x_orig, offset=yticks[0])
     plot_signal(x, offset=yticks[1])
     plot_signal(x_shallow, offset=yticks[2])
     plot_signal(x_steep, offset=yticks[3])
     plot_signal(x_mne_c, offset=yticks[4])
+    plot_signal(x_min, offset=yticks[5])
     axes[0].set(xlim=tlim, title='FIR, Lowpass=%d Hz' % f_p, xticks=tticks,
-                ylim=[-0.150, 0.025], yticks=yticks, yticklabels=yticklabels,)
+                ylim=[-0.200, 0.025], yticks=yticks, yticklabels=yticklabels,)
     for text in axes[0].get_yticklabels():
         text.set(rotation=45, size=8)
     axes[1].set(xlim=flim, ylim=(-60, 10), xlabel='Frequency (Hz)',
@@ -607,7 +682,7 @@ long-duration filter than the shorter, shallower-slope filter:
 
 
 
-.. image:: /auto_tutorials/images/sphx_glr_plot_background_filtering_013.png
+.. image:: /auto_tutorials/images/sphx_glr_plot_background_filtering_015.png
     :align: center
 
 
@@ -659,7 +734,7 @@ of the filter:
 
 
 
-.. image:: /auto_tutorials/images/sphx_glr_plot_background_filtering_014.png
+.. image:: /auto_tutorials/images/sphx_glr_plot_background_filtering_016.png
     :align: center
 
 
@@ -695,7 +770,7 @@ with a longer impulse response:
 
 
 
-.. image:: /auto_tutorials/images/sphx_glr_plot_background_filtering_015.png
+.. image:: /auto_tutorials/images/sphx_glr_plot_background_filtering_017.png
     :align: center
 
 
@@ -719,7 +794,7 @@ to get better attenuation in the stop-band:
 
 
 
-.. image:: /auto_tutorials/images/sphx_glr_plot_background_filtering_016.png
+.. image:: /auto_tutorials/images/sphx_glr_plot_background_filtering_018.png
     :align: center
 
 
@@ -742,7 +817,7 @@ different x-axis scale):
 
 
 
-.. image:: /auto_tutorials/images/sphx_glr_plot_background_filtering_017.png
+.. image:: /auto_tutorials/images/sphx_glr_plot_background_filtering_019.png
     :align: center
 
 
@@ -779,7 +854,7 @@ perform on our Morlet signal from before:
 
 
 
-.. image:: /auto_tutorials/images/sphx_glr_plot_background_filtering_018.png
+.. image:: /auto_tutorials/images/sphx_glr_plot_background_filtering_020.png
     :align: center
 
 
@@ -892,7 +967,7 @@ We can recreate a problematic simulation from Tanner *et al.* 2015 [8]_:
 
 
 
-.. image:: /auto_tutorials/images/sphx_glr_plot_background_filtering_019.png
+.. image:: /auto_tutorials/images/sphx_glr_plot_background_filtering_021.png
     :align: center
 
 
@@ -963,7 +1038,7 @@ before:
 
 
 
-.. image:: /auto_tutorials/images/sphx_glr_plot_background_filtering_020.png
+.. image:: /auto_tutorials/images/sphx_glr_plot_background_filtering_022.png
     :align: center
 
 
@@ -998,7 +1073,7 @@ Putting some activity in the baseline period:
 
 
 
-.. image:: /auto_tutorials/images/sphx_glr_plot_background_filtering_021.png
+.. image:: /auto_tutorials/images/sphx_glr_plot_background_filtering_023.png
     :align: center
 
 
@@ -1205,7 +1280,7 @@ References
 .. _fieldtrip band-pass documentation: http://www.fieldtriptoolbox.org/reference/ft_preproc_bandpassfilter  # noqa
 
 
-**Total running time of the script:** ( 0 minutes  14.292 seconds)
+**Total running time of the script:** ( 0 minutes  16.804 seconds)
 
 
 
