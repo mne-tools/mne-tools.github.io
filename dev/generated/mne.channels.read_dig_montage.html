@@ -166,7 +166,7 @@ This documentation is for the <strong>development version (0.14.dev0)</strong> -
 <h1>mne.channels.read_dig_montage<a class="headerlink" href="#mne-channels-read-dig-montage" title="Permalink to this headline">¶</a></h1>
 <dl class="function">
 <dt id="mne.channels.read_dig_montage">
-<code class="descclassname">mne.channels.</code><code class="descname">read_dig_montage</code><span class="sig-paren">(</span><em>hsp=None</em>, <em>hpi=None</em>, <em>elp=None</em>, <em>point_names=None</em>, <em>unit='auto'</em>, <em>fif=None</em>, <em>transform=True</em>, <em>dev_head_t=False</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/maint/0.14.dev0/mne/channels/montage.py#L432-L619"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.channels.read_dig_montage" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">mne.channels.</code><code class="descname">read_dig_montage</code><span class="sig-paren">(</span><em>hsp=None</em>, <em>hpi=None</em>, <em>elp=None</em>, <em>point_names=None</em>, <em>unit='auto'</em>, <em>fif=None</em>, <em>transform=True</em>, <em>dev_head_t=False</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/maint/0.14.dev0/mne/channels/montage.py#L515-L668"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.channels.read_dig_montage" title="Permalink to this definition">¶</a></dt>
 <dd><p>Read subject-specific digitization montage from a file.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -184,22 +184,25 @@ digitizer space and will be rescaled according to the unit parameter.</p>
 <blockquote>
 <div><p>If str, this corresponds to the filename of Head Position Indicator
 (HPI) points. If numpy.array, this corresponds to an array
-of HPI points. These points are in device space.</p>
+of HPI points. These points are in device space, and are only
+necessary if computation of a <code class="docutils literal"><span class="pre">dev_head_t</span></code> by the
+<a class="reference internal" href="mne.channels.DigMontage.html#mne.channels.DigMontage" title="mne.channels.DigMontage"><code class="xref py py-class docutils literal"><span class="pre">DigMontage</span></code></a> is required.</p>
 </div></blockquote>
 <p><strong>elp</strong> : None | str | array, shape (n_fids + n_hpi, 3)</p>
 <blockquote>
 <div><p>If str, this corresponds to the filename of electrode position
 points. This is typically used with the Polhemus FastSCAN system.
-Fiducials should be listed first: nasion, left periauricular point,
-right periauricular point, then the points corresponding to the HPI.
 If numpy.array, this corresponds to an array of digitizer points in
 the same order. These points are assumed to be in the native digitizer
 space and will be rescaled according to the unit parameter.</p>
 </div></blockquote>
 <p><strong>point_names</strong> : None | list</p>
 <blockquote>
-<div><p>If list, this corresponds to a list of point names. This must be
-specified if elp is defined.</p>
+<div><p>A list of point names for elp (required if elp is defined).
+Typically this would be like:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="s1">&#39;nasion&#39;</span><span class="p">,</span> <span class="s1">&#39;lpa&#39;</span><span class="p">,</span> <span class="s1">&#39;rpa&#39;</span><span class="p">,</span> <span class="s1">&#39;CHPI001&#39;</span><span class="p">,</span> <span class="s1">&#39;CHPI002&#39;</span><span class="p">,</span> <span class="s1">&#39;CHPI003&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
 </div></blockquote>
 <p><strong>unit</strong> : &#8216;auto&#8217; | &#8216;m&#8217; | &#8216;cm&#8217; | &#8216;mm&#8217;</p>
 <blockquote>
@@ -218,17 +221,20 @@ If str (filename), all other arguments are ignored.</p>
 </div></blockquote>
 <p><strong>transform</strong> : bool</p>
 <blockquote>
-<div><p>If True, points will be transformed to Neuromag space.
-The fidicuals, &#8216;nasion&#8217;, &#8216;lpa&#8217;, &#8216;rpa&#8217; must be specified in
-the montage file. Useful for points captured using Polhemus FastSCAN.
-Default is True.</p>
+<div><p>If True (default), points will be transformed to Neuromag space
+using <a class="reference internal" href="mne.channels.DigMontage.html#mne.channels.DigMontage.transform_to_head" title="mne.channels.DigMontage.transform_to_head"><code class="xref py py-meth docutils literal"><span class="pre">DigMontage.transform_to_head()</span></code></a>.
+The fidicuals (nasion, lpa, and rpa) must be specified.
+This is useful for points captured using a device that does
+not automatically convert points to Neuromag head coordinates
+(e.g., Polhemus FastSCAN).</p>
 </div></blockquote>
 <p><strong>dev_head_t</strong> : bool</p>
 <blockquote>
 <div><p>If True, a Dev-to-Head transformation matrix will be added to the
-montage. To get a proper <cite>dev_head_t</cite>, the hpi and the elp points
-must be in the same order. If False, an identity matrix will be added
-to the montage. Default is False.</p>
+montage using <a class="reference internal" href="mne.channels.DigMontage.html#mne.channels.DigMontage.compute_dev_head_t" title="mne.channels.DigMontage.compute_dev_head_t"><code class="xref py py-meth docutils literal"><span class="pre">DigMontage.compute_dev_head_t()</span></code></a>.
+To get a proper <cite>dev_head_t</cite>, the hpi and the elp points
+must be in the same order. If False (default), no transformation
+will be added to the montage.</p>
 </div></blockquote>
 </td>
 </tr>
@@ -242,10 +248,7 @@ to the montage. Default is False.</p>
 </table>
 <div class="admonition seealso">
 <p class="first admonition-title">See also</p>
-<dl class="last docutils">
-<dt><a class="reference internal" href="mne.channels.read_montage.html#mne.channels.read_montage" title="mne.channels.read_montage"><code class="xref py py-obj docutils literal"><span class="pre">read_montage</span></code></a></dt>
-<dd>Function to read generic EEG templates</dd>
-</dl>
+<p class="last"><a class="reference internal" href="mne.channels.DigMontage.html#mne.channels.DigMontage" title="mne.channels.DigMontage"><code class="xref py py-obj docutils literal"><span class="pre">DigMontage</span></code></a>, <a class="reference internal" href="mne.channels.Montage.html#mne.channels.Montage" title="mne.channels.Montage"><code class="xref py py-obj docutils literal"><span class="pre">Montage</span></code></a>, <a class="reference internal" href="mne.channels.read_montage.html#mne.channels.read_montage" title="mne.channels.read_montage"><code class="xref py py-obj docutils literal"><span class="pre">read_montage</span></code></a></p>
 </div>
 <p class="rubric">Notes</p>
 <p>All digitized points will be transformed to head-based coordinate system
@@ -269,7 +272,7 @@ if transform is True and fiducials are present.</p>
       
     </p>
     <p>
-        &copy; Copyright 2012-2016, MNE Developers. Last updated on 2016-11-29.<br/>
+        &copy; Copyright 2012-2016, MNE Developers. Last updated on 2016-11-30.<br/>
     </p>
   </div>
 </footer>
