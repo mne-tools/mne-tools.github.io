@@ -1,0 +1,184 @@
+
+
+.. _sphx_glr_auto_examples_preprocessing_plot_movement_compensation.py:
+
+
+==============================================
+Maxwell filter data with movement compensation
+==============================================
+
+Demonstrate movement compensation on simulated data. The simulated data
+contains bilateral activation of auditory cortices, repeated over 14
+different head rotations (head center held fixed). See the following for
+details:
+
+    https://github.com/mne-tools/mne-misc-data/blob/master/movement/simulate.py
+
+
+
+
+.. code-block:: python
+
+    # Authors: Eric Larson <larson.eric.d@gmail.com>
+    #
+    # License: BSD (3-clause)
+
+    from os import path as op
+
+    import mne
+    from mne.preprocessing import maxwell_filter
+
+    print(__doc__)
+
+    data_path = op.join(mne.datasets.misc.data_path(verbose=True), 'movement')
+
+    pos = mne.chpi.read_head_pos(op.join(data_path, 'simulated_quats.pos'))
+    raw = mne.io.read_raw_fif(op.join(data_path, 'simulated_movement_raw.fif'))
+    raw_stat = mne.io.read_raw_fif(op.join(data_path,
+                                           'simulated_stationary_raw.fif'))
+
+
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    Overwriting existing file.
+    Opening raw data file /home/ubuntu/mne_data/MNE-misc-data/movement/simulated_movement_raw.fif...
+        Range : 25800 ... 34208 =     42.956 ...    56.955 secs
+    Ready.
+    Current compensation grade : 0
+    Opening raw data file /home/ubuntu/mne_data/MNE-misc-data/movement/simulated_stationary_raw.fif...
+        Range : 25800 ... 34208 =     42.956 ...    56.955 secs
+    Ready.
+    Current compensation grade : 0
+
+
+Process our simulated raw data (taking into account head movements)
+
+
+
+.. code-block:: python
+
+
+    # extract our resulting events
+    events = mne.find_events(raw, stim_channel='STI 014')
+    events[:, 2] = 1
+    raw.plot(events=events)
+
+    topo_kwargs = dict(times=[0, 0.1, 0.2], ch_type='mag', vmin=-500, vmax=500)
+
+    # 0. Take average of stationary data (bilateral auditory patterns)
+    evoked_stat = mne.Epochs(raw_stat, events, 1, -0.2, 0.8).average()
+    evoked_stat.plot_topomap(title='Stationary', **topo_kwargs)
+
+    # 1. Take a naive average (smears activity)
+    evoked = mne.Epochs(raw, events, 1, -0.2, 0.8).average()
+    evoked.plot_topomap(title='Moving: naive average', **topo_kwargs)
+
+    # 2. Use raw movement compensation (restores pattern)
+    raw_sss = maxwell_filter(raw, head_pos=pos)
+    evoked_raw_mc = mne.Epochs(raw_sss, events, 1, -0.2, 0.8).average()
+    evoked_raw_mc.plot_topomap(title='Moving: movement compensated', **topo_kwargs)
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+    *
+
+      .. image:: /auto_examples/preprocessing/images/sphx_glr_plot_movement_compensation_001.png
+            :scale: 47
+
+    *
+
+      .. image:: /auto_examples/preprocessing/images/sphx_glr_plot_movement_compensation_002.png
+            :scale: 47
+
+    *
+
+      .. image:: /auto_examples/preprocessing/images/sphx_glr_plot_movement_compensation_003.png
+            :scale: 47
+
+    *
+
+      .. image:: /auto_examples/preprocessing/images/sphx_glr_plot_movement_compensation_004.png
+            :scale: 47
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    14 events found
+    Events id: [ 1  2  3  4  5  6  7  8  9 10 11 12 13 14]
+    14 matching events found
+    0 projection items activated
+    14 matching events found
+    0 projection items activated
+    Maxwell filtering raw data
+        Appending head position result channels and loading raw data from disk
+        No bad MEG channels
+        Processing 203 gradiometers and 102 magnetometers
+        Automatic origin fit: head of radius 91.0 mm
+        Using origin -4.1, 16.0, 51.7 mm in the head frame
+        Computing regularization
+            Using 90/95 harmonic components for    0.000  (75/80 in, 15/15 out)
+        Processing 1 data chunks of (at least) 10.0 sec
+        Computing regularization
+            Using 87/95 harmonic components for    0.000  (72/80 in, 15/15 out)
+        Computing regularization
+            Using 88/95 harmonic components for    1.001  (73/80 in, 15/15 out)
+        Computing regularization
+            Using 90/95 harmonic components for    2.000  (75/80 in, 15/15 out)
+        Computing regularization
+            Using 88/95 harmonic components for    3.000  (73/80 in, 15/15 out)
+        Computing regularization
+            Using 88/95 harmonic components for    3.999  (73/80 in, 15/15 out)
+        Computing regularization
+            Using 88/95 harmonic components for    5.000  (73/80 in, 15/15 out)
+        Computing regularization
+            Using 89/95 harmonic components for    6.001  (74/80 in, 15/15 out)
+        Computing regularization
+            Using 93/95 harmonic components for    6.999  (78/80 in, 15/15 out)
+        Computing regularization
+            Using 88/95 harmonic components for    8.000  (73/80 in, 15/15 out)
+        Computing regularization
+            Using 91/95 harmonic components for    9.001  (76/80 in, 15/15 out)
+        Computing regularization
+            Using 93/95 harmonic components for   10.000  (78/80 in, 15/15 out)
+        Computing regularization
+            Using 93/95 harmonic components for   11.000  (78/80 in, 15/15 out)
+        Computing regularization
+            Using 89/95 harmonic components for   11.999  (74/80 in, 15/15 out)
+        Computing regularization
+            Using 88/95 harmonic components for   13.000  (73/80 in, 15/15 out)
+            Used  14 head positions for    0.000 -   13.999 sec (#1/1)
+    [done]
+    14 matching events found
+    0 projection items activated
+
+
+**Total running time of the script:** ( 0 minutes  9.265 seconds)
+
+
+
+.. container:: sphx-glr-footer
+
+
+  .. container:: sphx-glr-download
+
+     :download:`Download Python source code: plot_movement_compensation.py <plot_movement_compensation.py>`
+
+
+
+  .. container:: sphx-glr-download
+
+     :download:`Download Jupyter notebook: plot_movement_compensation.ipynb <plot_movement_compensation.ipynb>`
+
+.. rst-class:: sphx-glr-signature
+
+    `Generated by Sphinx-Gallery <http://sphinx-gallery.readthedocs.io>`_

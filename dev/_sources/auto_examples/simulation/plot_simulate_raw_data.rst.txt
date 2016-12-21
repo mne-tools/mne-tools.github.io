@@ -1,0 +1,220 @@
+
+
+.. _sphx_glr_auto_examples_simulation_plot_simulate_raw_data.py:
+
+
+===========================
+Generate simulated raw data
+===========================
+
+This example generates raw data by repeating a desired source
+activation multiple times.
+
+
+
+
+.. code-block:: python
+
+    # Authors: Yousra Bekhti <yousra.bekhti@gmail.com>
+    #          Mark Wronkiewicz <wronk.mark@gmail.com>
+    #          Eric Larson <larson.eric.d@gmail.com>
+    #
+    # License: BSD (3-clause)
+
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    import mne
+    from mne import read_source_spaces, find_events, Epochs, compute_covariance
+    from mne.datasets import sample
+    from mne.simulation import simulate_sparse_stc, simulate_raw
+
+    print(__doc__)
+
+    data_path = sample.data_path()
+    raw_fname = data_path + '/MEG/sample/sample_audvis_raw.fif'
+    trans_fname = data_path + '/MEG/sample/sample_audvis_raw-trans.fif'
+    src_fname = data_path + '/subjects/sample/bem/sample-oct-6-src.fif'
+    bem_fname = (data_path +
+                 '/subjects/sample/bem/sample-5120-5120-5120-bem-sol.fif')
+
+    # Load real data as the template
+    raw = mne.io.read_raw_fif(raw_fname)
+    raw = raw.crop(0., 30.)  # 30 sec is enough
+
+
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    Opening raw data file /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis_raw.fif...
+        Read a total of 3 projection items:
+            PCA-v1 (1 x 102)  idle
+            PCA-v2 (1 x 102)  idle
+            PCA-v3 (1 x 102)  idle
+        Range : 25800 ... 192599 =     42.956 ...   320.670 secs
+    Ready.
+    Current compensation grade : 0
+
+
+Generate dipole time series
+
+
+
+.. code-block:: python
+
+    n_dipoles = 4  # number of dipoles to create
+    epoch_duration = 2.  # duration of each epoch/event
+    n = 0  # harmonic number
+
+
+    def data_fun(times):
+        """Generate time-staggered sinusoids at harmonics of 10Hz"""
+        global n
+        n_samp = len(times)
+        window = np.zeros(n_samp)
+        start, stop = [int(ii * float(n_samp) / (2 * n_dipoles))
+                       for ii in (2 * n, 2 * n + 1)]
+        window[start:stop] = 1.
+        n += 1
+        data = 25e-9 * np.sin(2. * np.pi * 10. * n * times)
+        data *= window
+        return data
+
+    times = raw.times[:int(raw.info['sfreq'] * epoch_duration)]
+    src = read_source_spaces(src_fname)
+    stc = simulate_sparse_stc(src, n_dipoles=n_dipoles, times=times,
+                              data_fun=data_fun, random_state=0)
+    # look at our source data
+    fig, ax = plt.subplots(1)
+    ax.plot(times, 1e9 * stc.data.T)
+    ax.set(ylabel='Amplitude (nAm)', xlabel='Time (sec)')
+    fig.show()
+
+
+
+
+.. image:: /auto_examples/simulation/images/sphx_glr_plot_simulate_raw_data_001.png
+    :align: center
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    Reading a source space...
+        [done]
+        Reading a source space...
+        [done]
+        2 source spaces read
+
+
+Simulate raw data
+
+
+
+.. code-block:: python
+
+    raw_sim = simulate_raw(raw, stc, trans_fname, src, bem_fname, cov='simple',
+                           iir_filter=[0.2, -0.2, 0.04], ecg=True, blink=True,
+                           n_jobs=1, verbose=True)
+    raw_sim.plot()
+
+
+
+
+.. image:: /auto_examples/simulation/images/sphx_glr_plot_simulate_raw_data_002.png
+    :align: center
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    Provided parameters will provide approximately 15 events
+    Setting up raw simulation: 2 positions, "zero" interpolation
+    Blinks simulated and trace stored on channel:     EOG 061
+    ECG simulated and trace not stored
+    Event information stored on channel:              STI 014
+    Setting up forward solutions
+    Computing gain matrix for transform #1/2
+    Computing gain matrix for transform #2/2
+      Simulating data for 0.000-30.001 sec with 16 events
+    Done
+
+
+Plot evoked data
+
+
+
+.. code-block:: python
+
+    events = find_events(raw_sim)  # only 1 pos, so event number == 1
+    epochs = Epochs(raw_sim, events, 1, -0.2, epoch_duration)
+    cov = compute_covariance(epochs, tmax=0., method='empirical')  # quick calc
+    evoked = epochs.average()
+    evoked.plot_white(cov)
+
+
+
+.. image:: /auto_examples/simulation/images/sphx_glr_plot_simulate_raw_data_003.png
+    :align: center
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    Removing orphaned offset at the beginning of the file.
+    15 events found
+    Events id: [1]
+    15 matching events found
+    Created an SSP operator (subspace dimension = 3)
+    3 projection items activated
+    Loading data for 15 events and 1322 original time points ...
+    1 bad epochs dropped
+    Too few samples (required : 1825 got : 1694), covariance estimate may be unreliable
+    Estimating covariance using EMPIRICAL
+    Done.
+    Using cross-validation to select the best estimator.
+    Number of samples used : 1694
+    [done]
+    log-likelihood on unseen data (descending order):
+       empirical: -3131.813
+    selecting best estimator: empirical
+    estimated rank (eeg): 59
+    estimated rank (grad): 203
+    estimated rank (mag): 99
+    estimated rank (mag + grad): 302
+    estimated rank (eeg): 59
+        Created an SSP operator (subspace dimension = 3)
+    Setting small MEG eigenvalues to zero.
+    Not doing PCA for MEG.
+    Setting small EEG eigenvalues to zero.
+    Not doing PCA for EEG.
+    No average EEG reference present in info["projs"], covariance may be adversely affected. Consider recomputing covariance using a raw file with an average eeg reference projector added.
+
+
+**Total running time of the script:** ( 0 minutes  57.521 seconds)
+
+
+
+.. container:: sphx-glr-footer
+
+
+  .. container:: sphx-glr-download
+
+     :download:`Download Python source code: plot_simulate_raw_data.py <plot_simulate_raw_data.py>`
+
+
+
+  .. container:: sphx-glr-download
+
+     :download:`Download Jupyter notebook: plot_simulate_raw_data.ipynb <plot_simulate_raw_data.ipynb>`
+
+.. rst-class:: sphx-glr-signature
+
+    `Generated by Sphinx-Gallery <http://sphinx-gallery.readthedocs.io>`_
