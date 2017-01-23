@@ -263,7 +263,7 @@ Complex Physiologic Signals. Circulation 101(23):e215-e220</dd>
 <span class="kn">from</span> <span class="nn">sklearn.cross_validation</span> <span class="kn">import</span> <span class="n">ShuffleSplit</span>  <span class="c1"># noqa</span>
 
 <span class="c1"># Assemble a classifier</span>
-<span class="n">svc</span> <span class="o">=</span> <span class="n">LDA</span><span class="p">()</span>
+<span class="n">lda</span> <span class="o">=</span> <span class="n">LDA</span><span class="p">()</span>
 <span class="n">csp</span> <span class="o">=</span> <a href="../../generated/mne.decoding.CSP.html#mne.decoding.CSP" title="View documentation for mne.decoding.CSP"><span class="n">CSP</span></a><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">reg</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">log</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 
 <span class="c1"># Define a monte-carlo cross-validation generator (reduce variance):</span>
@@ -275,7 +275,7 @@ Complex Physiologic Signals. Circulation 101(23):e215-e220</dd>
 <span class="c1"># Use scikit-learn Pipeline with cross_val_score function</span>
 <span class="kn">from</span> <span class="nn">sklearn.pipeline</span> <span class="kn">import</span> <span class="n">Pipeline</span>  <span class="c1"># noqa</span>
 <span class="kn">from</span> <span class="nn">sklearn.cross_validation</span> <span class="kn">import</span> <span class="n">cross_val_score</span>  <span class="c1"># noqa</span>
-<span class="n">clf</span> <span class="o">=</span> <span class="n">Pipeline</span><span class="p">([(</span><span class="s1">&#39;CSP&#39;</span><span class="p">,</span> <span class="n">csp</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;SVC&#39;</span><span class="p">,</span> <span class="n">svc</span><span class="p">)])</span>
+<span class="n">clf</span> <span class="o">=</span> <span class="n">Pipeline</span><span class="p">([(</span><span class="s1">&#39;CSP&#39;</span><span class="p">,</span> <span class="n">csp</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;LDA&#39;</span><span class="p">,</span> <span class="n">lda</span><span class="p">)])</span>
 <span class="n">scores</span> <span class="o">=</span> <span class="n">cross_val_score</span><span class="p">(</span><span class="n">clf</span><span class="p">,</span> <span class="n">epochs_data_train</span><span class="p">,</span> <span class="n">labels</span><span class="p">,</span> <span class="n">cv</span><span class="o">=</span><span class="n">cv</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
 <span class="c1"># Printing the results</span>
@@ -317,13 +317,13 @@ Complex Physiologic Signals. Circulation 101(23):e215-e220</dd>
     <span class="n">X_test</span> <span class="o">=</span> <span class="n">csp</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">epochs_data_train</span><span class="p">[</span><span class="n">test_idx</span><span class="p">])</span>
 
     <span class="c1"># fit classifier</span>
-    <span class="n">svc</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+    <span class="n">lda</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
 
     <span class="c1"># running classifier: test classifier on sliding window</span>
     <span class="n">score_this_window</span> <span class="o">=</span> <span class="p">[]</span>
     <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">w_start</span><span class="p">:</span>
         <span class="n">X_test</span> <span class="o">=</span> <span class="n">csp</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">epochs_data</span><span class="p">[</span><span class="n">test_idx</span><span class="p">][:,</span> <span class="p">:,</span> <span class="n">n</span><span class="p">:(</span><span class="n">n</span> <span class="o">+</span> <span class="n">w_length</span><span class="p">)])</span>
-        <span class="n">score_this_window</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">svc</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">y_test</span><span class="p">))</span>
+        <span class="n">score_this_window</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">lda</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">y_test</span><span class="p">))</span>
     <span class="n">scores_windows</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">score_this_window</span><span class="p">)</span>
 
 <span class="c1"># Plot scores over time</span>
@@ -341,7 +341,7 @@ Complex Physiologic Signals. Circulation 101(23):e215-e220</dd>
 </pre></div>
 </div>
 <img alt="../../_images/sphx_glr_plot_decoding_csp_eeg_002.png" class="align-center" src="../../_images/sphx_glr_plot_decoding_csp_eeg_002.png" />
-<p><strong>Total running time of the script:</strong> ( 0 minutes  3.106 seconds)</p>
+<p><strong>Total running time of the script:</strong> ( 0 minutes  3.159 seconds)</p>
 <div class="sphx-glr-footer container">
 <div class="sphx-glr-download container">
 <a class="reference download internal" href="../../_downloads/plot_decoding_csp_eeg.py" download=""><code class="xref download docutils literal"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">plot_decoding_csp_eeg.py</span></code></a></div>
