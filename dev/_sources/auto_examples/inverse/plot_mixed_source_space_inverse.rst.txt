@@ -12,52 +12,118 @@ Create a mixed source space and compute MNE inverse solution on evoked dataset
 
 
 
+.. code-block:: python
 
-.. rst-class:: sphx-glr-horizontal
+    # Author: Annalisa Pascarella <a.pascarella@iac.cnr.it>
+    #
+    # License: BSD (3-clause)
+
+    import os.path as op
+    import matplotlib.pyplot as plt
+    import mne
+
+    from mne.datasets import sample
+    from mne import setup_volume_source_space
+    from mne import make_forward_solution
+    from mne.minimum_norm import make_inverse_operator, apply_inverse
+
+    from nilearn import plotting
+
+    # Set dir
+    data_path = sample.data_path()
+    subject = 'sample'
+    data_dir = op.join(data_path, 'MEG', subject)
+    subjects_dir = op.join(data_path, 'subjects')
+    bem_dir = op.join(subjects_dir, subject, 'bem')
+
+    # Set file names
+    fname_mixed_src = op.join(bem_dir, '%s-oct-6-mixed-src.fif' % subject)
+    fname_aseg = op.join(subjects_dir, subject, 'mri', 'aseg.mgz')
+
+    fname_model = op.join(bem_dir, '%s-5120-bem.fif' % subject)
+    fname_bem = op.join(bem_dir, '%s-5120-bem-sol.fif' % subject)
+
+    fname_evoked = data_dir + '/sample_audvis-ave.fif'
+    fname_trans = data_dir + '/sample_audvis_raw-trans.fif'
+    fname_fwd = data_dir + '/sample_audvis-meg-oct-6-mixed-fwd.fif'
+    fname_cov = data_dir + '/sample_audvis-shrunk-cov.fif'
 
 
-    *
 
-      .. image:: /auto_examples/inverse/images/sphx_glr_plot_mixed_source_space_inverse_001.png
-            :scale: 47
 
-    *
 
-      .. image:: /auto_examples/inverse/images/sphx_glr_plot_mixed_source_space_inverse_002.png
-            :scale: 47
+
+
+Set up our source space.
+
+
+
+.. code-block:: python
+
+
+    # List substructures we are interested in. We select only the
+    # sub structures we want to include in the source space
+    labels_vol = ['Left-Amygdala',
+                  'Left-Thalamus-Proper',
+                  'Left-Cerebellum-Cortex',
+                  'Brain-Stem',
+                  'Right-Amygdala',
+                  'Right-Thalamus-Proper',
+                  'Right-Cerebellum-Cortex']
+
+    # Get a surface-based source space. We could set one up like this::
+    #
+    #     >>> src = setup_source_space(subject, fname=None, spacing='oct6',
+    #                                  add_dist=False, subjects_dir=subjects_dir)
+    #
+    # But we already have one saved:
+
+    src = mne.read_source_spaces(op.join(bem_dir, 'sample-oct-6-src.fif'))
+
+    # Now we create a mixed src space by adding the volume regions specified in the
+    # list labels_vol. First, read the aseg file and the source space bounds
+    # using the inner skull surface (here using 10mm spacing to save time):
+
+    vol_src = setup_volume_source_space(
+        subject, mri=fname_aseg, pos=7.0, bem=fname_model,
+        volume_label=labels_vol, subjects_dir=subjects_dir, verbose=True)
+
+    # Generate the mixed source space
+    src += vol_src
+
+    # Visualize the source space.
+    src.plot(subjects_dir=subjects_dir)
+
+    n = sum(src[i]['nuse'] for i in range(len(src)))
+    print('the src space contains %d spaces and %d points' % (len(src), n))
+
+    # We could write the mixed source space with::
+    #
+    #    >>> write_source_spaces(fname_mixed_src, src, overwrite=True)
+    #
+
+
+
+
+.. image:: /auto_examples/inverse/images/sphx_glr_plot_mixed_source_space_inverse_001.png
+    :align: center
 
 
 .. rst-class:: sphx-glr-script-out
 
  Out::
 
-    Setting up the source space with the following parameters:
-
-    SUBJECTS_DIR = /home/ubuntu/mne_data/MNE-sample-data/subjects
-    Subject      = sample
-    Surface      = white
-    Octahedron subdivision grade 6
-
-    >>> 1. Creating the source space...
-
-    Doing the octahedral vertex picking...
-    Loading /home/ubuntu/mne_data/MNE-sample-data/subjects/sample/surf/lh.white...
-    Mapping lh sample -> oct (6) ...
-        Triangle neighbors and vertex normals...
-    Loading geometry from /home/ubuntu/mne_data/MNE-sample-data/subjects/sample/surf/lh.sphere...
-        Triangle neighbors and vertex normals...
-    Setting up the triangulation for the decimated surface...
-    loaded lh.white 4098/155407 selected to source space (oct = 6)
-
-    Loading /home/ubuntu/mne_data/MNE-sample-data/subjects/sample/surf/rh.white...
-    Mapping rh sample -> oct (6) ...
-        Triangle neighbors and vertex normals...
-    Loading geometry from /home/ubuntu/mne_data/MNE-sample-data/subjects/sample/surf/rh.sphere...
-        Triangle neighbors and vertex normals...
-    Setting up the triangulation for the decimated surface...
-    loaded rh.white 4098/156866 selected to source space (oct = 6)
-
-    You are now one step closer to computing the gain matrix
+    Reading a source space...
+        Computing patch statistics...
+        Patch information added...
+        Distance information added...
+        [done]
+        Reading a source space...
+        Computing patch statistics...
+        Patch information added...
+        Distance information added...
+        [done]
+        2 source spaces read
     BEM file              : /home/ubuntu/mne_data/MNE-sample-data/subjects/sample/bem/sample-5120-bem.fif
     Output file           : None
     grid                  : 7.0 mm
@@ -338,208 +404,19 @@ Create a mixed source space and compute MNE inverse solution on evoked dataset
          0.000000  0.000000  0.000000       1.00
     Setting up interpolation...
      864360/16777216 nonzero values [done]
+        Triangle neighbors and vertex normals...
+        Triangle neighbors and vertex normals...
+    Using /home/ubuntu/mne_data/MNE-sample-data/subjects/sample/bem/flash/outer_skull.surf for head surface.
+        Triangle neighbors and vertex normals...
     the src space contains 9 spaces and 8545 points
-        Write a source space...
-        [done]
-        Write a source space...
-        [done]
-        Write a source space...
-        [done]
-        Write a source space...
-        [done]
-        Write a source space...
-        [done]
-        Write a source space...
-        [done]
-        Write a source space...
-        [done]
-        Write a source space...
-        [done]
-        Write a source space...
-        [done]
-        9 source spaces written
-    Reading FreeSurfer lookup table
-    Source space                 : <SourceSpaces: [<surface (lh), n_vertices=155407, n_used=4098, coordinate_frame=MRI (surface RAS)>, <surface (rh), n_vertices=156866, n_used=4098, coordinate_frame=MRI (surface RAS)>, <volume (Left-Amygdala), n_used=5, coordinate_frame=MRI (surface RAS)>, <volume (Left-Thalamus-Proper), n_used=24, coordinate_frame=MRI (surface RAS)>, <volume (Left-Cerebellum-Cortex), n_used=106, coordinate_frame=MRI (surface RAS)>, <volume (Brain-Stem), n_used=65, coordinate_frame=MRI (surface RAS)>, <volume (Right-Amygdala), n_used=4, coordinate_frame=MRI (surface RAS)>, <volume (Right-Thalamus-Proper), n_used=24, coordinate_frame=MRI (surface RAS)>, <volume (Right-Cerebellum-Cortex), n_used=121, coordinate_frame=MRI (surface RAS)>]>
-    MRI -> head transform source : /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis_raw-trans.fif
-    Measurement data             : sample_audvis-ave.fif
-    BEM model                    : /home/ubuntu/mne_data/MNE-sample-data/subjects/sample/bem/sample-5120-bem-sol.fif
-    Accurate field computations
-    Do computations in head coordinates
-    Free source orientations
-    Destination for the solution : None
-
-    Read 9 source spaces a total of 8545 active source locations
-
-    Coordinate transformation: MRI (surface RAS) -> head
-         0.999310  0.009985 -0.035787      -3.17 mm
-         0.012759  0.812405  0.582954       6.86 mm
-         0.034894 -0.583008  0.811716      28.88 mm
-         0.000000  0.000000  0.000000       1.00
-
-    Read 306 MEG channels from info
-    81 coil definitions read
-    Coordinate transformation: MEG device -> head
-         0.991420 -0.039936 -0.124467      -6.13 mm
-         0.060661  0.984012  0.167456       0.06 mm
-         0.115790 -0.173570  0.977991      64.74 mm
-         0.000000  0.000000  0.000000       1.00
-    MEG coil definitions created in head coordinates.
-    Source spaces are now in head coordinates.
-
-    Setting up the BEM model using /home/ubuntu/mne_data/MNE-sample-data/subjects/sample/bem/sample-5120-bem-sol.fif...
-
-    Loading surfaces...
-    Homogeneous model surface loaded.
-
-    Loading the solution matrix...
-
-    Loaded linear_collocation BEM solution from /home/ubuntu/mne_data/MNE-sample-data/subjects/sample/bem/sample-5120-bem-sol.fif
-    Employing the head->MRI coordinate transform with the BEM model.
-    BEM model sample-5120-bem-sol.fif is now set up
-
-    Source spaces are in head coordinates.
-    Checking that the sources are inside the bounding surface and at least    5.0 mm away (will take a few...)
-    2 source space points omitted because they are outside the inner skull surface.
-    364 source space points omitted because of the    5.0-mm distance limit.
-    1 source space point omitted because it is outside the inner skull surface.
-    331 source space point omitted because of the    5.0-mm distance limit.
-    Thank you for waiting.
-
-    Setting up compensation data...
-        No compensation set. Nothing more to do.
-
-    Composing the field computation matrix...
-    Computing MEG at 7847 source locations (free orientations)...
-
-    Finished.
-    Leadfield size : 306 sensors x 23541 dipoles
-    the fwd src space contains 9 spaces and 7847 points
-    Reading /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis-ave.fif ...
-        Read a total of 4 projection items:
-            PCA-v1 (1 x 102) active
-            PCA-v2 (1 x 102) active
-            PCA-v3 (1 x 102) active
-            Average EEG reference (1 x 60) active
-        Found the data of interest:
-            t =    -199.80 ...     499.49 ms (Left Auditory)
-            0 CTF compensation matrices available
-            nave = 55 - aspect type = 100
-    Projections have already been applied. Setting proj attribute to True.
-    Applying baseline correction (mode: mean)
-        365 x 365 full covariance (kind = 1) found.
-        Read a total of 4 projection items:
-            PCA-v1 (1 x 102) active
-            PCA-v2 (1 x 102) active
-            PCA-v3 (1 x 102) active
-            Average EEG reference (1 x 59) active
-    info["bads"] and noise_cov["bads"] do not match, excluding bad channels from both
-    Computing inverse operator with 305 channels.
-        Created an SSP operator (subspace dimension = 3)
-    estimated rank (mag + grad): 302
-    Setting small MEG eigenvalues to zero.
-    Not doing PCA for MEG.
-    Total rank is 302
-    Computing inverse operator with 305 channels.
-    Creating the source covariance matrix
-    Whitening the forward solution.
-    Adjusting source covariance matrix.
-    Computing SVD of whitened and weighted lead field matrix.
-        largest singular value = 4.51306
-        scaling factor to adjust the trace = 2.21975e+20
-    Preparing the inverse operator for use...
-        Scaled noise and source covariance from nave = 1 to nave = 55
-        Created the regularized inverter
-        Created an SSP operator (subspace dimension = 3)
-        Created the whitener using a full noise covariance matrix (3 small eigenvalues omitted)
-    Picked 305 channels from the data
-    Computing inverse...
-    (eigenleads need to be weighted)...
-    combining the current components...
-    [done]
-    Reading labels from parcellation..
-       read 34 labels from /home/ubuntu/mne_data/MNE-sample-data/subjects/sample/label/lh.aparc.annot
-       read 34 labels from /home/ubuntu/mne_data/MNE-sample-data/subjects/sample/label/rh.aparc.annot
-    [done]
-    Extracting time courses for 75 labels (mode: mean)
 
 
+Export source positions to nift file:
 
-
-|
 
 
 .. code-block:: python
 
-    # Author: Annalisa Pascarella <a.pascarella@iac.cnr.it>
-    #
-    # License: BSD (3-clause)
-
-    import os.path as op
-    import matplotlib.pyplot as plt
-    import mne
-
-    from mne.datasets import sample
-    from mne import write_source_spaces, setup_source_space
-    from mne import setup_volume_source_space
-    from mne import make_forward_solution
-    from mne.minimum_norm import make_inverse_operator, apply_inverse
-
-    from nilearn import plotting
-
-    # Set dir
-    data_path = sample.data_path()
-    subject = 'sample'
-    data_dir = op.join(data_path, 'MEG', subject)
-    subjects_dir = op.join(data_path, 'subjects')
-    bem_dir = op.join(subjects_dir, subject, 'bem')
-
-    # Set file names
-    fname_mixed_src = op.join(bem_dir, '%s-oct-6-mixed-src.fif' % subject)
-    fname_aseg = op.join(subjects_dir, subject, 'mri', 'aseg.mgz')
-
-    fname_model = op.join(bem_dir, '%s-5120-bem.fif' % subject)
-    fname_bem = op.join(bem_dir, '%s-5120-bem-sol.fif' % subject)
-
-    fname_evoked = data_dir + '/sample_audvis-ave.fif'
-    fname_trans = data_dir + '/sample_audvis_raw-trans.fif'
-    fname_fwd = data_dir + '/sample_audvis-meg-oct-6-mixed-fwd.fif'
-    fname_cov = data_dir + '/sample_audvis-shrunk-cov.fif'
-
-    # List of sub structures we are interested in. We select only the
-    # sub structures we want to include in the source space
-    labels_vol = ['Left-Amygdala',
-                  'Left-Thalamus-Proper',
-                  'Left-Cerebellum-Cortex',
-                  'Brain-Stem',
-                  'Right-Amygdala',
-                  'Right-Thalamus-Proper',
-                  'Right-Cerebellum-Cortex']
-
-    # Setup a surface-based source space
-    src = setup_source_space(subject, fname=None, subjects_dir=subjects_dir,
-                             spacing='oct6', add_dist=False)
-
-    # We create a mixed src space adding to the surface src space the volume
-    # regions specified in the list labels_vol. First, read the aseg file and the
-    # source space bounds using the inner skull surface
-
-    # Setup a volume source space
-    # set pos=7.0 for speed issue
-    vol_src = setup_volume_source_space(subject, mri=fname_aseg,
-                                        pos=7.0,
-                                        bem=fname_model,
-                                        volume_label=labels_vol,
-                                        subjects_dir=subjects_dir)
-    # Generate the mixed source space
-    src += vol_src
-
-    n = sum(src[i]['nuse'] for i in range(len(src)))
-    print('the src space contains %d spaces and %d points' % (len(src), n))
-
-    # Write the mixed source space
-    write_source_spaces(fname_mixed_src, src)
-
-    # Export source positions to nift file
     nii_fname = op.join(bem_dir, '%s-mixed-src.nii' % subject)
     src.export_volume(nii_fname, mri_resolution=True)
 
@@ -549,9 +426,7 @@ Create a mixed source space and compute MNE inverse solution on evoked dataset
     # Compute the fwd matrix
     fwd = make_forward_solution(fname_evoked, fname_trans, src, fname_bem,
                                 mindist=5.0,  # ignore sources<=5mm from innerskull
-                                meg=True, eeg=False,
-                                n_jobs=1,
-                                overwrite=True)
+                                meg=True, eeg=False, n_jobs=1)
 
     leadfield = fwd['sol']['data']
     print("Leadfield size : %d sensors x %d dipoles" % leadfield.shape)
@@ -605,7 +480,136 @@ Create a mixed source space and compute MNE inverse solution on evoked dataset
     mne.viz.tight_layout()
     plt.show()
 
-**Total running time of the script:** ( 2 minutes  34.580 seconds)
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+    *
+
+      .. image:: /auto_examples/inverse/images/sphx_glr_plot_mixed_source_space_inverse_002.png
+            :scale: 47
+
+    *
+
+      .. image:: /auto_examples/inverse/images/sphx_glr_plot_mixed_source_space_inverse_003.png
+            :scale: 47
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    Reading FreeSurfer lookup table
+    Source space                 : <SourceSpaces: [<surface (lh), n_vertices=155407, n_used=4098, coordinate_frame=MRI (surface RAS)>, <surface (rh), n_vertices=156866, n_used=4098, coordinate_frame=MRI (surface RAS)>, <volume (Left-Amygdala), n_used=5, coordinate_frame=MRI (surface RAS)>, <volume (Left-Thalamus-Proper), n_used=24, coordinate_frame=MRI (surface RAS)>, <volume (Left-Cerebellum-Cortex), n_used=106, coordinate_frame=MRI (surface RAS)>, <volume (Brain-Stem), n_used=65, coordinate_frame=MRI (surface RAS)>, <volume (Right-Amygdala), n_used=4, coordinate_frame=MRI (surface RAS)>, <volume (Right-Thalamus-Proper), n_used=24, coordinate_frame=MRI (surface RAS)>, <volume (Right-Cerebellum-Cortex), n_used=121, coordinate_frame=MRI (surface RAS)>]>
+    MRI -> head transform source : /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis_raw-trans.fif
+    Measurement data             : sample_audvis-ave.fif
+    BEM model                    : /home/ubuntu/mne_data/MNE-sample-data/subjects/sample/bem/sample-5120-bem-sol.fif
+    Accurate field computations
+    Do computations in head coordinates
+    Free source orientations
+    Destination for the solution : None
+
+    Read 9 source spaces a total of 8545 active source locations
+
+    Coordinate transformation: MRI (surface RAS) -> head
+         0.999310  0.009985 -0.035787      -3.17 mm
+         0.012759  0.812405  0.582954       6.86 mm
+         0.034894 -0.583008  0.811716      28.88 mm
+         0.000000  0.000000  0.000000       1.00
+
+    Read 306 MEG channels from info
+    81 coil definitions read
+    Coordinate transformation: MEG device -> head
+         0.991420 -0.039936 -0.124467      -6.13 mm
+         0.060661  0.984012  0.167456       0.06 mm
+         0.115790 -0.173570  0.977991      64.74 mm
+         0.000000  0.000000  0.000000       1.00
+    MEG coil definitions created in head coordinates.
+    Source spaces are now in head coordinates.
+
+    Setting up the BEM model using /home/ubuntu/mne_data/MNE-sample-data/subjects/sample/bem/sample-5120-bem-sol.fif...
+
+    Loading surfaces...
+    Homogeneous model surface loaded.
+
+    Loading the solution matrix...
+
+    Loaded linear_collocation BEM solution from /home/ubuntu/mne_data/MNE-sample-data/subjects/sample/bem/sample-5120-bem-sol.fif
+    Employing the head->MRI coordinate transform with the BEM model.
+    BEM model sample-5120-bem-sol.fif is now set up
+
+    Source spaces are in head coordinates.
+    Checking that the sources are inside the bounding surface and at least    5.0 mm away (will take a few...)
+    2 source space points omitted because they are outside the inner skull surface.
+    364 source space points omitted because of the    5.0-mm distance limit.
+        Computing patch statistics...
+        Patch information added...
+    1 source space point omitted because it is outside the inner skull surface.
+    331 source space point omitted because of the    5.0-mm distance limit.
+        Computing patch statistics...
+        Patch information added...
+    Thank you for waiting.
+
+    Setting up compensation data...
+        No compensation set. Nothing more to do.
+
+    Composing the field computation matrix...
+    Computing MEG at 7847 source locations (free orientations)...
+
+    Finished.
+    Leadfield size : 306 sensors x 23541 dipoles
+    the fwd src space contains 9 spaces and 7847 points
+    Reading /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis-ave.fif ...
+        Read a total of 4 projection items:
+            PCA-v1 (1 x 102) active
+            PCA-v2 (1 x 102) active
+            PCA-v3 (1 x 102) active
+            Average EEG reference (1 x 60) active
+        Found the data of interest:
+            t =    -199.80 ...     499.49 ms (Left Auditory)
+            0 CTF compensation matrices available
+            nave = 55 - aspect type = 100
+    Projections have already been applied. Setting proj attribute to True.
+    Applying baseline correction (mode: mean)
+        365 x 365 full covariance (kind = 1) found.
+        Read a total of 4 projection items:
+            PCA-v1 (1 x 102) active
+            PCA-v2 (1 x 102) active
+            PCA-v3 (1 x 102) active
+            Average EEG reference (1 x 59) active
+    info["bads"] and noise_cov["bads"] do not match, excluding bad channels from both
+    Computing inverse operator with 305 channels.
+        Created an SSP operator (subspace dimension = 3)
+    estimated rank (mag + grad): 302
+    Setting small MEG eigenvalues to zero.
+    Not doing PCA for MEG.
+    Total rank is 302
+    Computing inverse operator with 305 channels.
+    Creating the source covariance matrix
+    Whitening the forward solution.
+    Adjusting source covariance matrix.
+    Computing SVD of whitened and weighted lead field matrix.
+        largest singular value = 4.513
+        scaling factor to adjust the trace = 2.21982e+20
+    Preparing the inverse operator for use...
+        Scaled noise and source covariance from nave = 1 to nave = 55
+        Created the regularized inverter
+        Created an SSP operator (subspace dimension = 3)
+        Created the whitener using a full noise covariance matrix (3 small eigenvalues omitted)
+    Picked 305 channels from the data
+    Computing inverse...
+    (eigenleads need to be weighted)...
+    combining the current components...
+    [done]
+    Reading labels from parcellation..
+       read 34 labels from /home/ubuntu/mne_data/MNE-sample-data/subjects/sample/label/lh.aparc.annot
+       read 34 labels from /home/ubuntu/mne_data/MNE-sample-data/subjects/sample/label/rh.aparc.annot
+    [done]
+    Extracting time courses for 75 labels (mode: mean)
+
+
+**Total running time of the script:** ( 2 minutes  37.340 seconds)
 
 
 
