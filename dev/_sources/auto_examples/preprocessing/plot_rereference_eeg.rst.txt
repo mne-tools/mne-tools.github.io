@@ -58,7 +58,7 @@ Load raw data and apply some EEG referencing schemes.
     Reading 0 ... 41699  =      0.000 ...   277.709 secs...
 
 
-Apply different EEG referencing schemes and plot the resulting evokeds
+Apply different EEG referencing schemes and plot the resulting evokeds.
 
 
 
@@ -73,28 +73,24 @@ Apply different EEG referencing schemes and plot the resulting evokeds
 
     # No reference. This assumes that the EEG has already been referenced properly.
     # This explicitly prevents MNE from adding a default EEG reference.
-    raw_no_ref, _ = mne.io.set_eeg_reference(raw, [])
-    evoked_no_ref = mne.Epochs(raw_no_ref, **epochs_params).average()
-    del raw_no_ref  # Free memory
+    raw.set_eeg_reference([])
+    evoked_no_ref = mne.Epochs(raw, **epochs_params).average()
 
     evoked_no_ref.plot(axes=ax1, titles=dict(eeg='EEG Original reference'))
 
     # Average reference. This is normally added by default, but can also be added
     # explicitly.
-    raw_car, _ = mne.io.set_eeg_reference(raw)
-    evoked_car = mne.Epochs(raw_car, **epochs_params).average()
-    del raw_car
+    raw.set_eeg_reference()
+    evoked_car = mne.Epochs(raw, **epochs_params).average()
 
     evoked_car.plot(axes=ax2, titles=dict(eeg='EEG Average reference'))
 
-    # Use the mean of channels EEG 001 and EEG 002 as a reference
-    raw_custom, _ = mne.io.set_eeg_reference(raw, ['EEG 001', 'EEG 002'])
-    evoked_custom = mne.Epochs(raw_custom, **epochs_params).average()
-    del raw_custom
+    # Re-reference from an average reference to the mean of channels EEG 001 and
+    # EEG 002.
+    raw.set_eeg_reference(['EEG 001', 'EEG 002'])
+    evoked_custom = mne.Epochs(raw, **epochs_params).average()
 
     evoked_custom.plot(axes=ax3, titles=dict(eeg='EEG Custom reference'))
-
-    mne.viz.tight_layout()
 
 
 
@@ -106,7 +102,7 @@ Apply different EEG referencing schemes and plot the resulting evokeds
 
  Out::
 
-    Applying a custom EEG reference.
+    EEG data marked as already having the desired reference. Preventing automatic future re-referencing to an average reference.
     Removing existing average EEG reference projection.
     72 matching events found
     3 projection items activated
@@ -126,7 +122,9 @@ Apply different EEG referencing schemes and plot the resulting evokeds
         Rejecting  epoch based on EOG : [u'EOG 061']
         Rejecting  epoch based on EEG : [u'EEG 001', u'EEG 002', u'EEG 003', u'EEG 007']
         Rejecting  epoch based on EEG : [u'EEG 001', u'EEG 002', u'EEG 003', u'EEG 007']
-    An average reference projection was already added. The data has been left untouched.
+    Adding average EEG reference projection.
+    1 projection items deactivated
+    Average reference projection was added, but hasn't been applied yet. Use the .apply_proj() method function to apply projections.
     72 matching events found
     Created an SSP operator (subspace dimension = 1)
     4 projection items activated
@@ -168,7 +166,7 @@ Apply different EEG referencing schemes and plot the resulting evokeds
         Rejecting  epoch based on EOG : [u'EOG 061']
 
 
-**Total running time of the script:** ( 0 minutes  2.482 seconds)
+**Total running time of the script:** ( 0 minutes  2.004 seconds)
 
 
 

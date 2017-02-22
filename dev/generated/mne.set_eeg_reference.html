@@ -170,9 +170,34 @@ This documentation is for the <strong>development version (0.14.dev0)</strong> -
 <dl class="function">
 <dt id="mne.set_eeg_reference">
 <code class="descclassname">mne.</code><code class="descname">set_eeg_reference</code><span class="sig-paren">(</span><em>inst</em>, <em>ref_channels=None</em>, <em>copy=True</em>, <em>verbose=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/maint/0.14.dev0/mne/io/reference.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.set_eeg_reference" title="Permalink to this definition">¶</a></dt>
-<dd><p>Rereference EEG channels to new reference channel(s).</p>
-<p>If multiple reference channels are specified, they will be averaged. If
-no reference channels are specified, an average reference will be applied.</p>
+<dd><p>Specify which reference to use for EEG data.</p>
+<p>By default, MNE-Python will automatically re-reference the EEG signal to
+use an average reference (see below). Use this function to explicitly
+specify the desired reference for EEG. This can be either an existing
+electrode or a new virtual channel. This function will re-reference the
+data according to the desired reference and prevent MNE-Python from
+automatically adding an average reference.</p>
+<p>Some common referencing schemes and the corresponding value for the
+<code class="docutils literal"><span class="pre">ref_channels</span></code> parameter:</p>
+<dl class="docutils">
+<dt>No re-referencing:</dt>
+<dd>If the EEG data is already using the proper reference, set
+<code class="docutils literal"><span class="pre">ref_channels=[]</span></code>. This will prevent MNE-Python from automatically
+re-referencing the data to an average reference.</dd>
+<dt>Average reference:</dt>
+<dd>A new virtual reference electrode is created by averaging the current
+EEG signal. Make sure that all bad EEG channels are properly marked
+and set <code class="docutils literal"><span class="pre">ref_channels=None</span></code>.</dd>
+<dt>A single electrode:</dt>
+<dd>Set <code class="docutils literal"><span class="pre">ref_channels</span></code> to the name of the channel that will act as the
+new reference.</dd>
+<dt>The mean of multiple electrodes:</dt>
+<dd>A new virtual reference electrode is created by computing the average
+of the current EEG signal recorded from two or more selected channels.
+Set <code class="docutils literal"><span class="pre">ref_channels</span></code> to a list of channel names, indicating which
+channels to use. For example, to apply an average mastoid reference,
+when using the 10-20 naming scheme, set <code class="docutils literal"><span class="pre">ref_channels=['M1',</span> <span class="pre">'M2']</span></code>.</dd>
+</dl>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -183,12 +208,12 @@ no reference channels are specified, an average reference will be applied.</p>
 </div></blockquote>
 <p><strong>ref_channels</strong> : list of str | None</p>
 <blockquote>
-<div><p>The names of the channels to use to construct the reference. If
-None (default), an average reference will be added as an SSP
-projector but not immediately applied to the data. If an empty list
-is specified, the data is assumed to already have a proper reference
-and MNE will not attempt any re-referencing of the data. Defaults
-to an average reference (None).</p>
+<div><p>The names of the channels to use to construct the reference. To apply
+an average reference, specify <code class="docutils literal"><span class="pre">None</span></code> here (default). It will be added
+as an SSP projector, so it is not immediately applied to the data. If
+an empty list is specified, the data is assumed to already have a
+proper reference and MNE will not attempt any re-referencing of the
+data. Defaults to an average reference (None).</p>
 </div></blockquote>
 <p><strong>copy</strong> : bool</p>
 <blockquote>
@@ -232,6 +257,10 @@ function removes any pre-existing average reference projections.</li>
 reference.</li>
 <li>In order to apply a reference other than an average reference, the data
 must be preloaded.</li>
+<li>Re-referencing to an average reference is done with an SSP projector.
+This allows applying this reference without preloading the data. Be
+aware that on preloaded data, SSP projectors are not automatically
+applied. Use the <code class="docutils literal"><span class="pre">apply_proj()</span></code> method to apply them.</li>
 </ol>
 <div class="versionadded">
 <p><span class="versionmodified">New in version 0.9.0.</span></p>
@@ -240,11 +269,7 @@ must be preloaded.</li>
 
 <div class="section" id="examples-using-mne-set-eeg-reference">
 <h2>Examples using <code class="docutils literal"><span class="pre">mne.set_eeg_reference</span></code><a class="headerlink" href="#examples-using-mne-set-eeg-reference" title="Permalink to this headline">¶</a></h2>
-<div class="sphx-glr-thumbcontainer" tooltip="Load raw data and apply some EEG referencing schemes. "><div class="figure" id="id1">
-<img alt="../_images/sphx_glr_plot_rereference_eeg_thumb.png" src="../_images/sphx_glr_plot_rereference_eeg_thumb.png" />
-<p class="caption"><span class="caption-text"><a class="reference internal" href="../auto_examples/preprocessing/plot_rereference_eeg.html#sphx-glr-auto-examples-preprocessing-plot-rereference-eeg-py"><span class="std std-ref">Re-referencing the EEG signal</span></a></span></p>
-</div>
-</div><div class="sphx-glr-thumbcontainer" tooltip="EEG processing and Event Related Potentials (ERPs) ============================================..."><div class="figure" id="id2">
+<div class="sphx-glr-thumbcontainer" tooltip="EEG processing and Event Related Potentials (ERPs) ============================================..."><div class="figure" id="id1">
 <img alt="../_images/sphx_glr_plot_eeg_erp_thumb.png" src="../_images/sphx_glr_plot_eeg_erp_thumb.png" />
 <p class="caption"><span class="caption-text"><a class="reference internal" href="../auto_tutorials/plot_eeg_erp.html#sphx-glr-auto-tutorials-plot-eeg-erp-py"><span class="std std-ref">EEG processing and Event Related Potentials (ERPs)</span></a></span></p>
 </div>
