@@ -166,46 +166,51 @@ This documentation is for the <strong>development version (0.14.dev0)</strong> -
 <h1>mne.decoding.Scaler<a class="headerlink" href="#mne-decoding-scaler" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="mne.decoding.Scaler">
-<em class="property">class </em><code class="descclassname">mne.decoding.</code><code class="descname">Scaler</code><span class="sig-paren">(</span><em>info</em>, <em>with_mean=True</em>, <em>with_std=True</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/maint/0.14.dev0/mne/decoding/transformer.py#L20-L168"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.decoding.Scaler" title="Permalink to this definition">¶</a></dt>
-<dd><p>Standardize data across channels.</p>
-<p>By default, this makes each time point (within each epoch) have
-μ=0, σ=1.</p>
+<em class="property">class </em><code class="descclassname">mne.decoding.</code><code class="descname">Scaler</code><span class="sig-paren">(</span><em>info=None</em>, <em>scalings=None</em>, <em>with_mean=True</em>, <em>with_std=True</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/maint/0.14.dev0/mne/decoding/transformer.py#L69-L194"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.decoding.Scaler" title="Permalink to this definition">¶</a></dt>
+<dd><p>Standardize channel data.</p>
+<p>This class scales data for each channel. It differs from <a href="#id1"><span class="problematic" id="id2">scikit-learn_</span></a>
+classes (e.g., <a class="reference external" href="http://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.StandardScaler.html#sklearn.preprocessing.StandardScaler" title="(in scikit-learn v0.18.1)"><code class="xref py py-class docutils literal"><span class="pre">sklearn.preprocessing.StandardScaler</span></code></a>) in that
+it scales each <em>channel</em> by estimating μ and σ using data from all
+time points and epochs, as opposed to standardizing each <em>feature</em>
+(i.e., each time point for each channel) by estimating using μ and σ
+using data from all epochs.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
-<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>info</strong> : instance of Info</p>
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>info</strong> : instance of Info | None</p>
 <blockquote>
-<div><p>The measurement info</p>
+<div><p>The measurement info. Only necessary if <code class="docutils literal"><span class="pre">scalings</span></code> is a dict or
+None.</p>
+</div></blockquote>
+<p><strong>scalings</strong> : dict, string, defaults to None.</p>
+<blockquote>
+<div><p>Scaling method to be applied to data channel wise.</p>
+<ul class="simple">
+<li>if scalings is None (default), scales mag by 1e15, grad by 1e13,
+and eeg by 1e6.</li>
+<li>if scalings is <a class="reference external" href="https://docs.python.org/2/library/stdtypes.html#dict" title="(in Python v2.7)"><code class="xref py py-class docutils literal"><span class="pre">dict</span></code></a>, keys are channel types and values
+are scale factors.</li>
+<li>if <code class="docutils literal"><span class="pre">scalings=='median'</span></code>,
+<a class="reference external" href="http://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.RobustScaler.html#sklearn.preprocessing.RobustScaler" title="(in scikit-learn v0.18.1)"><code class="xref py py-class docutils literal"><span class="pre">sklearn.preprocessing.RobustScaler</span></code></a>
+is used (requires sklearn version 0.17+).</li>
+<li>if <code class="docutils literal"><span class="pre">scalings=='mean'</span></code>,
+<a class="reference external" href="http://scikit-learn.org/stable/modules/generated/sklearn.preprocessing.StandardScaler.html#sklearn.preprocessing.StandardScaler" title="(in scikit-learn v0.18.1)"><code class="xref py py-class docutils literal"><span class="pre">sklearn.preprocessing.StandardScaler</span></code></a>
+is used.</li>
+</ul>
 </div></blockquote>
 <p><strong>with_mean</strong> : boolean, True by default</p>
 <blockquote>
-<div><p>If True, center the data before scaling.</p>
+<div><p>If True, center the data using mean (or median) before scaling.
+Ignored for channel-type scaling.</p>
 </div></blockquote>
 <p><strong>with_std</strong> : boolean, True by default</p>
 <blockquote class="last">
-<div><p>If True, scale the data to unit variance (or equivalently,
-unit standard deviation).</p>
+<div><p>If True, scale the data to unit variance (<code class="docutils literal"><span class="pre">scalings='mean'</span></code>),
+quantile range (<code class="docutils literal"><span class="pre">scalings='median</span></code>), or using channel type
+if <code class="docutils literal"><span class="pre">scalings</span></code> is a dict or None).</p>
 </div></blockquote>
 </td>
-</tr>
-</tbody>
-</table>
-<p class="rubric">Attributes</p>
-<table border="1" class="docutils">
-<colgroup>
-<col width="19%" />
-<col width="81%" />
-</colgroup>
-<tbody valign="top">
-<tr class="row-odd"><td>info</td>
-<td>(instance of Info) The measurement info</td>
-</tr>
-<tr class="row-even"><td><code class="docutils literal"><span class="pre">ch_mean_</span></code></td>
-<td>(dict) The mean value for each channel type</td>
-</tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">std_</span></code></td>
-<td>(dict) The standard deviation for each channel type</td>
 </tr>
 </tbody>
 </table>
@@ -225,8 +230,14 @@ unit standard deviation).</p>
 <tr class="row-odd"><td><a class="reference internal" href="#mne.decoding.Scaler.fit_transform" title="mne.decoding.Scaler.fit_transform"><code class="xref py py-obj docutils literal"><span class="pre">fit_transform</span></code></a>(X[,&nbsp;y])</td>
 <td>Fit to data, then transform it.</td>
 </tr>
-<tr class="row-even"><td><a class="reference internal" href="#mne.decoding.Scaler.inverse_transform" title="mne.decoding.Scaler.inverse_transform"><code class="xref py py-obj docutils literal"><span class="pre">inverse_transform</span></code></a>(epochs_data[,&nbsp;y])</td>
+<tr class="row-even"><td><a class="reference internal" href="#mne.decoding.Scaler.get_params" title="mne.decoding.Scaler.get_params"><code class="xref py py-obj docutils literal"><span class="pre">get_params</span></code></a>([deep])</td>
+<td>Get parameters for this estimator.</td>
+</tr>
+<tr class="row-odd"><td><a class="reference internal" href="#mne.decoding.Scaler.inverse_transform" title="mne.decoding.Scaler.inverse_transform"><code class="xref py py-obj docutils literal"><span class="pre">inverse_transform</span></code></a>(epochs_data)</td>
 <td>Invert standardization of data across channels.</td>
+</tr>
+<tr class="row-even"><td><a class="reference internal" href="#mne.decoding.Scaler.set_params" title="mne.decoding.Scaler.set_params"><code class="xref py py-obj docutils literal"><span class="pre">set_params</span></code></a>(\*\*params)</td>
+<td>Set the parameters of this estimator.</td>
 </tr>
 <tr class="row-odd"><td><a class="reference internal" href="#mne.decoding.Scaler.transform" title="mne.decoding.Scaler.transform"><code class="xref py py-obj docutils literal"><span class="pre">transform</span></code></a>(epochs_data[,&nbsp;y])</td>
 <td>Standardize data across channels.</td>
@@ -240,7 +251,7 @@ unit standard deviation).</p>
 
 <dl class="method">
 <dt id="mne.decoding.Scaler.fit">
-<code class="descname">fit</code><span class="sig-paren">(</span><em>epochs_data</em>, <em>y</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/maint/0.14.dev0/mne/decoding/transformer.py#L53-L98"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.decoding.Scaler.fit" title="Permalink to this definition">¶</a></dt>
+<code class="descname">fit</code><span class="sig-paren">(</span><em>epochs_data</em>, <em>y</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/maint/0.14.dev0/mne/decoding/transformer.py#L133-L149"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.decoding.Scaler.fit" title="Permalink to this definition">¶</a></dt>
 <dd><p>Standardize data across channels.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -297,8 +308,33 @@ and returns a transformed version of X.</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="mne.decoding.Scaler.get_params">
+<code class="descname">get_params</code><span class="sig-paren">(</span><em>deep=True</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/maint/0.14.dev0/mne/fixes.py#L1107-L1142"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.decoding.Scaler.get_params" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get parameters for this estimator.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>deep</strong> : boolean, optional</p>
+<blockquote>
+<div><p>If True, will return the parameters for this estimator and
+contained subobjects that are estimators.</p>
+</div></blockquote>
+</td>
+</tr>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>params</strong> : mapping of string to any</p>
+<blockquote class="last">
+<div><p>Parameter names mapped to their values.</p>
+</div></blockquote>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+<dl class="method">
 <dt id="mne.decoding.Scaler.inverse_transform">
-<code class="descname">inverse_transform</code><span class="sig-paren">(</span><em>epochs_data</em>, <em>y=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/maint/0.14.dev0/mne/decoding/transformer.py#L135-L168"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.decoding.Scaler.inverse_transform" title="Permalink to this definition">¶</a></dt>
+<code class="descname">inverse_transform</code><span class="sig-paren">(</span><em>epochs_data</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/maint/0.14.dev0/mne/decoding/transformer.py#L175-L194"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.decoding.Scaler.inverse_transform" title="Permalink to this definition">¶</a></dt>
 <dd><p>Invert standardization of data across channels.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -307,11 +343,6 @@ and returns a transformed version of X.</p>
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>epochs_data</strong> : array, shape (n_epochs, n_channels, n_times)</p>
 <blockquote>
 <div><p>The data.</p>
-</div></blockquote>
-<p><strong>y</strong> : None | array, shape (n_epochs,)</p>
-<blockquote>
-<div><p>The label for each epoch.
-If None not used. Defaults to None.</p>
 </div></blockquote>
 </td>
 </tr>
@@ -329,8 +360,21 @@ memory usage may be large with big data.</p>
 </dd></dl>
 
 <dl class="method">
+<dt id="mne.decoding.Scaler.set_params">
+<code class="descname">set_params</code><span class="sig-paren">(</span><em>**params</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/maint/0.14.dev0/mne/fixes.py#L1144-L1178"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.decoding.Scaler.set_params" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set the parameters of this estimator.
+The method works on simple estimators as well as on nested objects
+(such as pipelines). The latter have parameters of the form
+<code class="docutils literal"><span class="pre">&lt;component&gt;__&lt;parameter&gt;</span></code> so that it&#8217;s possible to update each
+component of a nested object.
+Returns
+&#8212;&#8212;-
+self</p>
+</dd></dl>
+
+<dl class="method">
 <dt id="mne.decoding.Scaler.transform">
-<code class="descname">transform</code><span class="sig-paren">(</span><em>epochs_data</em>, <em>y=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/maint/0.14.dev0/mne/decoding/transformer.py#L100-L133"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.decoding.Scaler.transform" title="Permalink to this definition">¶</a></dt>
+<code class="descname">transform</code><span class="sig-paren">(</span><em>epochs_data</em>, <em>y=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/maint/0.14.dev0/mne/decoding/transformer.py#L151-L173"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.decoding.Scaler.transform" title="Permalink to this definition">¶</a></dt>
 <dd><p>Standardize data across channels.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -376,7 +420,7 @@ memory usage may be large with big data.</p>
       
     </p>
     <p>
-        &copy; Copyright 2012-2017, MNE Developers. Last updated on 2017-03-11.<br/>
+        &copy; Copyright 2012-2017, MNE Developers. Last updated on 2017-03-13.<br/>
     </p>
   </div>
 </footer>
