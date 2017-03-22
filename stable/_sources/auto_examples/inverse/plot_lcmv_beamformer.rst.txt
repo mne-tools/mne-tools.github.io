@@ -1,0 +1,247 @@
+
+
+.. _sphx_glr_auto_examples_inverse_plot_lcmv_beamformer.py:
+
+
+======================================
+Compute LCMV beamformer on evoked data
+======================================
+
+Compute LCMV beamformer solutions on an evoked dataset for three different
+choices of source orientation and store the solutions in stc files for
+visualisation.
+
+
+
+.. code-block:: python
+
+    # Author: Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
+    #
+    # License: BSD (3-clause)
+
+    import matplotlib.pyplot as plt
+    import numpy as np
+
+    import mne
+    from mne.datasets import sample
+    from mne.beamformer import lcmv
+
+    print(__doc__)
+
+    data_path = sample.data_path()
+    raw_fname = data_path + '/MEG/sample/sample_audvis_raw.fif'
+    event_fname = data_path + '/MEG/sample/sample_audvis_raw-eve.fif'
+    fname_fwd = data_path + '/MEG/sample/sample_audvis-meg-eeg-oct-6-fwd.fif'
+    label_name = 'Aud-lh'
+    fname_label = data_path + '/MEG/sample/labels/%s.label' % label_name
+    subjects_dir = data_path + '/subjects'
+
+
+
+
+
+
+
+Get epochs
+
+
+
+.. code-block:: python
+
+    event_id, tmin, tmax = 1, -0.2, 0.5
+
+    # Setup for reading the raw data
+    raw = mne.io.read_raw_fif(raw_fname, preload=True)
+    raw.info['bads'] = ['MEG 2443', 'EEG 053']  # 2 bads channels
+    events = mne.read_events(event_fname)
+
+    # Set up pick list: EEG + MEG - bad channels (modify to your needs)
+    left_temporal_channels = mne.read_selection('Left-temporal')
+    picks = mne.pick_types(raw.info, meg=True, eeg=False, stim=True, eog=True,
+                           exclude='bads', selection=left_temporal_channels)
+
+    # Pick the channels of interest
+    raw.pick_channels([raw.ch_names[pick] for pick in picks])
+    # Re-normalize our empty-room projectors, so they are fine after subselection
+    raw.info.normalize_proj()
+
+    # Read epochs
+    epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
+                        baseline=(None, 0), preload=True, proj=True,
+                        reject=dict(grad=4000e-13, mag=4e-12, eog=150e-6))
+    evoked = epochs.average()
+
+    forward = mne.read_forward_solution(fname_fwd, surf_ori=True)
+
+    # Compute regularized noise and data covariances
+    noise_cov = mne.compute_covariance(epochs, tmin=tmin, tmax=0, method='shrunk')
+    data_cov = mne.compute_covariance(epochs, tmin=0.04, tmax=0.15,
+                                      method='shrunk')
+
+    plt.close('all')
+
+    pick_oris = [None, 'normal', 'max-power']
+    names = ['free', 'normal', 'max-power']
+    descriptions = ['Free orientation', 'Normal orientation', 'Max-power '
+                    'orientation']
+    colors = ['b', 'k', 'r']
+
+    for pick_ori, name, desc, color in zip(pick_oris, names, descriptions, colors):
+        stc = lcmv(evoked, forward, noise_cov, data_cov, reg=0.05,
+                   pick_ori=pick_ori)
+
+        # View activation time-series
+        label = mne.read_label(fname_label)
+        stc_label = stc.in_label(label)
+        plt.plot(1e3 * stc_label.times, np.mean(stc_label.data, axis=0), color,
+                 hold=True, label=desc)
+
+    plt.xlabel('Time (ms)')
+    plt.ylabel('LCMV value')
+    plt.ylim(-0.8, 2.2)
+    plt.title('LCMV in %s' % label_name)
+    plt.legend()
+    plt.show()
+
+    # Plot last stc in the brain in 3D with PySurfer if available
+    brain = stc.plot(hemi='lh', subjects_dir=subjects_dir,
+                     initial_time=0.1, time_unit='s')
+    brain.show_view('lateral')
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+    *
+
+      .. image:: /auto_examples/inverse/images/sphx_glr_plot_lcmv_beamformer_001.png
+            :scale: 47
+
+    *
+
+      .. image:: /auto_examples/inverse/images/sphx_glr_plot_lcmv_beamformer_002.png
+            :scale: 47
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    Opening raw data file /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis_raw.fif...
+        Read a total of 3 projection items:
+            PCA-v1 (1 x 102)  idle
+            PCA-v2 (1 x 102)  idle
+            PCA-v3 (1 x 102)  idle
+        Range : 25800 ... 192599 =     42.956 ...   320.670 secs
+    Ready.
+    Current compensation grade : 0
+    Reading 0 ... 166799  =      0.000 ...   277.714 secs...
+    72 matching events found
+    Created an SSP operator (subspace dimension = 3)
+    3 projection items activated
+    Loading data for 72 events and 421 original time points ...
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : [u'EOG 061']
+    16 bad epochs dropped
+    Reading forward solution from /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis-meg-eeg-oct-6-fwd.fif...
+        Reading a source space...
+        Computing patch statistics...
+        Patch information added...
+        Distance information added...
+        [done]
+        Reading a source space...
+        Computing patch statistics...
+        Patch information added...
+        Distance information added...
+        [done]
+        2 source spaces read
+        Desired named matrix (kind = 3523) not available
+        Read MEG forward solution (7498 sources, 306 channels, free orientations)
+        Desired named matrix (kind = 3523) not available
+        Read EEG forward solution (7498 sources, 60 channels, free orientations)
+        MEG and EEG forward solutions combined
+        Source spaces transformed to the forward solution coordinate frame
+        Converting to surface-based source orientations...
+        Average patch normals will be employed in the rotation to the local surface coordinates....
+    [done]
+    Estimating covariance using SHRUNK
+    Done.
+    Using cross-validation to select the best estimator.
+    Number of samples used : 6776
+    [done]
+    log-likelihood on unseen data (descending order):
+       shrunk: -195.027
+    selecting best estimator: shrunk
+    Estimating covariance using SHRUNK
+    Done.
+    Using cross-validation to select the best estimator.
+    Number of samples used : 3752
+    [done]
+    log-likelihood on unseen data (descending order):
+       shrunk: -201.698
+    selecting best estimator: shrunk
+        39 out of 366 channels remain after picking
+        Created an SSP operator (subspace dimension = 3)
+    estimated rank (mag + grad): 36
+    Setting small MEG eigenvalues to zero.
+    Not doing PCA for MEG.
+    combining the current components...
+        39 out of 366 channels remain after picking
+        Created an SSP operator (subspace dimension = 3)
+    estimated rank (mag + grad): 36
+    Setting small MEG eigenvalues to zero.
+    Not doing PCA for MEG.
+        39 out of 366 channels remain after picking
+        Created an SSP operator (subspace dimension = 3)
+    estimated rank (mag + grad): 36
+    Setting small MEG eigenvalues to zero.
+    Not doing PCA for MEG.
+    Updating smoothing matrix, be patient..
+    Smoothing matrix creation, step 1
+    Smoothing matrix creation, step 2
+    Smoothing matrix creation, step 3
+    Smoothing matrix creation, step 4
+    Smoothing matrix creation, step 5
+    Smoothing matrix creation, step 6
+    Smoothing matrix creation, step 7
+    Smoothing matrix creation, step 8
+    Smoothing matrix creation, step 9
+    Smoothing matrix creation, step 10
+    colormap: fmin=3.98e-01 fmid=4.49e-01 fmax=1.12e+00 transparent=1
+
+
+**Total running time of the script:** ( 0 minutes  26.717 seconds)
+
+
+
+.. container:: sphx-glr-footer
+
+
+  .. container:: sphx-glr-download
+
+     :download:`Download Python source code: plot_lcmv_beamformer.py <plot_lcmv_beamformer.py>`
+
+
+
+  .. container:: sphx-glr-download
+
+     :download:`Download Jupyter notebook: plot_lcmv_beamformer.ipynb <plot_lcmv_beamformer.ipynb>`
+
+.. rst-class:: sphx-glr-signature
+
+    `Generated by Sphinx-Gallery <http://sphinx-gallery.readthedocs.io>`_

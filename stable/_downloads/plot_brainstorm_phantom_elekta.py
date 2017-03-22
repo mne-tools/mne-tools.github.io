@@ -38,7 +38,7 @@ print(__doc__)
 data_path = bst_phantom_elekta.data_path()
 
 raw_fname = op.join(data_path, 'kojak_all_200nAm_pp_no_chpi_no_ms_raw.fif')
-raw = read_raw_fif(raw_fname, add_eeg_ref=False)
+raw = read_raw_fif(raw_fname)
 
 ###############################################################################
 # Data channel array consisted of 204 MEG planor gradiometers,
@@ -68,7 +68,7 @@ raw = mne.preprocessing.maxwell_filter(raw, origin=(0., 0., 0.))
 # We know our phantom produces sinusoidal bursts below 25 Hz, so let's filter.
 
 raw.filter(None, 40., h_trans_bandwidth='auto', filter_length='auto',
-           phase='zero')
+           phase='zero', fir_window='hamming')
 raw.plot(events=events)
 
 ###############################################################################
@@ -79,7 +79,7 @@ raw.plot(events=events)
 tmin, tmax = -0.1, 0.1
 event_id = list(range(1, 33))
 epochs = mne.Epochs(raw, events, event_id, tmin, tmax, baseline=(None, -0.01),
-                    decim=5, preload=True, add_eeg_ref=False)
+                    decim=5, preload=True)
 epochs['1'].average().plot()
 
 ###############################################################################
@@ -100,7 +100,7 @@ dip = fit_dipole(evoked, cov, sphere, n_jobs=1)[0]
 ###############################################################################
 # Now we can compare to the actual locations, taking the difference in mm:
 
-actual_pos = mne.dipole.get_phantom_dipoles(kind='122')[0]
+actual_pos = mne.dipole.get_phantom_dipoles()[0]
 diffs = 1000 * np.sqrt(np.sum((dip.pos - actual_pos) ** 2, axis=-1))
 print('Differences (mm):\n%s' % diffs[:, np.newaxis])
 print('μ = %s' % (np.mean(diffs),))
