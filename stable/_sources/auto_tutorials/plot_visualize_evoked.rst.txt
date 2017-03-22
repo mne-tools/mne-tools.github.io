@@ -9,6 +9,8 @@
 Visualize Evoked data
 =====================
 
+In this tutorial we focus on plotting functions of :class:`mne.Evoked`.
+
 
 
 .. code-block:: python
@@ -19,13 +21,14 @@ Visualize Evoked data
 
     import mne
 
+    # sphinx_gallery_thumbnail_number = 9
 
 
 
 
 
 
-In this tutorial we focus on plotting functions of :class:`mne.Evoked`.
+
 First we read the evoked object from a file. Check out
 :ref:`tut_epoching_and_averaging` to get to this stage from raw data.
 
@@ -46,51 +49,6 @@ First we read the evoked object from a file. Check out
 
  Out::
 
-    Reading /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis-ave.fif ...
-        Read a total of 4 projection items:
-            PCA-v1 (1 x 102) active
-            PCA-v2 (1 x 102) active
-            PCA-v3 (1 x 102) active
-            Average EEG reference (1 x 60) active
-        Found the data of interest:
-            t =    -199.80 ...     499.49 ms (Left Auditory)
-            0 CTF compensation matrices available
-            nave = 55 - aspect type = 100
-    Projections have already been applied. Setting proj attribute to True.
-    Applying baseline correction (mode: mean)
-        Read a total of 4 projection items:
-            PCA-v1 (1 x 102) active
-            PCA-v2 (1 x 102) active
-            PCA-v3 (1 x 102) active
-            Average EEG reference (1 x 60) active
-        Found the data of interest:
-            t =    -199.80 ...     499.49 ms (Right Auditory)
-            0 CTF compensation matrices available
-            nave = 61 - aspect type = 100
-    Projections have already been applied. Setting proj attribute to True.
-    Applying baseline correction (mode: mean)
-        Read a total of 4 projection items:
-            PCA-v1 (1 x 102) active
-            PCA-v2 (1 x 102) active
-            PCA-v3 (1 x 102) active
-            Average EEG reference (1 x 60) active
-        Found the data of interest:
-            t =    -199.80 ...     499.49 ms (Left visual)
-            0 CTF compensation matrices available
-            nave = 67 - aspect type = 100
-    Projections have already been applied. Setting proj attribute to True.
-    Applying baseline correction (mode: mean)
-        Read a total of 4 projection items:
-            PCA-v1 (1 x 102) active
-            PCA-v2 (1 x 102) active
-            PCA-v3 (1 x 102) active
-            Average EEG reference (1 x 60) active
-        Found the data of interest:
-            t =    -199.80 ...     499.49 ms (Right visual)
-            0 CTF compensation matrices available
-            nave = 58 - aspect type = 100
-    Projections have already been applied. Setting proj attribute to True.
-    Applying baseline correction (mode: mean)
     [<Evoked  |  comment : 'Left Auditory', kind : average, time : [-0.199795, 0.499488], n_epochs : 55, n_channels x n_times : 376 x 421, ~4.9 MB>, <Evoked  |  comment : 'Right Auditory', kind : average, time : [-0.199795, 0.499488], n_epochs : 61, n_channels x n_times : 376 x 421, ~4.9 MB>, <Evoked  |  comment : 'Left visual', kind : average, time : [-0.199795, 0.499488], n_epochs : 67, n_channels x n_times : 376 x 421, ~4.9 MB>, <Evoked  |  comment : 'Right visual', kind : average, time : [-0.199795, 0.499488], n_epochs : 58, n_channels x n_times : 376 x 421, ~4.9 MB>]
 
 
@@ -245,11 +203,15 @@ other.
 
 .. code-block:: python
 
-    fig, ax = plt.subplots(1, 5)
-    evoked_l_aud.plot_topomap(times=0.1, axes=ax[0], show=False)
-    evoked_r_aud.plot_topomap(times=0.1, axes=ax[1], show=False)
-    evoked_l_vis.plot_topomap(times=0.1, axes=ax[2], show=False)
-    evoked_r_vis.plot_topomap(times=0.1, axes=ax[3], show=True)
+    fig, ax = plt.subplots(1, 5, figsize=(8, 2))
+    kwargs = dict(times=0.1, show=False, vmin=-300, vmax=300)
+    evoked_l_aud.plot_topomap(axes=ax[0], colorbar=True, **kwargs)
+    evoked_r_aud.plot_topomap(axes=ax[1], colorbar=False, **kwargs)
+    evoked_l_vis.plot_topomap(axes=ax[2], colorbar=False, **kwargs)
+    evoked_r_vis.plot_topomap(axes=ax[3], colorbar=False, **kwargs)
+    for ax, title in zip(ax[:4], ['Aud/L', 'Aud/R', 'Vis/L', 'Vis/R']):
+        ax.set_title(title)
+    plt.show()
 
 
 
@@ -258,14 +220,6 @@ other.
     :align: center
 
 
-.. rst-class:: sphx-glr-script-out
-
- Out::
-
-    Colorbar is drawn to the rightmost column of the figure. Be sure to provide enough space for it or turn it off with colorbar=False.
-    Colorbar is drawn to the rightmost column of the figure. Be sure to provide enough space for it or turn it off with colorbar=False.
-    Colorbar is drawn to the rightmost column of the figure. Be sure to provide enough space for it or turn it off with colorbar=False.
-    Colorbar is drawn to the rightmost column of the figure. Be sure to provide enough space for it or turn it off with colorbar=False.
 
 
 Notice that we created five axes, but had only four categories. The fifth
@@ -288,7 +242,7 @@ topomaps (:func:`mne.Evoked.plot_topomap`) and time series
 (:func:`mne.Evoked.plot`) of the joint plot.
 For an example of specific styling using these ``topomap_args`` and
 ``ts_args`` arguments, here, topomaps at specific time points
-(70 and 105 msec) are shown, sensors are not plotted (via an argument
+(90 and 200 ms) are shown, sensors are not plotted (via an argument
 forwarded to `plot_topomap`), and the Global Field Power is shown:
 
 
@@ -297,7 +251,7 @@ forwarded to `plot_topomap`), and the Global Field Power is shown:
 
     ts_args = dict(gfp=True)
     topomap_args = dict(sensors=False)
-    evoked_r_aud.plot_joint(title='right auditory', times=[.07, .105],
+    evoked_r_aud.plot_joint(title='right auditory', times=[.09, .20],
                             ts_args=ts_args, topomap_args=topomap_args)
 
 
@@ -353,8 +307,8 @@ We plot a MEG channel with a strong auditory response.
     linestyles = dict(Auditory='-', visual='--')
     pick = evoked_dict["Left/Auditory"].ch_names.index('MEG 1811')
 
-    mne.viz.plot_compare_evokeds(evoked_dict, picks=pick,
-                                 colors=colors, linestyles=linestyles)
+    mne.viz.plot_compare_evokeds(evoked_dict, picks=pick, colors=colors,
+                                 linestyles=linestyles)
 
 
 
@@ -367,54 +321,6 @@ We plot a MEG channel with a strong auditory response.
 
  Out::
 
-    Reading /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis-ave.fif ...
-        Read a total of 4 projection items:
-            PCA-v1 (1 x 102) active
-            PCA-v2 (1 x 102) active
-            PCA-v3 (1 x 102) active
-            Average EEG reference (1 x 60) active
-        Found the data of interest:
-            t =    -199.80 ...     499.49 ms (Left Auditory)
-            0 CTF compensation matrices available
-            nave = 55 - aspect type = 100
-    Projections have already been applied. Setting proj attribute to True.
-    Applying baseline correction (mode: mean)
-    Reading /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis-ave.fif ...
-        Read a total of 4 projection items:
-            PCA-v1 (1 x 102) active
-            PCA-v2 (1 x 102) active
-            PCA-v3 (1 x 102) active
-            Average EEG reference (1 x 60) active
-        Found the data of interest:
-            t =    -199.80 ...     499.49 ms (Right Auditory)
-            0 CTF compensation matrices available
-            nave = 61 - aspect type = 100
-    Projections have already been applied. Setting proj attribute to True.
-    Applying baseline correction (mode: mean)
-    Reading /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis-ave.fif ...
-        Read a total of 4 projection items:
-            PCA-v1 (1 x 102) active
-            PCA-v2 (1 x 102) active
-            PCA-v3 (1 x 102) active
-            Average EEG reference (1 x 60) active
-        Found the data of interest:
-            t =    -199.80 ...     499.49 ms (Left visual)
-            0 CTF compensation matrices available
-            nave = 67 - aspect type = 100
-    Projections have already been applied. Setting proj attribute to True.
-    Applying baseline correction (mode: mean)
-    Reading /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis-ave.fif ...
-        Read a total of 4 projection items:
-            PCA-v1 (1 x 102) active
-            PCA-v2 (1 x 102) active
-            PCA-v3 (1 x 102) active
-            Average EEG reference (1 x 60) active
-        Found the data of interest:
-            t =    -199.80 ...     499.49 ms (Right visual)
-            0 CTF compensation matrices available
-            nave = 58 - aspect type = 100
-    Projections have already been applied. Setting proj attribute to True.
-    Applying baseline correction (mode: mean)
     {'Left/Auditory': <Evoked  |  comment : 'Left Auditory', kind : average, time : [-0.199795, 0.499488], n_epochs : 55, n_channels x n_times : 376 x 421, ~4.9 MB>, 'Left/visual': <Evoked  |  comment : 'Left visual', kind : average, time : [-0.199795, 0.499488], n_epochs : 67, n_channels x n_times : 376 x 421, ~4.9 MB>, 'Right/Auditory': <Evoked  |  comment : 'Right Auditory', kind : average, time : [-0.199795, 0.499488], n_epochs : 61, n_channels x n_times : 376 x 421, ~4.9 MB>, 'Right/visual': <Evoked  |  comment : 'Right visual', kind : average, time : [-0.199795, 0.499488], n_epochs : 58, n_channels x n_times : 376 x 421, ~4.9 MB>}
 
 
@@ -447,11 +353,11 @@ figure for comparison. Click on the individual plots to open them bigger.
 
 .. code-block:: python
 
-    title = 'MNE sample data (condition : %s)'
-    evoked_l_aud.plot_topo(title=title % evoked_l_aud.comment)
-    colors = 'yellow', 'green', 'red', 'blue'
-    mne.viz.plot_evoked_topo(evoked, color=colors,
-                             title=title % 'Left/Right Auditory/Visual')
+    title = 'MNE sample data\n(condition : %s)'
+    evoked_l_aud.plot_topo(title=title % evoked_l_aud.comment,
+                           background_color='k', color=['white'])
+    mne.viz.plot_evoked_topo(evoked, title=title % 'Left/Right Auditory/Visual',
+                             background_color='w')
 
 
 
@@ -503,36 +409,19 @@ Here we just illustrate usage.
     :align: center
 
 
-.. rst-class:: sphx-glr-script-out
-
- Out::
-
-    Using surface from /home/ubuntu/mne_data/MNE-sample-data/subjects/sample/bem/sample-5120-5120-5120-bem.fif.
-    Getting helmet for system 306m
-    Prepare EEG mapping...
-    Computing dot products for 59 electrodes...
-    Computing dot products for 2562 surface locations...
-    Field mapping data ready
-        Preparing the mapping matrix...
-        [Truncate at 20 missing 0.001]
-        The map will have average electrode reference
-    Prepare MEG mapping...
-    Computing dot products for 305 coils...
-    Computing dot products for 304 surface locations...
-    Field mapping data ready
-        Preparing the mapping matrix...
-        [Truncate at 209 missing 0.0001]
 
 
 .. note::
     If trans_fname is set to None then only MEG estimates can be visualized.
 
 
-**Total running time of the script:** ( 0 minutes  24.919 seconds)
+**Total running time of the script:** ( 0 minutes  14.674 seconds)
 
 
 
-.. container:: sphx-glr-footer
+.. only :: html
+
+ .. container:: sphx-glr-footer
 
 
   .. container:: sphx-glr-download
@@ -545,6 +434,9 @@ Here we just illustrate usage.
 
      :download:`Download Jupyter notebook: plot_visualize_evoked.ipynb <plot_visualize_evoked.ipynb>`
 
-.. rst-class:: sphx-glr-signature
 
-    `Generated by Sphinx-Gallery <http://sphinx-gallery.readthedocs.io>`_
+.. only:: html
+
+ .. rst-class:: sphx-glr-signature
+
+    `Gallery generated by Sphinx-Gallery <https://sphinx-gallery.readthedocs.io>`_

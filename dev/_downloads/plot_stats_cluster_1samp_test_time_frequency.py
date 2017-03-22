@@ -1,6 +1,4 @@
 """
-.. _tut_stats_cluster_sensor_1samp_tfr:
-
 ===============================================================
 Non-parametric 1 sample cluster statistic on single trial power
 ===============================================================
@@ -68,9 +66,9 @@ evoked = epochs.average()
 # operations such as nonparametric statistics) if you don't need high
 # spectrotemporal resolution.
 decim = 5
-frequencies = np.arange(8, 40, 2)  # define frequencies of interest
+freqs = np.arange(8, 40, 2)  # define frequencies of interest
 sfreq = raw.info['sfreq']  # sampling in Hz
-tfr_epochs = tfr_morlet(epochs, frequencies, n_cycles=4., decim=decim,
+tfr_epochs = tfr_morlet(epochs, freqs, n_cycles=4., decim=decim,
                         average=False, return_itc=False, n_jobs=1)
 
 # Baseline power
@@ -110,10 +108,10 @@ vmax = np.max(np.abs(T_obs))
 vmin = -vmax
 plt.subplot(2, 1, 1)
 plt.imshow(T_obs, cmap=plt.cm.gray,
-           extent=[times[0], times[-1], frequencies[0], frequencies[-1]],
+           extent=[times[0], times[-1], freqs[0], freqs[-1]],
            aspect='auto', origin='lower', vmin=vmin, vmax=vmax)
 plt.imshow(T_obs_plot, cmap=plt.cm.RdBu_r,
-           extent=[times[0], times[-1], frequencies[0], frequencies[-1]],
+           extent=[times[0], times[-1], freqs[0], freqs[-1]],
            aspect='auto', origin='lower', vmin=vmin, vmax=vmax)
 plt.colorbar()
 plt.xlabel('Time (ms)')
@@ -121,5 +119,5 @@ plt.ylabel('Frequency (Hz)')
 plt.title('Induced power (%s)' % ch_name)
 
 ax2 = plt.subplot(2, 1, 2)
-evoked.plot(axes=[ax2])
+evoked.plot(axes=[ax2], time_unit='s')
 plt.show()

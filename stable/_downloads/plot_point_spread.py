@@ -32,7 +32,7 @@ lambda2 = 1.0 / snr ** 2
 
 # signal simulation parameters
 # do not add extra noise to the known signals
-evoked_snr = np.inf
+nave = np.inf
 T = 100
 times = np.linspace(0, 1, T)
 dt = times[1] - times[0]
@@ -52,8 +52,9 @@ fname_evoked = op.join(data_path, 'MEG', 'sample',
 # Load the MEG data
 # -----------------
 
-fwd = mne.read_forward_solution(fname_fwd, force_fixed=True,
-                                surf_ori=True)
+fwd = mne.read_forward_solution(fname_fwd)
+fwd = mne.convert_forward_solution(fwd, force_fixed=True, surf_ori=True,
+                                   use_cps=False)
 fwd['info']['bads'] = []
 inv_op = read_inverse_operator(fname_inv)
 
@@ -145,10 +146,10 @@ brain_gen = stc_gen.plot(clim=clim, figure=figs, **kwargs)
 #
 # Use the forward solution and add Gaussian noise to simulate sensor-space
 # (evoked) data from the known source-space signals. The amount of noise is
-# controlled by `evoked_snr` (higher values imply less noise).
+# controlled by `nave` (higher values imply less noise).
 #
-evoked_gen = simulate_evoked(fwd, stc_gen, evoked.info, cov, evoked_snr,
-                             tmin=0., tmax=1., random_state=seed)
+evoked_gen = simulate_evoked(fwd, stc_gen, evoked.info, cov, nave,
+                             random_state=seed)
 
 # Map the simulated sensor-space data to source-space using the inverse
 # operator.

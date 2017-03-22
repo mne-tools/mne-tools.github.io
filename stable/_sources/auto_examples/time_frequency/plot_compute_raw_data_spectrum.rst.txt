@@ -36,11 +36,17 @@ to the data to reduce ECG and EOG artifacts.
 
 
 
-Set parameters
+Load data
+---------
+
+We'll load a sample MEG dataset, along with SSP projections that will
+allow us to reduce EOG and ECG artifacts. For more information about
+reducing artifacts, see the preprocessing section in :ref:`documentation`.
 
 
 
 .. code-block:: python
+
 
     data_path = sample.data_path()
     raw_fname = data_path + '/MEG/sample/sample_audvis_raw.fif'
@@ -60,80 +66,15 @@ Set parameters
     fmin, fmax = 2, 300  # look at frequencies between 2 and 300Hz
     n_fft = 2048  # the FFT size (n_fft). Ideally a power of 2
 
-    # Let's first check out all channel types
-    raw.plot_psd(area_mode='range', tmax=10.0, show=False)
-
-    # Now let's focus on a smaller subset:
-    # Pick MEG magnetometers in the Left-temporal region
-    selection = read_selection('Left-temporal')
-    picks = mne.pick_types(raw.info, meg='mag', eeg=False, eog=False,
-                           stim=False, exclude='bads', selection=selection)
-
-    # Let's just look at the first few channels for demonstration purposes
-    picks = picks[:4]
-
-    plt.figure()
-    ax = plt.axes()
-    raw.plot_psd(tmin=tmin, tmax=tmax, fmin=fmin, fmax=fmax, n_fft=n_fft,
-                 n_jobs=1, proj=False, ax=ax, color=(0, 0, 1),  picks=picks,
-                 show=False)
-
-    # And now do the same with SSP applied
-    raw.plot_psd(tmin=tmin, tmax=tmax, fmin=fmin, fmax=fmax, n_fft=n_fft,
-                 n_jobs=1, proj=True, ax=ax, color=(0, 1, 0), picks=picks,
-                 show=False)
-
-    # And now do the same with SSP + notch filtering
-    # Pick all channels for notch since the SSP projection mixes channels together
-    raw.notch_filter(np.arange(60, 241, 60), n_jobs=1)
-    raw.plot_psd(tmin=tmin, tmax=tmax, fmin=fmin, fmax=fmax, n_fft=n_fft,
-                 n_jobs=1, proj=True, ax=ax, color=(1, 0, 0), picks=picks,
-                 show=False)
-
-    ax.set_title('Four left-temporal magnetometers')
-    plt.legend(['Without SSP', 'With SSP', 'SSP + Notch'])
-
-    # Alternatively, you may also create PSDs from Raw objects with ``psd_*``
-    f, ax = plt.subplots()
-    psds, freqs = psd_multitaper(raw, low_bias=True, tmin=tmin, tmax=tmax,
-                                 fmin=fmin, fmax=fmax, proj=True, picks=picks,
-                                 n_jobs=1)
-    psds = 10 * np.log10(psds)
-    psds_mean = psds.mean(0)
-    psds_std = psds.std(0)
-
-    ax.plot(freqs, psds_mean, color='k')
-    ax.fill_between(freqs, psds_mean - psds_std, psds_mean + psds_std,
-                    color='k', alpha=.5)
-    ax.set(title='Multitaper PSD', xlabel='Frequency',
-           ylabel='Power Spectral Density (dB)')
-    plt.show()
 
 
-
-.. rst-class:: sphx-glr-horizontal
-
-
-    *
-
-      .. image:: /auto_examples/time_frequency/images/sphx_glr_plot_compute_raw_data_spectrum_001.png
-            :scale: 47
-
-    *
-
-      .. image:: /auto_examples/time_frequency/images/sphx_glr_plot_compute_raw_data_spectrum_002.png
-            :scale: 47
-
-    *
-
-      .. image:: /auto_examples/time_frequency/images/sphx_glr_plot_compute_raw_data_spectrum_003.png
-            :scale: 47
 
 
 .. rst-class:: sphx-glr-script-out
 
  Out::
 
+    Successfully extracted to: [u'/home/ubuntu/mne_data/MNE-sample-data']
     Opening raw data file /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis_raw.fif...
         Read a total of 3 projection items:
             PCA-v1 (1 x 102)  idle
@@ -151,9 +92,94 @@ Set parameters
             EOG-eeg-998--0.200-0.200-PCA-01 (1 x 59)  idle
             EOG-eeg-998--0.200-0.200-PCA-02 (1 x 59)  idle
     6 projection items deactivated
+
+
+Plot the raw PSD
+----------------
+
+First we'll visualize the raw PSD of our data. We'll do this on all of the
+channels first. Note that there are several parameters to the
+:meth:`mne.io.Raw.plot_psd` method, some of which will be explained below.
+
+
+
+.. code-block:: python
+
+
+    raw.plot_psd(area_mode='range', tmax=10.0, show=False, average=True)
+
+
+
+
+.. image:: /auto_examples/time_frequency/images/sphx_glr_plot_compute_raw_data_spectrum_001.png
+    :align: center
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
     Effective window size : 3.410 (s)
     Effective window size : 3.410 (s)
     Effective window size : 3.410 (s)
+
+
+Plot a cleaned PSD
+------------------
+
+Next we'll focus the visualization on a subset of channels.
+This can be useful for identifying particularly noisy channels or
+investigating how the power spectrum changes across channels.
+
+We'll visualize how this PSD changes after applying some standard
+filtering techniques. We'll first apply the SSP projections, which is
+accomplished with the ``proj=True`` kwarg. We'll then perform a notch filter
+to remove particular frequency bands.
+
+
+
+.. code-block:: python
+
+
+    # Pick MEG magnetometers in the Left-temporal region
+    selection = read_selection('Left-temporal')
+    picks = mne.pick_types(raw.info, meg='mag', eeg=False, eog=False,
+                           stim=False, exclude='bads', selection=selection)
+
+    # Let's just look at the first few channels for demonstration purposes
+    picks = picks[:4]
+
+    plt.figure()
+    ax = plt.axes()
+    raw.plot_psd(tmin=tmin, tmax=tmax, fmin=fmin, fmax=fmax, n_fft=n_fft,
+                 n_jobs=1, proj=False, ax=ax, color=(0, 0, 1),  picks=picks,
+                 show=False, average=True)
+
+    raw.plot_psd(tmin=tmin, tmax=tmax, fmin=fmin, fmax=fmax, n_fft=n_fft,
+                 n_jobs=1, proj=True, ax=ax, color=(0, 1, 0), picks=picks,
+                 show=False, average=True)
+
+    # And now do the same with SSP + notch filtering
+    # Pick all channels for notch since the SSP projection mixes channels together
+    raw.notch_filter(np.arange(60, 241, 60), n_jobs=1, fir_design='firwin')
+    raw.plot_psd(tmin=tmin, tmax=tmax, fmin=fmin, fmax=fmax, n_fft=n_fft,
+                 n_jobs=1, proj=True, ax=ax, color=(1, 0, 0), picks=picks,
+                 show=False, average=True)
+
+    ax.set_title('Four left-temporal magnetometers')
+    plt.legend(ax.lines[::3], ['Without SSP', 'With SSP', 'SSP + Notch'])
+
+
+
+
+.. image:: /auto_examples/time_frequency/images/sphx_glr_plot_compute_raw_data_spectrum_002.png
+    :align: center
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
     Effective window size : 3.410 (s)
     Adding average EEG reference projection.
     Created an SSP operator (subspace dimension = 7)
@@ -161,23 +187,65 @@ Set parameters
     SSP projectors applied...
     Effective window size : 3.410 (s)
     Setting up band-stop filter
-    Filter length of 7928 samples (13.200 sec) selected
+    Filter length of 3965 samples (6.602 sec) selected
     Adding average EEG reference projection.
     Created an SSP operator (subspace dimension = 7)
     7 projection items activated
     SSP projectors applied...
     Effective window size : 3.410 (s)
+
+
+Alternative functions for PSDs
+------------------------------
+
+There are also several functions in MNE that create a PSD using a Raw
+object. These are in the :mod:`mne.time_frequency` module and begin with
+``psd_*``. For example, we'll use a multitaper method to compute the PSD
+below.
+
+
+
+.. code-block:: python
+
+
+    f, ax = plt.subplots()
+    psds, freqs = psd_multitaper(raw, low_bias=True, tmin=tmin, tmax=tmax,
+                                 fmin=fmin, fmax=fmax, proj=True, picks=picks,
+                                 n_jobs=1)
+    psds = 10 * np.log10(psds)
+    psds_mean = psds.mean(0)
+    psds_std = psds.std(0)
+
+    ax.plot(freqs, psds_mean, color='k')
+    ax.fill_between(freqs, psds_mean - psds_std, psds_mean + psds_std,
+                    color='k', alpha=.5)
+    ax.set(title='Multitaper PSD', xlabel='Frequency',
+           ylabel='Power Spectral Density (dB)')
+    plt.show()
+
+
+
+.. image:: /auto_examples/time_frequency/images/sphx_glr_plot_compute_raw_data_spectrum_003.png
+    :align: center
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
     Adding average EEG reference projection.
     Created an SSP operator (subspace dimension = 7)
     7 projection items activated
     SSP projectors applied...
 
 
-**Total running time of the script:** ( 0 minutes  8.001 seconds)
+**Total running time of the script:** ( 0 minutes  6.395 seconds)
 
 
 
-.. container:: sphx-glr-footer
+.. only :: html
+
+ .. container:: sphx-glr-footer
 
 
   .. container:: sphx-glr-download
@@ -190,6 +258,9 @@ Set parameters
 
      :download:`Download Jupyter notebook: plot_compute_raw_data_spectrum.ipynb <plot_compute_raw_data_spectrum.ipynb>`
 
-.. rst-class:: sphx-glr-signature
 
-    `Generated by Sphinx-Gallery <http://sphinx-gallery.readthedocs.io>`_
+.. only:: html
+
+ .. rst-class:: sphx-glr-signature
+
+    `Gallery generated by Sphinx-Gallery <https://sphinx-gallery.readthedocs.io>`_

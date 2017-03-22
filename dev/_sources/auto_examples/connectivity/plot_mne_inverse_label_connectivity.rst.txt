@@ -1,4 +1,8 @@
+.. note::
+    :class: sphx-glr-download-link-note
 
+    Click :ref:`here <sphx_glr_download_auto_examples_connectivity_plot_mne_inverse_label_connectivity.py>` to download the full example code
+.. rst-class:: sphx-glr-example-title
 
 .. _sphx_glr_auto_examples_connectivity_plot_mne_inverse_label_connectivity.py:
 
@@ -14,26 +18,75 @@ is ordered based on the locations of the regions.
 
 
 
+.. code-block:: python
 
-.. rst-class:: sphx-glr-horizontal
+    # Authors: Martin Luessi <mluessi@nmr.mgh.harvard.edu>
+    #          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
+    #          Nicolas P. Rougier (graph code borrowed from his matplotlib gallery)
+    #
+    # License: BSD (3-clause)
+
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    import mne
+    from mne.datasets import sample
+    from mne.minimum_norm import apply_inverse_epochs, read_inverse_operator
+    from mne.connectivity import spectral_connectivity
+    from mne.viz import circular_layout, plot_connectivity_circle
+
+    print(__doc__)
 
 
-    *
 
-      .. image:: /auto_examples/connectivity/images/sphx_glr_plot_mne_inverse_label_connectivity_001.png
-            :scale: 47
 
-    *
 
-      .. image:: /auto_examples/connectivity/images/sphx_glr_plot_mne_inverse_label_connectivity_002.png
-            :scale: 47
+
+
+Load our data
+-------------
+
+First we'll load the data we'll use in connectivity estimation. We'll use
+the sample MEG data provided with MNE.
+
+
+
+.. code-block:: python
+
+
+    data_path = sample.data_path()
+    subjects_dir = data_path + '/subjects'
+    fname_inv = data_path + '/MEG/sample/sample_audvis-meg-oct-6-meg-inv.fif'
+    fname_raw = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
+    fname_event = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw-eve.fif'
+
+    # Load data
+    inverse_operator = read_inverse_operator(fname_inv)
+    raw = mne.io.read_raw_fif(fname_raw)
+    events = mne.read_events(fname_event)
+
+    # Add a bad channel
+    raw.info['bads'] += ['MEG 2443']
+
+    # Pick MEG channels
+    picks = mne.pick_types(raw.info, meg=True, eeg=False, stim=False, eog=True,
+                           exclude='bads')
+
+    # Define epochs for left-auditory condition
+    event_id, tmin, tmax = 1, -0.2, 0.5
+    epochs = mne.Epochs(raw, events, event_id, tmin, tmax, picks=picks,
+                        baseline=(None, 0), reject=dict(mag=4e-12, grad=4000e-13,
+                                                        eog=150e-6))
+
+
+
 
 
 .. rst-class:: sphx-glr-script-out
 
  Out::
 
-    Reading inverse operator decomposition from /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis-meg-oct-6-meg-inv.fif...
+    Reading inverse operator decomposition from /home/circleci/mne_data/MNE-sample-data/MEG/sample/sample_audvis-meg-oct-6-meg-inv.fif...
         Reading inverse operator info...
         [done]
         Reading inverse operator decomposition...
@@ -69,7 +122,7 @@ is ordered based on the locations of the regions.
             PCA-v3 (1 x 102) active
             Average EEG reference (1 x 60) active
         Source spaces transformed to the inverse solution coordinate frame
-    Opening raw data file /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis_filt-0-40_raw.fif...
+    Opening raw data file /home/circleci/mne_data/MNE-sample-data/MEG/sample/sample_audvis_filt-0-40_raw.fif...
         Read a total of 4 projection items:
             PCA-v1 (1 x 102)  idle
             PCA-v2 (1 x 102)  idle
@@ -79,12 +132,82 @@ is ordered based on the locations of the regions.
     Ready.
     Current compensation grade : 0
     72 matching events found
+    Applying baseline correction (mode: mean)
+    Not setting metadata
     Created an SSP operator (subspace dimension = 3)
     4 projection items activated
-    Reading labels from parcellation..
-       read 34 labels from /home/ubuntu/mne_data/MNE-sample-data/subjects/sample/label/lh.aparc.annot
-       read 34 labels from /home/ubuntu/mne_data/MNE-sample-data/subjects/sample/label/rh.aparc.annot
-    [done]
+
+
+Compute inverse solutions and their connectivity
+------------------------------------------------
+
+Next, we need to compute the inverse solution for this data. This will return
+the sources / source activity that we'll use in computing connectivity. We'll
+compute the connectivity in the alpha band of these sources. We can specify
+particular frequencies to include in the connectivity with the ``fmin`` and
+``fmax`` flags. Notice from the status messages how mne-python:
+
+1. reads an epoch from the raw file
+2. applies SSP and baseline correction
+3. computes the inverse to obtain a source estimate
+4. averages the source estimate to obtain a time series for each label
+5. includes the label time series in the connectivity computation
+6. moves to the next epoch.
+
+This behaviour is because we are using generators. Since we only need to
+operate on the data one epoch at a time, using a generator allows us to
+compute connectivity in a computationally efficient manner where the amount
+of memory (RAM) needed is independent from the number of epochs.
+
+
+
+.. code-block:: python
+
+
+    # Compute inverse solution and for each epoch. By using "return_generator=True"
+    # stcs will be a generator object instead of a list.
+    snr = 1.0  # use lower SNR for single epochs
+    lambda2 = 1.0 / snr ** 2
+    method = "dSPM"  # use dSPM method (could also be MNE or sLORETA)
+    stcs = apply_inverse_epochs(epochs, inverse_operator, lambda2, method,
+                                pick_ori="normal", return_generator=True)
+
+    # Get labels for FreeSurfer 'aparc' cortical parcellation with 34 labels/hemi
+    labels = mne.read_labels_from_annot('sample', parc='aparc',
+                                        subjects_dir=subjects_dir)
+    label_colors = [label.color for label in labels]
+
+    # Average the source estimates within each label using sign-flips to reduce
+    # signal cancellations, also here we return a generator
+    src = inverse_operator['src']
+    label_ts = mne.extract_label_time_course(stcs, labels, src, mode='mean_flip',
+                                             return_generator=True)
+
+    fmin = 8.
+    fmax = 13.
+    sfreq = raw.info['sfreq']  # the sampling frequency
+    con_methods = ['pli', 'wpli2_debiased']
+    con, freqs, times, n_epochs, n_tapers = spectral_connectivity(
+        label_ts, method=con_methods, mode='multitaper', sfreq=sfreq, fmin=fmin,
+        fmax=fmax, faverage=True, mt_adaptive=True, n_jobs=1)
+
+    # con is a 3D array, get the connectivity for the first (and only) freq. band
+    # for each method
+    con_res = dict()
+    for method, c in zip(con_methods, con):
+        con_res[method] = c[:, :, 0]
+
+
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    Reading labels from parcellation...
+       read 34 labels from /home/circleci/mne_data/MNE-sample-data/subjects/sample/label/lh.aparc.annot
+       read 34 labels from /home/circleci/mne_data/MNE-sample-data/subjects/sample/label/rh.aparc.annot
     Connectivity computation...
     Preparing the inverse operator for use...
         Scaled noise and source covariance from nave = 1 to nave = 1
@@ -95,9 +218,10 @@ is ordered based on the locations of the regions.
     [done]
     Picked 305 channels from the data
     Computing inverse...
-    (eigenleads need to be weighted)...
+        Eigenleads need to be weighted ...
     Processing epoch : 1
     Extracting time courses for 68 labels (mode: mean_flip)
+    only using indices for lower-triangular matrix
         computing connectivity for 2278 connections
         using t=0.000s..0.699s for estimation (106 points)
         frequencies: 8.5Hz..12.7Hz (4 points)
@@ -132,7 +256,7 @@ is ordered based on the locations of the regions.
     Processing epoch : 10
     Extracting time courses for 68 labels (mode: mean_flip)
         computing connectivity for epoch 10
-        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
     Processing epoch : 11
     Extracting time courses for 68 labels (mode: mean_flip)
         computing connectivity for epoch 11
@@ -142,8 +266,8 @@ is ordered based on the locations of the regions.
     Processing epoch : 13
     Extracting time courses for 68 labels (mode: mean_flip)
         computing connectivity for epoch 13
-        Rejecting  epoch based on EOG : [u'EOG 061']
-        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
     Processing epoch : 14
     Extracting time courses for 68 labels (mode: mean_flip)
         computing connectivity for epoch 14
@@ -156,7 +280,7 @@ is ordered based on the locations of the regions.
     Processing epoch : 17
     Extracting time courses for 68 labels (mode: mean_flip)
         computing connectivity for epoch 17
-        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
     Processing epoch : 18
     Extracting time courses for 68 labels (mode: mean_flip)
         computing connectivity for epoch 18
@@ -166,7 +290,7 @@ is ordered based on the locations of the regions.
     Processing epoch : 20
     Extracting time courses for 68 labels (mode: mean_flip)
         computing connectivity for epoch 20
-        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
     Processing epoch : 21
     Extracting time courses for 68 labels (mode: mean_flip)
         computing connectivity for epoch 21
@@ -176,7 +300,7 @@ is ordered based on the locations of the regions.
     Processing epoch : 23
     Extracting time courses for 68 labels (mode: mean_flip)
         computing connectivity for epoch 23
-        Rejecting  epoch based on MAG : [u'MEG 1711']
+        Rejecting  epoch based on MAG : ['MEG 1711']
     Processing epoch : 24
     Extracting time courses for 68 labels (mode: mean_flip)
         computing connectivity for epoch 24
@@ -192,7 +316,7 @@ is ordered based on the locations of the regions.
     Processing epoch : 28
     Extracting time courses for 68 labels (mode: mean_flip)
         computing connectivity for epoch 28
-        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
     Processing epoch : 29
     Extracting time courses for 68 labels (mode: mean_flip)
         computing connectivity for epoch 29
@@ -202,27 +326,27 @@ is ordered based on the locations of the regions.
     Processing epoch : 31
     Extracting time courses for 68 labels (mode: mean_flip)
         computing connectivity for epoch 31
-        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
     Processing epoch : 32
     Extracting time courses for 68 labels (mode: mean_flip)
         computing connectivity for epoch 32
     Processing epoch : 33
     Extracting time courses for 68 labels (mode: mean_flip)
         computing connectivity for epoch 33
-        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
     Processing epoch : 34
     Extracting time courses for 68 labels (mode: mean_flip)
         computing connectivity for epoch 34
     Processing epoch : 35
     Extracting time courses for 68 labels (mode: mean_flip)
         computing connectivity for epoch 35
-        Rejecting  epoch based on EOG : [u'EOG 061']
-        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
     Processing epoch : 36
     Extracting time courses for 68 labels (mode: mean_flip)
         computing connectivity for epoch 36
-        Rejecting  epoch based on EOG : [u'EOG 061']
-        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
     Processing epoch : 37
     Extracting time courses for 68 labels (mode: mean_flip)
         computing connectivity for epoch 37
@@ -247,11 +371,11 @@ is ordered based on the locations of the regions.
     Processing epoch : 44
     Extracting time courses for 68 labels (mode: mean_flip)
         computing connectivity for epoch 44
-        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
     Processing epoch : 45
     Extracting time courses for 68 labels (mode: mean_flip)
         computing connectivity for epoch 45
-        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
     Processing epoch : 46
     Extracting time courses for 68 labels (mode: mean_flip)
         computing connectivity for epoch 46
@@ -261,8 +385,8 @@ is ordered based on the locations of the regions.
     Processing epoch : 48
     Extracting time courses for 68 labels (mode: mean_flip)
         computing connectivity for epoch 48
-        Rejecting  epoch based on EOG : [u'EOG 061']
-        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
     Processing epoch : 49
     Extracting time courses for 68 labels (mode: mean_flip)
         computing connectivity for epoch 49
@@ -285,101 +409,19 @@ is ordered based on the locations of the regions.
     Extracting time courses for 68 labels (mode: mean_flip)
         computing connectivity for epoch 55
     [done]
-        assembling connectivity matrix
+        assembling connectivity matrix (filling the upper triangular region of the matrix)
     [Connectivity computation done]
 
 
+Make a connectivity plot
+------------------------
 
+Now, we visualize this connectivity using a circular graph layout.
 
-|
 
 
 .. code-block:: python
 
-    # Authors: Martin Luessi <mluessi@nmr.mgh.harvard.edu>
-    #          Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
-    #          Nicolas P. Rougier (graph code borrowed from his matplotlib gallery)
-    #
-    # License: BSD (3-clause)
-
-    import numpy as np
-    import matplotlib.pyplot as plt
-
-    import mne
-    from mne.datasets import sample
-    from mne.minimum_norm import apply_inverse_epochs, read_inverse_operator
-    from mne.connectivity import spectral_connectivity
-    from mne.viz import circular_layout, plot_connectivity_circle
-
-    print(__doc__)
-
-    data_path = sample.data_path()
-    subjects_dir = data_path + '/subjects'
-    fname_inv = data_path + '/MEG/sample/sample_audvis-meg-oct-6-meg-inv.fif'
-    fname_raw = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
-    fname_event = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw-eve.fif'
-
-    # Load data
-    inverse_operator = read_inverse_operator(fname_inv)
-    raw = mne.io.read_raw_fif(fname_raw)
-    events = mne.read_events(fname_event)
-
-    # Add a bad channel
-    raw.info['bads'] += ['MEG 2443']
-
-    # Pick MEG channels
-    picks = mne.pick_types(raw.info, meg=True, eeg=False, stim=False, eog=True,
-                           exclude='bads')
-
-    # Define epochs for left-auditory condition
-    event_id, tmin, tmax = 1, -0.2, 0.5
-    epochs = mne.Epochs(raw, events, event_id, tmin, tmax, picks=picks,
-                        baseline=(None, 0), reject=dict(mag=4e-12, grad=4000e-13,
-                                                        eog=150e-6))
-
-    # Compute inverse solution and for each epoch. By using "return_generator=True"
-    # stcs will be a generator object instead of a list.
-    snr = 1.0  # use lower SNR for single epochs
-    lambda2 = 1.0 / snr ** 2
-    method = "dSPM"  # use dSPM method (could also be MNE or sLORETA)
-    stcs = apply_inverse_epochs(epochs, inverse_operator, lambda2, method,
-                                pick_ori="normal", return_generator=True)
-
-    # Get labels for FreeSurfer 'aparc' cortical parcellation with 34 labels/hemi
-    labels = mne.read_labels_from_annot('sample', parc='aparc',
-                                        subjects_dir=subjects_dir)
-    label_colors = [label.color for label in labels]
-
-    # Average the source estimates within each label using sign-flips to reduce
-    # signal cancellations, also here we return a generator
-    src = inverse_operator['src']
-    label_ts = mne.extract_label_time_course(stcs, labels, src, mode='mean_flip',
-                                             return_generator=True)
-
-    # Now we are ready to compute the connectivity in the alpha band. Notice
-    # from the status messages, how mne-python: 1) reads an epoch from the raw
-    # file, 2) applies SSP and baseline correction, 3) computes the inverse to
-    # obtain a source estimate, 4) averages the source estimate to obtain a
-    # time series for each label, 5) includes the label time series in the
-    # connectivity computation, and then moves to the next epoch. This
-    # behaviour is because we are using generators and allows us to
-    # compute connectivity in computationally efficient manner where the amount
-    # of memory (RAM) needed is independent from the number of epochs.
-    fmin = 8.
-    fmax = 13.
-    sfreq = raw.info['sfreq']  # the sampling frequency
-    con_methods = ['pli', 'wpli2_debiased']
-    con, freqs, times, n_epochs, n_tapers = spectral_connectivity(
-        label_ts, method=con_methods, mode='multitaper', sfreq=sfreq, fmin=fmin,
-        fmax=fmax, faverage=True, mt_adaptive=True, n_jobs=1)
-
-    # con is a 3D array, get the connectivity for the first (and only) freq. band
-    # for each method
-    con_res = dict()
-    for method, c in zip(con_methods, con):
-        con_res[method] = c[:, :, 0]
-
-    # Now, we visualize the connectivity using a circular graph layout
 
     # First, we reorder the labels based on their location in the left hemi
     label_names = [label.name for label in labels]
@@ -413,9 +455,27 @@ is ordered based on the locations of the regions.
                              node_angles=node_angles, node_colors=label_colors,
                              title='All-to-All Connectivity left-Auditory '
                                    'Condition (PLI)')
-    plt.savefig('circle.png', facecolor='black')
 
-    # Plot connectivity for both methods in the same plot
+
+
+
+.. image:: /auto_examples/connectivity/images/sphx_glr_plot_mne_inverse_label_connectivity_001.png
+    :class: sphx-glr-single-img
+
+
+
+
+Make two connectivity plots in the same figure
+----------------------------------------------
+
+We can also assign these connectivity plots to axes in a figure. Below we'll
+show the connectivity plot using two different connectivity methods.
+
+
+
+.. code-block:: python
+
+
     fig = plt.figure(num=None, figsize=(8, 4), facecolor='black')
     no_names = [''] * len(label_names)
     for ii, method in enumerate(con_methods):
@@ -426,11 +486,46 @@ is ordered based on the locations of the regions.
 
     plt.show()
 
-**Total running time of the script:** ( 0 minutes  8.524 seconds)
 
 
 
-.. container:: sphx-glr-footer
+.. image:: /auto_examples/connectivity/images/sphx_glr_plot_mne_inverse_label_connectivity_002.png
+    :class: sphx-glr-single-img
+
+
+
+
+Save the figure (optional)
+--------------------------
+
+By default matplotlib does not save using the facecolor, even though this was
+set when the figure was generated. If not set via savefig, the labels, title,
+and legend will be cut off from the output png file.
+
+
+
+.. code-block:: python
+
+
+    # fname_fig = data_path + '/MEG/sample/plot_inverse_connect.png'
+    # fig.savefig(fname_fig, facecolor='black')
+
+
+
+
+
+
+**Total running time of the script:** ( 0 minutes  9.218 seconds)
+
+
+.. _sphx_glr_download_auto_examples_connectivity_plot_mne_inverse_label_connectivity.py:
+
+
+.. only :: html
+
+ .. container:: sphx-glr-footer
+    :class: sphx-glr-footer-example
+
 
 
   .. container:: sphx-glr-download
@@ -443,6 +538,9 @@ is ordered based on the locations of the regions.
 
      :download:`Download Jupyter notebook: plot_mne_inverse_label_connectivity.ipynb <plot_mne_inverse_label_connectivity.ipynb>`
 
-.. rst-class:: sphx-glr-signature
 
-    `Generated by Sphinx-Gallery <http://sphinx-gallery.readthedocs.io>`_
+.. only:: html
+
+ .. rst-class:: sphx-glr-signature
+
+    `Gallery generated by Sphinx-Gallery <https://sphinx-gallery.readthedocs.io>`_

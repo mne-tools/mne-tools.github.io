@@ -30,7 +30,7 @@ data_path = sample.data_path()
 raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
 
 raw = io.read_raw_fif(raw_fname, preload=True)
-raw.filter(1, 20)
+raw.filter(1, 20, fir_design='firwin')
 
 picks = mne.pick_types(raw.info, meg=True, exclude=[])
 tmin, tmax = 0, 120  # use the first 120s of data
@@ -50,6 +50,7 @@ def my_callback(ax, ch_idx):
     ax.plot(freqs, psds[ch_idx], color='red')
     ax.set_xlabel = 'Frequency (Hz)'
     ax.set_ylabel = 'Power (dB)'
+
 
 for ax, idx in iter_topography(raw.info,
                                fig_facecolor='white',

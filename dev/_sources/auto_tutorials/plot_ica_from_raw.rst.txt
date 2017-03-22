@@ -1,4 +1,8 @@
+.. note::
+    :class: sphx-glr-download-link-note
 
+    Click :ref:`here <sphx_glr_download_auto_tutorials_plot_ica_from_raw.py>` to download the full example code
+.. rst-class:: sphx-glr-example-title
 
 .. _sphx_glr_auto_tutorials_plot_ica_from_raw.py:
 
@@ -45,8 +49,7 @@ Setup paths and prepare raw data.
     raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
 
     raw = mne.io.read_raw_fif(raw_fname, preload=True)
-    raw.filter(1, 45, n_jobs=1, l_trans_bandwidth=0.5, h_trans_bandwidth=0.5,
-               filter_length='10s', phase='zero-double')
+    raw.filter(1, None, fir_design='firwin')  # already lowpassed @ 40
     raw.annotations = mne.Annotations([1], [10], 'BAD')
     raw.plot(block=True)
 
@@ -60,28 +63,35 @@ Setup paths and prepare raw data.
 
 
 .. image:: /auto_tutorials/images/sphx_glr_plot_ica_from_raw_001.png
-    :align: center
+    :class: sphx-glr-single-img
 
 
 
 
 1) Fit ICA model using the FastICA algorithm.
+Other available choices are ``picard``, ``infomax`` or ``extended-infomax``.
+
+.. note:: The default method in MNE is FastICA, which along with Infomax is
+          one of the most widely used ICA algorithm. Picard is a
+          new algorithm that is expected to converge faster than FastICA and
+          Infomax, especially when the aim is to recover accurate maps with
+          a low tolerance parameter, see [1]_ for more information.
+
+We pass a float value between 0 and 1 to select n_components based on the
+percentage of variance explained by the PCA components.
 
 
 
 .. code-block:: python
 
 
-    # Other available choices are `infomax` or `extended-infomax`
-    # We pass a float value between 0 and 1 to select n_components based on the
-    # percentage of variance explained by the PCA components.
-
-    ica = ICA(n_components=0.95, method='fastica')
+    ica = ICA(n_components=0.95, method='fastica', random_state=0, max_iter=100)
 
     picks = mne.pick_types(raw.info, meg=True, eeg=False, eog=False,
                            stim=False, exclude='bads')
 
-    ica.fit(raw, picks=picks, decim=3, reject=dict(mag=4e-12, grad=4000e-13))
+    ica.fit(raw, picks=picks, decim=3, reject=dict(mag=4e-12, grad=4000e-13),
+            verbose='warning')  # low iterations -> does not fully converge
 
     # maximum number of components to reject
     n_max_ecg, n_max_eog = 3, 1  # here we don't expect horizontal EOG components
@@ -138,32 +148,32 @@ Setup paths and prepare raw data.
     *
 
       .. image:: /auto_tutorials/images/sphx_glr_plot_ica_from_raw_002.png
-            :scale: 47
+            :class: sphx-glr-multi-img
 
     *
 
       .. image:: /auto_tutorials/images/sphx_glr_plot_ica_from_raw_003.png
-            :scale: 47
+            :class: sphx-glr-multi-img
 
     *
 
       .. image:: /auto_tutorials/images/sphx_glr_plot_ica_from_raw_004.png
-            :scale: 47
+            :class: sphx-glr-multi-img
 
     *
 
       .. image:: /auto_tutorials/images/sphx_glr_plot_ica_from_raw_005.png
-            :scale: 47
+            :class: sphx-glr-multi-img
 
     *
 
       .. image:: /auto_tutorials/images/sphx_glr_plot_ica_from_raw_006.png
-            :scale: 47
+            :class: sphx-glr-multi-img
 
     *
 
       .. image:: /auto_tutorials/images/sphx_glr_plot_ica_from_raw_007.png
-            :scale: 47
+            :class: sphx-glr-multi-img
 
 
 
@@ -196,27 +206,27 @@ Setup paths and prepare raw data.
     *
 
       .. image:: /auto_tutorials/images/sphx_glr_plot_ica_from_raw_008.png
-            :scale: 47
+            :class: sphx-glr-multi-img
 
     *
 
       .. image:: /auto_tutorials/images/sphx_glr_plot_ica_from_raw_009.png
-            :scale: 47
+            :class: sphx-glr-multi-img
 
     *
 
       .. image:: /auto_tutorials/images/sphx_glr_plot_ica_from_raw_010.png
-            :scale: 47
+            :class: sphx-glr-multi-img
 
     *
 
       .. image:: /auto_tutorials/images/sphx_glr_plot_ica_from_raw_011.png
-            :scale: 47
+            :class: sphx-glr-multi-img
 
     *
 
       .. image:: /auto_tutorials/images/sphx_glr_plot_ica_from_raw_012.png
-            :scale: 47
+            :class: sphx-glr-multi-img
 
 
 
@@ -240,11 +250,25 @@ Setup paths and prepare raw data.
 
 
 
-**Total running time of the script:** ( 1 minutes  1.117 seconds)
+
+References
+----------
+.. [1] Ablin, P., Cardoso, J.F., Gramfort, A., 2017. Faster Independent
+       Component Analysis by preconditioning with Hessian approximations.
+       arXiv:1706.08171
 
 
+**Total running time of the script:** ( 0 minutes  26.454 seconds)
 
-.. container:: sphx-glr-footer
+
+.. _sphx_glr_download_auto_tutorials_plot_ica_from_raw.py:
+
+
+.. only :: html
+
+ .. container:: sphx-glr-footer
+    :class: sphx-glr-footer-example
+
 
 
   .. container:: sphx-glr-download
@@ -257,6 +281,9 @@ Setup paths and prepare raw data.
 
      :download:`Download Jupyter notebook: plot_ica_from_raw.ipynb <plot_ica_from_raw.ipynb>`
 
-.. rst-class:: sphx-glr-signature
 
-    `Generated by Sphinx-Gallery <http://sphinx-gallery.readthedocs.io>`_
+.. only:: html
+
+ .. rst-class:: sphx-glr-signature
+
+    `Gallery generated by Sphinx-Gallery <https://sphinx-gallery.readthedocs.io>`_

@@ -1,9 +1,11 @@
+.. note::
+    :class: sphx-glr-download-link-note
 
+    Click :ref:`here <sphx_glr_download_auto_tutorials_plot_epochs_to_data_frame.py>` to download the full example code
+.. rst-class:: sphx-glr-example-title
 
 .. _sphx_glr_auto_tutorials_plot_epochs_to_data_frame.py:
 
-
-.. _tut_io_export_pandas:
 
 =================================
 Export epochs to Pandas DataFrame
@@ -13,7 +15,11 @@ In this example the pandas exporter will be used to produce a DataFrame
 object. After exploring some basic features a split-apply-combine
 work flow will be conducted to examine the latencies of the response
 maxima across epochs and conditions.
-Note. Equivalent methods are available for raw and evoked data objects.
+
+.. note:: Equivalent methods are available for raw and evoked data objects.
+
+More information and additional introductory materials can be found at the
+pandas doc sites: http://pandas.pydata.org/pandas-docs/stable/
 
 Short Pandas Primer
 -------------------
@@ -41,13 +47,13 @@ Pandas DataFrame objects use a so called hierarchical index. This can be
 thought of as an array of unique tuples, in our case, representing the higher
 dimensional MEG data in a 2D data table. The column names are the channel names
 from the epoch object. The channels can be accessed like entries of a
-dictionary:
+dictionary::
 
-    df['MEG 2333']
+    >>> df['MEG 2333']
 
-Epochs and time slices can be accessed with the .ix method:
+Epochs and time slices can be accessed with the .loc method::
 
-    epochs_df.ix[(1, 2), 'MEG 2333']
+    >>> epochs_df.loc[(1, 2), 'MEG 2333']
 
 However, it is also possible to include this index as regular categorial data
 columns which yields a long table format typically used for repeated measure
@@ -86,11 +92,6 @@ to_records :
 to_dict :
     export data as dict of arrays.
 
-Reference
-~~~~~~~~~
-More information and additional introductory materials can be found at the
-pandas doc sites: http://pandas.pydata.org/pandas-docs/stable/
-
 
 
 .. code-block:: python
@@ -110,8 +111,8 @@ pandas doc sites: http://pandas.pydata.org/pandas-docs/stable/
     raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
     event_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw-eve.fif'
 
+    # These data already have an average EEG ref applied
     raw = mne.io.read_raw_fif(raw_fname)
-    raw.set_eeg_reference()  # set EEG average reference
 
     # For simplicity we will only consider the first 10 epochs
     events = mne.read_events(event_fname)[:10]
@@ -138,7 +139,22 @@ pandas doc sites: http://pandas.pydata.org/pandas-docs/stable/
 
  Out::
 
-    An average reference projection was already added. The data has been left untouched.
+    Opening raw data file /home/circleci/mne_data/MNE-sample-data/MEG/sample/sample_audvis_filt-0-40_raw.fif...
+        Read a total of 4 projection items:
+            PCA-v1 (1 x 102)  idle
+            PCA-v2 (1 x 102)  idle
+            PCA-v3 (1 x 102)  idle
+            Average EEG reference (1 x 60)  idle
+        Range : 6450 ... 48149 =     42.956 ...   320.665 secs
+    Ready.
+    Current compensation grade : 0
+    10 matching events found
+    Applying baseline correction (mode: mean)
+    Not setting metadata
+    4 projection items activated
+    Loading data for 10 events and 106 original time points ...
+        Rejecting  epoch based on EOG : ['EOG 061']
+    1 bad epochs dropped
 
 
 Export DataFrame
@@ -155,10 +171,10 @@ Export DataFrame
     # factors in a long table style commonly used for analyzing repeated measure
     # designs.
 
-    index, scale_time, scalings = ['epoch', 'time'], 1e3, dict(grad=1e13)
+    index, scaling_time, scalings = ['epoch', 'time'], 1e3, dict(grad=1e13)
 
-    df = epochs.to_data_frame(picks=None, scalings=scalings, scale_time=scale_time,
-                              index=index)
+    df = epochs.to_data_frame(picks=None, scalings=scalings,
+                              scaling_time=scaling_time, index=index)
 
     # Create MEG channel selector and drop EOG channel.
     meg_chs = [c for c in df.columns if 'MEG' in c]
@@ -169,6 +185,11 @@ Export DataFrame
 
 
 
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    Converting time column to int64...
 
 
 Explore Pandas MultiIndex
@@ -185,18 +206,18 @@ Explore Pandas MultiIndex
 
     # Inspecting the index object unveils that 'epoch', 'time' are used
     # for subsetting data. We can take advantage of that by using the
-    # .ix attribute, where in this case the first position indexes the MultiIndex
+    # .loc attribute, where in this case the first position indexes the MultiIndex
     # and the second the columns, that is, channels.
 
     # Plot some channels across the first three epochs
     xticks, sel = np.arange(3, 600, 120), meg_chs[:15]
-    df.ix[:3, sel].plot(xticks=xticks)
+    df.loc[:3, sel].plot(xticks=xticks)
     mne.viz.tight_layout()
 
     # slice the time starting at t0 in epoch 2 and ending 500ms after
     # the base line in epoch 3. Note that the second part of the tuple
     # represents time in milliseconds from stimulus onset.
-    df.ix[(1, 0):(3, 500), sel].plot(xticks=xticks)
+    df.loc[(1, 0):(3, 500), sel].plot(xticks=xticks)
     mne.viz.tight_layout()
 
     # Note: For convenience the index was converted from floating point values
@@ -229,7 +250,7 @@ Explore Pandas MultiIndex
     # apply method and passing a function. Assume we wanted to know the time
     # slice of the maximum response for each condition.
 
-    max_latency = grouped[sel[2]].apply(lambda x: df.time[x.argmax()])
+    max_latency = grouped[sel[2]].apply(lambda x: df.time[x.idxmax()])
 
     print(max_latency)
 
@@ -270,29 +291,29 @@ Explore Pandas MultiIndex
     *
 
       .. image:: /auto_tutorials/images/sphx_glr_plot_epochs_to_data_frame_001.png
-            :scale: 47
+            :class: sphx-glr-multi-img
 
     *
 
       .. image:: /auto_tutorials/images/sphx_glr_plot_epochs_to_data_frame_002.png
-            :scale: 47
+            :class: sphx-glr-multi-img
 
     *
 
       .. image:: /auto_tutorials/images/sphx_glr_plot_epochs_to_data_frame_003.png
-            :scale: 47
+            :class: sphx-glr-multi-img
 
     *
 
       .. image:: /auto_tutorials/images/sphx_glr_plot_epochs_to_data_frame_004.png
-            :scale: 47
+            :class: sphx-glr-multi-img
 
 
 .. rst-class:: sphx-glr-script-out
 
  Out::
 
-    [u'epoch', u'time'] [[0, 1, 2, 3, 4, 5, 6, 7, 8], [-200, -193, -186, -180, -173, -166, -160, -153, -147, -140, -133, -127, -120, -113, -107, -100, -93, -87, -80, -73, -67, -60, -53, -47, -40, -33, -27, -20, -13, -7, 0, 7, 13, 20, 27, 33, 40, 47, 53, 60, 67, 73, 80, 87, 93, 100, 107, 113, 120, 127, 133, 140, 147, 153, 160, 166, 173, 180, 186, 193, 200, 206, 213, 220, 226, 233, 240, 246, 253, 260, 266, 273, 280, 286, 293, 300, 306, 313, 320, 326, 333, 340, 346, 353, 360, 366, 373, 380, 386, 393, 400, 406, 413, 420, 426, 433, 440, 446, 453, 460, ...]]
+    ['epoch', 'time'] [[0, 1, 2, 3, 4, 5, 6, 7, 8], [-200, -193, -186, -180, -173, -166, -160, -153, -147, -140, -133, -127, -120, -113, -107, -100, -93, -87, -80, -73, -67, -60, -53, -47, -40, -33, -27, -20, -13, -7, 0, 7, 13, 20, 27, 33, 40, 47, 53, 60, 67, 73, 80, 87, 93, 100, 107, 113, 120, 127, 133, 140, 147, 153, 160, 166, 173, 180, 186, 193, 200, 206, 213, 220, 226, 233, 240, 246, 253, 260, 266, 273, 280, 286, 293, 300, 306, 313, 320, 326, 333, 340, 346, 353, 360, 366, 373, 380, 386, 393, 400, 406, 413, 420, 426, 433, 440, 446, 453, 460, ...]]
     condition   epoch
     auditory_l  1        100
                 5        186
@@ -316,11 +337,15 @@ Explore Pandas MultiIndex
     8    visual_r      6       353
 
 
-**Total running time of the script:** ( 0 minutes  1.333 seconds)
+
+.. _sphx_glr_download_auto_tutorials_plot_epochs_to_data_frame.py:
 
 
+.. only :: html
 
-.. container:: sphx-glr-footer
+ .. container:: sphx-glr-footer
+    :class: sphx-glr-footer-example
+
 
 
   .. container:: sphx-glr-download
@@ -333,6 +358,9 @@ Explore Pandas MultiIndex
 
      :download:`Download Jupyter notebook: plot_epochs_to_data_frame.ipynb <plot_epochs_to_data_frame.ipynb>`
 
-.. rst-class:: sphx-glr-signature
 
-    `Generated by Sphinx-Gallery <http://sphinx-gallery.readthedocs.io>`_
+.. only:: html
+
+ .. rst-class:: sphx-glr-signature
+
+    `Gallery generated by Sphinx-Gallery <https://sphinx-gallery.readthedocs.io>`_

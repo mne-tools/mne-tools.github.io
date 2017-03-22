@@ -1,7 +1,4 @@
 """
-
-.. _tut_artifacts_correct_ica:
-
 Artifact Correction with ICA
 ============================
 
@@ -13,8 +10,11 @@ These components have to be correctly identified and removed.
 
 If EOG or ECG recordings are available, they can be used in ICA to
 automatically select the corresponding artifact components from the
-decomposition. To do so, you have to first build an Epoch object around
-blink or heartbeat event.
+decomposition. To do so, you have to first build an :class:`mne.Epochs` object
+around blink or heartbeat events.
+
+ICA is implemented in MNE using the :class:`mne.preprocessing.ICA` class,
+which we will review here.
 """
 
 import numpy as np
@@ -30,23 +30,47 @@ data_path = sample.data_path()
 raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
 
 raw = mne.io.read_raw_fif(raw_fname, preload=True)
-raw.filter(1, 40, n_jobs=2)  # 1Hz high pass is often helpful for fitting ICA
+# 1Hz high pass is often helpful for fitting ICA (already lowpassed @ 40 Hz)
+raw.filter(1., None, n_jobs=1, fir_design='firwin')
 
 picks_meg = mne.pick_types(raw.info, meg=True, eeg=False, eog=False,
                            stim=False, exclude='bads')
 
 ###############################################################################
 # Before applying artifact correction please learn about your actual artifacts
-# by reading :ref:`tut_artifacts_detect`.
+# by reading :ref:`sphx_glr_auto_tutorials_plot_artifacts_detection.py`.
+#
+# .. warning:: ICA is sensitive to low-frequency drifts and therefore
+#              requires the data to be high-pass filtered prior to fitting.
+#              Typically, a cutoff frequency of 1 Hz is recommended. Note that
+#              FIR filters prior to MNE 0.15 used the ``'firwin2'`` design
+#              method, which generally produces rather shallow filters that
+#              might not work for ICA processing. Therefore, it is recommended
+#              to use IIR filters for MNE up to 0.14. In MNE 0.15, FIR filters
+#              can be designed with the ``'firwin'`` method, which generally
+#              produces much steeper filters. This method will be the default
+#              FIR design method in MNE 0.16. In MNE 0.15, you need to
+#              explicitly set ``fir_design='firwin'`` to use this method. This
+#              is the recommended filter method for ICA preprocessing.
+
 
 ###############################################################################
 # Fit ICA
 # -------
 #
-# ICA parameters:
+# First, choose the ICA method. There are currently four possible choices:
+# `fastica`, `picard`, `infomax` and `extended-infomax`.
+#
+# .. note:: The default method in MNE is FastICA, which along with Infomax is
+#           one of the most widely used ICA algorithms. Picard is a
+#           new algorithm that is expected to converge faster than FastICA and
+#           Infomax, especially when the aim is to recover accurate maps with
+#           a low tolerance parameter, see [1]_ for more information.
 
+method = 'fastica'
+
+# Choose other parameters
 n_components = 25  # if float, select n_components by explained variance of PCA
-method = 'fastica'  # for comparison with EEGLAB try "extended-infomax" here
 decim = 3  # we need sufficient statistics, not all time points -> saves time
 
 # we will also set state of the random number generator - ICA is a
@@ -68,7 +92,6 @@ print(ica)
 
 ###############################################################################
 # Plot ICA components
-
 ica.plot_components()  # can you spot some potential bad guys?
 
 
@@ -92,25 +115,24 @@ ica.plot_properties(raw, picks=[1, 2], psd_args={'fmax': 35.})
 
 ###############################################################################
 # Instead of opening individual figures with component properties, we can
-# also pass an instance of Raw or Epochs in ``inst`` arument to
+# also pass an instance of Raw or Epochs in ``inst`` argument to
 # ``ica.plot_components``. This would allow us to open component properties
 # interactively by clicking on individual component topomaps. In the notebook
-# this woks only when running matplotlib in interactive mode (``%matplotlib``).
+# this works only when running matplotlib in interactive mode
+# (``%matplotlib``).
 
-# uncomment the code below to test the inteactive mode of plot_components:
+# uncomment the code below to test the interactive mode of plot_components:
 # ica.plot_components(picks=range(10), inst=raw)
 
 ###############################################################################
 # Advanced artifact detection
 # ---------------------------
 #
-# Let's use a more efficient way to find artefacts
+# Let's use a more efficient way to find artifacts
 
 eog_average = create_eog_epochs(raw, reject=dict(mag=5e-12, grad=4000e-13),
                                 picks=picks_meg).average()
 
-# We simplify things by setting the maximum number of components to reject
-n_max_eog = 1  # here we bet on finding the vertical EOG components
 eog_epochs = create_eog_epochs(raw, reject=reject)  # get single EOG trials
 eog_inds, scores = ica.find_bads_eog(eog_epochs)  # find via correlation
 
@@ -141,7 +163,7 @@ print(ica.labels_)
 # components.
 #
 # Now let's see how we would modify our signals if we removed this component
-# from the data
+# from the data.
 ica.plot_overlay(eog_average, exclude=eog_inds, show=False)
 # red -> before, black -> after. Yes! We remove quite a lot!
 
@@ -158,11 +180,20 @@ ica.exclude.extend(eog_inds)
 # ica = read_ica('my-ica.fif')
 
 ###############################################################################
+# Note that nothing is yet removed from the raw data. To remove the effects of
+# the rejected components,
+# :meth:`the apply method <mne.preprocessing.ICA.apply>` must be called.
+# Here we apply it on the copy of the first ten seconds, so that the rest of
+# this tutorial still works as intended.
+raw_copy = raw.copy().crop(0, 10)
+ica.apply(raw_copy)
+raw_copy.plot()  # check the result
+
+###############################################################################
 # Exercise: find and remove ECG artifacts using ICA!
 ecg_epochs = create_ecg_epochs(raw, tmin=-.5, tmax=.5)
 ecg_inds, scores = ica.find_bads_ecg(ecg_epochs, method='ctps')
 ica.plot_properties(ecg_epochs, picks=ecg_inds, psd_args={'fmax': 35.})
-
 
 ###############################################################################
 # What if we don't have an EOG channel?
@@ -199,8 +230,8 @@ from mne.preprocessing.ica import corrmap  # noqa
 # data sets instead.
 
 # We'll start by simulating a group of subjects or runs from a subject
-start, stop = [0, len(raw.times) - 1]
-intervals = np.linspace(start, stop, 4, dtype=int)
+start, stop = [0, raw.times[-1]]
+intervals = np.linspace(start, stop, 4, dtype=np.float)
 icas_from_other_data = list()
 raw.pick_types(meg=True, eeg=False)  # take only MEG channels
 for ii, start in enumerate(intervals):
@@ -256,6 +287,7 @@ fig_template, fig_detected = corrmap(icas, template=template, label="blinks",
 # :func:`mne.preprocessing.corrmap`.
 eog_component = reference_ica.get_components()[:, eog_inds[0]]
 
+###############################################################################
 # If you calculate a new ICA solution, you can provide this array instead of
 # specifying the template in reference to the list of ICA objects you want
 # to run CORRMAP on. (Of course, the retrieved component map arrays can
@@ -264,4 +296,11 @@ eog_component = reference_ica.get_components()[:, eog_inds[0]]
 # You can also use SSP to correct for artifacts. It is a bit simpler and
 # faster but also less precise than ICA and requires that you know the event
 # timing of your artifact.
-# See :ref:`tut_artifacts_correct_ssp`.
+# See :ref:`sphx_glr_auto_tutorials_plot_artifacts_correction_ssp.py`.
+
+###############################################################################
+# References
+# ----------
+# .. [1] Ablin, P., Cardoso, J.F., Gramfort, A., 2017. Faster Independent
+#        Component Analysis by preconditioning with Hessian approximations.
+#        arXiv:1706.08171

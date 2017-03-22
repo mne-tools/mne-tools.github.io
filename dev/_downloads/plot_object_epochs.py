@@ -3,9 +3,13 @@
 
 The :class:`Epochs <mne.Epochs>` data structure: epoched data
 =============================================================
-"""
 
-from __future__ import print_function
+:class:`Epochs <mne.Epochs>` objects are a way of representing continuous
+data as a collection of time-locked trials, stored in an array of shape
+``(n_events, n_channels, n_times)``. They are useful for many statistical
+methods in neuroscience, and make it easy to quickly overview what occurs
+during a trial.
+"""
 
 import mne
 import os.path as op
@@ -13,14 +17,8 @@ import numpy as np
 from matplotlib import pyplot as plt
 
 ###############################################################################
-# :class:`Epochs <mne.Epochs>` objects are a way of representing continuous
-# data as a collection of time-locked trials, stored in an array of
-# `shape(n_events, n_channels, n_times)`. They are useful for many statistical
-# methods in neuroscience, and make it easy to quickly overview what occurs
-# during a trial.
-#
 # :class:`Epochs <mne.Epochs>` objects can be created in three ways:
-#  1. From a :class:`Raw <mne.io.RawFIF>` object, along with event times
+#  1. From a :class:`Raw <mne.io.Raw>` object, along with event times
 #  2. From an :class:`Epochs <mne.Epochs>` object that has been saved as a
 #     `.fif` file
 #  3. From scratch using :class:`EpochsArray <mne.EpochsArray>`. See
@@ -66,7 +64,8 @@ print(epochs)
 # information, as well as a number of attributes unique to the events contained
 # within the object.
 
-print(epochs.events[:3], epochs.event_id, sep='\n\n')
+print(epochs.events[:3])
+print(epochs.event_id)
 
 ###############################################################################
 # You can select subsets of epochs by indexing the :class:`Epochs <mne.Epochs>`
@@ -133,9 +132,12 @@ ev_right = epochs['Auditory/Right'].average()
 
 f, axs = plt.subplots(3, 2, figsize=(10, 5))
 _ = f.suptitle('Left / Right auditory', fontsize=20)
-_ = ev_left.plot(axes=axs[:, 0], show=False)
-_ = ev_right.plot(axes=axs[:, 1], show=False)
+_ = ev_left.plot(axes=axs[:, 0], show=False, time_unit='s')
+_ = ev_right.plot(axes=axs[:, 1], show=False, time_unit='s')
 plt.tight_layout()
 
 ###############################################################################
-# To export and manipulate Epochs using Pandas see :ref:`tut_io_export_pandas`.
+# To export and manipulate Epochs using Pandas see
+# :ref:`sphx_glr_auto_tutorials_plot_epochs_to_data_frame.py`,
+# or to work directly with metadata in MNE-Python see
+# :ref:`sphx_glr_auto_tutorials_plot_metadata_epochs.py`.

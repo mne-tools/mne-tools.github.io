@@ -1,0 +1,200 @@
+
+
+.. _sphx_glr_auto_examples_time_frequency_plot_compute_raw_data_spectrum.py:
+
+
+==================================================
+Compute the power spectral density of raw data
+==================================================
+
+This script shows how to compute the power spectral density (PSD)
+of measurements on a raw dataset. It also show the effect of applying SSP
+to the data to reduce ECG and EOG artifacts.
+
+
+
+.. code-block:: python
+
+    # Authors: Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
+    #          Martin Luessi <mluessi@nmr.mgh.harvard.edu>
+    #          Eric Larson <larson.eric.d@gmail.com>
+    # License: BSD (3-clause)
+
+    import numpy as np
+    import matplotlib.pyplot as plt
+
+    import mne
+    from mne import io, read_proj, read_selection
+    from mne.datasets import sample
+    from mne.time_frequency import psd_multitaper
+
+    print(__doc__)
+
+
+
+
+
+
+
+Set parameters
+
+
+
+.. code-block:: python
+
+    data_path = sample.data_path()
+    raw_fname = data_path + '/MEG/sample/sample_audvis_raw.fif'
+    proj_fname = data_path + '/MEG/sample/sample_audvis_eog-proj.fif'
+
+    tmin, tmax = 0, 60  # use the first 60s of data
+
+    # Setup for reading the raw data (to save memory, crop before loading)
+    raw = io.read_raw_fif(raw_fname).crop(tmin, tmax).load_data()
+    raw.info['bads'] += ['MEG 2443', 'EEG 053']  # bads + 2 more
+
+    # Add SSP projection vectors to reduce EOG and ECG artifacts
+    projs = read_proj(proj_fname)
+    raw.add_proj(projs, remove_existing=True)
+
+
+    fmin, fmax = 2, 300  # look at frequencies between 2 and 300Hz
+    n_fft = 2048  # the FFT size (n_fft). Ideally a power of 2
+
+    # Let's first check out all channel types
+    raw.plot_psd(area_mode='range', tmax=10.0, show=False)
+
+    # Now let's focus on a smaller subset:
+    # Pick MEG magnetometers in the Left-temporal region
+    selection = read_selection('Left-temporal')
+    picks = mne.pick_types(raw.info, meg='mag', eeg=False, eog=False,
+                           stim=False, exclude='bads', selection=selection)
+
+    # Let's just look at the first few channels for demonstration purposes
+    picks = picks[:4]
+
+    plt.figure()
+    ax = plt.axes()
+    raw.plot_psd(tmin=tmin, tmax=tmax, fmin=fmin, fmax=fmax, n_fft=n_fft,
+                 n_jobs=1, proj=False, ax=ax, color=(0, 0, 1),  picks=picks,
+                 show=False)
+
+    # And now do the same with SSP applied
+    raw.plot_psd(tmin=tmin, tmax=tmax, fmin=fmin, fmax=fmax, n_fft=n_fft,
+                 n_jobs=1, proj=True, ax=ax, color=(0, 1, 0), picks=picks,
+                 show=False)
+
+    # And now do the same with SSP + notch filtering
+    # Pick all channels for notch since the SSP projection mixes channels together
+    raw.notch_filter(np.arange(60, 241, 60), n_jobs=1)
+    raw.plot_psd(tmin=tmin, tmax=tmax, fmin=fmin, fmax=fmax, n_fft=n_fft,
+                 n_jobs=1, proj=True, ax=ax, color=(1, 0, 0), picks=picks,
+                 show=False)
+
+    ax.set_title('Four left-temporal magnetometers')
+    plt.legend(['Without SSP', 'With SSP', 'SSP + Notch'])
+
+    # Alternatively, you may also create PSDs from Raw objects with ``psd_*``
+    f, ax = plt.subplots()
+    psds, freqs = psd_multitaper(raw, low_bias=True, tmin=tmin, tmax=tmax,
+                                 fmin=fmin, fmax=fmax, proj=True, picks=picks,
+                                 n_jobs=1)
+    psds = 10 * np.log10(psds)
+    psds_mean = psds.mean(0)
+    psds_std = psds.std(0)
+
+    ax.plot(freqs, psds_mean, color='k')
+    ax.fill_between(freqs, psds_mean - psds_std, psds_mean + psds_std,
+                    color='k', alpha=.5)
+    ax.set(title='Multitaper PSD', xlabel='Frequency',
+           ylabel='Power Spectral Density (dB)')
+    plt.show()
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+    *
+
+      .. image:: /auto_examples/time_frequency/images/sphx_glr_plot_compute_raw_data_spectrum_001.png
+            :scale: 47
+
+    *
+
+      .. image:: /auto_examples/time_frequency/images/sphx_glr_plot_compute_raw_data_spectrum_002.png
+            :scale: 47
+
+    *
+
+      .. image:: /auto_examples/time_frequency/images/sphx_glr_plot_compute_raw_data_spectrum_003.png
+            :scale: 47
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    Opening raw data file /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis_raw.fif...
+        Read a total of 3 projection items:
+            PCA-v1 (1 x 102)  idle
+            PCA-v2 (1 x 102)  idle
+            PCA-v3 (1 x 102)  idle
+        Range : 25800 ... 192599 =     42.956 ...   320.670 secs
+    Ready.
+    Current compensation grade : 0
+    add_eeg_ref defaults to True in 0.13, will default to False in 0.14, and will be removed in 0.15. We recommend to use add_eeg_ref=False and set_eeg_reference() instead.
+    Adding average EEG reference projection.
+    1 projection items deactivated
+    Reading 0 ... 36037  =      0.000 ...    60.000 secs...
+        Read a total of 6 projection items:
+            EOG-planar-998--0.200-0.200-PCA-01 (1 x 203)  idle
+            EOG-planar-998--0.200-0.200-PCA-02 (1 x 203)  idle
+            EOG-axial-998--0.200-0.200-PCA-01 (1 x 102)  idle
+            EOG-axial-998--0.200-0.200-PCA-02 (1 x 102)  idle
+            EOG-eeg-998--0.200-0.200-PCA-01 (1 x 59)  idle
+            EOG-eeg-998--0.200-0.200-PCA-02 (1 x 59)  idle
+    6 projection items deactivated
+    Effective window size : 3.410 (s)
+    Effective window size : 3.410 (s)
+    Effective window size : 3.410 (s)
+    Effective window size : 3.410 (s)
+    Adding average EEG reference projection.
+    Created an SSP operator (subspace dimension = 7)
+    7 projection items activated
+    SSP projectors applied...
+    Effective window size : 3.410 (s)
+    Multiple deprecated filter parameters were used:
+    phase in 0.13 is "zero-double" but will change to "zero" in 0.14
+    fir_window in 0.13 is "hann" but will change to "hamming" in 0.14
+    The default filter length in 0.13 is "10s" but will change to "auto" in 0.14
+    Adding average EEG reference projection.
+    Created an SSP operator (subspace dimension = 7)
+    7 projection items activated
+    SSP projectors applied...
+    Effective window size : 3.410 (s)
+    Adding average EEG reference projection.
+    Created an SSP operator (subspace dimension = 7)
+    7 projection items activated
+    SSP projectors applied...
+
+
+**Total running time of the script:** ( 0 minutes  8.753 seconds)
+
+
+
+.. container:: sphx-glr-footer
+
+
+  .. container:: sphx-glr-download
+
+     :download:`Download Python source code: plot_compute_raw_data_spectrum.py <plot_compute_raw_data_spectrum.py>`
+
+
+
+  .. container:: sphx-glr-download
+
+     :download:`Download Jupyter notebook: plot_compute_raw_data_spectrum.ipynb <plot_compute_raw_data_spectrum.ipynb>`
+
+.. rst-class:: sphx-glr-signature
+
+    `Generated by Sphinx-Gallery <http://sphinx-gallery.readthedocs.io>`_

@@ -17,8 +17,11 @@ These components have to be correctly identified and removed.
 
 If EOG or ECG recordings are available, they can be used in ICA to
 automatically select the corresponding artifact components from the
-decomposition. To do so, you have to first build an Epoch object around
-blink or heartbeat event.
+decomposition. To do so, you have to first build an :class:`mne.Epochs` object
+around blink or heartbeat events.
+
+ICA is implemented in MNE using the :class:`mne.preprocessing.ICA` class,
+which we will review here.
 
 
 
@@ -38,7 +41,8 @@ blink or heartbeat event.
     raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
 
     raw = mne.io.read_raw_fif(raw_fname, preload=True)
-    raw.filter(1, 40, n_jobs=2)  # 1Hz high pass is often helpful for fitting ICA
+    # 1Hz high pass is often helpful for fitting ICA
+    raw.filter(1., 40., n_jobs=2, fir_design='firwin')
 
     picks_meg = mne.pick_types(raw.info, meg=True, eeg=False, eog=False,
                                stim=False, exclude='bads')
@@ -51,6 +55,7 @@ blink or heartbeat event.
 
  Out::
 
+    Successfully extracted to: [u'/home/ubuntu/mne_data/MNE-sample-data']
     Opening raw data file /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis_filt-0-40_raw.fif...
         Read a total of 4 projection items:
             PCA-v1 (1 x 102)  idle
@@ -64,11 +69,24 @@ blink or heartbeat event.
     Setting up band-pass filter from 1 - 40 Hz
     l_trans_bandwidth chosen to be 1.0 Hz
     h_trans_bandwidth chosen to be 10.0 Hz
-    Filter length of 991 samples (6.600 sec) selected
+    Filter length of 497 samples (3.310 sec) selected
 
 
 Before applying artifact correction please learn about your actual artifacts
 by reading :ref:`tut_artifacts_detect`.
+
+.. warning:: ICA is sensitive to low-frequency drifts and therefore
+             requires the data to be high-pass filtered prior to fitting.
+             Typically, a cutoff frequency of 1 Hz is recommended. Note that
+             FIR filters prior to MNE 0.15 used the ``'firwin2'`` design
+             method, which generally produces rather shallow filters that
+             might not work for ICA processing. Therefore, it is recommended
+             to use IIR filters for MNE up to 0.14. In MNE 0.15, FIR filters
+             can be designed with the ``'firwin'`` method, which generally
+             produces much steeper filters. This method will be the default
+             FIR design method in MNE 0.16. In MNE 0.15, you need to
+             explicitly set ``fir_design='firwin'`` to use this method. This
+             is the recommended filter method for ICA preprocessing.
 
 
 Fit ICA
@@ -151,7 +169,6 @@ Plot ICA components
 
 
 .. code-block:: python
-
 
     ica.plot_components()  # can you spot some potential bad guys?
 
@@ -275,8 +292,6 @@ Let's use a more efficient way to find artefacts
     eog_average = create_eog_epochs(raw, reject=dict(mag=5e-12, grad=4000e-13),
                                     picks=picks_meg).average()
 
-    # We simplify things by setting the maximum number of components to reject
-    n_max_eog = 1  # here we bet on finding the vertical EOG components
     eog_epochs = create_eog_epochs(raw, reject=reject)  # get single EOG trials
     eog_inds, scores = ica.find_bads_eog(eog_epochs)  # find via correlation
 
@@ -310,7 +325,9 @@ Let's use a more efficient way to find artefacts
     EOG channel index for this subject is: [375]
     Filtering the data to remove DC offset to help distinguish blinks from saccades
     Setting up band-pass filter from 2 - 45 Hz
+    Filter length of 2048 samples (13.639 sec) selected
     Setting up band-pass filter from 1 - 10 Hz
+    Filter length of 2048 samples (13.639 sec) selected
     Now detecting blinks and generating corresponding events
     Number of EOG events detected : 46
     46 matching events found
@@ -320,7 +337,9 @@ Let's use a more efficient way to find artefacts
     EOG channel index for this subject is: [375]
     Filtering the data to remove DC offset to help distinguish blinks from saccades
     Setting up band-pass filter from 2 - 45 Hz
+    Filter length of 2048 samples (13.639 sec) selected
     Setting up band-pass filter from 1 - 10 Hz
+    Filter length of 2048 samples (13.639 sec) selected
     Now detecting blinks and generating corresponding events
     Number of EOG events detected : 46
     46 matching events found
@@ -377,7 +396,7 @@ by artifact detection functions. You can also manually edit them to annotate
 components.
 
 Now let's see how we would modify our signals if we removed this component
-from the data
+from the data.
 
 
 
@@ -413,6 +432,35 @@ from the data
     Zeroing out 1 ICA components
 
 
+Note that nothing is yet removed from the raw data. To remove the effects of
+the rejected components,
+:meth:`the apply method <mne.preprocessing.ICA.apply>` must be called.
+Here we apply it on the copy of the first ten seconds, so that the rest of
+this tutorial still works as intended.
+
+
+
+.. code-block:: python
+
+    raw_copy = raw.copy().crop(0, 10)
+    ica.apply(raw_copy)
+    raw_copy.plot()  # check the result
+
+
+
+
+.. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_011.png
+    :align: center
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    Transforming to ICA space (25 components)
+    Zeroing out 1 ICA components
+
+
 Exercise: find and remove ECG artifacts using ICA!
 
 
@@ -426,14 +474,8 @@ Exercise: find and remove ECG artifacts using ICA!
 
 
 
-
 .. rst-class:: sphx-glr-horizontal
 
-
-    *
-
-      .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_011.png
-            :scale: 47
 
     *
 
@@ -445,6 +487,11 @@ Exercise: find and remove ECG artifacts using ICA!
       .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_013.png
             :scale: 47
 
+    *
+
+      .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_014.png
+            :scale: 47
+
 
 .. rst-class:: sphx-glr-script-out
 
@@ -452,6 +499,7 @@ Exercise: find and remove ECG artifacts using ICA!
 
     Reconstructing ECG signal from Magnetometers
     Setting up band-pass filter from 8 - 16 Hz
+    Filter length of 2048 samples (13.639 sec) selected
     Number of ECG events detected : 284 (average pulse 61 / min.)
     Creating RawArray with float64 data, n_channels=1, n_times=41700
         Range : 0 ... 41699 =      0.000 ...   277.709 secs
@@ -511,8 +559,8 @@ data sets instead.
 
 
     # We'll start by simulating a group of subjects or runs from a subject
-    start, stop = [0, len(raw.times) - 1]
-    intervals = np.linspace(start, stop, 4, dtype=int)
+    start, stop = [0, raw.times[-1]]
+    intervals = np.linspace(start, stop, 4, dtype=np.float)
     icas_from_other_data = list()
     raw.pick_types(meg=True, eeg=False)  # take only MEG channels
     for ii, start in enumerate(intervals):
@@ -531,21 +579,21 @@ data sets instead.
 
  Out::
 
-    fitting ICA from 0 to 13899 seconds
+    fitting ICA from 0.0 to 92.5695621499 seconds
     Fitting ICA to data using 305 channels. 
     Please be patient, this may take some time
     Inferring max_pca_components from picks.
         Rejecting  epoch based on MAG : [u'MEG 1711']
     Artifact detected in [12642, 12943]
     Selection by number: 25 components
-    fitting ICA from 13899 to 27799 seconds
+    fitting ICA from 92.5695621499 to 185.1391243 seconds
     Fitting ICA to data using 305 channels. 
     Please be patient, this may take some time
     Inferring max_pca_components from picks.
         Rejecting  epoch based on MAG : [u'MEG 1711']
     Artifact detected in [3612, 3913]
     Selection by number: 25 components
-    fitting ICA from 27799 to 41699 seconds
+    fitting ICA from 185.1391243 to 277.70868645 seconds
     Fitting ICA to data using 305 channels. 
     Please be patient, this may take some time
     Inferring max_pca_components from picks.
@@ -606,12 +654,12 @@ Investigate our reference ICA:
 
     *
 
-      .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_014.png
+      .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_015.png
             :scale: 47
 
     *
 
-      .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_015.png
+      .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_016.png
             :scale: 47
 
 
@@ -630,7 +678,7 @@ yourself if no automatic detection was available.
 
 
 
-.. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_016.png
+.. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_017.png
     :align: center
 
 
@@ -673,12 +721,12 @@ Now we can run the CORRMAP algorithm.
 
     *
 
-      .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_017.png
+      .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_018.png
             :scale: 47
 
     *
 
-      .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_018.png
+      .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_019.png
             :scale: 47
 
 
@@ -704,26 +752,30 @@ array can be used as an alternative template to
 
     eog_component = reference_ica.get_components()[:, eog_inds[0]]
 
-    # If you calculate a new ICA solution, you can provide this array instead of
-    # specifying the template in reference to the list of ICA objects you want
-    # to run CORRMAP on. (Of course, the retrieved component map arrays can
-    # also be used for other purposes than artifact correction.)
-    #
-    # You can also use SSP to correct for artifacts. It is a bit simpler and
-    # faster but also less precise than ICA and requires that you know the event
-    # timing of your artifact.
-    # See :ref:`tut_artifacts_correct_ssp`.
 
 
 
 
 
 
-**Total running time of the script:** ( 1 minutes  12.950 seconds)
+If you calculate a new ICA solution, you can provide this array instead of
+specifying the template in reference to the list of ICA objects you want
+to run CORRMAP on. (Of course, the retrieved component map arrays can
+also be used for other purposes than artifact correction.)
+
+You can also use SSP to correct for artifacts. It is a bit simpler and
+faster but also less precise than ICA and requires that you know the event
+timing of your artifact.
+See :ref:`tut_artifacts_correct_ssp`.
+
+
+**Total running time of the script:** ( 0 minutes  52.128 seconds)
 
 
 
-.. container:: sphx-glr-footer
+.. only :: html
+
+ .. container:: sphx-glr-footer
 
 
   .. container:: sphx-glr-download
@@ -736,6 +788,9 @@ array can be used as an alternative template to
 
      :download:`Download Jupyter notebook: plot_artifacts_correction_ica.ipynb <plot_artifacts_correction_ica.ipynb>`
 
-.. rst-class:: sphx-glr-signature
 
-    `Generated by Sphinx-Gallery <http://sphinx-gallery.readthedocs.io>`_
+.. only:: html
+
+ .. rst-class:: sphx-glr-signature
+
+    `Gallery generated by Sphinx-Gallery <https://sphinx-gallery.readthedocs.io>`_

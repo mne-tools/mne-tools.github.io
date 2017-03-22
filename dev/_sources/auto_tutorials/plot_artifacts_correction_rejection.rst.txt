@@ -1,9 +1,11 @@
+.. note::
+    :class: sphx-glr-download-link-note
 
+    Click :ref:`here <sphx_glr_download_auto_tutorials_plot_artifacts_correction_rejection.py>` to download the full example code
+.. rst-class:: sphx-glr-example-title
 
 .. _sphx_glr_auto_tutorials_plot_artifacts_correction_rejection.py:
 
-
-.. _tut_artifacts_reject:
 
 Rejecting bad data (channels and segments)
 ==========================================
@@ -13,6 +15,7 @@ Rejecting bad data (channels and segments)
 
 .. code-block:: python
 
+    # sphinx_gallery_thumbnail_number = 3
 
     import numpy as np
     import mne
@@ -20,27 +23,12 @@ Rejecting bad data (channels and segments)
 
     data_path = sample.data_path()
     raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
-    raw = mne.io.read_raw_fif(raw_fname)
-    raw.set_eeg_reference()
+    raw = mne.io.read_raw_fif(raw_fname)  # already has an EEG ref
 
 
 
 
 
-.. rst-class:: sphx-glr-script-out
-
- Out::
-
-    Opening raw data file /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis_filt-0-40_raw.fif...
-        Read a total of 4 projection items:
-            PCA-v1 (1 x 102)  idle
-            PCA-v2 (1 x 102)  idle
-            PCA-v3 (1 x 102)  idle
-            Average EEG reference (1 x 60)  idle
-        Range : 6450 ... 48149 =     42.956 ...   320.665 secs
-    Ready.
-    Current compensation grade : 0
-    An average reference projection was already added. The data has been left untouched.
 
 
 .. _marking_bad_channels:
@@ -126,7 +114,7 @@ To illustrate how to use channel interpolation let us load some data.
     evoked.pick_types(meg=True, eeg=True, exclude=[])
 
     # plot with bads
-    evoked.plot(exclude=[])
+    evoked.plot(exclude=[], time_unit='s')
 
     print(evoked.info['bads'])
 
@@ -134,26 +122,14 @@ To illustrate how to use channel interpolation let us load some data.
 
 
 .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_rejection_001.png
-    :align: center
+    :class: sphx-glr-single-img
 
 
 .. rst-class:: sphx-glr-script-out
 
  Out::
 
-    Reading /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis-ave.fif ...
-        Read a total of 4 projection items:
-            PCA-v1 (1 x 102) active
-            PCA-v2 (1 x 102) active
-            PCA-v3 (1 x 102) active
-            Average EEG reference (1 x 60) active
-        Found the data of interest:
-            t =    -199.80 ...     499.49 ms (Left Auditory)
-            0 CTF compensation matrices available
-            nave = 55 - aspect type = 100
-    Projections have already been applied. Setting proj attribute to True.
-    Applying baseline correction (mode: mean)
-    [u'MEG 2443', u'EEG 053']
+    ['MEG 2443', 'EEG 053']
 
 
 Let's now interpolate the bad channels (displayed in red above)
@@ -162,22 +138,12 @@ Let's now interpolate the bad channels (displayed in red above)
 
 .. code-block:: python
 
-    evoked.interpolate_bads(reset_bads=False)
+    evoked.interpolate_bads(reset_bads=False, verbose=False)
 
 
 
 
 
-.. rst-class:: sphx-glr-script-out
-
- Out::
-
-    Computing interpolation matrix from 59 sensor positions
-    Interpolating 1 sensors
-        Computing dot products for 305 coils...
-        Computing cross products for coils 305 x 1 coils...
-        Preparing the mapping matrix...
-        [Truncate at 79 missing 0.0001]
 
 
 Let's plot the cleaned data
@@ -186,13 +152,13 @@ Let's plot the cleaned data
 
 .. code-block:: python
 
-    evoked.plot(exclude=[])
+    evoked.plot(exclude=[], time_unit='s')
 
 
 
 
 .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_rejection_002.png
-    :align: center
+    :class: sphx-glr-single-img
 
 
 
@@ -235,29 +201,26 @@ can be added as an attribute of :class:`mne.io.Raw`.
     duration = np.repeat(0.5, n_blinks)
     raw.annotations = mne.Annotations(onset, duration, ['bad blink'] * n_blinks,
                                       orig_time=raw.info['meas_date'])
+    print(raw.annotations)  # to get information about what annotations we have
     raw.plot(events=eog_events)  # To see the annotated segments.
 
 
 
 
 .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_rejection_003.png
-    :align: center
+    :class: sphx-glr-single-img
 
 
 .. rst-class:: sphx-glr-script-out
 
  Out::
 
-    EOG channel index for this subject is: [375]
-    Filtering the data to remove DC offset to help distinguish blinks from saccades
-    Setting up band-pass filter from 2 - 45 Hz
-    Setting up band-pass filter from 1 - 10 Hz
-    Now detecting blinks and generating corresponding events
-    Number of EOG events detected : 46
+    <Annotations  |  46 segments : bad (46) >
 
 
 It is also possible to draw bad segments interactively using
-:meth:`raw.plot <mne.io.Raw.plot>` (see :ref:`tut_viz_raw`).
+:meth:`raw.plot <mne.io.Raw.plot>` (see
+:ref:`sphx_glr_auto_tutorials_plot_visualize_raw.py`).
 
 As the data is epoched, all the epochs overlapping with segments whose
 description starts with 'bad' are rejected by default. To turn rejection off,
@@ -325,15 +288,6 @@ We then construct the epochs
 
 
 
-.. rst-class:: sphx-glr-script-out
-
- Out::
-
-    319 events found
-    Events id: [ 1  2  3  4  5 32]
-    72 matching events found
-    Created an SSP operator (subspace dimension = 3)
-    4 projection items activated
 
 
 We then drop/reject the bad epochs
@@ -348,14 +302,6 @@ We then drop/reject the bad epochs
 
 
 
-.. rst-class:: sphx-glr-script-out
-
- Out::
-
-    Loading data for 72 events and 106 original time points ...
-        Rejecting  epoch based on EOG : [u'EOG 061']
-        Rejecting  epoch based on MAG : [u'MEG 1711']
-    22 bad epochs dropped
 
 
 And plot the so-called *drop log* that details the reason for which some
@@ -373,7 +319,7 @@ epochs have been dropped.
 
 
 .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_rejection_004.png
-    :align: center
+    :class: sphx-glr-single-img
 
 
 .. rst-class:: sphx-glr-script-out
@@ -390,11 +336,17 @@ epoch was rejected because 'EOG 061' exceeded the peak-to-peak rejection
 limit.
 
 
-**Total running time of the script:** ( 0 minutes  11.353 seconds)
+**Total running time of the script:** ( 0 minutes  13.850 seconds)
 
 
+.. _sphx_glr_download_auto_tutorials_plot_artifacts_correction_rejection.py:
 
-.. container:: sphx-glr-footer
+
+.. only :: html
+
+ .. container:: sphx-glr-footer
+    :class: sphx-glr-footer-example
+
 
 
   .. container:: sphx-glr-download
@@ -407,6 +359,9 @@ limit.
 
      :download:`Download Jupyter notebook: plot_artifacts_correction_rejection.ipynb <plot_artifacts_correction_rejection.ipynb>`
 
-.. rst-class:: sphx-glr-signature
 
-    `Generated by Sphinx-Gallery <http://sphinx-gallery.readthedocs.io>`_
+.. only:: html
+
+ .. rst-class:: sphx-glr-signature
+
+    `Gallery generated by Sphinx-Gallery <https://sphinx-gallery.readthedocs.io>`_

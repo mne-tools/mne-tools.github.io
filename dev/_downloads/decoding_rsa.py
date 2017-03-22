@@ -1,4 +1,7 @@
 """
+
+.. _rsa_noplot:
+
 ====================================
 Representational Similarity Analysis
 ====================================
@@ -13,6 +16,9 @@ In this example, we perform RSA on responses to 24 object images (among
 a list of 92 images). Subjects were presented with images of human, animal
 and inanimate objects [4]_. Here we use the 24 unique images of faces
 and body parts.
+
+.. note:: this example will download a very large (~6GB) file, so we will not
+          build the images below.
 
 References
 ----------
@@ -91,7 +97,6 @@ raw = concatenate_raws(raws)
 events = mne.find_events(raw, min_duration=.002)
 
 events = events[events[:, 2] <= max_trigger]
-mne.viz.plot_events(events, sfreq=raw.info['sfreq'])
 
 ##############################################################################
 # Epoch data

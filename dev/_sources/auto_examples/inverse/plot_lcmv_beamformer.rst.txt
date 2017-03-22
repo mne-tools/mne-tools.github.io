@@ -1,4 +1,8 @@
+.. note::
+    :class: sphx-glr-download-link-note
 
+    Click :ref:`here <sphx_glr_download_auto_examples_inverse_plot_lcmv_beamformer.py>` to download the full example code
+.. rst-class:: sphx-glr-example-title
 
 .. _sphx_glr_auto_examples_inverse_plot_lcmv_beamformer.py:
 
@@ -19,12 +23,14 @@ visualisation.
     #
     # License: BSD (3-clause)
 
+    # sphinx_gallery_thumbnail_number = 3
+
     import matplotlib.pyplot as plt
     import numpy as np
 
     import mne
     from mne.datasets import sample
-    from mne.beamformer import lcmv
+    from mne.beamformer import make_lcmv, apply_lcmv
 
     print(__doc__)
 
@@ -56,9 +62,8 @@ Get epochs
     events = mne.read_events(event_fname)
 
     # Set up pick list: EEG + MEG - bad channels (modify to your needs)
-    left_temporal_channels = mne.read_selection('Left-temporal')
     picks = mne.pick_types(raw.info, meg=True, eeg=False, stim=True, eog=True,
-                           exclude='bads', selection=left_temporal_channels)
+                           exclude='bads')
 
     # Pick the channels of interest
     raw.pick_channels([raw.ch_names[pick] for pick in picks])
@@ -71,64 +76,27 @@ Get epochs
                         reject=dict(grad=4000e-13, mag=4e-12, eog=150e-6))
     evoked = epochs.average()
 
-    forward = mne.read_forward_solution(fname_fwd, surf_ori=True)
+    forward = mne.read_forward_solution(fname_fwd)
+    forward = mne.convert_forward_solution(forward, surf_ori=True)
 
     # Compute regularized noise and data covariances
     noise_cov = mne.compute_covariance(epochs, tmin=tmin, tmax=0, method='shrunk')
     data_cov = mne.compute_covariance(epochs, tmin=0.04, tmax=0.15,
                                       method='shrunk')
-
-    plt.close('all')
-
-    pick_oris = [None, 'normal', 'max-power']
-    names = ['free', 'normal', 'max-power']
-    descriptions = ['Free orientation', 'Normal orientation', 'Max-power '
-                    'orientation']
-    colors = ['b', 'k', 'r']
-
-    for pick_ori, name, desc, color in zip(pick_oris, names, descriptions, colors):
-        stc = lcmv(evoked, forward, noise_cov, data_cov, reg=0.05,
-                   pick_ori=pick_ori)
-
-        # View activation time-series
-        label = mne.read_label(fname_label)
-        stc_label = stc.in_label(label)
-        plt.plot(1e3 * stc_label.times, np.mean(stc_label.data, axis=0), color,
-                 hold=True, label=desc)
-
-    plt.xlabel('Time (ms)')
-    plt.ylabel('LCMV value')
-    plt.ylim(-0.8, 2.2)
-    plt.title('LCMV in %s' % label_name)
-    plt.legend()
-    plt.show()
-
-    # Plot last stc in the brain in 3D with PySurfer if available
-    brain = stc.plot(hemi='lh', subjects_dir=subjects_dir,
-                     initial_time=0.1, time_unit='s')
-    brain.show_view('lateral')
+    evoked.plot(time_unit='s')
 
 
 
-.. rst-class:: sphx-glr-horizontal
 
-
-    *
-
-      .. image:: /auto_examples/inverse/images/sphx_glr_plot_lcmv_beamformer_001.png
-            :scale: 47
-
-    *
-
-      .. image:: /auto_examples/inverse/images/sphx_glr_plot_lcmv_beamformer_002.png
-            :scale: 47
+.. image:: /auto_examples/inverse/images/sphx_glr_plot_lcmv_beamformer_001.png
+    :class: sphx-glr-single-img
 
 
 .. rst-class:: sphx-glr-script-out
 
  Out::
 
-    Opening raw data file /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis_raw.fif...
+    Opening raw data file /home/circleci/mne_data/MNE-sample-data/MEG/sample/sample_audvis_raw.fif...
         Read a total of 3 projection items:
             PCA-v1 (1 x 102)  idle
             PCA-v2 (1 x 102)  idle
@@ -138,27 +106,30 @@ Get epochs
     Current compensation grade : 0
     Reading 0 ... 166799  =      0.000 ...   277.714 secs...
     72 matching events found
+    Applying baseline correction (mode: mean)
+    Not setting metadata
     Created an SSP operator (subspace dimension = 3)
     3 projection items activated
     Loading data for 72 events and 421 original time points ...
-        Rejecting  epoch based on EOG : [u'EOG 061']
-        Rejecting  epoch based on EOG : [u'EOG 061']
-        Rejecting  epoch based on EOG : [u'EOG 061']
-        Rejecting  epoch based on EOG : [u'EOG 061']
-        Rejecting  epoch based on EOG : [u'EOG 061']
-        Rejecting  epoch based on EOG : [u'EOG 061']
-        Rejecting  epoch based on EOG : [u'EOG 061']
-        Rejecting  epoch based on EOG : [u'EOG 061']
-        Rejecting  epoch based on EOG : [u'EOG 061']
-        Rejecting  epoch based on EOG : [u'EOG 061']
-        Rejecting  epoch based on EOG : [u'EOG 061']
-        Rejecting  epoch based on EOG : [u'EOG 061']
-        Rejecting  epoch based on EOG : [u'EOG 061']
-        Rejecting  epoch based on EOG : [u'EOG 061']
-        Rejecting  epoch based on EOG : [u'EOG 061']
-        Rejecting  epoch based on EOG : [u'EOG 061']
-    16 bad epochs dropped
-    Reading forward solution from /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis-meg-eeg-oct-6-fwd.fif...
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on MAG : ['MEG 1711']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+    17 bad epochs dropped
+    Reading forward solution from /home/circleci/mne_data/MNE-sample-data/MEG/sample/sample_audvis-meg-eeg-oct-6-fwd.fif...
         Reading a source space...
         Computing patch statistics...
         Patch information added...
@@ -176,60 +147,124 @@ Get epochs
         Read EEG forward solution (7498 sources, 60 channels, free orientations)
         MEG and EEG forward solutions combined
         Source spaces transformed to the forward solution coordinate frame
-        Converting to surface-based source orientations...
         Average patch normals will be employed in the rotation to the local surface coordinates....
+        Converting to surface-based source orientations...
+        [done]
+    Estimating covariance using SHRUNK
+    Done.
+    Number of samples used : 6655
     [done]
     Estimating covariance using SHRUNK
     Done.
-    Using cross-validation to select the best estimator.
-    Number of samples used : 6776
+    Number of samples used : 3685
     [done]
-    log-likelihood on unseen data (descending order):
-       shrunk: -195.027
-    selecting best estimator: shrunk
-    Estimating covariance using SHRUNK
-    Done.
-    Using cross-validation to select the best estimator.
-    Number of samples used : 3752
-    [done]
-    log-likelihood on unseen data (descending order):
-       shrunk: -201.698
-    selecting best estimator: shrunk
-        39 out of 366 channels remain after picking
+
+
+Run beamformers and look at maximum outputs
+
+
+
+.. code-block:: python
+
+
+    pick_oris = [None, 'normal', 'max-power']
+    names = ['free', 'normal', 'max-power']
+    descriptions = ['Free orientation, voxel: %i', 'Normal orientation, voxel: %i',
+                    'Max-power orientation, voxel: %i']
+    colors = ['b', 'k', 'r']
+
+    fig, ax = plt.subplots(1)
+    max_voxs = list()
+    for pick_ori, name, desc, color in zip(pick_oris, names, descriptions, colors):
+        # compute unit-noise-gain beamformer with whitening of the leadfield and
+        # data (enabled by passing a noise covariance matrix)
+        filters = make_lcmv(evoked.info, forward, data_cov, reg=0.05,
+                            noise_cov=noise_cov, pick_ori=pick_ori,
+                            weight_norm='unit-noise-gain')
+        # apply this spatial filter to source-reconstruct the evoked data
+        stc = apply_lcmv(evoked, filters, max_ori_out='signed')
+
+        # View activation time-series in maximum voxel at 100 ms:
+        time_idx = stc.time_as_index(0.1)
+        max_idx = np.argmax(stc.data[:, time_idx])
+        # we know these are all left hemi, so we can just use vertices[0]
+        max_voxs.append(stc.vertices[0][max_idx])
+        ax.plot(stc.times, stc.data[max_idx, :], color, label=desc % max_idx)
+
+    ax.set(xlabel='Time (ms)', ylabel='LCMV value', ylim=(-0.8, 2.2),
+           title='LCMV in maximum voxel')
+    ax.legend()
+    mne.viz.utils.plt_show()
+
+
+
+
+.. image:: /auto_examples/inverse/images/sphx_glr_plot_lcmv_beamformer_002.png
+    :class: sphx-glr-single-img
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    305 out of 366 channels remain after picking
         Created an SSP operator (subspace dimension = 3)
-    estimated rank (mag + grad): 36
+    estimated rank (mag + grad): 302
     Setting small MEG eigenvalues to zero.
     Not doing PCA for MEG.
+    Total rank is 302
     combining the current components...
-        39 out of 366 channels remain after picking
+        305 out of 366 channels remain after picking
         Created an SSP operator (subspace dimension = 3)
-    estimated rank (mag + grad): 36
+    estimated rank (mag + grad): 302
     Setting small MEG eigenvalues to zero.
     Not doing PCA for MEG.
-        39 out of 366 channels remain after picking
+    Total rank is 302
+        305 out of 366 channels remain after picking
         Created an SSP operator (subspace dimension = 3)
-    estimated rank (mag + grad): 36
+    estimated rank (mag + grad): 302
     Setting small MEG eigenvalues to zero.
     Not doing PCA for MEG.
-    Updating smoothing matrix, be patient..
-    Smoothing matrix creation, step 1
-    Smoothing matrix creation, step 2
-    Smoothing matrix creation, step 3
-    Smoothing matrix creation, step 4
-    Smoothing matrix creation, step 5
-    Smoothing matrix creation, step 6
-    Smoothing matrix creation, step 7
-    Smoothing matrix creation, step 8
-    Smoothing matrix creation, step 9
-    Smoothing matrix creation, step 10
-    colormap: fmin=3.98e-01 fmid=4.49e-01 fmax=1.12e+00 transparent=1
+    Total rank is 302
 
 
-**Total running time of the script:** ( 0 minutes  23.026 seconds)
+We can also look at the spatial distribution
 
 
 
-.. container:: sphx-glr-footer
+.. code-block:: python
+
+
+    # take absolute value for plotting
+    np.abs(stc.data, out=stc.data)
+
+    # Plot last stc in the brain in 3D with PySurfer if available
+    brain = stc.plot(hemi='lh', subjects_dir=subjects_dir,
+                     initial_time=0.1, time_unit='s')
+    brain.show_view('lateral')
+    for color, vertex in zip(colors, max_voxs):
+        brain.add_foci([vertex], coords_as_verts=True, scale_factor=0.5,
+                       hemi='lh', color=color)
+
+
+
+.. image:: /auto_examples/inverse/images/sphx_glr_plot_lcmv_beamformer_003.png
+    :class: sphx-glr-single-img
+
+
+
+
+**Total running time of the script:** ( 1 minutes  8.837 seconds)
+
+
+.. _sphx_glr_download_auto_examples_inverse_plot_lcmv_beamformer.py:
+
+
+.. only :: html
+
+ .. container:: sphx-glr-footer
+    :class: sphx-glr-footer-example
+
 
 
   .. container:: sphx-glr-download
@@ -242,6 +277,9 @@ Get epochs
 
      :download:`Download Jupyter notebook: plot_lcmv_beamformer.ipynb <plot_lcmv_beamformer.ipynb>`
 
-.. rst-class:: sphx-glr-signature
 
-    `Generated by Sphinx-Gallery <http://sphinx-gallery.readthedocs.io>`_
+.. only:: html
+
+ .. rst-class:: sphx-glr-signature
+
+    `Gallery generated by Sphinx-Gallery <https://sphinx-gallery.readthedocs.io>`_

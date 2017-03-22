@@ -1,4 +1,8 @@
+.. note::
+    :class: sphx-glr-download-link-note
 
+    Click :ref:`here <sphx_glr_download_auto_examples_inverse_plot_mixed_norm_inverse.py>` to download the full example code
+.. rst-class:: sphx-glr-example-title
 
 .. _sphx_glr_auto_examples_inverse_plot_mixed_norm_inverse.py:
 
@@ -7,7 +11,7 @@
 Compute sparse inverse solution with mixed norm: MxNE and irMxNE
 ================================================================
 
-Runs (ir)MxNE (L1/L2 [1]_ or L0.5/L2 [2]_ mixed norm) inverse solver.
+Runs an (ir)MxNE (L1/L2 [1]_ or L0.5/L2 [2]_ mixed norm) inverse solver.
 L0.5/L2 is done with irMxNE which allows for sparser
 source estimates with less amplitude bias due to the non-convexity
 of the L0.5/L2 mixed norm penalty.
@@ -17,7 +21,7 @@ References
 .. [1] Gramfort A., Kowalski M. and Hamalainen, M.
    "Mixed-norm estimates for the M/EEG inverse problem using accelerated
    gradient methods", Physics in Medicine and Biology, 2012.
-   http://dx.doi.org/10.1088/0031-9155/57/7/1937.
+   https://doi.org/10.1088/0031-9155/57/7/1937.
 
 .. [2] Strohmeier D., Haueisen J., and Gramfort A.
    "Improved MEG/EEG source localization with reweighted mixed-norms",
@@ -29,14 +33,18 @@ References
 .. code-block:: python
 
     # Author: Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
+    #         Daniel Strohmeier <daniel.strohmeier@tu-ilmenau.de>
     #
     # License: BSD (3-clause)
 
+    import numpy as np
+
     import mne
     from mne.datasets import sample
-    from mne.inverse_sparse import mixed_norm
+    from mne.inverse_sparse import mixed_norm, make_stc_from_dipoles
     from mne.minimum_norm import make_inverse_operator, apply_inverse
-    from mne.viz import plot_sparse_source_estimates
+    from mne.viz import (plot_sparse_source_estimates,
+                         plot_dipole_locations, plot_dipole_amplitudes)
 
     print(__doc__)
 
@@ -53,16 +61,10 @@ References
     evoked = mne.read_evokeds(ave_fname, condition=condition, baseline=(None, 0))
     evoked.crop(tmin=0, tmax=0.3)
     # Handling forward solution
-    forward = mne.read_forward_solution(fwd_fname, surf_ori=True)
-
-    ylim = dict(eeg=[-10, 10], grad=[-400, 400], mag=[-600, 600])
-    evoked.plot(ylim=ylim, proj=True)
+    forward = mne.read_forward_solution(fwd_fname)
 
 
 
-
-.. image:: /auto_examples/inverse/images/sphx_glr_plot_mixed_norm_inverse_001.png
-    :align: center
 
 
 .. rst-class:: sphx-glr-script-out
@@ -75,7 +77,7 @@ References
             PCA-v2 (1 x 102) active
             PCA-v3 (1 x 102) active
             Average EEG reference (1 x 59) active
-    Reading /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis-ave.fif ...
+    Reading /home/circleci/mne_data/MNE-sample-data/MEG/sample/sample_audvis-ave.fif ...
         Read a total of 4 projection items:
             PCA-v1 (1 x 102) active
             PCA-v2 (1 x 102) active
@@ -87,7 +89,7 @@ References
             nave = 55 - aspect type = 100
     Projections have already been applied. Setting proj attribute to True.
     Applying baseline correction (mode: mean)
-    Reading forward solution from /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis-meg-eeg-oct-6-fwd.fif...
+    Reading forward solution from /home/circleci/mne_data/MNE-sample-data/MEG/sample/sample_audvis-meg-eeg-oct-6-fwd.fif...
         Reading a source space...
         Computing patch statistics...
         Patch information added...
@@ -105,9 +107,6 @@ References
         Read EEG forward solution (7498 sources, 60 channels, free orientations)
         MEG and EEG forward solutions combined
         Source spaces transformed to the forward solution coordinate frame
-        Converting to surface-based source orientations...
-        Average patch normals will be employed in the rotation to the local surface coordinates....
-    [done]
 
 
 Run solver
@@ -116,35 +115,37 @@ Run solver
 
 .. code-block:: python
 
-    alpha = 50  # regularization parameter between 0 and 100 (100 is high)
+    alpha = 55  # regularization parameter between 0 and 100 (100 is high)
     loose, depth = 0.2, 0.9  # loose orientation & depth weighting
     n_mxne_iter = 10  # if > 1 use L0.5/L2 reweighted mixed norm solver
     # if n_mxne_iter > 1 dSPM weighting can be avoided.
 
     # Compute dSPM solution to be used as weights in MxNE
     inverse_operator = make_inverse_operator(evoked.info, forward, cov,
-                                             loose=None, depth=depth, fixed=True)
+                                             depth=depth, fixed=True,
+                                             use_cps=True)
     stc_dspm = apply_inverse(evoked, inverse_operator, lambda2=1. / 9.,
                              method='dSPM')
 
-    # Compute (ir)MxNE inverse solution
-    stc, residual = mixed_norm(
+    # Compute (ir)MxNE inverse solution with dipole output
+    dipoles, residual = mixed_norm(
         evoked, forward, cov, alpha, loose=loose, depth=depth, maxit=3000,
         tol=1e-4, active_set_size=10, debias=True, weights=stc_dspm,
-        weights_min=8., n_mxne_iter=n_mxne_iter, return_residual=True)
-    residual.plot(ylim=ylim, proj=True)
+        weights_min=8., n_mxne_iter=n_mxne_iter, return_residual=True,
+        return_as_dipoles=True)
 
 
 
-
-.. image:: /auto_examples/inverse/images/sphx_glr_plot_mixed_norm_inverse_002.png
-    :align: center
 
 
 .. rst-class:: sphx-glr-script-out
 
  Out::
 
+    Forward is not surface oriented, converting.
+        Average patch normals will be employed in the rotation to the local surface coordinates....
+        Converting to surface-based source orientations...
+        [done]
     info["bads"] and noise_cov["bads"] do not match, excluding bad channels from both
     Computing inverse operator with 364 channels.
         Created an SSP operator (subspace dimension = 4)
@@ -160,15 +161,16 @@ Run solver
         limit = 7262/7498 = 10.020865
         scale = 2.58122e-08 exp = 0.9
         Picked elements from a free-orientation depth-weighting prior into the fixed-orientation one
-        Changing to fixed-orientation forward solution with surface-based source orientations...
+        Average patch normals will be employed in the rotation to the local surface coordinates....
+        Converting to surface-based source orientations...
         [done]
     Computing inverse operator with 364 channels.
     Creating the source covariance matrix
     Whitening the forward solution.
     Adjusting source covariance matrix.
     Computing SVD of whitened and weighted lead field matrix.
-        largest singular value = 6.01803
-        scaling factor to adjust the trace = 6.9571e+18
+        largest singular value = 6.21995
+        scaling factor to adjust the trace = 6.82623e+18
     Preparing the inverse operator for use...
         Scaled noise and source covariance from nave = 1 to nave = 55
         Created the regularized inverter
@@ -176,11 +178,15 @@ Run solver
         Created the whitener using a full noise covariance matrix (4 small eigenvalues omitted)
         Computing noise-normalization factors (dSPM)...
     [done]
-    Picked 364 channels from the data
-    Computing inverse...
-    (eigenleads need to be weighted)...
-    (dSPM)...
+    Applying inverse operator to "Left Auditory"...
+        Picked 364 channels from the data
+        Computing inverse...
+        Eigenleads need to be weighted ...
+        dSPM...
     [done]
+        Average patch normals will be employed in the rotation to the local surface coordinates....
+        Converting to surface-based source orientations...
+        [done]
     info["bads"] and noise_cov["bads"] do not match, excluding bad channels from both
     Computing inverse operator with 364 channels.
         Created an SSP operator (subspace dimension = 4)
@@ -194,45 +200,44 @@ Run solver
     Total rank is 360
     Whitening lead field matrix.
     Applying loose dipole orientations. Loose value of 0.2.
-    Reducing source space to 551 sources
+    Reducing source space to 543 sources
     Whitening data matrix.
-    -- ALPHA MAX : 100.0
+    -- ALPHA MAX : 100.00000000000004
     Using block coordinate descent
-    Iteration 1 :: pobj 1915.138768 :: dgap 0.000092 ::n_active_start 10 :: n_active_end 3
-    Convergence reached ! (gap: 9.23375971524e-05 < 0.0001)
-    Final active set size: 3
-    active set size 3
-    -- ALPHA MAX : 255.133190485
-    Using block coordinate descent
-    Final active set size: 3
-    active set size 3
-    -- ALPHA MAX : 382.101398865
+    Iteration 1 :: p_obj 1930.706212 :: dgap 0.000075 ::n_active_start 10 :: n_active_end 6
+    Convergence reached ! (gap: 7.535317467954883e-05 < 0.0001)
+    Final active set size: 6
+    active set size 6
+    -- ALPHA MAX : 220.60549690833503
     Using block coordinate descent
     Final active set size: 3
     active set size 3
-    -- ALPHA MAX : 408.517323975
+    -- ALPHA MAX : 355.41658857113794
+    Using block coordinate descent
+    Final active set size: 3
+    active set size 3
+    -- ALPHA MAX : 410.9022658181657
     Using block coordinate descent
     Final active set size: 2
     active set size 2
-    -- ALPHA MAX : 412.903113891
+    -- ALPHA MAX : 433.2449094307255
     Using block coordinate descent
     Final active set size: 2
     active set size 2
-    -- ALPHA MAX : 413.780470677
+    -- ALPHA MAX : 435.7227360649407
     Using block coordinate descent
     Final active set size: 2
     active set size 2
-    -- ALPHA MAX : 413.912974792
+    -- ALPHA MAX : 435.9856709053658
     Using block coordinate descent
     Final active set size: 2
     active set size 2
-    -- ALPHA MAX : 413.930992334
+    -- ALPHA MAX : 436.0136502749894
     Using block coordinate descent
     Final active set size: 2
     active set size 2
     Convergence reached after 7 reweightings!
-    Debiasing converged after 72 iterations max(|D - D0| = 3.142884e-07 < 1.000000e-06)
-    combining the current components...
+    Debiasing converged after 67 iterations max(|D - D0| = 6.079120e-07 < 1.000000e-06)
     4 projection items deactivated
     Created an SSP operator (subspace dimension = 4)
     4 projection items activated
@@ -241,24 +246,57 @@ Run solver
     [done]
 
 
-View in 2D and 3D ("glass" brain like 3D plot)
+Plot dipole activations
 
 
 
 .. code-block:: python
 
-    plot_sparse_source_estimates(forward['src'], stc, bgcolor=(1, 1, 1),
-                                 fig_name="MxNE (cond %s)" % condition,
-                                 opacity=0.1)
+    plot_dipole_amplitudes(dipoles)
 
-    # and on the fsaverage brain after morphing
-    stc_fsaverage = stc.morph(subject_from='sample', subject_to='fsaverage',
-                              grade=None, sparse=True, subjects_dir=subjects_dir)
-    src_fsaverage_fname = subjects_dir + '/fsaverage/bem/fsaverage-ico-5-src.fif'
-    src_fsaverage = mne.read_source_spaces(src_fsaverage_fname)
+    # Plot dipole location of the strongest dipole with MRI slices
+    idx = np.argmax([np.max(np.abs(dip.amplitude)) for dip in dipoles])
+    plot_dipole_locations(dipoles[idx], forward['mri_head_t'], 'sample',
+                          subjects_dir=subjects_dir, mode='orthoview',
+                          idx='amplitude')
 
-    plot_sparse_source_estimates(src_fsaverage, stc_fsaverage, bgcolor=(1, 1, 1),
-                                 opacity=0.1)
+    # # Plot dipole locations of all dipoles with MRI slices
+    # for dip in dipoles:
+    #     plot_dipole_locations(dip, forward['mri_head_t'], 'sample',
+    #                           subjects_dir=subjects_dir, mode='orthoview',
+    #                           idx='amplitude')
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+    *
+
+      .. image:: /auto_examples/inverse/images/sphx_glr_plot_mixed_norm_inverse_001.png
+            :class: sphx-glr-multi-img
+
+    *
+
+      .. image:: /auto_examples/inverse/images/sphx_glr_plot_mixed_norm_inverse_002.png
+            :class: sphx-glr-multi-img
+
+
+
+
+Plot residual
+
+
+
+.. code-block:: python
+
+    ylim = dict(eeg=[-10, 10], grad=[-400, 400], mag=[-600, 600])
+    evoked.pick_types(meg=True, eeg=True, exclude='bads')
+    evoked.plot(ylim=ylim, proj=True, time_unit='s')
+    residual.pick_types(meg=True, eeg=True, exclude='bads')
+    residual.plot(ylim=ylim, proj=True, time_unit='s')
+
 
 
 
@@ -268,22 +306,62 @@ View in 2D and 3D ("glass" brain like 3D plot)
     *
 
       .. image:: /auto_examples/inverse/images/sphx_glr_plot_mixed_norm_inverse_003.png
-            :scale: 47
+            :class: sphx-glr-multi-img
 
     *
 
       .. image:: /auto_examples/inverse/images/sphx_glr_plot_mixed_norm_inverse_004.png
-            :scale: 47
+            :class: sphx-glr-multi-img
+
+
+
+
+Generate stc from dipoles
+
+
+
+.. code-block:: python
+
+    stc = make_stc_from_dipoles(dipoles, forward['src'])
+
+
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    Converting dipoles into a SourceEstimate.
+    [done]
+
+
+View in 2D and 3D ("glass" brain like 3D plot)
+
+
+
+.. code-block:: python
+
+    solver = "MxNE" if n_mxne_iter == 1 else "irMxNE"
+    plot_sparse_source_estimates(forward['src'], stc, bgcolor=(1, 1, 1),
+                                 fig_name="%s (cond %s)" % (solver, condition),
+                                 opacity=0.1)
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
 
     *
 
       .. image:: /auto_examples/inverse/images/sphx_glr_plot_mixed_norm_inverse_005.png
-            :scale: 47
+            :class: sphx-glr-multi-img
 
     *
 
       .. image:: /auto_examples/inverse/images/sphx_glr_plot_mixed_norm_inverse_006.png
-            :scale: 47
+            :class: sphx-glr-multi-img
 
 
 .. rst-class:: sphx-glr-script-out
@@ -291,7 +369,44 @@ View in 2D and 3D ("glass" brain like 3D plot)
  Out::
 
     Total number of active sources: 2
-        Left-hemisphere map read.
+
+
+Morph onto fsaverage brain and view
+
+
+
+.. code-block:: python
+
+    stc_fsaverage = stc.morph(subject_from='sample', subject_to='fsaverage',
+                              grade=None, sparse=True, subjects_dir=subjects_dir)
+    src_fsaverage_fname = subjects_dir + '/fsaverage/bem/fsaverage-ico-5-src.fif'
+    src_fsaverage = mne.read_source_spaces(src_fsaverage_fname)
+
+    plot_sparse_source_estimates(src_fsaverage, stc_fsaverage, bgcolor=(1, 1, 1),
+                                 fig_name="Morphed %s (cond %s)" % (solver,
+                                 condition), opacity=0.1)
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+    *
+
+      .. image:: /auto_examples/inverse/images/sphx_glr_plot_mixed_norm_inverse_007.png
+            :class: sphx-glr-multi-img
+
+    *
+
+      .. image:: /auto_examples/inverse/images/sphx_glr_plot_mixed_norm_inverse_008.png
+            :class: sphx-glr-multi-img
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    Left-hemisphere map read.
         Right-hemisphere map read.
         Reading a source space...
         [done]
@@ -301,11 +416,17 @@ View in 2D and 3D ("glass" brain like 3D plot)
     Total number of active sources: 2
 
 
-**Total running time of the script:** ( 0 minutes  11.352 seconds)
+**Total running time of the script:** ( 0 minutes  22.403 seconds)
 
 
+.. _sphx_glr_download_auto_examples_inverse_plot_mixed_norm_inverse.py:
 
-.. container:: sphx-glr-footer
+
+.. only :: html
+
+ .. container:: sphx-glr-footer
+    :class: sphx-glr-footer-example
+
 
 
   .. container:: sphx-glr-download
@@ -318,6 +439,9 @@ View in 2D and 3D ("glass" brain like 3D plot)
 
      :download:`Download Jupyter notebook: plot_mixed_norm_inverse.ipynb <plot_mixed_norm_inverse.ipynb>`
 
-.. rst-class:: sphx-glr-signature
 
-    `Generated by Sphinx-Gallery <http://sphinx-gallery.readthedocs.io>`_
+.. only:: html
+
+ .. rst-class:: sphx-glr-signature
+
+    `Gallery generated by Sphinx-Gallery <https://sphinx-gallery.readthedocs.io>`_

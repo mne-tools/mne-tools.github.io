@@ -5,9 +5,8 @@ Brainstorm auditory tutorial dataset
 ====================================
 
 Here we compute the evoked from raw for the auditory Brainstorm
-tutorial dataset. For comparison, see [1]_ and:
-
-    http://neuroimage.usc.edu/brainstorm/Tutorials/Auditory
+tutorial dataset. For comparison, see [1]_ and the associated
+`brainstorm site <http://neuroimage.usc.edu/brainstorm/Tutorials/Auditory>`_.
 
 Experiment:
 
@@ -42,7 +41,6 @@ from mne import combine_evoked
 from mne.minimum_norm import apply_inverse
 from mne.datasets.brainstorm import bst_auditory
 from mne.io import read_raw_ctf
-from mne.filter import notch_filter, filter_data
 
 print(__doc__)
 
@@ -171,14 +169,14 @@ if not use_precomputed:
     meg_picks = mne.pick_types(raw.info, meg=True, eeg=False)
     raw.plot_psd(tmax=np.inf, picks=meg_picks)
     notches = np.arange(60, 181, 60)
-    raw.notch_filter(notches)
+    raw.notch_filter(notches, phase='zero-double', fir_design='firwin2')
     raw.plot_psd(tmax=np.inf, picks=meg_picks)
 
 ###############################################################################
 # We also lowpass filter the data at 100 Hz to remove the hf components.
 if not use_precomputed:
     raw.filter(None, 100., h_trans_bandwidth=0.5, filter_length='10s',
-               phase='zero-double')
+               phase='zero-double', fir_design='firwin2')
 
 ###############################################################################
 # Epoching and averaging.
@@ -249,17 +247,13 @@ del epochs_standard, epochs_deviant
 
 ###############################################################################
 # Typical preprocessing step is the removal of power line artifact (50 Hz or
-# 60 Hz). Here we notch filter the data at 60, 120 and 180 to remove the
-# original 60 Hz artifact and the harmonics. Normally this would be done to
-# raw data (with :func:`mne.io.Raw.filter`), but to reduce memory consumption
-# of this tutorial, we do it at evoked stage.
-if use_precomputed:
-    sfreq = evoked_std.info['sfreq']
-    notches = [60, 120, 180]
-    for evoked in (evoked_std, evoked_dev):
-        evoked.data[:] = notch_filter(evoked.data, sfreq, notches)
-        evoked.data[:] = filter_data(evoked.data, sfreq, l_freq=None,
-                                     h_freq=100.)
+# 60 Hz). Here we lowpass filter the data at 40 Hz, which will remove all
+# line artifacts (and high frequency information). Normally this would be done
+# to raw data (with :func:`mne.io.Raw.filter`), but to reduce memory
+# consumption of this tutorial, we do it at evoked stage. (At the raw stage,
+# you could alternatively notch filter with :func:`mne.io.Raw.notch_filter`.)
+for evoked in (evoked_std, evoked_dev):
+    evoked.filter(l_freq=None, h_freq=40., fir_design='firwin')
 
 ###############################################################################
 # Here we plot the ERF of standard and deviant conditions. In both conditions
@@ -269,22 +263,22 @@ if use_precomputed:
 # is visible in deviant condition only (decision making in preparation of the
 # button press). You can view the topographies from a certain time span by
 # painting an area with clicking and holding the left mouse button.
-evoked_std.plot(window_title='Standard', gfp=True)
-evoked_dev.plot(window_title='Deviant', gfp=True)
+evoked_std.plot(window_title='Standard', gfp=True, time_unit='s')
+evoked_dev.plot(window_title='Deviant', gfp=True, time_unit='s')
 
 
 ###############################################################################
 # Show activations as topography figures.
 times = np.arange(0.05, 0.301, 0.025)
-evoked_std.plot_topomap(times=times, title='Standard')
-evoked_dev.plot_topomap(times=times, title='Deviant')
+evoked_std.plot_topomap(times=times, title='Standard', time_unit='s')
+evoked_dev.plot_topomap(times=times, title='Deviant', time_unit='s')
 
 ###############################################################################
 # We can see the MMN effect more clearly by looking at the difference between
 # the two conditions. P50 and N100 are no longer visible, but MMN/P200 and
 # P300 are emphasised.
 evoked_difference = combine_evoked([evoked_dev, -evoked_std], weights='equal')
-evoked_difference.plot(window_title='Difference', gfp=True)
+evoked_difference.plot(window_title='Difference', gfp=True, time_unit='s')
 
 ###############################################################################
 # Source estimation.

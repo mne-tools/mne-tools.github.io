@@ -1,6 +1,4 @@
 """
-.. _tut_viz_raw:
-
 Visualize Raw data
 ==================
 
@@ -11,9 +9,9 @@ import numpy as np
 import mne
 
 data_path = op.join(mne.datasets.sample.data_path(), 'MEG', 'sample')
-raw = mne.io.read_raw_fif(op.join(data_path, 'sample_audvis_raw.fif'))
-raw.set_eeg_reference()  # set EEG average reference
-events = mne.read_events(op.join(data_path, 'sample_audvis_raw-eve.fif'))
+raw = mne.io.read_raw_fif(op.join(data_path, 'sample_audvis_raw.fif'),
+                          preload=True)
+raw.set_eeg_reference('average', projection=True)  # set EEG average reference
 
 ###############################################################################
 # The visualization module (:mod:`mne.viz`) contains all the plotting functions
@@ -25,7 +23,7 @@ events = mne.read_events(op.join(data_path, 'sample_audvis_raw-eve.fif'))
 #
 # To visually inspect your raw data, you can use the python equivalent of
 # ``mne_browse_raw``.
-raw.plot(block=True)
+raw.plot(block=True, lowpass=40)
 
 ###############################################################################
 # The channels are color coded by channel type. Generally MEG channels are
@@ -58,26 +56,38 @@ raw.plot(block=True)
 # .. warning:: Annotations are modified in-place immediately at run-time.
 #              Deleted annotations cannot be retrieved after deletion.
 #
-# The channels are sorted by channel type by default. You can use the ``order``
-# parameter of :func:`raw.plot <mne.io.Raw.plot>` to group the channels in a
-# different way. ``order='selection'`` uses the same channel groups as MNE-C's
-# mne_browse_raw (see :ref:`CACCJEJD`). The selections are defined in
-# ``mne-python/mne/data/mne_analyze.sel`` and by modifying the channels there,
-# you can define your own selection groups. Notice that this also affects the
-# selections returned by :func:`mne.read_selection`. By default the selections
-# only work for Neuromag data, but ``order='position'`` tries to mimic this
-# behavior for any data with sensor positions available. The channels are
-# grouped by sensor positions to 8 evenly sized regions. Notice that for this
-# to work effectively, all the data channels in the channel array must be
-# present. The ``order`` parameter can also be passed as an array of ints
-# (picks) to plot the channels in the given order.
-raw.plot(order='selection')
+# The channels are sorted by channel type by default. You can use the
+# ``group_by`` parameter of :func:`raw.plot <mne.io.Raw.plot>` to group the
+# channels in a different way. ``group_by='selection'`` uses the same channel
+# groups as MNE-C's mne_browse_raw (see :ref:`CACCJEJD`). The selections are
+# defined in ``mne-python/mne/data/mne_analyze.sel`` and by modifying the
+# channels there, you can define your own selection groups. Notice that this
+# also affects the selections returned by :func:`mne.read_selection`. By
+# default the selections only work for Neuromag data, but
+# ``group_by='position'`` tries to mimic this behavior for any data with sensor
+# positions available. The channels are grouped by sensor positions to 8 evenly
+# sized regions. Notice that for this to work effectively, all the data
+# channels in the channel array must be present. The ``order`` parameter allows
+# to customize the order and select a subset of channels for plotting (picks).
+# Here we use the butterfly mode and group the channels by position. To toggle
+# between regular and butterfly modes, press 'b' key when the plotter window is
+# active. Notice that ``group_by`` also affects the channel groupings in
+# butterfly mode.
+raw.plot(butterfly=True, group_by='position')
 
 ###############################################################################
-# We read the events from a file and passed it as a parameter when calling the
-# method. The events are plotted as vertical lines so you can see how they
-# align with the raw data.
+# We can read events from a file (or extract them from the trigger channel)
+# and pass them as a parameter when calling the method. The events are plotted
+# as vertical lines so you can see how they align with the raw data.
 #
+# We can also pass a corresponding "event_id" to transform the event
+# trigger integers to strings.
+
+events = mne.read_events(op.join(data_path, 'sample_audvis_raw-eve.fif'))
+event_id = {'A/L': 1, 'A/R': 2, 'V/L': 3, 'V/R': 4, 'S': 5, 'B': 32}
+raw.plot(butterfly=True, events=events, event_id=event_id)
+
+###############################################################################
 # We can check where the channels reside with ``plot_sensors``. Notice that
 # this method (along with many other MNE plotting functions) is callable using
 # any MNE data container where the channel information is available.
@@ -105,7 +115,7 @@ raw.plot_projs_topomap()
 raw.plot()
 
 ###############################################################################
-# Now click the `proj` button at the lower right corner of the browser
+# Now click the ``proj`` button at the lower right corner of the browser
 # window. A selection dialog should appear, where you can toggle the projectors
 # on and off. Notice that the first four are already applied to the data and
 # toggling them does not change the data. However the newly added projectors
@@ -115,9 +125,9 @@ raw.plot()
 # projectors.
 #
 # Raw container also lets us easily plot the power spectra over the raw data.
-# Here we plot the data using `spatial_colors` to map the line colors to
+# Here we plot the data using ``spatial_colors`` to map the line colors to
 # channel locations (default in versions >= 0.15.0). Other option is to use the
-# `average` (default in < 0.15.0). See the API documentation for more info.
+# ``average`` (default in < 0.15.0). See the API documentation for more info.
 raw.plot_psd(tmax=np.inf, average=False)
 
 ###############################################################################

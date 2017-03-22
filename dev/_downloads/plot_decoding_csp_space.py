@@ -40,7 +40,7 @@ event_id = dict(aud_l=1, vis_l=3)
 
 # Setup for reading the raw data
 raw = io.read_raw_fif(raw_fname, preload=True)
-raw.filter(2, None)  # replace baselining with high-pass
+raw.filter(2, None, fir_design='firwin')  # replace baselining with high-pass
 events = mne.read_events(event_fname)
 
 raw.info['bads'] = ['MEG 2443']  # set bad channels
@@ -58,19 +58,19 @@ evoked = epochs.average()
 # Decoding in sensor space using a linear SVM
 
 from sklearn.svm import SVC  # noqa
-from sklearn.cross_validation import ShuffleSplit  # noqa
+from sklearn.model_selection import ShuffleSplit  # noqa
 from mne.decoding import CSP  # noqa
 
 n_components = 3  # pick some components
 svc = SVC(C=1, kernel='linear')
-csp = CSP(n_components=n_components)
+csp = CSP(n_components=n_components, norm_trace=False)
 
 # Define a monte-carlo cross-validation generator (reduce variance):
-cv = ShuffleSplit(len(labels), 10, test_size=0.2, random_state=42)
+cv = ShuffleSplit(n_splits=10, test_size=0.2, random_state=42)
 scores = []
 epochs_data = epochs.get_data()
 
-for train_idx, test_idx in cv:
+for train_idx, test_idx in cv.split(labels):
     y_train, y_test = labels[train_idx], labels[test_idx]
 
     X_train = csp.fit_transform(epochs_data[train_idx], y_train)
@@ -90,14 +90,14 @@ print("Classification accuracy: %f / Chance level: %f" % (np.mean(scores),
 # Or use much more convenient scikit-learn cross_val_score function using
 # a Pipeline
 from sklearn.pipeline import Pipeline  # noqa
-from sklearn.cross_validation import cross_val_score  # noqa
-cv = ShuffleSplit(len(labels), 10, test_size=0.2, random_state=42)
+from sklearn.model_selection import cross_val_score  # noqa
+cv = ShuffleSplit(n_splits=10, test_size=0.2, random_state=42)
 clf = Pipeline([('CSP', csp), ('SVC', svc)])
 scores = cross_val_score(clf, epochs_data, labels, cv=cv, n_jobs=1)
 print(scores.mean())  # should match results above
 
 # And using reuglarized csp with Ledoit-Wolf estimator
-csp = CSP(n_components=n_components, reg='ledoit_wolf')
+csp = CSP(n_components=n_components, reg='ledoit_wolf', norm_trace=False)
 clf = Pipeline([('CSP', csp), ('SVC', svc)])
 scores = cross_val_score(clf, epochs_data, labels, cv=cv, n_jobs=1)
 print(scores.mean())  # should get better results than above
@@ -110,4 +110,4 @@ for idx in range(4):
     mne.viz.plot_topomap(data[idx], evoked.info, axes=axes[idx], show=False)
 fig.suptitle('CSP patterns')
 fig.tight_layout()
-fig.show()
+mne.viz.utils.plt_show()

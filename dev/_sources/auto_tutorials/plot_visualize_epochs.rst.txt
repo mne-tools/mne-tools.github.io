@@ -1,4 +1,8 @@
+.. note::
+    :class: sphx-glr-download-link-note
 
+    Click :ref:`here <sphx_glr_download_auto_tutorials_plot_visualize_epochs.py>` to download the full example code
+.. rst-class:: sphx-glr-example-title
 
 .. _sphx_glr_auto_tutorials_plot_visualize_epochs.py:
 
@@ -13,39 +17,26 @@ Visualize Epochs data
 
 .. code-block:: python
 
+    # sphinx_gallery_thumbnail_number = 7
+
     import os.path as op
 
     import mne
 
     data_path = op.join(mne.datasets.sample.data_path(), 'MEG', 'sample')
-    raw = mne.io.read_raw_fif(op.join(data_path, 'sample_audvis_raw.fif'))
-    raw.set_eeg_reference()  # set EEG average reference
+    raw = mne.io.read_raw_fif(
+        op.join(data_path, 'sample_audvis_raw.fif'), preload=True)
+    raw.load_data().filter(None, 9, fir_design='firwin')
+    raw.set_eeg_reference('average', projection=True)  # set EEG average reference
     event_id = {'auditory/left': 1, 'auditory/right': 2, 'visual/left': 3,
                 'visual/right': 4, 'smiley': 5, 'button': 32}
     events = mne.read_events(op.join(data_path, 'sample_audvis_raw-eve.fif'))
-    epochs = mne.Epochs(raw, events, event_id=event_id, tmin=-0.2, tmax=1.)
+    epochs = mne.Epochs(raw, events, event_id=event_id, tmin=-0.2, tmax=.5)
 
 
 
 
 
-.. rst-class:: sphx-glr-script-out
-
- Out::
-
-    Opening raw data file /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis_raw.fif...
-        Read a total of 3 projection items:
-            PCA-v1 (1 x 102)  idle
-            PCA-v2 (1 x 102)  idle
-            PCA-v3 (1 x 102)  idle
-        Range : 25800 ... 192599 =     42.956 ...   320.670 secs
-    Ready.
-    Current compensation grade : 0
-    Adding average EEG reference projection.
-    1 projection items deactivated
-    320 matching events found
-    Created an SSP operator (subspace dimension = 4)
-    4 projection items activated
 
 
 This tutorial focuses on visualization of epoched data. All of the functions
@@ -72,16 +63,9 @@ This blocks the execution of the script until the browser window is closed.
 
 
 .. image:: /auto_tutorials/images/sphx_glr_plot_visualize_epochs_001.png
-    :align: center
+    :class: sphx-glr-single-img
 
 
-.. rst-class:: sphx-glr-script-out
-
- Out::
-
-    Loading data for 320 events and 722 original time points ...
-    0 bad epochs dropped
-    Loading data for 20 events and 722 original time points ...
 
 
 The numbers at the top refer to the event id of the epoch. The number at the
@@ -125,19 +109,14 @@ window for more information about the interactive features.
     *
 
       .. image:: /auto_tutorials/images/sphx_glr_plot_visualize_epochs_002.png
-            :scale: 47
+            :class: sphx-glr-multi-img
 
     *
 
       .. image:: /auto_tutorials/images/sphx_glr_plot_visualize_epochs_003.png
-            :scale: 47
+            :class: sphx-glr-multi-img
 
 
-.. rst-class:: sphx-glr-script-out
-
- Out::
-
-    Loading data for 15 events and 722 original time points ...
 
 
 To plot individual channels as an image, where you see all the epochs at one
@@ -153,20 +132,54 @@ button. Hitting space bar resets the scale.
 
 .. code-block:: python
 
-    epochs.plot_image(278, cmap='interactive')
+    epochs.plot_image(278, cmap='interactive', sigma=1., vmin=-250, vmax=250)
 
 
 
 
 .. image:: /auto_tutorials/images/sphx_glr_plot_visualize_epochs_004.png
-    :align: center
+    :class: sphx-glr-single-img
 
 
-.. rst-class:: sphx-glr-script-out
 
- Out::
 
-    Loading data for 320 events and 722 original time points ...
+We can also give an overview of all channels by calculating  the global
+field power (or other other aggregation methods). However, combining
+multiple channel types (e.g., MEG and EEG) in this way is not sensible.
+Instead, we can use the ``group_by`` parameter. Setting ``group_by`` to
+'type' combines channels by type.
+``group_by`` can also be used to group channels into arbitrary groups, e.g.
+regions of interests, by providing a dictionary containing
+group name -> channel indices mappings.
+
+
+
+.. code-block:: python
+
+    epochs.plot_image(combine='gfp', group_by='type', sigma=2., cmap="YlGnBu_r")
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+    *
+
+      .. image:: /auto_tutorials/images/sphx_glr_plot_visualize_epochs_005.png
+            :class: sphx-glr-multi-img
+
+    *
+
+      .. image:: /auto_tutorials/images/sphx_glr_plot_visualize_epochs_006.png
+            :class: sphx-glr-multi-img
+
+    *
+
+      .. image:: /auto_tutorials/images/sphx_glr_plot_visualize_epochs_007.png
+            :class: sphx-glr-multi-img
+
+
 
 
 You also have functions for plotting channelwise information arranged into a
@@ -178,26 +191,28 @@ to be a bit off. Here we define the limits by hand.
 
 .. code-block:: python
 
-    epochs.plot_topo_image(vmin=-200, vmax=200, title='ERF images')
+    epochs.plot_topo_image(vmin=-250, vmax=250, title='ERF images', sigma=2.,
+                           fig_facecolor='w', font_color='k')
 
 
 
-.. image:: /auto_tutorials/images/sphx_glr_plot_visualize_epochs_005.png
-    :align: center
-
-
-.. rst-class:: sphx-glr-script-out
-
- Out::
-
-    Loading data for 320 events and 722 original time points ...
-
-
-**Total running time of the script:** ( 0 minutes  33.186 seconds)
+.. image:: /auto_tutorials/images/sphx_glr_plot_visualize_epochs_008.png
+    :class: sphx-glr-single-img
 
 
 
-.. container:: sphx-glr-footer
+
+**Total running time of the script:** ( 0 minutes  31.259 seconds)
+
+
+.. _sphx_glr_download_auto_tutorials_plot_visualize_epochs.py:
+
+
+.. only :: html
+
+ .. container:: sphx-glr-footer
+    :class: sphx-glr-footer-example
+
 
 
   .. container:: sphx-glr-download
@@ -210,6 +225,9 @@ to be a bit off. Here we define the limits by hand.
 
      :download:`Download Jupyter notebook: plot_visualize_epochs.ipynb <plot_visualize_epochs.ipynb>`
 
-.. rst-class:: sphx-glr-signature
 
-    `Generated by Sphinx-Gallery <http://sphinx-gallery.readthedocs.io>`_
+.. only:: html
+
+ .. rst-class:: sphx-glr-signature
+
+    `Gallery generated by Sphinx-Gallery <https://sphinx-gallery.readthedocs.io>`_

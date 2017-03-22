@@ -39,11 +39,11 @@ raw.plot()
 
 # set EOG channel
 raw.set_channel_types({'EEG058': 'eog'})
-raw.set_eeg_reference()
+raw.set_eeg_reference('average', projection=True)
 
 # show power line interference and remove it
-raw.plot_psd(tmax=60.)
-raw.notch_filter(np.arange(60, 181, 60))
+raw.plot_psd(tmax=60., average=False)
+raw.notch_filter(np.arange(60, 181, 60), fir_design='firwin')
 
 events = mne.find_events(raw, stim_channel='UPPT001')
 
@@ -69,7 +69,8 @@ mne.preprocessing.fix_stim_artifact(evoked)
 evoked.shift_time(-0.004)
 
 # plot the result
-evoked.plot()
+evoked.plot(time_unit='s')
 
 # show topomaps
-evoked.plot_topomap(times=np.array([0.016, 0.030, 0.060, 0.070]))
+evoked.plot_topomap(times=np.array([0.016, 0.030, 0.060, 0.070]),
+                    time_unit='s')

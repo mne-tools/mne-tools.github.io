@@ -97,7 +97,7 @@ evoked_data = np.mean(epochs_data, axis=0)
 evokeds = mne.EvokedArray(evoked_data, info=info, tmin=-0.2,
                           comment='Arbitrary', nave=nave)
 evokeds.plot(picks=picks, show=True, units={'mag': '-'},
-             titles={'mag': 'sin and cos averaged'})
+             titles={'mag': 'sin and cos averaged'}, time_unit='s')
 
 ###############################################################################
 # Create epochs by windowing the raw data.
@@ -137,7 +137,7 @@ epochs.plot(scalings='auto', block=True)
 # The example here uses the ExampleIO object for creating fake data.
 # For actual data and different file formats, consult the NEO documentation.
 reader = neo.io.ExampleIO('fakedata.nof')
-bl = reader.read(cascade=True, lazy=False)[0]
+bl = reader.read(lazy=False)[0]
 
 # Get data from first (and only) segment
 seg = bl.segments[0]
@@ -145,11 +145,14 @@ title = seg.file_origin
 
 ch_names = list()
 data = list()
-for asig in seg.analogsignals:
+for ai, asig in enumerate(seg.analogsignals):
     # Since the data does not contain channel names, channel indices are used.
-    ch_names.append(str(asig.channel_index))
-    asig = asig.rescale('V').magnitude
-    data.append(asig)
+    ch_names.append('Neo %02d' % (ai + 1,))
+    # We need the ravel() here because Neo < 0.5 gave 1D, Neo 0.5 gives
+    # 2D (but still a single channel).
+    data.append(asig.rescale('V').magnitude.ravel())
+
+data = np.array(data, float)
 
 sfreq = int(seg.analogsignals[0].sampling_rate.magnitude)
 

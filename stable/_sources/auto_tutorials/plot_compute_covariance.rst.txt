@@ -8,9 +8,16 @@
 Computing covariance matrix
 ===========================
 
+Many methods in MNE, including e.g. source estimation and some classification
+algorithms, require covariance estimations from the recordings.
+In this tutorial we cover the basics of sensor covariance computations and
+construct a noise covariance matrix that can be used when computing the
+minimum-norm inverse solution. For more information, see :ref:`BABDEEEB`.
+
 
 
 .. code-block:: python
+
 
     import os.path as op
 
@@ -38,36 +45,14 @@ inverse solution. For more information, see :ref:`BABDEEEB`.
     raw_empty_room = mne.io.read_raw_fif(raw_empty_room_fname)
     raw_fname = op.join(data_path, 'MEG', 'sample', 'sample_audvis_raw.fif')
     raw = mne.io.read_raw_fif(raw_fname)
-    raw.set_eeg_reference()
+    raw.set_eeg_reference('average', projection=True)
     raw.info['bads'] += ['EEG 053']  # bads + 1 more
 
 
 
 
 
-.. rst-class:: sphx-glr-script-out
 
- Out::
-
-    Opening raw data file /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/ernoise_raw.fif...
-    Isotrak not found
-        Read a total of 3 projection items:
-            PCA-v1 (1 x 102)  idle
-            PCA-v2 (1 x 102)  idle
-            PCA-v3 (1 x 102)  idle
-        Range : 19800 ... 85867 =     32.966 ...   142.965 secs
-    Ready.
-    Current compensation grade : 0
-    Opening raw data file /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis_raw.fif...
-        Read a total of 3 projection items:
-            PCA-v1 (1 x 102)  idle
-            PCA-v2 (1 x 102)  idle
-            PCA-v3 (1 x 102)  idle
-        Range : 25800 ... 192599 =     42.956 ...   320.670 secs
-    Ready.
-    Current compensation grade : 0
-    Adding average EEG reference projection.
-    1 projection items deactivated
 
 
 The definition of noise depends on the paradigm. In MEG it is quite common
@@ -80,28 +65,36 @@ useful if you use resting state as a noise baseline. Here we use the whole
 empty room recording to compute the noise covariance (tmax=None is the same
 as the end of the recording, see :func:`mne.compute_raw_covariance`).
 
+Keep in mind that you want to match your empty room dataset to your
+actual MEG data, processing-wise. Ensure that filters
+are all the same and if you use ICA, apply it to your empty-room and subject
+data equivalently. In this case we did not filter the data and
+we don't use ICA. However, we do have bad channels and projections in
+the MEG data, and, hence, we want to make sure they get stored in the
+covariance object.
+
 
 
 .. code-block:: python
 
-    noise_cov = mne.compute_raw_covariance(raw_empty_room, tmin=0, tmax=None)
+
+    raw_empty_room.info['bads'] = [
+        bb for bb in raw.info['bads'] if 'EEG' not in bb]
+    raw_empty_room.add_proj(
+        [pp.copy() for pp in raw.info['projs'] if 'EEG' not in pp['desc']])
+
+    noise_cov = mne.compute_raw_covariance(
+        raw_empty_room, tmin=0, tmax=None)
 
 
 
 
 
-.. rst-class:: sphx-glr-script-out
-
- Out::
-
-    Using up to 549 segments
-    Number of samples used : 65880
-    [done]
 
 
-Now that you the covariance matrix in a python object you can save it to a
-file with :func:`mne.write_cov`. Later you can read it back to a python
-object using :func:`mne.read_cov`.
+Now that you have the covariance matrix in an MNE-Python object you can
+save it to a file with :func:`mne.write_cov`. Later you can read it back
+using :func:`mne.read_cov`.
 
 You can also use the pre-stimulus baseline to estimate the noise covariance.
 First we have to construct the epochs. When computing the covariance, you
@@ -114,8 +107,8 @@ just to be sure, we define it here manually.
 .. code-block:: python
 
     events = mne.find_events(raw)
-    epochs = mne.Epochs(raw, events, event_id=1, tmin=-0.2, tmax=0.0,
-                        baseline=(-0.2, 0.0))
+    epochs = mne.Epochs(raw, events, event_id=1, tmin=-0.2, tmax=0.5,
+                        baseline=(-0.2, 0.0), decim=3)  # we'll decimate for speed
 
 
 
@@ -125,40 +118,22 @@ just to be sure, we define it here manually.
 
  Out::
 
-    320 events found
-    Events id: [ 1  2  3  4  5 32]
-    72 matching events found
-    Created an SSP operator (subspace dimension = 4)
-    4 projection items activated
+    The measurement information indicates a low-pass frequency of 172.176 Hz. The decim=3 parameter will result in a sampling frequency of 200.205 Hz, which can cause aliasing artifacts.
 
 
-Note that this method also attenuates the resting state activity in your
-source estimates.
+Note that this method also attenuates any activity in your
+source estimates that resemble the baseline, if you like it or not.
 
 
 
 .. code-block:: python
 
-    noise_cov_baseline = mne.compute_covariance(epochs)
+    noise_cov_baseline = mne.compute_covariance(epochs, tmax=0)
 
 
 
 
 
-.. rst-class:: sphx-glr-script-out
-
- Out::
-
-    Loading data for 72 events and 121 original time points ...
-    0 bad epochs dropped
-    Estimating covariance using EMPIRICAL
-    Done.
-    Using cross-validation to select the best estimator.
-    Number of samples used : 8712
-    [done]
-    log-likelihood on unseen data (descending order):
-       empirical: -1837.298
-    selecting best estimator: empirical
 
 
 Plot the covariance matrices
@@ -172,7 +147,7 @@ epochs are already applied, so ``proj`` parameter has no effect.
 .. code-block:: python
 
     noise_cov.plot(raw_empty_room.info, proj=True)
-    noise_cov_baseline.plot(epochs.info)
+    noise_cov_baseline.plot(epochs.info, proj=True)
 
 
 
@@ -201,11 +176,6 @@ epochs are already applied, so ``proj`` parameter has no effect.
             :scale: 47
 
 
-.. rst-class:: sphx-glr-script-out
-
- Out::
-
-    Created an SSP operator (subspace dimension = 3)
 
 
 How should I regularize the covariance matrix?
@@ -227,78 +197,13 @@ option cross-validation will be used to learn the optimal regularization:
 .. code-block:: python
 
 
-    cov = mne.compute_covariance(epochs, tmax=0., method='auto')
+    noise_cov_reg = mne.compute_covariance(epochs, tmax=0.,
+                                           method='auto')
 
 
 
 
 
-.. rst-class:: sphx-glr-script-out
-
- Out::
-
-    Loading data for 72 events and 121 original time points ...
-    Estimating covariance using SHRUNK
-    Done.
-    Estimating covariance using DIAGONAL_FIXED
-        EEG regularization : None
-        MAG regularization : 0.01
-        GRAD regularization : 0.01
-    Done.
-    Estimating covariance using EMPIRICAL
-    Done.
-    Estimating covariance using FACTOR_ANALYSIS
-    ... rank: 5 - loglik: -1889.922
-    ... rank: 10 - loglik: -1852.016
-    ... rank: 15 - loglik: -1829.413
-    ... rank: 20 - loglik: -1816.381
-    ... rank: 25 - loglik: -1805.784
-    ... rank: 30 - loglik: -1797.708
-    ... rank: 35 - loglik: -1792.948
-    ... rank: 40 - loglik: -1791.404
-    ... rank: 45 - loglik: -1789.788
-    ... rank: 50 - loglik: -1788.293
-    ... rank: 55 - loglik: -1787.154
-    ... rank: 60 - loglik: -1786.771
-    ... rank: 65 - loglik: -1786.254
-    ... rank: 70 - loglik: -1786.301
-    ... rank: 75 - loglik: -1786.192
-    ... rank: 80 - loglik: -1786.915
-    ... rank: 85 - loglik: -1786.300
-    ... rank: 90 - loglik: -1786.785
-    ... rank: 95 - loglik: -1786.508
-    ... rank: 100 - loglik: -1786.828
-    ... rank: 105 - loglik: -1786.391
-    ... rank: 110 - loglik: -1786.858
-    ... rank: 115 - loglik: -1787.574
-    ... rank: 120 - loglik: -1787.115
-    early stopping parameter search.
-    ... best model at rank = 75
-    Done.
-    Using cross-validation to select the best estimator.
-        EEG regularization : None
-        MAG regularization : 0.01
-        GRAD regularization : 0.01
-        EEG regularization : None
-        MAG regularization : 0.01
-        GRAD regularization : 0.01
-        EEG regularization : None
-        MAG regularization : 0.01
-        GRAD regularization : 0.01
-    Number of samples used : 8712
-    [done]
-    Number of samples used : 8712
-    [done]
-    Number of samples used : 8712
-    [done]
-    Number of samples used : 8712
-    [done]
-    log-likelihood on unseen data (descending order):
-       shrunk: -1772.255
-       factor_analysis: -1786.192
-       diagonal_fixed: -1795.956
-       empirical: -1837.298
-    selecting best estimator: shrunk
 
 
 This procedure evaluates the noise covariance quantitatively by how well it
@@ -320,7 +225,8 @@ of freedom, e.g. ``ddof=3`` with 2 active SSP vectors):
 
 
     evoked = epochs.average()
-    evoked.plot_white(cov)
+    evoked.plot_white(noise_cov_reg)
+
 
 
 
@@ -329,20 +235,6 @@ of freedom, e.g. ``ddof=3`` with 2 active SSP vectors):
     :align: center
 
 
-.. rst-class:: sphx-glr-script-out
-
- Out::
-
-    estimated rank (eeg): 59
-    estimated rank (grad): 203
-    estimated rank (mag): 102
-    estimated rank (mag + grad): 305
-    estimated rank (eeg): 59
-        Created an SSP operator (subspace dimension = 4)
-    Setting small MEG eigenvalues to zero.
-    Not doing PCA for MEG.
-    Setting small EEG eigenvalues to zero.
-    Not doing PCA for EEG.
 
 
 This plot displays both, the whitened evoked signals for each channels and
@@ -370,10 +262,11 @@ compared:
 .. code-block:: python
 
 
-    covs = mne.compute_covariance(epochs, tmax=0., method=('empirical', 'shrunk'),
-                                  return_estimators=True)
+    noise_covs = mne.compute_covariance(
+        epochs, tmax=0., method=('empirical', 'shrunk'), return_estimators=True)
     evoked = epochs.average()
-    evoked.plot_white(covs)
+    evoked.plot_white(noise_covs)
+
 
 
 
@@ -382,47 +275,39 @@ compared:
     :align: center
 
 
-.. rst-class:: sphx-glr-script-out
-
- Out::
-
-    Loading data for 72 events and 121 original time points ...
-    Estimating covariance using EMPIRICAL
-    Done.
-    Estimating covariance using SHRUNK
-    Done.
-    Using cross-validation to select the best estimator.
-    Number of samples used : 8712
-    [done]
-    Number of samples used : 8712
-    [done]
-    log-likelihood on unseen data (descending order):
-       shrunk: -1772.255
-       empirical: -1837.298
-    estimated rank (eeg): 59
-    estimated rank (grad): 203
-    estimated rank (mag): 102
-    estimated rank (mag + grad): 305
-    estimated rank (eeg): 59
-    estimated rank (eeg): 58
-    estimated rank (grad): 203
-    estimated rank (mag): 99
-    estimated rank (mag + grad): 302
-    estimated rank (eeg): 58
-        Created an SSP operator (subspace dimension = 4)
-    Setting small MEG eigenvalues to zero.
-    Not doing PCA for MEG.
-    Setting small EEG eigenvalues to zero.
-    Not doing PCA for EEG.
-        Created an SSP operator (subspace dimension = 4)
-    Setting small MEG eigenvalues to zero.
-    Not doing PCA for MEG.
-    Setting small EEG eigenvalues to zero.
-    Not doing PCA for EEG.
 
 
 This will plot the whitened evoked for the optimal estimator and display the
 GFPs for all estimators as separate lines in the related panel.
+
+
+Finally, let's have a look at the difference between empty room and
+event related covariance.
+
+
+
+.. code-block:: python
+
+
+    evoked_meg = evoked.pick_types(meg=True, eeg=False)
+    noise_cov_meg = mne.pick_channels_cov(noise_cov_baseline, evoked_meg.ch_names)
+    noise_cov['method'] = 'empty_room'
+    noise_cov_meg['method'] = 'baseline'
+
+    evoked_meg.plot_white([noise_cov_meg, noise_cov])
+
+
+
+
+
+.. image:: /auto_tutorials/images/sphx_glr_plot_compute_covariance_007.png
+    :align: center
+
+
+
+
+Based on the negative log-likelihood, the baseline covariance
+seems more appropriate.
 
 
 References
@@ -436,11 +321,13 @@ References
    space separation method. IEEE Trans. Signal Proc. 53, 3359-3372.
 
 
-**Total running time of the script:** ( 4 minutes  22.412 seconds)
+**Total running time of the script:** ( 1 minutes  3.948 seconds)
 
 
 
-.. container:: sphx-glr-footer
+.. only :: html
+
+ .. container:: sphx-glr-footer
 
 
   .. container:: sphx-glr-download
@@ -453,6 +340,9 @@ References
 
      :download:`Download Jupyter notebook: plot_compute_covariance.ipynb <plot_compute_covariance.ipynb>`
 
-.. rst-class:: sphx-glr-signature
 
-    `Generated by Sphinx-Gallery <http://sphinx-gallery.readthedocs.io>`_
+.. only:: html
+
+ .. rst-class:: sphx-glr-signature
+
+    `Gallery generated by Sphinx-Gallery <https://sphinx-gallery.readthedocs.io>`_

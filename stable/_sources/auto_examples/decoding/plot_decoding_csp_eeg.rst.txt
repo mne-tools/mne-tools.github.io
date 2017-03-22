@@ -38,6 +38,10 @@ References
     import numpy as np
     import matplotlib.pyplot as plt
 
+    from sklearn.pipeline import Pipeline
+    from sklearn.discriminant_analysis import LinearDiscriminantAnalysis
+    from sklearn.model_selection import ShuffleSplit, cross_val_score
+
     from mne import Epochs, pick_types, find_events
     from mne.channels import read_layout
     from mne.io import concatenate_raws, read_raw_edf
@@ -57,14 +61,15 @@ References
     runs = [6, 10, 14]  # motor imagery: hands vs feet
 
     raw_fnames = eegbci.load_data(subject, runs)
-    raw_files = [read_raw_edf(f, preload=True) for f in raw_fnames]
+    raw_files = [read_raw_edf(f, preload=True, stim_channel='auto') for f in
+                 raw_fnames]
     raw = concatenate_raws(raw_files)
 
     # strip channel names of "." characters
     raw.rename_channels(lambda x: x.strip('.'))
 
     # Apply band-pass filter
-    raw.filter(7., 30.)
+    raw.filter(7., 30., fir_design='firwin', skip_by_annotation='edge')
 
     events = find_events(raw, shortest_event=0, stim_channel='STI 014')
 
@@ -87,24 +92,35 @@ References
  Out::
 
     Extracting edf Parameters from /home/ubuntu/mne_data/MNE-eegbci-data/physiobank/database/eegmmidb/S001/S001R06.edf...
+    EDF file detected
     Setting channel info structure...
-    Creating Raw.info structure...
+    Created Raw.info structure...
     Reading 0 ... 19999  =      0.000 ...   124.994 secs...
     Ready.
     Extracting edf Parameters from /home/ubuntu/mne_data/MNE-eegbci-data/physiobank/database/eegmmidb/S001/S001R10.edf...
+    EDF file detected
     Setting channel info structure...
-    Creating Raw.info structure...
+    Created Raw.info structure...
     Reading 0 ... 19999  =      0.000 ...   124.994 secs...
     Ready.
     Extracting edf Parameters from /home/ubuntu/mne_data/MNE-eegbci-data/physiobank/database/eegmmidb/S001/S001R14.edf...
+    EDF file detected
     Setting channel info structure...
-    Creating Raw.info structure...
+    Created Raw.info structure...
     Reading 0 ... 19999  =      0.000 ...   124.994 secs...
     Ready.
     Setting up band-pass filter from 7 - 30 Hz
     l_trans_bandwidth chosen to be 2.0 Hz
     h_trans_bandwidth chosen to be 7.5 Hz
-    Filter length of 528 samples (3.300 sec) selected
+    Filter length of 265 samples (1.656 sec) selected
+    Setting up band-pass filter from 7 - 30 Hz
+    l_trans_bandwidth chosen to be 2.0 Hz
+    h_trans_bandwidth chosen to be 7.5 Hz
+    Filter length of 265 samples (1.656 sec) selected
+    Setting up band-pass filter from 7 - 30 Hz
+    l_trans_bandwidth chosen to be 2.0 Hz
+    h_trans_bandwidth chosen to be 7.5 Hz
+    Filter length of 265 samples (1.656 sec) selected
     Removing orphaned offset at the beginning of the file.
     89 events found
     Events id: [1 2 3]
@@ -121,22 +137,18 @@ Classification with linear discrimant analysis
 .. code-block:: python
 
 
-    from sklearn.lda import LDA  # noqa
-    from sklearn.cross_validation import ShuffleSplit  # noqa
-
-    # Assemble a classifier
-    lda = LDA()
-    csp = CSP(n_components=4, reg=None, log=True)
-
     # Define a monte-carlo cross-validation generator (reduce variance):
-    cv = ShuffleSplit(len(labels), 10, test_size=0.2, random_state=42)
     scores = []
     epochs_data = epochs.get_data()
     epochs_data_train = epochs_train.get_data()
+    cv = ShuffleSplit(10, test_size=0.2, random_state=42)
+    cv_split = cv.split(epochs_data_train)
+
+    # Assemble a classifier
+    lda = LinearDiscriminantAnalysis()
+    csp = CSP(n_components=4, reg=None, log=True, norm_trace=False)
 
     # Use scikit-learn Pipeline with cross_val_score function
-    from sklearn.pipeline import Pipeline  # noqa
-    from sklearn.cross_validation import cross_val_score  # noqa
     clf = Pipeline([('CSP', csp), ('LDA', lda)])
     scores = cross_val_score(clf, epochs_data_train, labels, cv=cv, n_jobs=1)
 
@@ -149,14 +161,9 @@ Classification with linear discrimant analysis
     # plot CSP patterns estimated on full data for visualization
     csp.fit_transform(epochs_data, labels)
 
-    evoked = epochs.average()
-    evoked.data = csp.patterns_.T
-    evoked.times = np.arange(evoked.data.shape[0])
-
     layout = read_layout('EEG1005')
-    evoked.plot_topomap(times=[0, 1, 2, 3, 4, 5], ch_type='eeg', layout=layout,
-                        scale_time=1, time_format='%i', scale=1,
-                        unit='Patterns (AU)', size=1.5)
+    csp.plot_patterns(epochs.info, layout=layout, ch_type='eeg',
+                      units='Patterns (AU)', size=1.5)
 
 
 
@@ -169,7 +176,7 @@ Classification with linear discrimant analysis
 
  Out::
 
-    Classification accuracy: 0.944444 / Chance level: 0.533333
+    Classification accuracy: 0.933333 / Chance level: 0.533333
 
 
 Look at performance over time
@@ -186,7 +193,7 @@ Look at performance over time
 
     scores_windows = []
 
-    for train_idx, test_idx in cv:
+    for train_idx, test_idx in cv_split:
         y_train, y_test = labels[train_idx], labels[test_idx]
 
         X_train = csp.fit_transform(epochs_data_train[train_idx], y_train)
@@ -223,11 +230,13 @@ Look at performance over time
 
 
 
-**Total running time of the script:** ( 0 minutes  3.265 seconds)
+**Total running time of the script:** ( 0 minutes  1.859 seconds)
 
 
 
-.. container:: sphx-glr-footer
+.. only :: html
+
+ .. container:: sphx-glr-footer
 
 
   .. container:: sphx-glr-download
@@ -240,6 +249,9 @@ Look at performance over time
 
      :download:`Download Jupyter notebook: plot_decoding_csp_eeg.ipynb <plot_decoding_csp_eeg.ipynb>`
 
-.. rst-class:: sphx-glr-signature
 
-    `Generated by Sphinx-Gallery <http://sphinx-gallery.readthedocs.io>`_
+.. only:: html
+
+ .. rst-class:: sphx-glr-signature
+
+    `Gallery generated by Sphinx-Gallery <https://sphinx-gallery.readthedocs.io>`_

@@ -1,9 +1,11 @@
+.. note::
+    :class: sphx-glr-download-link-note
 
+    Click :ref:`here <sphx_glr_download_auto_tutorials_plot_visualize_raw.py>` to download the full example code
+.. rst-class:: sphx-glr-example-title
 
 .. _sphx_glr_auto_tutorials_plot_visualize_raw.py:
 
-
-.. _tut_viz_raw:
 
 Visualize Raw data
 ==================
@@ -19,28 +21,14 @@ Visualize Raw data
     import mne
 
     data_path = op.join(mne.datasets.sample.data_path(), 'MEG', 'sample')
-    raw = mne.io.read_raw_fif(op.join(data_path, 'sample_audvis_raw.fif'))
-    raw.set_eeg_reference()  # set EEG average reference
-    events = mne.read_events(op.join(data_path, 'sample_audvis_raw-eve.fif'))
+    raw = mne.io.read_raw_fif(op.join(data_path, 'sample_audvis_raw.fif'),
+                              preload=True)
+    raw.set_eeg_reference('average', projection=True)  # set EEG average reference
 
 
 
 
 
-.. rst-class:: sphx-glr-script-out
-
- Out::
-
-    Opening raw data file /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis_raw.fif...
-        Read a total of 3 projection items:
-            PCA-v1 (1 x 102)  idle
-            PCA-v2 (1 x 102)  idle
-            PCA-v3 (1 x 102)  idle
-        Range : 25800 ... 192599 =     42.956 ...   320.670 secs
-    Ready.
-    Current compensation grade : 0
-    Adding average EEG reference projection.
-    1 projection items deactivated
 
 
 The visualization module (:mod:`mne.viz`) contains all the plotting functions
@@ -57,13 +45,13 @@ To visually inspect your raw data, you can use the python equivalent of
 
 .. code-block:: python
 
-    raw.plot(block=True)
+    raw.plot(block=True, lowpass=40)
 
 
 
 
 .. image:: /auto_tutorials/images/sphx_glr_plot_visualize_raw_001.png
-    :align: center
+    :class: sphx-glr-single-img
 
 
 
@@ -98,25 +86,29 @@ corner of the browser window.
 .. warning:: Annotations are modified in-place immediately at run-time.
              Deleted annotations cannot be retrieved after deletion.
 
-The channels are sorted by channel type by default. You can use the ``order``
-parameter of :func:`raw.plot <mne.io.Raw.plot>` to group the channels in a
-different way. ``order='selection'`` uses the same channel groups as MNE-C's
-mne_browse_raw (see :ref:`CACCJEJD`). The selections are defined in
-``mne-python/mne/data/mne_analyze.sel`` and by modifying the channels there,
-you can define your own selection groups. Notice that this also affects the
-selections returned by :func:`mne.read_selection`. By default the selections
-only work for Neuromag data, but ``order='position'`` tries to mimic this
-behavior for any data with sensor positions available. The channels are
-grouped by sensor positions to 8 evenly sized regions. Notice that for this
-to work effectively, all the data channels in the channel array must be
-present. The ``order`` parameter can also be passed as an array of ints
-(picks) to plot the channels in the given order.
+The channels are sorted by channel type by default. You can use the
+``group_by`` parameter of :func:`raw.plot <mne.io.Raw.plot>` to group the
+channels in a different way. ``group_by='selection'`` uses the same channel
+groups as MNE-C's mne_browse_raw (see :ref:`CACCJEJD`). The selections are
+defined in ``mne-python/mne/data/mne_analyze.sel`` and by modifying the
+channels there, you can define your own selection groups. Notice that this
+also affects the selections returned by :func:`mne.read_selection`. By
+default the selections only work for Neuromag data, but
+``group_by='position'`` tries to mimic this behavior for any data with sensor
+positions available. The channels are grouped by sensor positions to 8 evenly
+sized regions. Notice that for this to work effectively, all the data
+channels in the channel array must be present. The ``order`` parameter allows
+to customize the order and select a subset of channels for plotting (picks).
+Here we use the butterfly mode and group the channels by position. To toggle
+between regular and butterfly modes, press 'b' key when the plotter window is
+active. Notice that ``group_by`` also affects the channel groupings in
+butterfly mode.
 
 
 
 .. code-block:: python
 
-    raw.plot(order='selection')
+    raw.plot(butterfly=True, group_by='position')
 
 
 
@@ -127,19 +119,40 @@ present. The ``order`` parameter can also be passed as an array of ints
     *
 
       .. image:: /auto_tutorials/images/sphx_glr_plot_visualize_raw_002.png
-            :scale: 47
+            :class: sphx-glr-multi-img
 
     *
 
       .. image:: /auto_tutorials/images/sphx_glr_plot_visualize_raw_003.png
-            :scale: 47
+            :class: sphx-glr-multi-img
 
 
 
 
-We read the events from a file and passed it as a parameter when calling the
-method. The events are plotted as vertical lines so you can see how they
-align with the raw data.
+We can read events from a file (or extract them from the trigger channel)
+and pass them as a parameter when calling the method. The events are plotted
+as vertical lines so you can see how they align with the raw data.
+
+We can also pass a corresponding "event_id" to transform the event
+trigger integers to strings.
+
+
+
+.. code-block:: python
+
+
+    events = mne.read_events(op.join(data_path, 'sample_audvis_raw-eve.fif'))
+    event_id = {'A/L': 1, 'A/R': 2, 'V/L': 3, 'V/R': 4, 'S': 5, 'B': 32}
+    raw.plot(butterfly=True, events=events, event_id=event_id)
+
+
+
+
+.. image:: /auto_tutorials/images/sphx_glr_plot_visualize_raw_004.png
+    :class: sphx-glr-single-img
+
+
+
 
 We can check where the channels reside with ``plot_sensors``. Notice that
 this method (along with many other MNE plotting functions) is callable using
@@ -154,8 +167,8 @@ any MNE data container where the channel information is available.
 
 
 
-.. image:: /auto_tutorials/images/sphx_glr_plot_visualize_raw_004.png
-    :align: center
+.. image:: /auto_tutorials/images/sphx_glr_plot_visualize_raw_005.png
+    :class: sphx-glr-single-img
 
 
 
@@ -179,22 +192,10 @@ file and plot them.
 
 
 
-.. image:: /auto_tutorials/images/sphx_glr_plot_visualize_raw_005.png
-    :align: center
+.. image:: /auto_tutorials/images/sphx_glr_plot_visualize_raw_006.png
+    :class: sphx-glr-single-img
 
 
-.. rst-class:: sphx-glr-script-out
-
- Out::
-
-    Read a total of 6 projection items:
-            EOG-planar-998--0.200-0.200-PCA-01 (1 x 203)  idle
-            EOG-planar-998--0.200-0.200-PCA-02 (1 x 203)  idle
-            EOG-axial-998--0.200-0.200-PCA-01 (1 x 102)  idle
-            EOG-axial-998--0.200-0.200-PCA-02 (1 x 102)  idle
-            EOG-eeg-998--0.200-0.200-PCA-01 (1 x 59)  idle
-            EOG-eeg-998--0.200-0.200-PCA-02 (1 x 59)  idle
-    6 projection items deactivated
 
 
 The first three projectors that we see are the SSP vectors from empty room
@@ -213,13 +214,13 @@ again.
 
 
 
-.. image:: /auto_tutorials/images/sphx_glr_plot_visualize_raw_006.png
-    :align: center
+.. image:: /auto_tutorials/images/sphx_glr_plot_visualize_raw_007.png
+    :class: sphx-glr-single-img
 
 
 
 
-Now click the `proj` button at the lower right corner of the browser
+Now click the ``proj`` button at the lower right corner of the browser
 window. A selection dialog should appear, where you can toggle the projectors
 on and off. Notice that the first four are already applied to the data and
 toggling them does not change the data. However the newly added projectors
@@ -229,9 +230,9 @@ inspecting the effect. See :func:`mne.io.Raw.del_proj` to actually remove the
 projectors.
 
 Raw container also lets us easily plot the power spectra over the raw data.
-Here we plot the data using `spatial_colors` to map the line colors to
+Here we plot the data using ``spatial_colors`` to map the line colors to
 channel locations (default in versions >= 0.15.0). Other option is to use the
-`average` (default in < 0.15.0). See the API documentation for more info.
+``average`` (default in < 0.15.0). See the API documentation for more info.
 
 
 
@@ -242,17 +243,10 @@ channel locations (default in versions >= 0.15.0). Other option is to use the
 
 
 
-.. image:: /auto_tutorials/images/sphx_glr_plot_visualize_raw_007.png
-    :align: center
+.. image:: /auto_tutorials/images/sphx_glr_plot_visualize_raw_008.png
+    :class: sphx-glr-single-img
 
 
-.. rst-class:: sphx-glr-script-out
-
- Out::
-
-    Effective window size : 3.410 (s)
-    Effective window size : 3.410 (s)
-    Effective window size : 3.410 (s)
 
 
 Plotting channel-wise power spectra is just as easy. The layout is inferred
@@ -276,27 +270,28 @@ wise spectra of first 30 seconds of the data.
 
     *
 
-      .. image:: /auto_tutorials/images/sphx_glr_plot_visualize_raw_008.png
-            :scale: 47
+      .. image:: /auto_tutorials/images/sphx_glr_plot_visualize_raw_009.png
+            :class: sphx-glr-multi-img
 
     *
 
-      .. image:: /auto_tutorials/images/sphx_glr_plot_visualize_raw_009.png
-            :scale: 47
-
-
-.. rst-class:: sphx-glr-script-out
-
- Out::
-
-    Effective window size : 1.705 (s)
-
-
-**Total running time of the script:** ( 0 minutes  21.579 seconds)
+      .. image:: /auto_tutorials/images/sphx_glr_plot_visualize_raw_010.png
+            :class: sphx-glr-multi-img
 
 
 
-.. container:: sphx-glr-footer
+
+**Total running time of the script:** ( 0 minutes  17.035 seconds)
+
+
+.. _sphx_glr_download_auto_tutorials_plot_visualize_raw.py:
+
+
+.. only :: html
+
+ .. container:: sphx-glr-footer
+    :class: sphx-glr-footer-example
+
 
 
   .. container:: sphx-glr-download
@@ -309,6 +304,9 @@ wise spectra of first 30 seconds of the data.
 
      :download:`Download Jupyter notebook: plot_visualize_raw.ipynb <plot_visualize_raw.ipynb>`
 
-.. rst-class:: sphx-glr-signature
 
-    `Generated by Sphinx-Gallery <http://sphinx-gallery.readthedocs.io>`_
+.. only:: html
+
+ .. rst-class:: sphx-glr-signature
+
+    `Gallery generated by Sphinx-Gallery <https://sphinx-gallery.readthedocs.io>`_

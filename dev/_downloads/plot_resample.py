@@ -14,8 +14,6 @@ reduction in data size, at the cost of an equal loss of temporal resolution.
 # Authors: Marijn van Vliet <w.m.vanvliet@gmail.com>
 #
 # License: BSD (3-clause)
-#
-from __future__ import print_function
 
 from matplotlib import pyplot as plt
 
@@ -61,7 +59,7 @@ mne.viz.tight_layout()
 # When resampling epochs is unwanted or impossible, for example when the data
 # doesn't fit into memory or your analysis pipeline doesn't involve epochs at
 # all, the alternative approach is to resample the continuous data. This
-# can also be done on non-preloaded data.
+# can only be done on loaded or pre-loaded data.
 
 # Resample to 300 Hz
 raw_resampled = raw.copy().resample(300, npad='auto')
@@ -73,8 +71,8 @@ raw_resampled = raw.copy().resample(300, npad='auto')
 # events on the original data before downsampling.
 print('Number of events before resampling:', len(mne.find_events(raw)))
 
-# Resample to 100 Hz (generates warning)
-raw_resampled = raw.copy().resample(100, npad='auto')
+# Resample to 100 Hz (suppress the warning that would be emitted)
+raw_resampled = raw.copy().resample(100, npad='auto', verbose='error')
 print('Number of events after resampling:',
       len(mne.find_events(raw_resampled)))
 
