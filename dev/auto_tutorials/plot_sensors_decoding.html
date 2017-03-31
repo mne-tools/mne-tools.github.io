@@ -150,7 +150,7 @@ This documentation is for the <strong>development version (0.15.dev0)</strong> -
             </a></p><ul>
 <li><a class="reference internal" href="#">Decoding sensor space data</a><ul>
 <li><a class="reference internal" href="#temporal-decoding">Temporal decoding</a></li>
-<li><a class="reference internal" href="#generalization-across-time">Generalization Across Time</a></li>
+<li><a class="reference internal" href="#temporal-generalization">Temporal Generalization</a></li>
 <li><a class="reference internal" href="#exercise">Exercise</a><ul>
 <li><a class="reference internal" href="#references">References</a></li>
 </ul>
@@ -178,12 +178,14 @@ point.</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
 
-<span class="kn">from</span> <span class="nn">sklearn.metrics</span> <span class="kn">import</span> <span class="n">roc_auc_score</span>
-<span class="kn">from</span> <span class="nn">sklearn.cross_validation</span> <span class="kn">import</span> <span class="n">StratifiedKFold</span>
+<span class="kn">from</span> <span class="nn">sklearn.pipeline</span> <span class="kn">import</span> <span class="n">make_pipeline</span>
+<span class="kn">from</span> <span class="nn">sklearn.preprocessing</span> <span class="kn">import</span> <span class="n">StandardScaler</span>
+<span class="kn">from</span> <span class="nn">sklearn.linear_model</span> <span class="kn">import</span> <span class="n">LogisticRegression</span>
 
 <span class="kn">import</span> <span class="nn">mne</span>
 <span class="kn">from</span> <span class="nn">mne.datasets</span> <span class="kn">import</span> <span class="n">sample</span>
-<span class="kn">from</span> <span class="nn">mne.decoding</span> <span class="kn">import</span> <a href="../generated/mne.decoding.TimeDecoding.html#mne.decoding.TimeDecoding" title="View documentation for mne.decoding.TimeDecoding"><span class="n">TimeDecoding</span></a><span class="p">,</span> <a href="../generated/mne.decoding.GeneralizationAcrossTime.html#mne.decoding.GeneralizationAcrossTime" title="View documentation for mne.decoding.GeneralizationAcrossTime"><span class="n">GeneralizationAcrossTime</span></a>
+<span class="kn">from</span> <span class="nn">mne.decoding</span> <span class="kn">import</span> <span class="p">(</span><a href="../generated/mne.decoding.SlidingEstimator.html#mne.decoding.SlidingEstimator" title="View documentation for mne.decoding.SlidingEstimator"><span class="n">SlidingEstimator</span></a><span class="p">,</span> <a href="../generated/mne.decoding.GeneralizingEstimator.html#mne.decoding.GeneralizingEstimator" title="View documentation for mne.decoding.GeneralizingEstimator"><span class="n">GeneralizingEstimator</span></a><span class="p">,</span>
+                          <span class="n">cross_val_multiscore</span><span class="p">,</span> <a href="../generated/mne.decoding.LinearModel.html#mne.decoding.LinearModel" title="View documentation for mne.decoding.LinearModel"><span class="n">LinearModel</span></a><span class="p">,</span> <a href="../generated/mne.decoding.get_coef.html#mne.decoding.get_coef" title="View documentation for mne.decoding.get_coef"><span class="n">get_coef</span></a><span class="p">)</span>
 
 <span class="n">data_path</span> <span class="o">=</span> <a href="../generated/mne.datasets.sample.data_path.html#mne.datasets.sample.data_path" title="View documentation for mne.datasets.sample.data_path"><span class="n">sample</span><span class="o">.</span><span class="n">data_path</span></a><span class="p">()</span>
 
@@ -193,12 +195,15 @@ point.</p>
 <p>Set parameters</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">raw_fname</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis_filt-0-40_raw.fif&#39;</span>
 <span class="n">event_fname</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis_filt-0-40_raw-eve.fif&#39;</span>
-<span class="n">tmin</span><span class="p">,</span> <span class="n">tmax</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.5</span>
-<span class="n">event_id</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">aud_l</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">vis_l</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<span class="n">tmin</span><span class="p">,</span> <span class="n">tmax</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.200</span><span class="p">,</span> <span class="mf">0.500</span>
+<span class="n">event_id</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">audio_left</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">visual_left</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
 
 <span class="c1"># Setup for reading the raw data</span>
 <span class="n">raw</span> <span class="o">=</span> <a href="../generated/mne.io.read_raw_fif.html#mne.io.read_raw_fif" title="View documentation for mne.io.read_raw_fif"><span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read_raw_fif</span></a><span class="p">(</span><span class="n">raw_fname</span><span class="p">,</span> <span class="n">preload</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-<span class="n">raw</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>  <span class="c1"># replace baselining with high-pass</span>
+
+<span class="c1"># The subsequent decoding analyses only capture evoked responses, so we can</span>
+<span class="c1"># low-pass the MEG data.</span>
+<span class="n">raw</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="mf">40.</span><span class="p">)</span>
 <span class="n">events</span> <span class="o">=</span> <a href="../generated/mne.read_events.html#mne.read_events" title="View documentation for mne.read_events"><span class="n">mne</span><span class="o">.</span><span class="n">read_events</span></a><span class="p">(</span><span class="n">event_fname</span><span class="p">)</span>
 
 <span class="c1"># Set up pick list: EEG + MEG - bad channels (modify to your needs)</span>
@@ -208,12 +213,10 @@ point.</p>
 
 <span class="c1"># Read epochs</span>
 <span class="n">epochs</span> <span class="o">=</span> <a href="../generated/mne.Epochs.html#mne.Epochs" title="View documentation for mne.Epochs"><span class="n">mne</span><span class="o">.</span><span class="n">Epochs</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">event_id</span><span class="p">,</span> <span class="n">tmin</span><span class="p">,</span> <span class="n">tmax</span><span class="p">,</span> <span class="n">proj</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
-                    <span class="n">picks</span><span class="o">=</span><span class="n">picks</span><span class="p">,</span> <span class="n">baseline</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">preload</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
-                    <span class="n">reject</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">grad</span><span class="o">=</span><span class="mf">4000e-13</span><span class="p">,</span> <span class="n">eog</span><span class="o">=</span><span class="mf">150e-6</span><span class="p">))</span>
+                    <span class="n">picks</span><span class="o">=</span><span class="n">picks</span><span class="p">,</span> <span class="n">baseline</span><span class="o">=</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="mf">0.</span><span class="p">),</span> <span class="n">preload</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+                    <span class="n">reject</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">grad</span><span class="o">=</span><span class="mf">4000e-13</span><span class="p">,</span> <span class="n">eog</span><span class="o">=</span><span class="mf">150e-6</span><span class="p">),</span> <span class="n">decim</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 
-<span class="n">epochs_list</span> <span class="o">=</span> <span class="p">[</span><span class="n">epochs</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">event_id</span><span class="p">]</span>
-<a href="../generated/mne.epochs.equalize_epoch_counts.html#mne.epochs.equalize_epoch_counts" title="View documentation for mne.epochs.equalize_epoch_counts"><span class="n">mne</span><span class="o">.</span><span class="n">epochs</span><span class="o">.</span><span class="n">equalize_epoch_counts</span></a><span class="p">(</span><span class="n">epochs_list</span><span class="p">)</span>
-<span class="n">data_picks</span> <span class="o">=</span> <a href="../generated/mne.pick_types.html#mne.pick_types" title="View documentation for mne.pick_types"><span class="n">mne</span><span class="o">.</span><span class="n">pick_types</span></a><span class="p">(</span><span class="n">epochs</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">meg</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="s1">&#39;bads&#39;</span><span class="p">)</span>
+<span class="n">epochs</span><span class="o">.</span><span class="n">pick_types</span><span class="p">(</span><span class="n">meg</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="s1">&#39;bads&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p class="sphx-glr-script-out">Out:</p>
@@ -227,10 +230,11 @@ point.</p>
 <span class="n">Ready</span><span class="o">.</span>
 <span class="n">Current</span> <span class="n">compensation</span> <span class="n">grade</span> <span class="p">:</span> <span class="mi">0</span>
 <span class="n">Reading</span> <span class="mi">0</span> <span class="o">...</span> <span class="mi">41699</span>  <span class="o">=</span>      <span class="mf">0.000</span> <span class="o">...</span>   <span class="mf">277.709</span> <span class="n">secs</span><span class="o">...</span>
-<span class="n">Setting</span> <span class="n">up</span> <span class="n">high</span><span class="o">-</span><span class="k">pass</span> <span class="nb">filter</span> <span class="n">at</span> <span class="mi">2</span> <span class="n">Hz</span>
-<span class="n">l_trans_bandwidth</span> <span class="n">chosen</span> <span class="n">to</span> <span class="n">be</span> <span class="mf">2.0</span> <span class="n">Hz</span>
-<span class="n">Filter</span> <span class="n">length</span> <span class="n">of</span> <span class="mi">496</span> <span class="n">samples</span> <span class="p">(</span><span class="mf">3.303</span> <span class="n">sec</span><span class="p">)</span> <span class="n">selected</span>
+<span class="n">Setting</span> <span class="n">up</span> <span class="n">low</span><span class="o">-</span><span class="k">pass</span> <span class="nb">filter</span> <span class="n">at</span> <span class="mi">40</span> <span class="n">Hz</span>
+<span class="n">h_trans_bandwidth</span> <span class="n">chosen</span> <span class="n">to</span> <span class="n">be</span> <span class="mf">10.0</span> <span class="n">Hz</span>
+<span class="n">Filter</span> <span class="n">length</span> <span class="n">of</span> <span class="mi">99</span> <span class="n">samples</span> <span class="p">(</span><span class="mf">0.659</span> <span class="n">sec</span><span class="p">)</span> <span class="n">selected</span>
 <span class="mi">145</span> <span class="n">matching</span> <span class="n">events</span> <span class="n">found</span>
+<span class="n">The</span> <span class="n">measurement</span> <span class="n">information</span> <span class="n">indicates</span> <span class="n">a</span> <span class="n">low</span><span class="o">-</span><span class="k">pass</span> <span class="n">frequency</span> <span class="n">of</span> <span class="mi">40</span> <span class="n">Hz</span><span class="o">.</span> <span class="n">The</span> <span class="n">decim</span><span class="o">=</span><span class="mi">2</span> <span class="n">parameter</span> <span class="n">will</span> <span class="n">result</span> <span class="ow">in</span> <span class="n">a</span> <span class="n">sampling</span> <span class="n">frequency</span> <span class="n">of</span> <span class="mf">75.0769</span> <span class="n">Hz</span><span class="p">,</span> <span class="n">which</span> <span class="n">can</span> <span class="n">cause</span> <span class="n">aliasing</span> <span class="n">artifacts</span><span class="o">.</span>
 <span class="mi">4</span> <span class="n">projection</span> <span class="n">items</span> <span class="n">activated</span>
 <span class="n">Loading</span> <span class="n">data</span> <span class="k">for</span> <span class="mi">145</span> <span class="n">events</span> <span class="ow">and</span> <span class="mi">106</span> <span class="n">original</span> <span class="n">time</span> <span class="n">points</span> <span class="o">...</span>
     <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="sa">u</span><span class="s1">&#39;EOG 061&#39;</span><span class="p">]</span>
@@ -254,56 +258,97 @@ point.</p>
     <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="sa">u</span><span class="s1">&#39;EOG 061&#39;</span><span class="p">]</span>
     <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="sa">u</span><span class="s1">&#39;EOG 061&#39;</span><span class="p">]</span>
     <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="sa">u</span><span class="s1">&#39;EOG 061&#39;</span><span class="p">]</span>
-    <span class="n">Rejecting</span>  <span class="n">epoch</span> <span class="n">based</span> <span class="n">on</span> <span class="n">EOG</span> <span class="p">:</span> <span class="p">[</span><span class="sa">u</span><span class="s1">&#39;EOG 061&#39;</span><span class="p">]</span>
-<span class="mi">22</span> <span class="n">bad</span> <span class="n">epochs</span> <span class="n">dropped</span>
-<span class="n">Dropped</span> <span class="mi">11</span> <span class="n">epochs</span>
-<span class="n">Dropped</span> <span class="mi">0</span> <span class="n">epochs</span>
+<span class="mi">21</span> <span class="n">bad</span> <span class="n">epochs</span> <span class="n">dropped</span>
 </pre></div>
 </div>
 <div class="section" id="temporal-decoding">
 <h2>Temporal decoding<a class="headerlink" href="#temporal-decoding" title="Permalink to this headline">¶</a></h2>
-<p>We&#8217;ll use the default classifer for a binary classification problem
-which is a linear Support Vector Machine (SVM).</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">td</span> <span class="o">=</span> <a href="../generated/mne.decoding.TimeDecoding.html#mne.decoding.TimeDecoding" title="View documentation for mne.decoding.TimeDecoding"><span class="n">TimeDecoding</span></a><span class="p">(</span><span class="n">predict_mode</span><span class="o">=</span><span class="s1">&#39;cross-validation&#39;</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<p>We&#8217;ll use a Logistic Regression for a binary classification as machine
+learning model.</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># We will train the classifier on all left visual vs auditory trials on MEG</span>
 
-<span class="c1"># Fit</span>
-<span class="n">td</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">epochs</span><span class="p">)</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">epochs</span><span class="o">.</span><span class="n">get_data</span><span class="p">()</span>  <span class="c1"># MEG signals: n_epochs, n_channels, n_times</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">epochs</span><span class="o">.</span><span class="n">events</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span>  <span class="c1"># target: Audio left or right</span>
 
-<span class="c1"># Compute accuracy</span>
-<span class="n">td</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="n">epochs</span><span class="p">)</span>
+<span class="n">clf</span> <span class="o">=</span> <span class="n">make_pipeline</span><span class="p">(</span><span class="n">StandardScaler</span><span class="p">(),</span> <span class="n">LogisticRegression</span><span class="p">())</span>
 
-<span class="c1"># Plot scores across time</span>
-<span class="n">td</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s1">&#39;Sensor space decoding&#39;</span><span class="p">)</span>
-</pre></div>
-</div>
-<img alt="../_images/sphx_glr_plot_sensors_decoding_001.png" class="align-center" src="../_images/sphx_glr_plot_sensors_decoding_001.png" />
-</div>
-<div class="section" id="generalization-across-time">
-<h2>Generalization Across Time<a class="headerlink" href="#generalization-across-time" title="Permalink to this headline">¶</a></h2>
-<p>This runs the analysis used in <a class="footnote-reference" href="#id3" id="id1">[1]</a> and further detailed in <a class="footnote-reference" href="#id4" id="id2">[2]</a></p>
-<p>Here we&#8217;ll use a stratified cross-validation scheme.</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># make response vector</span>
-<span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">epochs</span><span class="o">.</span><span class="n">events</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
-<span class="n">y</span><span class="p">[</span><span class="n">epochs</span><span class="o">.</span><span class="n">events</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="mi">3</span><span class="p">]</span> <span class="o">=</span> <span class="mi">1</span>
-<span class="n">cv</span> <span class="o">=</span> <span class="n">StratifiedKFold</span><span class="p">(</span><span class="n">y</span><span class="o">=</span><span class="n">y</span><span class="p">)</span>  <span class="c1"># do a stratified cross-validation</span>
+<span class="n">time_decod</span> <span class="o">=</span> <a href="../generated/mne.decoding.SlidingEstimator.html#mne.decoding.SlidingEstimator" title="View documentation for mne.decoding.SlidingEstimator"><span class="n">SlidingEstimator</span></a><span class="p">(</span><span class="n">clf</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">scoring</span><span class="o">=</span><span class="s1">&#39;roc_auc&#39;</span><span class="p">)</span>
 
-<span class="c1"># define the GeneralizationAcrossTime object</span>
-<span class="n">gat</span> <span class="o">=</span> <a href="../generated/mne.decoding.GeneralizationAcrossTime.html#mne.decoding.GeneralizationAcrossTime" title="View documentation for mne.decoding.GeneralizationAcrossTime"><span class="n">GeneralizationAcrossTime</span></a><span class="p">(</span><span class="n">predict_mode</span><span class="o">=</span><span class="s1">&#39;cross-validation&#39;</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-                               <span class="n">cv</span><span class="o">=</span><span class="n">cv</span><span class="p">,</span> <span class="n">scorer</span><span class="o">=</span><span class="n">roc_auc_score</span><span class="p">)</span>
+<span class="n">scores</span> <span class="o">=</span> <span class="n">cross_val_multiscore</span><span class="p">(</span><span class="n">time_decod</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">cv</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
-<span class="c1"># fit and score</span>
-<span class="n">gat</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">epochs</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="n">y</span><span class="p">)</span>
-<span class="n">gat</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="n">epochs</span><span class="p">)</span>
+<span class="c1"># Mean scores across cross-validation splits</span>
+<span class="n">scores</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
-<span class="c1"># let&#39;s visualize now</span>
-<span class="n">gat</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
-<span class="n">gat</span><span class="o">.</span><span class="n">plot_diagonal</span><span class="p">()</span>
+<span class="c1"># Plot</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.subplots" title="View documentation for matplotlib.pyplot.subplots"><span class="n">plt</span><span class="o">.</span><span class="n">subplots</span></a><span class="p">()</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">epochs</span><span class="o">.</span><span class="n">times</span><span class="p">,</span> <span class="n">scores</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;score&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="o">.</span><span class="mi">5</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;chance&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Times&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;AUC&#39;</span><span class="p">)</span>  <span class="c1"># Area Under the Curve</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="o">.</span><span class="mi">0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;-&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Sensor space decoding&#39;</span><span class="p">)</span>
+<a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.show" title="View documentation for matplotlib.pyplot.show"><span class="n">plt</span><span class="o">.</span><span class="n">show</span></a><span class="p">()</span>
+
+<span class="c1"># You can retrieve the spatial filters and spatial patterns if you explicitly</span>
+<span class="c1"># use a LinearModel</span>
+<span class="n">clf</span> <span class="o">=</span> <span class="n">make_pipeline</span><span class="p">(</span><span class="n">StandardScaler</span><span class="p">(),</span> <a href="../generated/mne.decoding.LinearModel.html#mne.decoding.LinearModel" title="View documentation for mne.decoding.LinearModel"><span class="n">LinearModel</span></a><span class="p">(</span><span class="n">LogisticRegression</span><span class="p">()))</span>
+<span class="n">time_decod</span> <span class="o">=</span> <a href="../generated/mne.decoding.SlidingEstimator.html#mne.decoding.SlidingEstimator" title="View documentation for mne.decoding.SlidingEstimator"><span class="n">SlidingEstimator</span></a><span class="p">(</span><span class="n">clf</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">scoring</span><span class="o">=</span><span class="s1">&#39;roc_auc&#39;</span><span class="p">)</span>
+<span class="n">time_decod</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">)</span>
+
+<span class="n">coef</span> <span class="o">=</span> <a href="../generated/mne.decoding.get_coef.html#mne.decoding.get_coef" title="View documentation for mne.decoding.get_coef"><span class="n">get_coef</span></a><span class="p">(</span><span class="n">time_decod</span><span class="p">,</span> <span class="s1">&#39;patterns_&#39;</span><span class="p">,</span> <span class="n">inverse_transform</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">evoked</span> <span class="o">=</span> <a href="../generated/mne.EvokedArray.html#mne.EvokedArray" title="View documentation for mne.EvokedArray"><span class="n">mne</span><span class="o">.</span><span class="n">EvokedArray</span></a><span class="p">(</span><span class="n">coef</span><span class="p">,</span> <span class="n">epochs</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">tmin</span><span class="o">=</span><span class="n">epochs</span><span class="o">.</span><span class="n">times</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="n">evoked</span><span class="o">.</span><span class="n">plot_joint</span><span class="p">(</span><span class="n">times</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mf">0.</span><span class="p">,</span> <span class="o">.</span><span class="mi">500</span><span class="p">,</span> <span class="o">.</span><span class="mi">100</span><span class="p">),</span> <span class="n">title</span><span class="o">=</span><span class="s1">&#39;patterns&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <ul class="sphx-glr-horizontal">
-<li><a class="first reference internal image-reference" href="../_images/sphx_glr_plot_sensors_decoding_002.png"><img alt="../_images/sphx_glr_plot_sensors_decoding_002.png" src="../_images/sphx_glr_plot_sensors_decoding_002.png" style="width: 376.0px; height: 282.0px;" /></a>
+<li><a class="first reference internal image-reference" href="../_images/sphx_glr_plot_sensors_decoding_001.png"><img alt="../_images/sphx_glr_plot_sensors_decoding_001.png" src="../_images/sphx_glr_plot_sensors_decoding_001.png" style="width: 376.0px; height: 282.0px;" /></a>
 </li>
+<li><a class="first reference internal image-reference" href="../_images/sphx_glr_plot_sensors_decoding_002.png"><img alt="../_images/sphx_glr_plot_sensors_decoding_002.png" src="../_images/sphx_glr_plot_sensors_decoding_002.png" style="width: 376.0px; height: 197.4px;" /></a>
+</li>
+</ul>
+</div>
+<div class="section" id="temporal-generalization">
+<h2>Temporal Generalization<a class="headerlink" href="#temporal-generalization" title="Permalink to this headline">¶</a></h2>
+<p>This runs the analysis used in <a class="footnote-reference" href="#id3" id="id1">[1]</a> and further detailed in <a class="footnote-reference" href="#id4" id="id2">[2]</a></p>
+<p>The idea is to fit the models on each time instant and see how it
+generalizes to any other time point.</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># define the Temporal Generalization object</span>
+<span class="n">time_gen</span> <span class="o">=</span> <a href="../generated/mne.decoding.GeneralizingEstimator.html#mne.decoding.GeneralizingEstimator" title="View documentation for mne.decoding.GeneralizingEstimator"><span class="n">GeneralizingEstimator</span></a><span class="p">(</span><span class="n">clf</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">scoring</span><span class="o">=</span><span class="s1">&#39;roc_auc&#39;</span><span class="p">)</span>
+
+<span class="n">scores</span> <span class="o">=</span> <span class="n">cross_val_multiscore</span><span class="p">(</span><span class="n">time_gen</span><span class="p">,</span> <span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">cv</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+
+<span class="c1"># Mean scores across cross-validation splits</span>
+<span class="n">scores</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="c1"># Plot the diagonal (it&#39;s exactly the same as the time-by-time decoding above)</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.subplots" title="View documentation for matplotlib.pyplot.subplots"><span class="n">plt</span><span class="o">.</span><span class="n">subplots</span></a><span class="p">()</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">epochs</span><span class="o">.</span><span class="n">times</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">diag</span><span class="p">(</span><span class="n">scores</span><span class="p">),</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;score&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="o">.</span><span class="mi">5</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;chance&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Times&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;AUC&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">legend</span><span class="p">()</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="o">.</span><span class="mi">0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;-&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Decoding MEG sensors over time&#39;</span><span class="p">)</span>
+<a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.show" title="View documentation for matplotlib.pyplot.show"><span class="n">plt</span><span class="o">.</span><span class="n">show</span></a><span class="p">()</span>
+
+<span class="c1"># Plot the full matrix</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.subplots" title="View documentation for matplotlib.pyplot.subplots"><span class="n">plt</span><span class="o">.</span><span class="n">subplots</span></a><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">im</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="n">interpolation</span><span class="o">=</span><span class="s1">&#39;nearest&#39;</span><span class="p">,</span> <span class="n">origin</span><span class="o">=</span><span class="s1">&#39;lower&#39;</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;RdBu_r&#39;</span><span class="p">,</span>
+               <span class="n">extent</span><span class="o">=</span><span class="n">epochs</span><span class="o">.</span><span class="n">times</span><span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]],</span> <span class="n">vmin</span><span class="o">=</span><span class="mf">0.</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mf">1.</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Testing Time (s)&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;Training Time (s)&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Temporal Generalization&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">)</span>
+<a href="http://matplotlib.org/api/colorbar_api.html#matplotlib.colorbar" title="View documentation for matplotlib.pyplot.colorbar"><span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span></a><span class="p">(</span><span class="n">im</span><span class="p">,</span> <span class="n">ax</span><span class="o">=</span><span class="n">ax</span><span class="p">)</span>
+<a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.show" title="View documentation for matplotlib.pyplot.show"><span class="n">plt</span><span class="o">.</span><span class="n">show</span></a><span class="p">()</span>
+</pre></div>
+</div>
+<ul class="sphx-glr-horizontal">
 <li><a class="first reference internal image-reference" href="../_images/sphx_glr_plot_sensors_decoding_003.png"><img alt="../_images/sphx_glr_plot_sensors_decoding_003.png" src="../_images/sphx_glr_plot_sensors_decoding_003.png" style="width: 376.0px; height: 282.0px;" /></a>
+</li>
+<li><a class="first reference internal image-reference" href="../_images/sphx_glr_plot_sensors_decoding_004.png"><img alt="../_images/sphx_glr_plot_sensors_decoding_004.png" src="../_images/sphx_glr_plot_sensors_decoding_004.png" style="width: 376.0px; height: 282.0px;" /></a>
 </li>
 </ul>
 </div>
@@ -339,7 +384,7 @@ Cognitive Sciences, 18(4), 203-210.
 <a class="reference external" href="http://www.ncbi.nlm.nih.gov/pubmed/24593982">http://www.ncbi.nlm.nih.gov/pubmed/24593982</a></td></tr>
 </tbody>
 </table>
-<p><strong>Total running time of the script:</strong> ( 0 minutes  25.138 seconds)</p>
+<p><strong>Total running time of the script:</strong> ( 0 minutes  24.395 seconds)</p>
 <div class="sphx-glr-footer container">
 <div class="sphx-glr-download container">
 <a class="reference download internal" href="../_downloads/plot_sensors_decoding.py" download=""><code class="xref download docutils literal"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">plot_sensors_decoding.py</span></code></a></div>
@@ -363,7 +408,7 @@ Cognitive Sciences, 18(4), 203-210.
       
     </p>
     <p>
-        &copy; Copyright 2012-2017, MNE Developers. Last updated on 2017-03-30.<br/>
+        &copy; Copyright 2012-2017, MNE Developers. Last updated on 2017-03-31.<br/>
     </p>
   </div>
 </footer>
