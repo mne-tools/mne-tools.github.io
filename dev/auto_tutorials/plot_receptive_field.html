@@ -155,6 +155,8 @@ This documentation is for the <strong>development version (0.15.dev0)</strong> -
 <li><a class="reference internal" href="#simulate-a-neural-response">Simulate a neural response</a></li>
 <li><a class="reference internal" href="#fit-a-model-to-recover-this-receptive-field">Fit a model to recover this receptive field</a></li>
 <li><a class="reference internal" href="#visualize-the-effects-of-regularization">Visualize the effects of regularization</a></li>
+<li><a class="reference internal" href="#using-different-regularization-types">Using different regularization types</a></li>
+<li><a class="reference internal" href="#compare-model-performance">Compare model performance</a></li>
 </ul>
 </li>
 </ul>
@@ -185,7 +187,7 @@ modeling with continuous inputs is described in:</p>
 <table class="docutils footnote" frame="void" id="id1" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
-<tr><td class="label"><a class="fn-backref" href="#id6">[1]</a></td><td>Theunissen, F. E. et al. Estimating spatio-temporal receptive
+<tr><td class="label"><a class="fn-backref" href="#id7">[1]</a></td><td>Theunissen, F. E. et al. Estimating spatio-temporal receptive
 fields of auditory and visual neurons from their responses to
 natural stimuli. Network 12, 289-316 (2001).</td></tr>
 </tbody>
@@ -193,7 +195,7 @@ natural stimuli. Network 12, 289-316 (2001).</td></tr>
 <table class="docutils footnote" frame="void" id="id2" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
-<tr><td class="label"><a class="fn-backref" href="#id7">[2]</a></td><td>Willmore, B. &amp; Smyth, D. Methods for first-order kernel
+<tr><td class="label"><a class="fn-backref" href="#id8">[2]</a></td><td>Willmore, B. &amp; Smyth, D. Methods for first-order kernel
 estimation: simple-cell receptive fields from responses to
 natural scenes. Network 14, 553-77 (2003).</td></tr>
 </tbody>
@@ -201,7 +203,7 @@ natural scenes. Network 14, 553-77 (2003).</td></tr>
 <table class="docutils footnote" frame="void" id="id3" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
-<tr><td class="label"><a class="fn-backref" href="#id5">[3]</a></td><td>Crosse, M. J., Di Liberto, G. M., Bednar, A. &amp; Lalor, E. C. (2016).
+<tr><td class="label"><a class="fn-backref" href="#id6">[3]</a></td><td>Crosse, M. J., Di Liberto, G. M., Bednar, A. &amp; Lalor, E. C. (2016).
 The Multivariate Temporal Response Function (mTRF) Toolbox:
 A MATLAB Toolbox for Relating Neural Signals to Continuous Stimuli.
 Frontiers in Human Neuroscience 10, 604.
@@ -211,9 +213,18 @@ doi:10.3389/fnhum.2016.00604</td></tr>
 <table class="docutils footnote" frame="void" id="id4" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
-<tr><td class="label"><a class="fn-backref" href="#id8">[4]</a></td><td>Holdgraf, C. R. et al. Rapid tuning shifts in human auditory cortex
+<tr><td class="label"><a class="fn-backref" href="#id9">[4]</a></td><td>Holdgraf, C. R. et al. Rapid tuning shifts in human auditory cortex
 enhance speech intelligibility. Nature Communications, 7, 13654 (2016).
 doi:10.1038/ncomms13654</td></tr>
+</tbody>
+</table>
+<table class="docutils footnote" frame="void" id="id5" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label"><a class="fn-backref" href="#id10">[5]</a></td><td>Crosse, M. J., Di Liberto, G. M., Bednar, A. &amp; Lalor, E. C. (2016).
+The Multivariate Temporal Response Function (mTRF) Toolbox:
+A MATLAB Toolbox for Relating Neural Signals to Continuous Stimuli.
+Frontiers in Human Neuroscience 10, 604. doi:10.3389/fnhum.2016.00604</td></tr>
 </tbody>
 </table>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># Authors: Chris Holdgraf &lt;choldgraf@gmail.com&gt;</span>
@@ -224,19 +235,18 @@ doi:10.1038/ncomms13654</td></tr>
 <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
 
 <span class="kn">import</span> <span class="nn">mne</span>
-<span class="kn">from</span> <span class="nn">mne.decoding</span> <span class="kn">import</span> <a href="../generated/mne.decoding.ReceptiveField.html#mne.decoding.ReceptiveField" title="View documentation for mne.decoding.ReceptiveField"><span class="n">ReceptiveField</span></a>
+<span class="kn">from</span> <span class="nn">mne.decoding</span> <span class="kn">import</span> <a href="../generated/mne.decoding.ReceptiveField.html#mne.decoding.ReceptiveField" title="View documentation for mne.decoding.ReceptiveField"><span class="n">ReceptiveField</span></a><span class="p">,</span> <a href="../generated/mne.decoding.TimeDelayingRidge.html#mne.decoding.TimeDelayingRidge" title="View documentation for mne.decoding.TimeDelayingRidge"><span class="n">TimeDelayingRidge</span></a>
 
 <span class="kn">from</span> <span class="nn">scipy.stats</span> <span class="kn">import</span> <span class="n">multivariate_normal</span>
 <span class="kn">from</span> <span class="nn">scipy.io</span> <span class="kn">import</span> <a href="http://docs.scipy.org/doc/scipy/reference/generated/scipy.io.loadmat.html#scipy.io.loadmat" title="View documentation for scipy.io.loadmat"><span class="n">loadmat</span></a>
 <span class="kn">from</span> <span class="nn">sklearn.preprocessing</span> <span class="kn">import</span> <span class="n">scale</span>
-<span class="kn">from</span> <span class="nn">sklearn.linear_model</span> <span class="kn">import</span> <span class="n">Ridge</span>
 <span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">RandomState</span><span class="p">(</span><span class="mi">1337</span><span class="p">)</span>  <span class="c1"># To make this example reproducible</span>
 </pre></div>
 </div>
 </div>
 <div class="section" id="load-audio-data">
 <h2>Load audio data<a class="headerlink" href="#load-audio-data" title="Permalink to this headline">¶</a></h2>
-<p>We&#8217;ll read in the audio data from <a class="footnote-reference" href="#id3" id="id5">[3]</a> in order to simulate a response.</p>
+<p>We&#8217;ll read in the audio data from <a class="footnote-reference" href="#id3" id="id6">[3]</a> in order to simulate a response.</p>
 <p>In addition, we&#8217;ll downsample the data along the time dimension in order to
 speed up computation. Note that depending on the input values, this may
 not be desired. For example if your input stimulus varies more quickly than
@@ -257,22 +267,22 @@ not be desired. For example if your input stimulus varies more quickly than
 <p>We&#8217;ll simulate a linear receptive field for a theoretical neural signal. This
 defines how the signal will respond to power in this receptive field space.</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">n_freqs</span> <span class="o">=</span> <span class="mi">16</span>
-<span class="n">tmin</span><span class="p">,</span> <span class="n">tmax</span> <span class="o">=</span> <span class="o">-.</span><span class="mi">4</span><span class="p">,</span> <span class="mf">0.</span>
+<span class="n">tmin</span><span class="p">,</span> <span class="n">tmax</span> <span class="o">=</span> <span class="o">-.</span><span class="mi">4</span><span class="p">,</span> <span class="mf">0.1</span>
 
 <span class="c1"># To simulate the data we&#39;ll create explicit delays here</span>
 <span class="n">delays_samp</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">tmin</span> <span class="o">*</span> <span class="n">sfreq</span><span class="p">),</span>
                         <span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">tmax</span> <span class="o">*</span> <span class="n">sfreq</span><span class="p">)</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)</span>
 <span class="n">delays_sec</span> <span class="o">=</span> <span class="n">delays_samp</span> <span class="o">/</span> <span class="n">sfreq</span>
-<span class="n">freqs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logspace</span><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">log10</span><span class="p">(</span><span class="mi">5000</span><span class="p">),</span> <span class="n">n_freqs</span><span class="p">)</span>
+<span class="n">freqs</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">linspace</span><span class="p">(</span><span class="mi">50</span><span class="p">,</span> <span class="mi">5000</span><span class="p">,</span> <span class="n">n_freqs</span><span class="p">)</span>
 <span class="n">grid</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">meshgrid</span><span class="p">(</span><span class="n">delays_sec</span><span class="p">,</span> <span class="n">freqs</span><span class="p">))</span>
 
 <span class="c1"># We need data to be shaped as n_epochs, n_features, n_times, so swap axes here</span>
 <span class="n">grid</span> <span class="o">=</span> <span class="n">grid</span><span class="o">.</span><span class="n">swapaxes</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span><span class="o">.</span><span class="n">swapaxes</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 
 <span class="c1"># Simulate a temporal receptive field with a Gabor filter</span>
-<span class="n">means_high</span> <span class="o">=</span> <span class="p">[</span><span class="o">-.</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1000</span><span class="p">]</span>
-<span class="n">means_low</span> <span class="o">=</span> <span class="p">[</span><span class="o">-.</span><span class="mi">15</span><span class="p">,</span> <span class="mi">2000</span><span class="p">]</span>
-<span class="n">cov</span> <span class="o">=</span> <span class="p">[[</span><span class="o">.</span><span class="mo">0005</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">200000</span><span class="p">]]</span>
+<span class="n">means_high</span> <span class="o">=</span> <span class="p">[</span><span class="o">-.</span><span class="mi">1</span><span class="p">,</span> <span class="mi">500</span><span class="p">]</span>
+<span class="n">means_low</span> <span class="o">=</span> <span class="p">[</span><span class="o">-.</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2500</span><span class="p">]</span>
+<span class="n">cov</span> <span class="o">=</span> <span class="p">[[</span><span class="o">.</span><span class="mo">001</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">500000</span><span class="p">]]</span>
 <span class="n">gauss_high</span> <span class="o">=</span> <span class="n">multivariate_normal</span><span class="o">.</span><span class="n">pdf</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="n">means_high</span><span class="p">,</span> <span class="n">cov</span><span class="p">)</span>
 <span class="n">gauss_low</span> <span class="o">=</span> <span class="o">-</span><span class="mi">1</span> <span class="o">*</span> <span class="n">multivariate_normal</span><span class="o">.</span><span class="n">pdf</span><span class="p">(</span><span class="n">grid</span><span class="p">,</span> <span class="n">means_low</span><span class="p">,</span> <span class="n">cov</span><span class="p">)</span>
 <span class="n">weights</span> <span class="o">=</span> <span class="n">gauss_high</span> <span class="o">+</span> <span class="n">gauss_low</span>  <span class="c1"># Combine to create the &quot;true&quot; STRF</span>
@@ -299,7 +309,7 @@ is effectively doing a convolution between the stimulus and the receptive
 field. See <a class="reference external" href="https://en.wikipedia.org/wiki/Convolution">here</a> for more
 information.</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># Reshape audio to split into epochs, then make epochs the first dimension.</span>
-<span class="n">n_epochs</span><span class="p">,</span> <span class="n">n_seconds</span> <span class="o">=</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">3</span>
+<span class="n">n_epochs</span><span class="p">,</span> <span class="n">n_seconds</span> <span class="o">=</span> <span class="mi">16</span><span class="p">,</span> <span class="mi">5</span>
 <span class="n">audio</span> <span class="o">=</span> <span class="n">audio</span><span class="p">[:,</span> <span class="p">:</span><span class="nb">int</span><span class="p">(</span><span class="n">n_seconds</span> <span class="o">*</span> <span class="n">sfreq</span> <span class="o">*</span> <span class="n">n_epochs</span><span class="p">)]</span>
 <span class="n">X</span> <span class="o">=</span> <span class="n">audio</span><span class="o">.</span><span class="n">reshape</span><span class="p">([</span><span class="n">n_freqs</span><span class="p">,</span> <span class="n">n_epochs</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">swapaxes</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
 <span class="n">n_times</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
@@ -333,7 +343,7 @@ information.</p>
 <span class="n">y</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">((</span><span class="n">n_epochs</span><span class="p">,</span> <span class="n">n_times</span><span class="p">))</span>
 <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">iep</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">X_del</span><span class="p">):</span>
     <span class="c1"># Simulate this epoch and add random noise</span>
-    <span class="n">noise_amp</span> <span class="o">=</span> <span class="o">.</span><span class="mo">0005</span>
+    <span class="n">noise_amp</span> <span class="o">=</span> <span class="o">.</span><span class="mo">002</span>
     <span class="n">y</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">weights_sim</span><span class="p">,</span> <span class="n">iep</span><span class="p">)</span> <span class="o">+</span> <span class="n">noise_amp</span> <span class="o">*</span> <span class="n">rng</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">n_times</span><span class="p">)</span>
 
 <span class="c1"># Plot the first 2 trials of audio and the simulated electrode activity</span>
@@ -359,7 +369,7 @@ the linear receptive field of this signal. Note that properties of the
 receptive field (e.g. smoothness) will depend on the autocorrelation in the
 inputs and outputs.</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># Create training and testing data</span>
-<span class="n">train</span><span class="p">,</span> <span class="n">test</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mi">20</span><span class="p">),</span> <span class="mi">21</span>
+<span class="n">train</span><span class="p">,</span> <span class="n">test</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="n">n_epochs</span> <span class="o">-</span> <span class="mi">1</span><span class="p">),</span> <span class="n">n_epochs</span> <span class="o">-</span> <span class="mi">1</span>
 <span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span> <span class="o">=</span> <span class="n">X</span><span class="p">[</span><span class="n">train</span><span class="p">],</span> <span class="n">X</span><span class="p">[</span><span class="n">test</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="n">train</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="n">test</span><span class="p">]</span>
 <span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span> <span class="o">=</span> <span class="p">[</span><span class="n">np</span><span class="o">.</span><span class="n">rollaxis</span><span class="p">(</span><span class="n">ii</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span> <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span>
                                     <span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">X_test</span><span class="p">,</span> <span class="n">y_train</span><span class="p">,</span> <span class="n">y_test</span><span class="p">)]</span>
@@ -368,7 +378,7 @@ inputs and outputs.</p>
 <span class="n">scores</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">alphas</span><span class="p">)</span>
 <span class="n">models</span> <span class="o">=</span> <span class="p">[]</span>
 <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">alpha</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">alphas</span><span class="p">):</span>
-    <span class="n">rf</span> <span class="o">=</span> <a href="../generated/mne.decoding.ReceptiveField.html#mne.decoding.ReceptiveField" title="View documentation for mne.decoding.ReceptiveField"><span class="n">ReceptiveField</span></a><span class="p">(</span><span class="n">tmin</span><span class="p">,</span> <span class="n">tmax</span><span class="p">,</span> <span class="n">sfreq</span><span class="p">,</span> <span class="n">freqs</span><span class="p">,</span> <span class="n">estimator</span><span class="o">=</span><span class="n">Ridge</span><span class="p">(</span><span class="n">alpha</span><span class="p">))</span>
+    <span class="n">rf</span> <span class="o">=</span> <a href="../generated/mne.decoding.ReceptiveField.html#mne.decoding.ReceptiveField" title="View documentation for mne.decoding.ReceptiveField"><span class="n">ReceptiveField</span></a><span class="p">(</span><span class="n">tmin</span><span class="p">,</span> <span class="n">tmax</span><span class="p">,</span> <span class="n">sfreq</span><span class="p">,</span> <span class="n">freqs</span><span class="p">,</span> <span class="n">estimator</span><span class="o">=</span><span class="n">alpha</span><span class="p">)</span>
     <span class="n">rf</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
 
     <span class="c1"># Now make predictions about the model output, given input stimuli.</span>
@@ -414,17 +424,17 @@ inputs and outputs.</p>
 <div class="section" id="visualize-the-effects-of-regularization">
 <h2>Visualize the effects of regularization<a class="headerlink" href="#visualize-the-effects-of-regularization" title="Permalink to this headline">¶</a></h2>
 <p>Above we fit a <a class="reference internal" href="../generated/mne.decoding.ReceptiveField.html#mne.decoding.ReceptiveField" title="mne.decoding.ReceptiveField"><code class="xref py py-class docutils literal"><span class="pre">mne.decoding.ReceptiveField</span></code></a> model for one of many
-values for the &#8220;ridge&#8221; parameter. Here we will plot the model score as well
-as the model coefficients for each value, in order to visualize how
-coefficients change with different levels of regularization. These issues
-as well as the STRF pipeline are described in detail in <a class="footnote-reference" href="#id1" id="id6">[1]</a>, <a class="footnote-reference" href="#id2" id="id7">[2]</a>, and
-<a class="footnote-reference" href="#id4" id="id8">[4]</a>.</p>
+values for the ridge regularization parameter. Here we will plot the model
+score as well as the model coefficients for each value, in order to
+visualize how coefficients change with different levels of regularization.
+These issues as well as the STRF pipeline are described in detail
+in <a class="footnote-reference" href="#id1" id="id7">[1]</a>, <a class="footnote-reference" href="#id2" id="id8">[2]</a>, and <a class="footnote-reference" href="#id4" id="id9">[4]</a>.</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># Plot model score for each ridge parameter</span>
 <span class="n">fig</span> <span class="o">=</span> <a href="http://matplotlib.org/api/figure_api.html#matplotlib.figure" title="View documentation for matplotlib.pyplot.figure"><span class="n">plt</span><span class="o">.</span><span class="n">figure</span></a><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
 <span class="n">ax</span> <span class="o">=</span> <a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.subplot2grid" title="View documentation for matplotlib.pyplot.subplot2grid"><span class="n">plt</span><span class="o">.</span><span class="n">subplot2grid</span></a><span class="p">([</span><span class="mi">2</span><span class="p">,</span> <span class="mi">10</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">alphas</span><span class="p">)),</span> <span class="n">scores</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;o&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">)</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="s1">&#39;Best parameter&#39;</span><span class="p">,</span> <span class="p">(</span><span class="n">ix_best_alpha</span><span class="p">,</span> <span class="n">scores</span><span class="p">[</span><span class="n">ix_best_alpha</span><span class="p">]),</span>
-            <span class="p">(</span><span class="n">ix_best_alpha</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">scores</span><span class="p">[</span><span class="n">ix_best_alpha</span><span class="p">]</span> <span class="o">-</span> <span class="o">.</span><span class="mo">005</span><span class="p">),</span>
+            <span class="p">(</span><span class="n">ix_best_alpha</span> <span class="o">-</span> <span class="mi">1</span><span class="p">,</span> <span class="n">scores</span><span class="p">[</span><span class="n">ix_best_alpha</span><span class="p">]</span> <span class="o">-</span> <span class="o">.</span><span class="mo">01</span><span class="p">),</span>
             <span class="n">arrowprops</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;arrowstyle&#39;</span><span class="p">:</span> <span class="s1">&#39;-&gt;&#39;</span><span class="p">})</span>
 <a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.xticks" title="View documentation for matplotlib.pyplot.xticks"><span class="n">plt</span><span class="o">.</span><span class="n">xticks</span></a><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">alphas</span><span class="p">)),</span> <span class="p">[</span><span class="s2">&quot;</span><span class="si">%.0e</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">ii</span> <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="n">alphas</span><span class="p">])</span>
 <span class="n">ax</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">xlabel</span><span class="o">=</span><span class="s2">&quot;Ridge regularization value&quot;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;Score ($R^2$)&quot;</span><span class="p">,</span>
@@ -440,12 +450,89 @@ as well as the STRF pipeline are described in detail in <a class="footnote-refer
     <a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.autoscale" title="View documentation for matplotlib.pyplot.autoscale"><span class="n">plt</span><span class="o">.</span><span class="n">autoscale</span></a><span class="p">(</span><span class="n">tight</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 <span class="n">fig</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="s1">&#39;Model coefficients / scores for many ridge parameters&#39;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 <span class="n">mne</span><span class="o">.</span><span class="n">viz</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+</pre></div>
+</div>
+<img alt="home/ubuntu/mne-python/doc/auto_tutorials/images/sphx_glr_plot_receptive_field_005.png" class="align-center" src="home/ubuntu/mne-python/doc/auto_tutorials/images/sphx_glr_plot_receptive_field_005.png" />
+</div>
+<div class="section" id="using-different-regularization-types">
+<h2>Using different regularization types<a class="headerlink" href="#using-different-regularization-types" title="Permalink to this headline">¶</a></h2>
+<p>In addition to the standard ridge regularization, the
+<a class="reference internal" href="../generated/mne.decoding.TimeDelayingRidge.html#mne.decoding.TimeDelayingRidge" title="mne.decoding.TimeDelayingRidge"><code class="xref py py-class docutils literal"><span class="pre">mne.decoding.TimeDelayingRidge</span></code></a> class also exposes
+<a class="reference external" href="https://en.wikipedia.org/wiki/Laplacian_matrix">Laplacian</a> regularization
+term as:</p>
+<div class="math">
+\[\begin{split}\left[\begin{matrix}
+     1 &amp; -1 &amp;   &amp;   &amp; &amp; \\
+    -1 &amp;  2 &amp; -1 &amp;   &amp; &amp; \\
+       &amp; -1 &amp; 2 &amp; -1 &amp; &amp; \\
+       &amp; &amp; \ddots &amp; \ddots &amp; \ddots &amp; \\
+       &amp; &amp; &amp; -1 &amp; 2 &amp; -1 \\
+       &amp; &amp; &amp;    &amp; -1 &amp; 1\end{matrix}\right]\end{split}\]</div>
+<p>This imposes a smoothness constraint of nearby time samples. Quoting <a class="footnote-reference" href="#id5" id="id10">[5]</a>:</p>
+<blockquote>
+<div>Tikhonov [identity] regularization (Equation 5) reduces overfitting by
+smoothing the TRF estimate in a way that is insensitive to
+the amplitude of the signal of interest. However, the Laplacian
+approach (Equation 6) reduces off-sample error whilst preserving
+signal amplitude (Lalor et al., 2006). As a result, this approach
+usually leads to an improved estimate of the system’s response (as
+indexed by MSE) compared to Tikhonov regularization.</div></blockquote>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">alphas</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">logspace</span><span class="p">(</span><span class="o">-</span><span class="mi">4</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<span class="n">old_scores</span> <span class="o">=</span> <span class="n">scores</span>
+<span class="n">scores</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span><span class="p">(</span><span class="n">alphas</span><span class="p">)</span>
+<span class="n">models</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="n">alpha</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">alphas</span><span class="p">):</span>
+    <span class="n">estimator</span> <span class="o">=</span> <a href="../generated/mne.decoding.TimeDelayingRidge.html#mne.decoding.TimeDelayingRidge" title="View documentation for mne.decoding.TimeDelayingRidge"><span class="n">TimeDelayingRidge</span></a><span class="p">(</span><span class="n">tmin</span><span class="p">,</span> <span class="n">tmax</span><span class="p">,</span> <span class="n">sfreq</span><span class="p">,</span> <span class="n">reg_type</span><span class="o">=</span><span class="s1">&#39;laplacian&#39;</span><span class="p">,</span>
+                                  <span class="n">alpha</span><span class="o">=</span><span class="n">alpha</span><span class="p">)</span>
+    <span class="n">rf</span> <span class="o">=</span> <a href="../generated/mne.decoding.ReceptiveField.html#mne.decoding.ReceptiveField" title="View documentation for mne.decoding.ReceptiveField"><span class="n">ReceptiveField</span></a><span class="p">(</span><span class="n">tmin</span><span class="p">,</span> <span class="n">tmax</span><span class="p">,</span> <span class="n">sfreq</span><span class="p">,</span> <span class="n">freqs</span><span class="p">,</span> <span class="n">estimator</span><span class="o">=</span><span class="n">estimator</span><span class="p">)</span>
+    <span class="n">rf</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_train</span><span class="p">,</span> <span class="n">y_train</span><span class="p">)</span>
+
+    <span class="c1"># Now make predictions about the model output, given input stimuli.</span>
+    <span class="n">scores</span><span class="p">[</span><span class="n">ii</span><span class="p">]</span> <span class="o">=</span> <span class="n">rf</span><span class="o">.</span><span class="n">score</span><span class="p">(</span><span class="n">X_test</span><span class="p">,</span> <span class="n">y_test</span><span class="p">)</span>
+    <span class="n">models</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">rf</span><span class="p">)</span>
+
+<span class="n">ix_best_alpha</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">argmax</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="compare-model-performance">
+<h2>Compare model performance<a class="headerlink" href="#compare-model-performance" title="Permalink to this headline">¶</a></h2>
+<p>Below we visualize the model performance of each regularization method
+(ridge vs. Laplacian) for different levels of alpha. As you can see, the
+Laplacian method performs better in general, because it imposes a smoothness
+constraint along the time and feature dimensions of the coefficients.
+This matches the &#8220;true&#8221; receptive field structure and results in a better
+model fit.</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">fig</span> <span class="o">=</span> <a href="http://matplotlib.org/api/figure_api.html#matplotlib.figure" title="View documentation for matplotlib.pyplot.figure"><span class="n">plt</span><span class="o">.</span><span class="n">figure</span></a><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">20</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<span class="n">ax</span> <span class="o">=</span> <a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.subplot2grid" title="View documentation for matplotlib.pyplot.subplot2grid"><span class="n">plt</span><span class="o">.</span><span class="n">subplot2grid</span></a><span class="p">([</span><span class="mi">2</span><span class="p">,</span> <span class="mi">10</span><span class="p">],</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">10</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">alphas</span><span class="p">)),</span> <span class="n">scores</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;o&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">alphas</span><span class="p">)),</span> <span class="n">old_scores</span><span class="p">,</span> <span class="n">marker</span><span class="o">=</span><span class="s1">&#39;o&#39;</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;0.5&#39;</span><span class="p">,</span> <span class="n">ls</span><span class="o">=</span><span class="s1">&#39;:&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="s1">&#39;Best parameter&#39;</span><span class="p">,</span> <span class="p">(</span><span class="n">ix_best_alpha</span><span class="p">,</span> <span class="n">scores</span><span class="p">[</span><span class="n">ix_best_alpha</span><span class="p">]),</span>
+            <span class="p">(</span><span class="n">ix_best_alpha</span> <span class="o">-</span> <span class="mf">0.8</span><span class="p">,</span> <span class="n">scores</span><span class="p">[</span><span class="n">ix_best_alpha</span><span class="p">]</span> <span class="o">-</span> <span class="o">.</span><span class="mo">01</span><span class="p">),</span>
+            <span class="n">arrowprops</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;arrowstyle&#39;</span><span class="p">:</span> <span class="s1">&#39;-&gt;&#39;</span><span class="p">})</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">annotate</span><span class="p">(</span><span class="s1">&#39;Ridge regularization&#39;</span><span class="p">,</span> <span class="p">(</span><span class="n">ix_best_alpha</span><span class="p">,</span> <span class="n">old_scores</span><span class="p">[</span><span class="n">ix_best_alpha</span><span class="p">]),</span>
+            <span class="p">(</span><span class="n">ix_best_alpha</span> <span class="o">-</span> <span class="mf">0.5</span><span class="p">,</span> <span class="n">old_scores</span><span class="p">[</span><span class="n">ix_best_alpha</span><span class="p">]</span> <span class="o">-</span> <span class="o">.</span><span class="mo">02</span><span class="p">),</span>
+            <span class="n">arrowprops</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;arrowstyle&#39;</span><span class="p">:</span> <span class="s1">&#39;-&gt;&#39;</span><span class="p">})</span>
+<a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.xticks" title="View documentation for matplotlib.pyplot.xticks"><span class="n">plt</span><span class="o">.</span><span class="n">xticks</span></a><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">alphas</span><span class="p">)),</span> <span class="p">[</span><span class="s2">&quot;</span><span class="si">%.0e</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">ii</span> <span class="k">for</span> <span class="n">ii</span> <span class="ow">in</span> <span class="n">alphas</span><span class="p">])</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">xlabel</span><span class="o">=</span><span class="s2">&quot;Laplacian regularization value&quot;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s2">&quot;Score ($R^2$)&quot;</span><span class="p">,</span>
+       <span class="n">xlim</span><span class="o">=</span><span class="p">[</span><span class="o">-.</span><span class="mi">4</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">alphas</span><span class="p">)</span> <span class="o">-</span> <span class="o">.</span><span class="mi">6</span><span class="p">])</span>
+<span class="n">mne</span><span class="o">.</span><span class="n">viz</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
+
+<span class="c1"># Plot the STRF of each ridge parameter</span>
+<span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="p">(</span><span class="n">rf</span><span class="p">,</span> <span class="n">i_alpha</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">models</span><span class="p">,</span> <span class="n">alphas</span><span class="p">)):</span>
+    <span class="n">ax</span> <span class="o">=</span> <a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.subplot2grid" title="View documentation for matplotlib.pyplot.subplot2grid"><span class="n">plt</span><span class="o">.</span><span class="n">subplot2grid</span></a><span class="p">([</span><span class="mi">2</span><span class="p">,</span> <span class="mi">10</span><span class="p">],</span> <span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">ii</span><span class="p">],</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">pcolormesh</span><span class="p">(</span><span class="n">times</span><span class="p">,</span> <span class="n">rf</span><span class="o">.</span><span class="n">feature_names</span><span class="p">,</span> <span class="n">rf</span><span class="o">.</span><span class="n">coef_</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+    <a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.xticks" title="View documentation for matplotlib.pyplot.xticks"><span class="n">plt</span><span class="o">.</span><span class="n">xticks</span></a><span class="p">([],</span> <span class="p">[])</span>
+    <a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.yticks" title="View documentation for matplotlib.pyplot.yticks"><span class="n">plt</span><span class="o">.</span><span class="n">yticks</span></a><span class="p">([],</span> <span class="p">[])</span>
+    <a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.autoscale" title="View documentation for matplotlib.pyplot.autoscale"><span class="n">plt</span><span class="o">.</span><span class="n">autoscale</span></a><span class="p">(</span><span class="n">tight</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="s1">&#39;Model coefficients / scores for laplacian regularization&#39;</span><span class="p">,</span> <span class="n">y</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">mne</span><span class="o">.</span><span class="n">viz</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">()</span>
 
 <a href="http://matplotlib.org/api/pyplot_api.html#matplotlib.pyplot.show" title="View documentation for matplotlib.pyplot.show"><span class="n">plt</span><span class="o">.</span><span class="n">show</span></a><span class="p">()</span>
 </pre></div>
 </div>
-<img alt="home/ubuntu/mne-python/doc/auto_tutorials/images/sphx_glr_plot_receptive_field_005.png" class="align-center" src="home/ubuntu/mne-python/doc/auto_tutorials/images/sphx_glr_plot_receptive_field_005.png" />
-<p><strong>Total running time of the script:</strong> ( 0 minutes  3.071 seconds)</p>
+<img alt="home/ubuntu/mne-python/doc/auto_tutorials/images/sphx_glr_plot_receptive_field_006.png" class="align-center" src="home/ubuntu/mne-python/doc/auto_tutorials/images/sphx_glr_plot_receptive_field_006.png" />
+<p><strong>Total running time of the script:</strong> ( 0 minutes  4.595 seconds)</p>
 <div class="sphx-glr-footer docutils container">
 <div class="sphx-glr-download docutils container">
 <a class="reference download internal" href="../_downloads/plot_receptive_field1.py" download=""><code class="xref download docutils literal"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">plot_receptive_field.py</span></code></a></div>
