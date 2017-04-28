@@ -166,7 +166,7 @@ This documentation is for the <strong>development version (0.15.dev0)</strong> -
 <h1>mne.viz.plot_raw<a class="headerlink" href="#mne-viz-plot-raw" title="Permalink to this headline">¶</a></h1>
 <dl class="function">
 <dt id="mne.viz.plot_raw">
-<code class="descclassname">mne.viz.</code><code class="descname">plot_raw</code><span class="sig-paren">(</span><em>raw</em>, <em>events=None</em>, <em>duration=10.0</em>, <em>start=0.0</em>, <em>n_channels=20</em>, <em>bgcolor='w'</em>, <em>color=None</em>, <em>bad_color=(0.8</em>, <em>0.8</em>, <em>0.8)</em>, <em>event_color='cyan'</em>, <em>scalings=None</em>, <em>remove_dc=True</em>, <em>order='type'</em>, <em>show_options=False</em>, <em>title=None</em>, <em>show=True</em>, <em>block=False</em>, <em>highpass=None</em>, <em>lowpass=None</em>, <em>filtorder=4</em>, <em>clipping=None</em>, <em>show_first_samp=False</em>, <em>proj=True</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/maint/0.15.dev0/mne/viz/raw.py#L91-L409"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.viz.plot_raw" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">mne.viz.</code><code class="descname">plot_raw</code><span class="sig-paren">(</span><em>raw</em>, <em>events=None</em>, <em>duration=10.0</em>, <em>start=0.0</em>, <em>n_channels=20</em>, <em>bgcolor='w'</em>, <em>color=None</em>, <em>bad_color=(0.8</em>, <em>0.8</em>, <em>0.8)</em>, <em>event_color='cyan'</em>, <em>scalings=None</em>, <em>remove_dc=True</em>, <em>order=None</em>, <em>show_options=False</em>, <em>title=None</em>, <em>show=True</em>, <em>block=False</em>, <em>highpass=None</em>, <em>lowpass=None</em>, <em>filtorder=4</em>, <em>clipping=None</em>, <em>show_first_samp=False</em>, <em>proj=True</em>, <em>group_by='type'</em>, <em>butterfly=False</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/maint/0.15.dev0/mne/viz/raw.py#L91-L437"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.viz.plot_raw" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot raw data.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -194,7 +194,7 @@ show_first_samp is True, then it is taken relative to
 <p><strong>n_channels</strong> : int</p>
 <blockquote>
 <div><p>Number of channels to plot at once. Defaults to 20. Has no effect if
-<code class="docutils literal"><span class="pre">order</span></code> is &#8216;position&#8217; or &#8216;selection&#8217;.</p>
+<code class="docutils literal"><span class="pre">order</span></code> is &#8216;position&#8217;, &#8216;selection&#8217; or &#8216;butterfly&#8217;.</p>
 </div></blockquote>
 <p><strong>bgcolor</strong> : color object</p>
 <blockquote>
@@ -236,16 +236,13 @@ subset of times up to 100mb will be loaded. If None, defaults to:</p>
 <blockquote>
 <div><p>If True remove DC component when plotting data.</p>
 </div></blockquote>
-<p><strong>order</strong> : str | array of int</p>
+<p><strong>order</strong> : array of int | None</p>
 <blockquote>
-<div><p>Order in which to plot data. &#8216;type&#8217; groups by channel type, &#8216;original&#8217;
-plots in the order of ch_names, &#8216;selection&#8217; uses Elekta&#8217;s channel
-groupings (only works for Neuromag data), &#8216;position&#8217; groups the
-channels by the positions of the sensors. &#8216;selection&#8217; and &#8216;position&#8217;
-modes allow custom selections by using lasso selector on the topomap.
-Pressing <code class="docutils literal"><span class="pre">ctrl</span></code> key while selecting allows appending to the current
-selection. If array, only the channels in the array are plotted in the
-given order. Defaults to &#8216;type&#8217;.</p>
+<div><p>Order in which to plot data. If the array is shorter than the number of
+channels, only the given channels are plotted. If None (default), all
+channels are plotted. If <code class="docutils literal"><span class="pre">group_by</span></code> is <code class="docutils literal"><span class="pre">'position'</span></code> or
+<code class="docutils literal"><span class="pre">'selection'</span></code>, the <code class="docutils literal"><span class="pre">order</span></code> parameter is used only for selecting the
+channels to be plotted.</p>
 </div></blockquote>
 <p><strong>show_options</strong> : bool</p>
 <blockquote>
@@ -301,6 +298,24 @@ Individual projectors can be enabled/disabled interactively (see
 Notes). This argument only affects the plot; use <code class="docutils literal"><span class="pre">raw.apply_proj()</span></code>
 to modify the data stored in the Raw object.</p>
 </div></blockquote>
+<p><strong>group_by</strong> : str</p>
+<blockquote>
+<div><p>How to group channels. <code class="docutils literal"><span class="pre">'type'</span></code> groups by channel type,
+<code class="docutils literal"><span class="pre">'original'</span></code> plots in the order of ch_names, <code class="docutils literal"><span class="pre">'selection'</span></code> uses
+Elekta&#8217;s channel groupings (only works for Neuromag data),
+<code class="docutils literal"><span class="pre">'position'</span></code> groups the channels by the positions of the sensors.
+<code class="docutils literal"><span class="pre">'selection'</span></code> and <code class="docutils literal"><span class="pre">'position'</span></code> modes allow custom selections by
+using lasso selector on the topomap. Pressing <code class="docutils literal"><span class="pre">ctrl</span></code> key while
+selecting allows appending to the current selection. Channels marked as
+bad appear with red edges on the topomap. <code class="docutils literal"><span class="pre">'type'</span></code> and <code class="docutils literal"><span class="pre">'original'</span></code>
+groups the channels by type in butterfly mode whereas <code class="docutils literal"><span class="pre">'selection'</span></code>
+and <code class="docutils literal"><span class="pre">'position'</span></code> use regional grouping. <code class="docutils literal"><span class="pre">'type'</span></code> and <code class="docutils literal"><span class="pre">'original'</span></code>
+modes are overrided with <code class="docutils literal"><span class="pre">order</span></code> keyword.</p>
+</div></blockquote>
+<p><strong>butterfly</strong> : bool</p>
+<blockquote>
+<div><p>Whether to start in butterfly mode. Defaults to False.</p>
+</div></blockquote>
 </td>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>fig</strong> : Instance of matplotlib.figure.Figure</p>
@@ -325,6 +340,8 @@ corner of the plot window opens a secondary control window, which allows
 enabling/disabling specific projectors individually. This provides a means
 of interactively observing how each projector would affect the raw data if
 it were applied.</p>
+<p>Annotation mode is toggled by pressing &#8216;a&#8217; and butterfly mode by pressing
+&#8216;b&#8217;.</p>
 </dd></dl>
 
 <div style='clear:both'></div></div>
