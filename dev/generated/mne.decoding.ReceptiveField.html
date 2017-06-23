@@ -163,7 +163,7 @@ This documentation is for the <strong>development version 0.15.dev0</strong> - <
 <h1>mne.decoding.ReceptiveField<a class="headerlink" href="#mne-decoding-receptivefield" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="mne.decoding.ReceptiveField">
-<em class="property">class </em><code class="descclassname">mne.decoding.</code><code class="descname">ReceptiveField</code><span class="sig-paren">(</span><em>tmin</em>, <em>tmax</em>, <em>sfreq</em>, <em>feature_names=None</em>, <em>estimator=None</em>, <em>fit_intercept=True</em>, <em>scoring=’r2’</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/maint/0.15.dev0/mne/decoding/receptive_field.py#L16-L294"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.decoding.ReceptiveField" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">mne.decoding.</code><code class="descname">ReceptiveField</code><span class="sig-paren">(</span><em>tmin</em>, <em>tmax</em>, <em>sfreq</em>, <em>feature_names=None</em>, <em>estimator=None</em>, <em>fit_intercept=None</em>, <em>scoring=’r2’</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/maint/0.15.dev0/mne/decoding/receptive_field.py#L16-L332"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.decoding.ReceptiveField" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fit a receptive field model.</p>
 <p>This allows you to fit a model using time-lagged input features. For
 example, a spectro- or spatio-temporal receptive field (STRF).</p>
@@ -199,10 +199,11 @@ float is passed, it will be interpreted as the <cite>alpha</cite> parameter
 to be passed to a Ridge regression model. If <cite>None</cite>, then a Ridge
 regression model with an alpha of 0 will be used.</p>
 </div></blockquote>
-<p><strong>fit_intercept</strong> : bool</p>
+<p><strong>fit_intercept</strong> : bool | None</p>
 <blockquote>
 <div><p>If True (default), the sample mean is removed before fitting.
-Ignored if <code class="docutils literal"><span class="pre">estimator</span></code> is a <a class="reference external" href="http://scikit-learn.org/stable/modules/generated/sklearn.base.BaseEstimator.html#sklearn.base.BaseEstimator" title="(in scikit-learn v0.18.1)"><code class="xref py py-class docutils literal"><span class="pre">sklearn.base.BaseEstimator</span></code></a>.</p>
+If <code class="docutils literal"><span class="pre">estimator</span></code> is a <a class="reference external" href="http://scikit-learn.org/stable/modules/generated/sklearn.base.BaseEstimator.html#sklearn.base.BaseEstimator" title="(in scikit-learn v0.18.2)"><code class="xref py py-class docutils literal"><span class="pre">sklearn.base.BaseEstimator</span></code></a>,
+this must be None or match <code class="docutils literal"><span class="pre">estimator.fit_intercept</span></code>.</p>
 </div></blockquote>
 <p><strong>scoring</strong> : [‘r2’, ‘corrcoef’]</p>
 <blockquote class="last">
@@ -214,6 +215,10 @@ coefficient).</p>
 </tr>
 </tbody>
 </table>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last"><a class="reference internal" href="mne.decoding.TimeDelayingRidge.html#mne.decoding.TimeDelayingRidge" title="mne.decoding.TimeDelayingRidge"><code class="xref py py-obj docutils literal"><span class="pre">mne.decoding.TimeDelayingRidge</span></code></a></p>
+</div>
 <p class="rubric">References</p>
 <table class="docutils citation" frame="void" id="r44" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
@@ -252,18 +257,18 @@ enhance speech intelligibility. Nature Communications,
 <p class="rubric">Attributes</p>
 <table border="1" class="docutils">
 <colgroup>
-<col width="18%" />
-<col width="82%" />
+<col width="16%" />
+<col width="84%" />
 </colgroup>
 <tbody valign="top">
 <tr class="row-odd"><td><code class="docutils literal"><span class="pre">coef_</span></code></td>
-<td>(array, shape (n_outputs, n_features, n_delays)) The coefficients from the model fit, reshaped for easy visualization. If you want the raw (1d) coefficients, access them from the estimator stored in <code class="docutils literal"><span class="pre">self.estimator_</span></code>.</td>
+<td>(array, shape ([n_outputs, ]n_features, n_delays)) The coefficients from the model fit, reshaped for easy visualization. During <a class="reference internal" href="#mne.decoding.ReceptiveField.fit" title="mne.decoding.ReceptiveField.fit"><code class="xref py py-meth docutils literal"><span class="pre">mne.decoding.ReceptiveField.fit()</span></code></a>, if <code class="docutils literal"><span class="pre">y</span></code> has one dimension (time), the <code class="docutils literal"><span class="pre">n_outputs</span></code> dimension here is omitted.</td>
 </tr>
 <tr class="row-even"><td><code class="docutils literal"><span class="pre">delays_</span></code>: array, shape (n_delays,), dtype int</td>
 <td>The delays used to fit the model, in indices. To return the delays in seconds, use <code class="docutils literal"><span class="pre">self.delays_</span> <span class="pre">/</span> <span class="pre">self.sfreq</span></code></td>
 </tr>
-<tr class="row-odd"><td><code class="docutils literal"><span class="pre">keep_samples_</span></code></td>
-<td>(slice) The rows to keep during model fitting after removing rows with missing values due to time delaying.</td>
+<tr class="row-odd"><td><code class="docutils literal"><span class="pre">valid_samples_</span></code></td>
+<td>(slice) The rows to keep during model fitting after removing rows with missing values due to time delaying. This can be used to get an output equivalent to using <a class="reference external" href="https://docs.scipy.org/doc/numpy-dev/reference/generated/numpy.convolve.html#numpy.convolve" title="(in NumPy v1.13.dev0)"><code class="xref py py-func docutils literal"><span class="pre">numpy.convolve()</span></code></a> or <a class="reference external" href="https://docs.scipy.org/doc/numpy-dev/reference/generated/numpy.correlate.html#numpy.correlate" title="(in NumPy v1.13.dev0)"><code class="xref py py-func docutils literal"><span class="pre">numpy.correlate()</span></code></a> with <code class="docutils literal"><span class="pre">mode='valid'</span></code>.</td>
 </tr>
 </tbody>
 </table>
@@ -301,7 +306,7 @@ enhance speech intelligibility. Nature Communications,
 
 <dl class="method">
 <dt id="mne.decoding.ReceptiveField.fit">
-<code class="descname">fit</code><span class="sig-paren">(</span><em>X</em>, <em>y</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/maint/0.15.dev0/mne/decoding/receptive_field.py#L133-L194"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.decoding.ReceptiveField.fit" title="Permalink to this definition">¶</a></dt>
+<code class="descname">fit</code><span class="sig-paren">(</span><em>X</em>, <em>y</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/maint/0.15.dev0/mne/decoding/receptive_field.py#L136-L216"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.decoding.ReceptiveField.fit" title="Permalink to this definition">¶</a></dt>
 <dd><p>Fit a receptive field model.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -311,7 +316,7 @@ enhance speech intelligibility. Nature Communications,
 <blockquote>
 <div><p>The input features for the model.</p>
 </div></blockquote>
-<p><strong>y</strong> : array, shape (n_times[, n_epochs], n_outputs)</p>
+<p><strong>y</strong> : array, shape (n_times[, n_epochs][, n_outputs])</p>
 <blockquote>
 <div><p>The output features for the model.</p>
 </div></blockquote>
@@ -354,7 +359,7 @@ contained subobjects that are estimators.</p>
 
 <dl class="method">
 <dt id="mne.decoding.ReceptiveField.predict">
-<code class="descname">predict</code><span class="sig-paren">(</span><em>X</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/maint/0.15.dev0/mne/decoding/receptive_field.py#L196-L214"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.decoding.ReceptiveField.predict" title="Permalink to this definition">¶</a></dt>
+<code class="descname">predict</code><span class="sig-paren">(</span><em>X</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/maint/0.15.dev0/mne/decoding/receptive_field.py#L218-L259"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.decoding.ReceptiveField.predict" title="Permalink to this definition">¶</a></dt>
 <dd><p>Generate predictions with a receptive field.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -366,9 +371,11 @@ contained subobjects that are estimators.</p>
 </div></blockquote>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>y_pred</strong> : array, shape (n_times * n_epochs[, n_outputs])</p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>y_pred</strong> : array, shape (n_times[, n_epochs][, n_outputs])</p>
 <blockquote class="last">
-<div><p>The output predictions with time concatenated.</p>
+<div><p>The output predictions. “Note that valid samples (those
+unaffected by edge artifacts during the time delaying step) can
+be obtained using <code class="docutils literal"><span class="pre">y_pred[rf.valid_samples_]</span></code>.</p>
 </div></blockquote>
 </td>
 </tr>
@@ -378,7 +385,7 @@ contained subobjects that are estimators.</p>
 
 <dl class="method">
 <dt id="mne.decoding.ReceptiveField.score">
-<code class="descname">score</code><span class="sig-paren">(</span><em>X</em>, <em>y</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/maint/0.15.dev0/mne/decoding/receptive_field.py#L216-L252"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.decoding.ReceptiveField.score" title="Permalink to this definition">¶</a></dt>
+<code class="descname">score</code><span class="sig-paren">(</span><em>X</em>, <em>y</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/maint/0.15.dev0/mne/decoding/receptive_field.py#L261-L296"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.decoding.ReceptiveField.score" title="Permalink to this definition">¶</a></dt>
 <dd><p>Score predictions generated with a receptive field.</p>
 <p>This calls <cite>self.predict</cite>, then masks the output of this
 and <cite>y</cite> with <cite>self.mask_prediction_</cite>. Finally, it passes
@@ -391,7 +398,7 @@ this to a <cite>sklearn</cite> scorer.</p>
 <blockquote>
 <div><p>The input features for the model.</p>
 </div></blockquote>
-<p><strong>y</strong> : array, shape (n_times[, n_epochs], n_outputs)</p>
+<p><strong>y</strong> : array, shape (n_times[, n_epochs][, n_outputs])</p>
 <blockquote>
 <div><p>Used for scikit-learn compatibility.</p>
 </div></blockquote>
@@ -445,7 +452,7 @@ self</p>
       <li><a href="faq.html#cite">Cite MNE</a></li>
       <li class="pull-right"><a href="#">Back to top</a></li>
     </ul>
-    <p>&copy; Copyright 2012-2017, MNE Developers. Last updated on 2017-06-20.</p>
+    <p>&copy; Copyright 2012-2017, MNE Developers. Last updated on 2017-06-23.</p>
   </div>
 </footer>
   </body>
