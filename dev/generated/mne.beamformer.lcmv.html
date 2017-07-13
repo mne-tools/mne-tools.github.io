@@ -166,7 +166,7 @@ This documentation is for the <strong>development version 0.15.dev0</strong> - <
 <h1>mne.beamformer.lcmv<a class="headerlink" href="#mne-beamformer-lcmv" title="Permalink to this headline">¶</a></h1>
 <dl class="function">
 <dt id="mne.beamformer.lcmv">
-<code class="descclassname">mne.beamformer.</code><code class="descname">lcmv</code><span class="sig-paren">(</span><em>evoked</em>, <em>forward</em>, <em>noise_cov</em>, <em>data_cov</em>, <em>reg=0.05</em>, <em>label=None</em>, <em>pick_ori=None</em>, <em>picks=None</em>, <em>rank=None</em>, <em>verbose=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/maint/0.15.dev0/mne/beamformer/_lcmv.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.beamformer.lcmv" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">mne.beamformer.</code><code class="descname">lcmv</code><span class="sig-paren">(</span><em>evoked</em>, <em>forward</em>, <em>noise_cov=None</em>, <em>data_cov=None</em>, <em>reg=0.05</em>, <em>label=None</em>, <em>pick_ori=None</em>, <em>picks=None</em>, <em>rank=None</em>, <em>weight_norm=’unit-noise-gain’</em>, <em>max_ori_out=’abs’</em>, <em>verbose=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/maint/0.15.dev0/mne/beamformer/_lcmv.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.beamformer.lcmv" title="Permalink to this definition">¶</a></dt>
 <dd><p>Linearly Constrained Minimum Variance (LCMV) beamformer.</p>
 <p>Compute Linearly Constrained Minimum Variance (LCMV) beamformer
 on evoked data.</p>
@@ -189,7 +189,9 @@ report any issue or suggestions.</p>
 </div></blockquote>
 <p><strong>noise_cov</strong> : Covariance</p>
 <blockquote>
-<div><p>The noise covariance</p>
+<div><p>The noise covariance. If provided, whitening will be done. Providing a
+noise covariance is mandatory if you mix sensor types, e.g.
+gradiometers with magnetometers or EEG with MEG.</p>
 </div></blockquote>
 <p><strong>data_cov</strong> : Covariance</p>
 <blockquote>
@@ -221,6 +223,21 @@ detected automatically. If int, the rank is specified for the MEG
 channels. A dictionary with entries ‘eeg’ and/or ‘meg’ can be used
 to specify the rank for each modality.</p>
 </div></blockquote>
+<p><strong>weight_norm: ‘unit-noise-gain’| ‘nai’ | None</strong></p>
+<blockquote>
+<div><p>If ‘unit-noise-gain’, the unit-noise gain minimum variance beamformer
+will be computed (Borgiotti-Kaplan beamformer) <a class="reference internal" href="#r23" id="id1">[R23]</a>,
+if ‘nai’, the Neural Activity Index <a class="reference internal" href="#r22" id="id2">[R22]</a> will be computed</p>
+</div></blockquote>
+<p><strong>max_ori_out: ‘abs’ | ‘signed’</strong></p>
+<blockquote>
+<div><p>Specify in case of pick_ori=’max-power’.
+If ‘abs’, the absolute value of the source space time series will be
+returned,
+if ‘signed’, the signed source space time series will be returned.
+‘abs’ is deprecated and will be removed in 0.16. Set max_ori_out to
+‘signed’ to remove this warning.</p>
+</div></blockquote>
 <p><strong>verbose</strong> : bool, str, int, or None</p>
 <blockquote>
 <div><p>If not None, override default verbose level (see <a class="reference internal" href="mne.verbose.html#mne.verbose" title="mne.verbose"><code class="xref py py-func docutils literal"><span class="pre">mne.verbose()</span></code></a>
@@ -241,23 +258,36 @@ and <a class="reference internal" href="../auto_tutorials/plot_configuration.htm
 <p class="last"><a class="reference internal" href="mne.beamformer.lcmv_raw.html#mne.beamformer.lcmv_raw" title="mne.beamformer.lcmv_raw"><code class="xref py py-obj docutils literal"><span class="pre">lcmv_raw</span></code></a>, <a class="reference internal" href="mne.beamformer.lcmv_epochs.html#mne.beamformer.lcmv_epochs" title="mne.beamformer.lcmv_epochs"><code class="xref py py-obj docutils literal"><span class="pre">lcmv_epochs</span></code></a></p>
 </div>
 <p class="rubric">Notes</p>
-<p>The original reference is:
-Van Veen et al. Localization of brain electrical activity via linearly
-constrained minimum variance spatial filtering.
-Biomedical Engineering (1997) vol. 44 (9) pp. 867–880</p>
+<p>The original reference is <a class="reference internal" href="#r22" id="id3">[R22]</a></p>
 <p>The reference for finding the max-power orientation is:
 Sekihara et al. Asymptotic SNR of scalar and vector minimum-variance
 beamformers for neuromagnetic source reconstruction.
 Biomedical Engineering (2004) vol. 51 (10) pp. 1726–34</p>
+<p class="rubric">References</p>
+<table class="docutils citation" frame="void" id="r22" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[R22]</td><td><em>(<a class="fn-backref" href="#id2">1</a>, <a class="fn-backref" href="#id3">2</a>, <a class="fn-backref" href="#id4">3</a>)</em> Van Veen et al. Localization of brain electrical activity via
+linearly constrained minimum variance spatial filtering.
+Biomedical Engineering (1997) vol. 44 (9) pp. 867–880</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="r23" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[R23]</td><td><em>(<a class="fn-backref" href="#id1">1</a>, <a class="fn-backref" href="#id5">2</a>)</em> Sekihara &amp; Nagarajan. Adaptive spatial filters for electromagnetic
+brain imaging (2008) Springer Science &amp; Business Media</td></tr>
+</tbody>
+</table>
 </dd></dl>
 
 <div class="section" id="examples-using-mne-beamformer-lcmv">
 <h2>Examples using <code class="docutils literal"><span class="pre">mne.beamformer.lcmv</span></code><a class="headerlink" href="#examples-using-mne-beamformer-lcmv" title="Permalink to this headline">¶</a></h2>
-<div class="sphx-glr-thumbcontainer" tooltip="Compute LCMV beamformer solutions on an evoked dataset for three different choices of source or..."><div class="figure" id="id1">
+<div class="sphx-glr-thumbcontainer" tooltip="Compute LCMV beamformer solutions on an evoked dataset for three different choices of source or..."><div class="figure" id="id6">
 <img alt="../_images/sphx_glr_plot_lcmv_beamformer_thumb.png" src="../_images/sphx_glr_plot_lcmv_beamformer_thumb.png" />
 <p class="caption"><span class="caption-text"><a class="reference internal" href="../auto_examples/inverse/plot_lcmv_beamformer.html#sphx-glr-auto-examples-inverse-plot-lcmv-beamformer-py"><span class="std std-ref">Compute LCMV beamformer on evoked data</span></a></span></p>
 </div>
-</div><div class="sphx-glr-thumbcontainer" tooltip="Compute LCMV inverse solution on an auditory evoked dataset in a volume source space. It stores..."><div class="figure" id="id2">
+</div><div class="sphx-glr-thumbcontainer" tooltip="Compute LCMV inverse solution on an auditory evoked dataset in a volume source space. It stores..."><div class="figure" id="id7">
 <img alt="../_images/sphx_glr_plot_lcmv_beamformer_volume_thumb.png" src="../_images/sphx_glr_plot_lcmv_beamformer_volume_thumb.png" />
 <p class="caption"><span class="caption-text"><a class="reference internal" href="../auto_examples/inverse/plot_lcmv_beamformer_volume.html#sphx-glr-auto-examples-inverse-plot-lcmv-beamformer-volume-py"><span class="std std-ref">Compute LCMV inverse solution on evoked data in volume source space</span></a></span></p>
 </div>

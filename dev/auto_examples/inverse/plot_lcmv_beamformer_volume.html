@@ -218,10 +218,19 @@ Freeview.</p>
 <span class="n">data_cov</span> <span class="o">=</span> <a href="../../generated/mne.compute_covariance.html#mne.compute_covariance" title="View documentation for mne.compute_covariance"><span class="n">mne</span><span class="o">.</span><span class="n">compute_covariance</span></a><span class="p">(</span><span class="n">epochs</span><span class="p">,</span> <span class="n">tmin</span><span class="o">=</span><span class="mf">0.04</span><span class="p">,</span> <span class="n">tmax</span><span class="o">=</span><span class="mf">0.15</span><span class="p">,</span>
                                   <span class="n">method</span><span class="o">=</span><span class="s1">&#39;shrunk&#39;</span><span class="p">)</span>
 
-<span class="c1"># Run free orientation (vector) beamformer. Source orientation can be</span>
-<span class="c1"># restricted by setting pick_ori to &#39;max-power&#39; (or &#39;normal&#39; but only when</span>
-<span class="c1"># using a surface-based source space)</span>
-<span class="n">stc</span> <span class="o">=</span> <a href="../../generated/mne.beamformer.lcmv.html#mne.beamformer.lcmv" title="View documentation for mne.beamformer.lcmv"><span class="n">lcmv</span></a><span class="p">(</span><span class="n">evoked</span><span class="p">,</span> <span class="n">forward</span><span class="p">,</span> <span class="n">noise_cov</span><span class="p">,</span> <span class="n">data_cov</span><span class="p">,</span> <span class="n">reg</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span> <span class="n">pick_ori</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
+<span class="c1"># Run free orientation (vector) beamformer with weight normalization (neural</span>
+<span class="c1"># activity index, NAI). Providing a noise covariance matrix enables whitening</span>
+<span class="c1"># of the data and forward solution. Source orientation is optimized by</span>
+<span class="c1"># setting pick_ori to &#39;max-power&#39;.</span>
+<span class="c1"># weight_norm can also be set to &#39;unit-noise-gain&#39;. Source orientation can also</span>
+<span class="c1"># be &#39;normal&#39; (but only when using a surface-based source space) or None,</span>
+<span class="c1"># which computes a vector beamfomer. Note, however, that not all combinations</span>
+<span class="c1"># of orientation selection and weight normalization are implemented yet.</span>
+<span class="n">stc</span> <span class="o">=</span> <a href="../../generated/mne.beamformer.lcmv.html#mne.beamformer.lcmv" title="View documentation for mne.beamformer.lcmv"><span class="n">lcmv</span></a><span class="p">(</span><span class="n">evoked</span><span class="p">,</span> <span class="n">forward</span><span class="p">,</span> <span class="n">noise_cov</span><span class="p">,</span> <span class="n">data_cov</span><span class="p">,</span> <span class="n">reg</span><span class="o">=</span><span class="mf">0.05</span><span class="p">,</span>
+           <span class="n">pick_ori</span><span class="o">=</span><span class="s1">&#39;max-power&#39;</span><span class="p">,</span> <span class="n">weight_norm</span><span class="o">=</span><span class="s1">&#39;nai&#39;</span><span class="p">,</span> <span class="n">max_ori_out</span><span class="o">=</span><span class="s1">&#39;signed&#39;</span><span class="p">)</span>
+
+<span class="c1"># take absolute values for plotting</span>
+<span class="n">stc</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">stc</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
 
 <span class="c1"># Save result in stc files</span>
 <span class="n">stc</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;lcmv-vol&#39;</span><span class="p">)</span>
@@ -235,7 +244,7 @@ Freeview.</p>
 <span class="n">t1_fname</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/subjects/sample/mri/T1.mgz&#39;</span>
 
 <span class="c1"># Plotting with nilearn ######################################################</span>
-<span class="n">plot_stat_map</span><span class="p">(</span><span class="n">index_img</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="mi">61</span><span class="p">),</span> <span class="n">t1_fname</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">0.8</span><span class="p">,</span>
+<span class="n">plot_stat_map</span><span class="p">(</span><span class="n">index_img</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="mi">61</span><span class="p">),</span> <span class="n">t1_fname</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><span class="mf">1.35</span><span class="p">,</span>
               <span class="n">title</span><span class="o">=</span><span class="s1">&#39;LCMV (t=</span><span class="si">%.1f</span><span class="s1"> s.)&#39;</span> <span class="o">%</span> <span class="n">stc</span><span class="o">.</span><span class="n">times</span><span class="p">[</span><span class="mi">61</span><span class="p">])</span>
 
 <span class="c1"># plot source time courses with the maximum peak amplitudes</span>
@@ -312,12 +321,11 @@ Freeview.</p>
 <span class="n">estimated</span> <span class="n">rank</span> <span class="p">(</span><span class="n">mag</span> <span class="o">+</span> <span class="n">grad</span><span class="p">):</span> <span class="mi">36</span>
 <span class="n">Setting</span> <span class="n">small</span> <span class="n">MEG</span> <span class="n">eigenvalues</span> <span class="n">to</span> <span class="n">zero</span><span class="o">.</span>
 <span class="n">Not</span> <span class="n">doing</span> <span class="n">PCA</span> <span class="k">for</span> <span class="n">MEG</span><span class="o">.</span>
-<span class="n">combining</span> <span class="n">the</span> <span class="n">current</span> <span class="n">components</span><span class="o">...</span>
 <span class="n">Writing</span> <span class="n">STC</span> <span class="n">to</span> <span class="n">disk</span><span class="o">...</span>
 <span class="p">[</span><span class="n">done</span><span class="p">]</span>
 </pre></div>
 </div>
-<p><strong>Total running time of the script:</strong> ( 0 minutes  7.505 seconds)</p>
+<p><strong>Total running time of the script:</strong> ( 0 minutes  8.260 seconds)</p>
 <div class="sphx-glr-footer docutils container">
 <div class="sphx-glr-download docutils container">
 <a class="reference download internal" href="../../_downloads/plot_lcmv_beamformer_volume.py" download=""><code class="xref download docutils literal"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">plot_lcmv_beamformer_volume.py</span></code></a></div>
