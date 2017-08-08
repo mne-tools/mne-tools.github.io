@@ -8,12 +8,15 @@
 Modifying data in-place
 =======================
 
+It is often necessary to modify data once you have loaded it into memory.
+Common examples of this are signal processing, feature extraction, and data
+cleaning. Some functionality is pre-built into MNE-python, though it is also
+possible to apply an arbitrary function to the data.
+
 
 
 .. code-block:: python
 
-
-    from __future__ import print_function
 
     import mne
     import os.path as op
@@ -26,17 +29,12 @@ Modifying data in-place
 
 
 
-It is often necessary to modify data once you have loaded it into memory.
-Common examples of this are signal processing, feature extraction, and data
-cleaning. Some functionality is pre-built into MNE-python, though it is also
-possible to apply an arbitrary function to the data.
+Load an example dataset, the preload flag loads the data into memory now
 
 
 
 .. code-block:: python
 
-
-    # Load an example dataset, the preload flag loads the data into memory now
     data_path = op.join(mne.datasets.sample.data_path(), 'MEG',
                         'sample', 'sample_audvis_raw.fif')
     raw = mne.io.read_raw_fif(data_path, preload=True)
@@ -51,15 +49,6 @@ possible to apply an arbitrary function to the data.
 
  Out::
 
-    Opening raw data file /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis_raw.fif...
-        Read a total of 3 projection items:
-            PCA-v1 (1 x 102)  idle
-            PCA-v2 (1 x 102)  idle
-            PCA-v3 (1 x 102)  idle
-        Range : 25800 ... 192599 =     42.956 ...   320.670 secs
-    Ready.
-    Current compensation grade : 0
-    Reading 0 ... 166799  =      0.000 ...   277.714 secs...
     <Raw  |  sample_audvis_raw.fif, n_channels x n_times : 376 x 6007 (10.0 sec), ~21.0 MB, data loaded>
 
 
@@ -75,7 +64,8 @@ Most MNE objects have in-built methods for filtering:
 
     filt_bands = [(1, 3), (3, 10), (10, 20), (20, 60)]
     f, (ax, ax2) = plt.subplots(2, 1, figsize=(15, 10))
-    _ = ax.plot(raw._data[0])
+    data, times = raw[0]
+    _ = ax.plot(data[0])
     for fmin, fmax in filt_bands:
         raw_filt = raw.copy()
         raw_filt.filter(fmin, fmax, fir_design='firwin')
@@ -91,26 +81,6 @@ Most MNE objects have in-built methods for filtering:
     :align: center
 
 
-.. rst-class:: sphx-glr-script-out
-
- Out::
-
-    Setting up band-pass filter from 1 - 3 Hz
-    l_trans_bandwidth chosen to be 1.0 Hz
-    h_trans_bandwidth chosen to be 2.0 Hz
-    Filter length of 1982 samples (3.300 sec) selected
-    Setting up band-pass filter from 3 - 10 Hz
-    l_trans_bandwidth chosen to be 2.0 Hz
-    h_trans_bandwidth chosen to be 2.5 Hz
-    Filter length of 991 samples (1.650 sec) selected
-    Setting up band-pass filter from 10 - 20 Hz
-    l_trans_bandwidth chosen to be 2.5 Hz
-    h_trans_bandwidth chosen to be 5.0 Hz
-    Filter length of 793 samples (1.320 sec) selected
-    Setting up band-pass filter from 20 - 60 Hz
-    l_trans_bandwidth chosen to be 5.0 Hz
-    h_trans_bandwidth chosen to be 15.0 Hz
-    Filter length of 396 samples (0.659 sec) selected
 
 
 In addition, there are functions for applying the Hilbert transform, which is
@@ -129,7 +99,7 @@ useful to calculate phase / amplitude of your signal.
     raw_hilb = raw_band.copy()
     hilb_picks = mne.pick_types(raw_band.info, meg=False, eeg=True)
     raw_hilb.apply_hilbert(hilb_picks)
-    print(raw_hilb._data.dtype)
+    print(raw_hilb[0][0].dtype)
 
 
 
@@ -139,8 +109,6 @@ useful to calculate phase / amplitude of your signal.
 
  Out::
 
-    Setting up band-pass filter from 12 - 18 Hz
-    Filter length of 991 samples (1.650 sec) selected
     complex64
 
 
@@ -164,9 +132,9 @@ the hilbert transformed data.
     raw_phase.apply_function(np.angle, hilb_picks)
 
     f, (a1, a2) = plt.subplots(2, 1, figsize=(15, 10))
-    a1.plot(raw_band._data[hilb_picks[0]])
-    a1.plot(raw_amp._data[hilb_picks[0]])
-    a2.plot(raw_phase._data[hilb_picks[0]])
+    a1.plot(raw_band[hilb_picks[0]][0][0].real)
+    a1.plot(raw_amp[hilb_picks[0]][0][0].real)
+    a2.plot(raw_phase[hilb_picks[0]][0][0].real)
     a1.set_title('Amplitude of frequency band')
     a2.set_title('Phase of frequency band')
 
@@ -178,7 +146,7 @@ the hilbert transformed data.
 
 
 
-**Total running time of the script:** ( 0 minutes  2.436 seconds)
+**Total running time of the script:** ( 0 minutes  2.426 seconds)
 
 
 

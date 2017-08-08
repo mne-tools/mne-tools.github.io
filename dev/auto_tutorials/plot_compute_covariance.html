@@ -166,17 +166,17 @@ This documentation is for the <strong>development version 0.15.dev0</strong> - <
       
   <div class="section" id="computing-covariance-matrix">
 <span id="tut-compute-covariance"></span><span id="sphx-glr-auto-tutorials-plot-compute-covariance-py"></span><h1>Computing covariance matrix<a class="headerlink" href="#computing-covariance-matrix" title="Permalink to this headline">¶</a></h1>
+<p>Many methods in MNE, including e.g. source estimation and some classification
+algorithms, require covariance estimations from the recordings.
+In this tutorial we cover the basics of sensor covariance computations and
+construct a noise covariance matrix that can be used when computing the
+minimum-norm inverse solution. For more information, see <a class="reference internal" href="../manual/cookbook.html#babdeeeb"><span class="std std-ref">Computing the noise-covariance matrix</span></a>.</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os.path</span> <span class="kn">as</span> <span class="nn">op</span>
 
 <span class="kn">import</span> <span class="nn">mne</span>
 <span class="kn">from</span> <span class="nn">mne.datasets</span> <span class="kn">import</span> <span class="n">sample</span>
-</pre></div>
-</div>
-<p>Source estimation method such as MNE require a noise estimations from the
-recordings. In this tutorial we cover the basics of noise covariance and
-construct a noise covariance matrix that can be used when computing the
-inverse solution. For more information, see <a class="reference internal" href="../manual/cookbook.html#babdeeeb"><span class="std std-ref">Computing the noise-covariance matrix</span></a>.</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">data_path</span> <span class="o">=</span> <a href="../generated/mne.datasets.sample.data_path.html#mne.datasets.sample.data_path" title="View documentation for mne.datasets.sample.data_path"><span class="n">sample</span><span class="o">.</span><span class="n">data_path</span></a><span class="p">()</span>
+
+<span class="n">data_path</span> <span class="o">=</span> <a href="../generated/mne.datasets.sample.data_path.html#mne.datasets.sample.data_path" title="View documentation for mne.datasets.sample.data_path"><span class="n">sample</span><span class="o">.</span><span class="n">data_path</span></a><span class="p">()</span>
 <span class="n">raw_empty_room_fname</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span>
     <span class="n">data_path</span><span class="p">,</span> <span class="s1">&#39;MEG&#39;</span><span class="p">,</span> <span class="s1">&#39;sample&#39;</span><span class="p">,</span> <span class="s1">&#39;ernoise_raw.fif&#39;</span><span class="p">)</span>
 <span class="n">raw_empty_room</span> <span class="o">=</span> <a href="../generated/mne.io.read_raw_fif.html#mne.io.read_raw_fif" title="View documentation for mne.io.read_raw_fif"><span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read_raw_fif</span></a><span class="p">(</span><span class="n">raw_empty_room_fname</span><span class="p">)</span>
@@ -184,28 +184,6 @@ inverse solution. For more information, see <a class="reference internal" href="
 <span class="n">raw</span> <span class="o">=</span> <a href="../generated/mne.io.read_raw_fif.html#mne.io.read_raw_fif" title="View documentation for mne.io.read_raw_fif"><span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read_raw_fif</span></a><span class="p">(</span><span class="n">raw_fname</span><span class="p">)</span>
 <span class="n">raw</span><span class="o">.</span><span class="n">set_eeg_reference</span><span class="p">(</span><span class="s1">&#39;average&#39;</span><span class="p">,</span> <span class="n">projection</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 <span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;bads&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;EEG 053&#39;</span><span class="p">]</span>  <span class="c1"># bads + 1 more</span>
-</pre></div>
-</div>
-<p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-default"><div class="highlight"><pre><span></span><span class="n">Opening</span> <span class="n">raw</span> <span class="n">data</span> <span class="n">file</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">ubuntu</span><span class="o">/</span><span class="n">mne_data</span><span class="o">/</span><span class="n">MNE</span><span class="o">-</span><span class="n">sample</span><span class="o">-</span><span class="n">data</span><span class="o">/</span><span class="n">MEG</span><span class="o">/</span><span class="n">sample</span><span class="o">/</span><span class="n">ernoise_raw</span><span class="o">.</span><span class="n">fif</span><span class="o">...</span>
-<span class="n">Isotrak</span> <span class="ow">not</span> <span class="n">found</span>
-    <span class="n">Read</span> <span class="n">a</span> <span class="n">total</span> <span class="n">of</span> <span class="mi">3</span> <span class="n">projection</span> <span class="n">items</span><span class="p">:</span>
-        <span class="n">PCA</span><span class="o">-</span><span class="n">v1</span> <span class="p">(</span><span class="mi">1</span> <span class="n">x</span> <span class="mi">102</span><span class="p">)</span>  <span class="n">idle</span>
-        <span class="n">PCA</span><span class="o">-</span><span class="n">v2</span> <span class="p">(</span><span class="mi">1</span> <span class="n">x</span> <span class="mi">102</span><span class="p">)</span>  <span class="n">idle</span>
-        <span class="n">PCA</span><span class="o">-</span><span class="n">v3</span> <span class="p">(</span><span class="mi">1</span> <span class="n">x</span> <span class="mi">102</span><span class="p">)</span>  <span class="n">idle</span>
-    <span class="n">Range</span> <span class="p">:</span> <span class="mi">19800</span> <span class="o">...</span> <span class="mi">85867</span> <span class="o">=</span>     <span class="mf">32.966</span> <span class="o">...</span>   <span class="mf">142.965</span> <span class="n">secs</span>
-<span class="n">Ready</span><span class="o">.</span>
-<span class="n">Current</span> <span class="n">compensation</span> <span class="n">grade</span> <span class="p">:</span> <span class="mi">0</span>
-<span class="n">Opening</span> <span class="n">raw</span> <span class="n">data</span> <span class="n">file</span> <span class="o">/</span><span class="n">home</span><span class="o">/</span><span class="n">ubuntu</span><span class="o">/</span><span class="n">mne_data</span><span class="o">/</span><span class="n">MNE</span><span class="o">-</span><span class="n">sample</span><span class="o">-</span><span class="n">data</span><span class="o">/</span><span class="n">MEG</span><span class="o">/</span><span class="n">sample</span><span class="o">/</span><span class="n">sample_audvis_raw</span><span class="o">.</span><span class="n">fif</span><span class="o">...</span>
-    <span class="n">Read</span> <span class="n">a</span> <span class="n">total</span> <span class="n">of</span> <span class="mi">3</span> <span class="n">projection</span> <span class="n">items</span><span class="p">:</span>
-        <span class="n">PCA</span><span class="o">-</span><span class="n">v1</span> <span class="p">(</span><span class="mi">1</span> <span class="n">x</span> <span class="mi">102</span><span class="p">)</span>  <span class="n">idle</span>
-        <span class="n">PCA</span><span class="o">-</span><span class="n">v2</span> <span class="p">(</span><span class="mi">1</span> <span class="n">x</span> <span class="mi">102</span><span class="p">)</span>  <span class="n">idle</span>
-        <span class="n">PCA</span><span class="o">-</span><span class="n">v3</span> <span class="p">(</span><span class="mi">1</span> <span class="n">x</span> <span class="mi">102</span><span class="p">)</span>  <span class="n">idle</span>
-    <span class="n">Range</span> <span class="p">:</span> <span class="mi">25800</span> <span class="o">...</span> <span class="mi">192599</span> <span class="o">=</span>     <span class="mf">42.956</span> <span class="o">...</span>   <span class="mf">320.670</span> <span class="n">secs</span>
-<span class="n">Ready</span><span class="o">.</span>
-<span class="n">Current</span> <span class="n">compensation</span> <span class="n">grade</span> <span class="p">:</span> <span class="mi">0</span>
-<span class="n">Adding</span> <span class="n">average</span> <span class="n">EEG</span> <span class="n">reference</span> <span class="n">projection</span><span class="o">.</span>
-<span class="mi">1</span> <span class="n">projection</span> <span class="n">items</span> <span class="n">deactivated</span>
 </pre></div>
 </div>
 <p>The definition of noise depends on the paradigm. In MEG it is quite common
@@ -218,12 +196,6 @@ useful if you use resting state as a noise baseline. Here we use the whole
 empty room recording to compute the noise covariance (tmax=None is the same
 as the end of the recording, see <a class="reference internal" href="../generated/mne.compute_raw_covariance.html#mne.compute_raw_covariance" title="mne.compute_raw_covariance"><code class="xref py py-func docutils literal"><span class="pre">mne.compute_raw_covariance()</span></code></a>).</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">noise_cov</span> <span class="o">=</span> <a href="../generated/mne.compute_raw_covariance.html#mne.compute_raw_covariance" title="View documentation for mne.compute_raw_covariance"><span class="n">mne</span><span class="o">.</span><span class="n">compute_raw_covariance</span></a><span class="p">(</span><span class="n">raw_empty_room</span><span class="p">,</span> <span class="n">tmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">tmax</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
-</pre></div>
-</div>
-<p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-default"><div class="highlight"><pre><span></span><span class="n">Using</span> <span class="n">up</span> <span class="n">to</span> <span class="mi">549</span> <span class="n">segments</span>
-<span class="n">Number</span> <span class="n">of</span> <span class="n">samples</span> <span class="n">used</span> <span class="p">:</span> <span class="mi">65880</span>
-<span class="p">[</span><span class="n">done</span><span class="p">]</span>
 </pre></div>
 </div>
 <p>Now that you the covariance matrix in a python object you can save it to a
@@ -239,30 +211,9 @@ just to be sure, we define it here manually.</p>
                     <span class="n">baseline</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">))</span>
 </pre></div>
 </div>
-<p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-default"><div class="highlight"><pre><span></span><span class="mi">320</span> <span class="n">events</span> <span class="n">found</span>
-<span class="n">Events</span> <span class="nb">id</span><span class="p">:</span> <span class="p">[</span> <span class="mi">1</span>  <span class="mi">2</span>  <span class="mi">3</span>  <span class="mi">4</span>  <span class="mi">5</span> <span class="mi">32</span><span class="p">]</span>
-<span class="mi">72</span> <span class="n">matching</span> <span class="n">events</span> <span class="n">found</span>
-<span class="n">Created</span> <span class="n">an</span> <span class="n">SSP</span> <span class="n">operator</span> <span class="p">(</span><span class="n">subspace</span> <span class="n">dimension</span> <span class="o">=</span> <span class="mi">4</span><span class="p">)</span>
-<span class="mi">4</span> <span class="n">projection</span> <span class="n">items</span> <span class="n">activated</span>
-</pre></div>
-</div>
 <p>Note that this method also attenuates the resting state activity in your
 source estimates.</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">noise_cov_baseline</span> <span class="o">=</span> <a href="../generated/mne.compute_covariance.html#mne.compute_covariance" title="View documentation for mne.compute_covariance"><span class="n">mne</span><span class="o">.</span><span class="n">compute_covariance</span></a><span class="p">(</span><span class="n">epochs</span><span class="p">)</span>
-</pre></div>
-</div>
-<p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-default"><div class="highlight"><pre><span></span><span class="n">Loading</span> <span class="n">data</span> <span class="k">for</span> <span class="mi">72</span> <span class="n">events</span> <span class="ow">and</span> <span class="mi">121</span> <span class="n">original</span> <span class="n">time</span> <span class="n">points</span> <span class="o">...</span>
-<span class="mi">0</span> <span class="n">bad</span> <span class="n">epochs</span> <span class="n">dropped</span>
-<span class="n">Estimating</span> <span class="n">covariance</span> <span class="n">using</span> <span class="n">EMPIRICAL</span>
-<span class="n">Done</span><span class="o">.</span>
-<span class="n">Using</span> <span class="n">cross</span><span class="o">-</span><span class="n">validation</span> <span class="n">to</span> <span class="n">select</span> <span class="n">the</span> <span class="n">best</span> <span class="n">estimator</span><span class="o">.</span>
-<span class="n">Number</span> <span class="n">of</span> <span class="n">samples</span> <span class="n">used</span> <span class="p">:</span> <span class="mi">8712</span>
-<span class="p">[</span><span class="n">done</span><span class="p">]</span>
-<span class="n">log</span><span class="o">-</span><span class="n">likelihood</span> <span class="n">on</span> <span class="n">unseen</span> <span class="n">data</span> <span class="p">(</span><span class="n">descending</span> <span class="n">order</span><span class="p">):</span>
-   <span class="n">empirical</span><span class="p">:</span> <span class="o">-</span><span class="mf">1837.298</span>
-<span class="n">selecting</span> <span class="n">best</span> <span class="n">estimator</span><span class="p">:</span> <span class="n">empirical</span>
 </pre></div>
 </div>
 <div class="section" id="plot-the-covariance-matrices">
@@ -283,10 +234,6 @@ epochs are already applied, so <code class="docutils literal"><span class="pre">
 <li><a class="first reference internal image-reference" href="../_images/sphx_glr_plot_compute_covariance_004.png"><img alt="../_images/sphx_glr_plot_compute_covariance_004.png" src="../_images/sphx_glr_plot_compute_covariance_004.png" style="width: 376.0px; height: 282.0px;" /></a>
 </li>
 </ul>
-<p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-default"><div class="highlight"><pre><span></span><span class="n">Created</span> <span class="n">an</span> <span class="n">SSP</span> <span class="n">operator</span> <span class="p">(</span><span class="n">subspace</span> <span class="n">dimension</span> <span class="o">=</span> <span class="mi">3</span><span class="p">)</span>
-</pre></div>
-</div>
 </div>
 <div class="section" id="how-should-i-regularize-the-covariance-matrix">
 <h2>How should I regularize the covariance matrix?<a class="headerlink" href="#how-should-i-regularize-the-covariance-matrix" title="Permalink to this headline">¶</a></h2>
@@ -301,71 +248,6 @@ In MNE-Python, regularization is done using advanced regularization methods
 described in <a class="footnote-reference" href="#id3" id="id1">[1]</a>. For this the ‘auto’ option can be used. With this
 option cross-validation will be used to learn the optimal regularization:</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">cov</span> <span class="o">=</span> <a href="../generated/mne.compute_covariance.html#mne.compute_covariance" title="View documentation for mne.compute_covariance"><span class="n">mne</span><span class="o">.</span><span class="n">compute_covariance</span></a><span class="p">(</span><span class="n">epochs</span><span class="p">,</span> <span class="n">tmax</span><span class="o">=</span><span class="mf">0.</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">)</span>
-</pre></div>
-</div>
-<p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-default"><div class="highlight"><pre><span></span><span class="n">Loading</span> <span class="n">data</span> <span class="k">for</span> <span class="mi">72</span> <span class="n">events</span> <span class="ow">and</span> <span class="mi">121</span> <span class="n">original</span> <span class="n">time</span> <span class="n">points</span> <span class="o">...</span>
-<span class="n">Estimating</span> <span class="n">covariance</span> <span class="n">using</span> <span class="n">SHRUNK</span>
-<span class="n">Done</span><span class="o">.</span>
-<span class="n">Estimating</span> <span class="n">covariance</span> <span class="n">using</span> <span class="n">DIAGONAL_FIXED</span>
-    <span class="n">EEG</span> <span class="n">regularization</span> <span class="p">:</span> <span class="kc">None</span>
-    <span class="n">MAG</span> <span class="n">regularization</span> <span class="p">:</span> <span class="mf">0.01</span>
-    <span class="n">GRAD</span> <span class="n">regularization</span> <span class="p">:</span> <span class="mf">0.01</span>
-<span class="n">Done</span><span class="o">.</span>
-<span class="n">Estimating</span> <span class="n">covariance</span> <span class="n">using</span> <span class="n">EMPIRICAL</span>
-<span class="n">Done</span><span class="o">.</span>
-<span class="n">Estimating</span> <span class="n">covariance</span> <span class="n">using</span> <span class="n">FACTOR_ANALYSIS</span>
-<span class="o">...</span> <span class="n">rank</span><span class="p">:</span> <span class="mi">5</span> <span class="o">-</span> <span class="n">loglik</span><span class="p">:</span> <span class="o">-</span><span class="mf">1889.922</span>
-<span class="o">...</span> <span class="n">rank</span><span class="p">:</span> <span class="mi">10</span> <span class="o">-</span> <span class="n">loglik</span><span class="p">:</span> <span class="o">-</span><span class="mf">1852.016</span>
-<span class="o">...</span> <span class="n">rank</span><span class="p">:</span> <span class="mi">15</span> <span class="o">-</span> <span class="n">loglik</span><span class="p">:</span> <span class="o">-</span><span class="mf">1829.413</span>
-<span class="o">...</span> <span class="n">rank</span><span class="p">:</span> <span class="mi">20</span> <span class="o">-</span> <span class="n">loglik</span><span class="p">:</span> <span class="o">-</span><span class="mf">1816.381</span>
-<span class="o">...</span> <span class="n">rank</span><span class="p">:</span> <span class="mi">25</span> <span class="o">-</span> <span class="n">loglik</span><span class="p">:</span> <span class="o">-</span><span class="mf">1805.784</span>
-<span class="o">...</span> <span class="n">rank</span><span class="p">:</span> <span class="mi">30</span> <span class="o">-</span> <span class="n">loglik</span><span class="p">:</span> <span class="o">-</span><span class="mf">1797.708</span>
-<span class="o">...</span> <span class="n">rank</span><span class="p">:</span> <span class="mi">35</span> <span class="o">-</span> <span class="n">loglik</span><span class="p">:</span> <span class="o">-</span><span class="mf">1792.948</span>
-<span class="o">...</span> <span class="n">rank</span><span class="p">:</span> <span class="mi">40</span> <span class="o">-</span> <span class="n">loglik</span><span class="p">:</span> <span class="o">-</span><span class="mf">1791.404</span>
-<span class="o">...</span> <span class="n">rank</span><span class="p">:</span> <span class="mi">45</span> <span class="o">-</span> <span class="n">loglik</span><span class="p">:</span> <span class="o">-</span><span class="mf">1789.788</span>
-<span class="o">...</span> <span class="n">rank</span><span class="p">:</span> <span class="mi">50</span> <span class="o">-</span> <span class="n">loglik</span><span class="p">:</span> <span class="o">-</span><span class="mf">1788.293</span>
-<span class="o">...</span> <span class="n">rank</span><span class="p">:</span> <span class="mi">55</span> <span class="o">-</span> <span class="n">loglik</span><span class="p">:</span> <span class="o">-</span><span class="mf">1787.154</span>
-<span class="o">...</span> <span class="n">rank</span><span class="p">:</span> <span class="mi">60</span> <span class="o">-</span> <span class="n">loglik</span><span class="p">:</span> <span class="o">-</span><span class="mf">1786.771</span>
-<span class="o">...</span> <span class="n">rank</span><span class="p">:</span> <span class="mi">65</span> <span class="o">-</span> <span class="n">loglik</span><span class="p">:</span> <span class="o">-</span><span class="mf">1786.254</span>
-<span class="o">...</span> <span class="n">rank</span><span class="p">:</span> <span class="mi">70</span> <span class="o">-</span> <span class="n">loglik</span><span class="p">:</span> <span class="o">-</span><span class="mf">1786.301</span>
-<span class="o">...</span> <span class="n">rank</span><span class="p">:</span> <span class="mi">75</span> <span class="o">-</span> <span class="n">loglik</span><span class="p">:</span> <span class="o">-</span><span class="mf">1786.192</span>
-<span class="o">...</span> <span class="n">rank</span><span class="p">:</span> <span class="mi">80</span> <span class="o">-</span> <span class="n">loglik</span><span class="p">:</span> <span class="o">-</span><span class="mf">1786.915</span>
-<span class="o">...</span> <span class="n">rank</span><span class="p">:</span> <span class="mi">85</span> <span class="o">-</span> <span class="n">loglik</span><span class="p">:</span> <span class="o">-</span><span class="mf">1786.300</span>
-<span class="o">...</span> <span class="n">rank</span><span class="p">:</span> <span class="mi">90</span> <span class="o">-</span> <span class="n">loglik</span><span class="p">:</span> <span class="o">-</span><span class="mf">1786.785</span>
-<span class="o">...</span> <span class="n">rank</span><span class="p">:</span> <span class="mi">95</span> <span class="o">-</span> <span class="n">loglik</span><span class="p">:</span> <span class="o">-</span><span class="mf">1786.508</span>
-<span class="o">...</span> <span class="n">rank</span><span class="p">:</span> <span class="mi">100</span> <span class="o">-</span> <span class="n">loglik</span><span class="p">:</span> <span class="o">-</span><span class="mf">1786.828</span>
-<span class="o">...</span> <span class="n">rank</span><span class="p">:</span> <span class="mi">105</span> <span class="o">-</span> <span class="n">loglik</span><span class="p">:</span> <span class="o">-</span><span class="mf">1786.391</span>
-<span class="o">...</span> <span class="n">rank</span><span class="p">:</span> <span class="mi">110</span> <span class="o">-</span> <span class="n">loglik</span><span class="p">:</span> <span class="o">-</span><span class="mf">1786.858</span>
-<span class="o">...</span> <span class="n">rank</span><span class="p">:</span> <span class="mi">115</span> <span class="o">-</span> <span class="n">loglik</span><span class="p">:</span> <span class="o">-</span><span class="mf">1787.574</span>
-<span class="o">...</span> <span class="n">rank</span><span class="p">:</span> <span class="mi">120</span> <span class="o">-</span> <span class="n">loglik</span><span class="p">:</span> <span class="o">-</span><span class="mf">1787.115</span>
-<span class="n">early</span> <span class="n">stopping</span> <span class="n">parameter</span> <span class="n">search</span><span class="o">.</span>
-<span class="o">...</span> <span class="n">best</span> <span class="n">model</span> <span class="n">at</span> <span class="n">rank</span> <span class="o">=</span> <span class="mi">75</span>
-<span class="n">Done</span><span class="o">.</span>
-<span class="n">Using</span> <span class="n">cross</span><span class="o">-</span><span class="n">validation</span> <span class="n">to</span> <span class="n">select</span> <span class="n">the</span> <span class="n">best</span> <span class="n">estimator</span><span class="o">.</span>
-    <span class="n">EEG</span> <span class="n">regularization</span> <span class="p">:</span> <span class="kc">None</span>
-    <span class="n">MAG</span> <span class="n">regularization</span> <span class="p">:</span> <span class="mf">0.01</span>
-    <span class="n">GRAD</span> <span class="n">regularization</span> <span class="p">:</span> <span class="mf">0.01</span>
-    <span class="n">EEG</span> <span class="n">regularization</span> <span class="p">:</span> <span class="kc">None</span>
-    <span class="n">MAG</span> <span class="n">regularization</span> <span class="p">:</span> <span class="mf">0.01</span>
-    <span class="n">GRAD</span> <span class="n">regularization</span> <span class="p">:</span> <span class="mf">0.01</span>
-    <span class="n">EEG</span> <span class="n">regularization</span> <span class="p">:</span> <span class="kc">None</span>
-    <span class="n">MAG</span> <span class="n">regularization</span> <span class="p">:</span> <span class="mf">0.01</span>
-    <span class="n">GRAD</span> <span class="n">regularization</span> <span class="p">:</span> <span class="mf">0.01</span>
-<span class="n">Number</span> <span class="n">of</span> <span class="n">samples</span> <span class="n">used</span> <span class="p">:</span> <span class="mi">8712</span>
-<span class="p">[</span><span class="n">done</span><span class="p">]</span>
-<span class="n">Number</span> <span class="n">of</span> <span class="n">samples</span> <span class="n">used</span> <span class="p">:</span> <span class="mi">8712</span>
-<span class="p">[</span><span class="n">done</span><span class="p">]</span>
-<span class="n">Number</span> <span class="n">of</span> <span class="n">samples</span> <span class="n">used</span> <span class="p">:</span> <span class="mi">8712</span>
-<span class="p">[</span><span class="n">done</span><span class="p">]</span>
-<span class="n">Number</span> <span class="n">of</span> <span class="n">samples</span> <span class="n">used</span> <span class="p">:</span> <span class="mi">8712</span>
-<span class="p">[</span><span class="n">done</span><span class="p">]</span>
-<span class="n">log</span><span class="o">-</span><span class="n">likelihood</span> <span class="n">on</span> <span class="n">unseen</span> <span class="n">data</span> <span class="p">(</span><span class="n">descending</span> <span class="n">order</span><span class="p">):</span>
-   <span class="n">shrunk</span><span class="p">:</span> <span class="o">-</span><span class="mf">1772.255</span>
-   <span class="n">factor_analysis</span><span class="p">:</span> <span class="o">-</span><span class="mf">1786.192</span>
-   <span class="n">diagonal_fixed</span><span class="p">:</span> <span class="o">-</span><span class="mf">1795.956</span>
-   <span class="n">empirical</span><span class="p">:</span> <span class="o">-</span><span class="mf">1837.298</span>
-<span class="n">selecting</span> <span class="n">best</span> <span class="n">estimator</span><span class="p">:</span> <span class="n">shrunk</span>
 </pre></div>
 </div>
 <p>This procedure evaluates the noise covariance quantitatively by how well it
@@ -385,19 +267,6 @@ of freedom, e.g. <code class="docutils literal"><span class="pre">ddof=3</span><
 </pre></div>
 </div>
 <img alt="../_images/sphx_glr_plot_compute_covariance_005.png" class="align-center" src="../_images/sphx_glr_plot_compute_covariance_005.png" />
-<p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-default"><div class="highlight"><pre><span></span><span class="n">estimated</span> <span class="n">rank</span> <span class="p">(</span><span class="n">eeg</span><span class="p">):</span> <span class="mi">59</span>
-<span class="n">estimated</span> <span class="n">rank</span> <span class="p">(</span><span class="n">grad</span><span class="p">):</span> <span class="mi">203</span>
-<span class="n">estimated</span> <span class="n">rank</span> <span class="p">(</span><span class="n">mag</span><span class="p">):</span> <span class="mi">102</span>
-<span class="n">estimated</span> <span class="n">rank</span> <span class="p">(</span><span class="n">mag</span> <span class="o">+</span> <span class="n">grad</span><span class="p">):</span> <span class="mi">305</span>
-<span class="n">estimated</span> <span class="n">rank</span> <span class="p">(</span><span class="n">eeg</span><span class="p">):</span> <span class="mi">59</span>
-    <span class="n">Created</span> <span class="n">an</span> <span class="n">SSP</span> <span class="n">operator</span> <span class="p">(</span><span class="n">subspace</span> <span class="n">dimension</span> <span class="o">=</span> <span class="mi">4</span><span class="p">)</span>
-<span class="n">Setting</span> <span class="n">small</span> <span class="n">MEG</span> <span class="n">eigenvalues</span> <span class="n">to</span> <span class="n">zero</span><span class="o">.</span>
-<span class="n">Not</span> <span class="n">doing</span> <span class="n">PCA</span> <span class="k">for</span> <span class="n">MEG</span><span class="o">.</span>
-<span class="n">Setting</span> <span class="n">small</span> <span class="n">EEG</span> <span class="n">eigenvalues</span> <span class="n">to</span> <span class="n">zero</span><span class="o">.</span>
-<span class="n">Not</span> <span class="n">doing</span> <span class="n">PCA</span> <span class="k">for</span> <span class="n">EEG</span><span class="o">.</span>
-</pre></div>
-</div>
 <p>This plot displays both, the whitened evoked signals for each channels and
 the whitened GFP. The numbers in the GFP panel represent the estimated rank
 of the data, which amounts to the effective degrees of freedom by which the
@@ -422,42 +291,6 @@ compared:</p>
 </pre></div>
 </div>
 <img alt="../_images/sphx_glr_plot_compute_covariance_006.png" class="align-center" src="../_images/sphx_glr_plot_compute_covariance_006.png" />
-<p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-default"><div class="highlight"><pre><span></span><span class="n">Loading</span> <span class="n">data</span> <span class="k">for</span> <span class="mi">72</span> <span class="n">events</span> <span class="ow">and</span> <span class="mi">121</span> <span class="n">original</span> <span class="n">time</span> <span class="n">points</span> <span class="o">...</span>
-<span class="n">Estimating</span> <span class="n">covariance</span> <span class="n">using</span> <span class="n">EMPIRICAL</span>
-<span class="n">Done</span><span class="o">.</span>
-<span class="n">Estimating</span> <span class="n">covariance</span> <span class="n">using</span> <span class="n">SHRUNK</span>
-<span class="n">Done</span><span class="o">.</span>
-<span class="n">Using</span> <span class="n">cross</span><span class="o">-</span><span class="n">validation</span> <span class="n">to</span> <span class="n">select</span> <span class="n">the</span> <span class="n">best</span> <span class="n">estimator</span><span class="o">.</span>
-<span class="n">Number</span> <span class="n">of</span> <span class="n">samples</span> <span class="n">used</span> <span class="p">:</span> <span class="mi">8712</span>
-<span class="p">[</span><span class="n">done</span><span class="p">]</span>
-<span class="n">Number</span> <span class="n">of</span> <span class="n">samples</span> <span class="n">used</span> <span class="p">:</span> <span class="mi">8712</span>
-<span class="p">[</span><span class="n">done</span><span class="p">]</span>
-<span class="n">log</span><span class="o">-</span><span class="n">likelihood</span> <span class="n">on</span> <span class="n">unseen</span> <span class="n">data</span> <span class="p">(</span><span class="n">descending</span> <span class="n">order</span><span class="p">):</span>
-   <span class="n">shrunk</span><span class="p">:</span> <span class="o">-</span><span class="mf">1772.255</span>
-   <span class="n">empirical</span><span class="p">:</span> <span class="o">-</span><span class="mf">1837.298</span>
-<span class="n">estimated</span> <span class="n">rank</span> <span class="p">(</span><span class="n">eeg</span><span class="p">):</span> <span class="mi">59</span>
-<span class="n">estimated</span> <span class="n">rank</span> <span class="p">(</span><span class="n">grad</span><span class="p">):</span> <span class="mi">203</span>
-<span class="n">estimated</span> <span class="n">rank</span> <span class="p">(</span><span class="n">mag</span><span class="p">):</span> <span class="mi">102</span>
-<span class="n">estimated</span> <span class="n">rank</span> <span class="p">(</span><span class="n">mag</span> <span class="o">+</span> <span class="n">grad</span><span class="p">):</span> <span class="mi">305</span>
-<span class="n">estimated</span> <span class="n">rank</span> <span class="p">(</span><span class="n">eeg</span><span class="p">):</span> <span class="mi">59</span>
-<span class="n">estimated</span> <span class="n">rank</span> <span class="p">(</span><span class="n">eeg</span><span class="p">):</span> <span class="mi">58</span>
-<span class="n">estimated</span> <span class="n">rank</span> <span class="p">(</span><span class="n">grad</span><span class="p">):</span> <span class="mi">203</span>
-<span class="n">estimated</span> <span class="n">rank</span> <span class="p">(</span><span class="n">mag</span><span class="p">):</span> <span class="mi">99</span>
-<span class="n">estimated</span> <span class="n">rank</span> <span class="p">(</span><span class="n">mag</span> <span class="o">+</span> <span class="n">grad</span><span class="p">):</span> <span class="mi">302</span>
-<span class="n">estimated</span> <span class="n">rank</span> <span class="p">(</span><span class="n">eeg</span><span class="p">):</span> <span class="mi">58</span>
-    <span class="n">Created</span> <span class="n">an</span> <span class="n">SSP</span> <span class="n">operator</span> <span class="p">(</span><span class="n">subspace</span> <span class="n">dimension</span> <span class="o">=</span> <span class="mi">4</span><span class="p">)</span>
-<span class="n">Setting</span> <span class="n">small</span> <span class="n">MEG</span> <span class="n">eigenvalues</span> <span class="n">to</span> <span class="n">zero</span><span class="o">.</span>
-<span class="n">Not</span> <span class="n">doing</span> <span class="n">PCA</span> <span class="k">for</span> <span class="n">MEG</span><span class="o">.</span>
-<span class="n">Setting</span> <span class="n">small</span> <span class="n">EEG</span> <span class="n">eigenvalues</span> <span class="n">to</span> <span class="n">zero</span><span class="o">.</span>
-<span class="n">Not</span> <span class="n">doing</span> <span class="n">PCA</span> <span class="k">for</span> <span class="n">EEG</span><span class="o">.</span>
-    <span class="n">Created</span> <span class="n">an</span> <span class="n">SSP</span> <span class="n">operator</span> <span class="p">(</span><span class="n">subspace</span> <span class="n">dimension</span> <span class="o">=</span> <span class="mi">4</span><span class="p">)</span>
-<span class="n">Setting</span> <span class="n">small</span> <span class="n">MEG</span> <span class="n">eigenvalues</span> <span class="n">to</span> <span class="n">zero</span><span class="o">.</span>
-<span class="n">Not</span> <span class="n">doing</span> <span class="n">PCA</span> <span class="k">for</span> <span class="n">MEG</span><span class="o">.</span>
-<span class="n">Setting</span> <span class="n">small</span> <span class="n">EEG</span> <span class="n">eigenvalues</span> <span class="n">to</span> <span class="n">zero</span><span class="o">.</span>
-<span class="n">Not</span> <span class="n">doing</span> <span class="n">PCA</span> <span class="k">for</span> <span class="n">EEG</span><span class="o">.</span>
-</pre></div>
-</div>
 <p>This will plot the whitened evoked for the optimal estimator and display the
 GFPs for all estimators as separate lines in the related panel.</p>
 </div>
@@ -478,7 +311,7 @@ vol. 108, 328-342, NeuroImage.</td></tr>
 space separation method. IEEE Trans. Signal Proc. 53, 3359-3372.</td></tr>
 </tbody>
 </table>
-<p><strong>Total running time of the script:</strong> ( 4 minutes  35.725 seconds)</p>
+<p><strong>Total running time of the script:</strong> ( 4 minutes  35.648 seconds)</p>
 <div class="sphx-glr-footer docutils container">
 <div class="sphx-glr-download docutils container">
 <a class="reference download internal" href="../_downloads/plot_compute_covariance.py" download=""><code class="xref download docutils literal"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">plot_compute_covariance.py</span></code></a></div>
@@ -509,7 +342,7 @@ space separation method. IEEE Trans. Signal Proc. 53, 3359-3372.</td></tr>
       <li><a href="faq.html#cite">Cite MNE</a></li>
       <li class="pull-right"><a href="#">Back to top</a></li>
     </ul>
-    <p>&copy; Copyright 2012-2017, MNE Developers. Last updated on 2017-08-06.</p>
+    <p>&copy; Copyright 2012-2017, MNE Developers. Last updated on 2017-08-08.</p>
   </div>
 </footer>
   </body>
