@@ -1,0 +1,158 @@
+
+
+.. _sphx_glr_auto_examples_inverse_plot_vector_mne_solution.py:
+
+
+==============================
+Plotting the full MNE solution
+==============================
+
+The source space that is used for the inverse computation defines a set of
+dipoles, distributed across the cortex. When visualizing a source estimate, it
+is sometimes useful to show the dipole directions, as well as their estimated
+magnitude.
+
+
+
+
+.. image:: /auto_examples/inverse/images/sphx_glr_plot_vector_mne_solution_001.png
+    :align: center
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    Reading /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis-ave.fif ...
+        Read a total of 4 projection items:
+            PCA-v1 (1 x 102) active
+            PCA-v2 (1 x 102) active
+            PCA-v3 (1 x 102) active
+            Average EEG reference (1 x 60) active
+        Found the data of interest:
+            t =    -199.80 ...     499.49 ms (Left Auditory)
+            0 CTF compensation matrices available
+            nave = 55 - aspect type = 100
+    Projections have already been applied. Setting proj attribute to True.
+    Applying baseline correction (mode: mean)
+    Reading inverse operator decomposition from /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis-meg-oct-6-meg-inv.fif...
+        Reading inverse operator info...
+        [done]
+        Reading inverse operator decomposition...
+        [done]
+        305 x 305 full covariance (kind = 1) found.
+        Read a total of 4 projection items:
+            PCA-v1 (1 x 102) active
+            PCA-v2 (1 x 102) active
+            PCA-v3 (1 x 102) active
+            Average EEG reference (1 x 60) active
+        Noise covariance matrix read.
+        22494 x 22494 diagonal covariance (kind = 2) found.
+        Source covariance matrix read.
+        22494 x 22494 diagonal covariance (kind = 6) found.
+        Orientation priors read.
+        22494 x 22494 diagonal covariance (kind = 5) found.
+        Depth priors read.
+        Did not find the desired covariance matrix (kind = 3)
+        Reading a source space...
+        Computing patch statistics...
+        Patch information added...
+        Distance information added...
+        [done]
+        Reading a source space...
+        Computing patch statistics...
+        Patch information added...
+        Distance information added...
+        [done]
+        2 source spaces read
+        Read a total of 4 projection items:
+            PCA-v1 (1 x 102) active
+            PCA-v2 (1 x 102) active
+            PCA-v3 (1 x 102) active
+            Average EEG reference (1 x 60) active
+        Source spaces transformed to the inverse solution coordinate frame
+    Preparing the inverse operator for use...
+        Scaled noise and source covariance from nave = 1 to nave = 55
+        Created the regularized inverter
+        Created an SSP operator (subspace dimension = 3)
+        Created the whitener using a full noise covariance matrix (3 small eigenvalues omitted)
+        Computing noise-normalization factors (dSPM)...
+    [done]
+    Picked 305 channels from the data
+    Computing inverse...
+    (eigenleads need to be weighted)...
+    (dSPM)...
+    [done]
+    Updating smoothing matrix, be patient..
+    Smoothing matrix creation, step 1
+    Smoothing matrix creation, step 2
+    Smoothing matrix creation, step 3
+    Smoothing matrix creation, step 4
+    Smoothing matrix creation, step 5
+    Smoothing matrix creation, step 6
+    Smoothing matrix creation, step 7
+    Smoothing matrix creation, step 8
+    Smoothing matrix creation, step 9
+    Smoothing matrix creation, step 10
+    colormap: fmin=2.46e+00 fmid=2.90e+00 fmax=1.12e+01 transparent=1
+
+
+
+
+|
+
+
+.. code-block:: python
+
+    # Author: Marijn van Vliet <w.m.vanvliet@gmail.com>
+    #
+    # License: BSD (3-clause)
+    import mne
+    from mne.datasets import sample
+    from mne.minimum_norm import read_inverse_operator, apply_inverse
+
+    print(__doc__)
+
+    data_path = sample.data_path()
+    subjects_dir = data_path + '/subjects'
+
+    # Read evoked data
+    fname_evoked = data_path + '/MEG/sample/sample_audvis-ave.fif'
+    evoked = mne.read_evokeds(fname_evoked, condition=0, baseline=(None, 0))
+
+    # Read inverse solution
+    fname_inv = data_path + '/MEG/sample/sample_audvis-meg-oct-6-meg-inv.fif'
+    inv = read_inverse_operator(fname_inv)
+
+    # Apply inverse solution, set pick_ori='vector' to obtain a
+    # :class:`mne.VectorSourceEstimate` object
+    snr = 3.0
+    lambda2 = 1.0 / snr ** 2
+    stc = apply_inverse(evoked, inv, lambda2, 'dSPM', pick_ori='vector')
+
+    # Use peak getter to move vizualization to the time point of the peak magnitude
+    _, peak_time = stc.magnitude().get_peak(hemi='lh')
+
+    # Plot the source estimate
+    brain = stc.plot(initial_time=peak_time, hemi='lh', subjects_dir=subjects_dir)
+
+**Total running time of the script:** ( 0 minutes  12.116 seconds)
+
+
+
+.. container:: sphx-glr-footer
+
+
+  .. container:: sphx-glr-download
+
+     :download:`Download Python source code: plot_vector_mne_solution.py <plot_vector_mne_solution.py>`
+
+
+
+  .. container:: sphx-glr-download
+
+     :download:`Download Jupyter notebook: plot_vector_mne_solution.ipynb <plot_vector_mne_solution.ipynb>`
+
+.. rst-class:: sphx-glr-signature
+
+    `Generated by Sphinx-Gallery <https://sphinx-gallery.readthedocs.io>`_
