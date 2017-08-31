@@ -166,21 +166,23 @@ This documentation is for the <strong>development version 0.15.dev0</strong> - <
 <code class="descclassname">mne.stats.</code><code class="descname">spatio_temporal_cluster_1samp_test</code><span class="sig-paren">(</span><em>X</em>, <em>threshold=None</em>, <em>n_permutations=1024</em>, <em>tail=0</em>, <em>stat_fun=&lt;function ttest_1samp_no_p&gt;</em>, <em>connectivity=None</em>, <em>verbose=None</em>, <em>n_jobs=1</em>, <em>seed=None</em>, <em>max_step=1</em>, <em>spatial_exclude=None</em>, <em>step_down_p=0</em>, <em>t_power=1</em>, <em>out_type='indices'</em>, <em>check_disjoint=False</em>, <em>buffer_size=1000</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/stats/cluster_level.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.stats.spatio_temporal_cluster_1samp_test" title="Permalink to this definition">¶</a></dt>
 <dd><p>Non-parametric cluster-level 1 sample T-test for spatio-temporal data.</p>
 <p>This function provides a convenient wrapper for data organized in the form
-(observations x time x space) to use permutation_cluster_1samp_test.</p>
+(observations x time x space) to use
+<a class="reference internal" href="mne.stats.permutation_cluster_1samp_test.html#mne.stats.permutation_cluster_1samp_test" title="mne.stats.permutation_cluster_1samp_test"><code class="xref py py-func docutils literal"><span class="pre">mne.stats.permutation_cluster_1samp_test()</span></code></a>. See <a class="reference internal" href="#r169170" id="id1">[R169170]</a> for more
+information.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>X</strong> : array</p>
 <blockquote>
-<div><p>Array of shape observations x time x vertices.</p>
+<div><p>Array data, shape <code class="docutils literal"><span class="pre">(n_observations,</span> <span class="pre">n_times,</span> <span class="pre">n_vertices)</span></code>.</p>
 </div></blockquote>
 <p><strong>threshold</strong> : float | dict | None</p>
 <blockquote>
 <div><p>If threshold is None, it will choose a t-threshold equivalent to
 p &lt; 0.05 for the given number of (within-subject) observations.
 If a dict is used, then threshold-free cluster enhancement (TFCE)
-will be used.</p>
+<a class="reference internal" href="#r170170" id="id2">[R170170]</a> will be used.</p>
 </div></blockquote>
 <p><strong>n_permutations</strong> : int</p>
 <blockquote>
@@ -215,12 +217,9 @@ and <a class="reference internal" href="../auto_tutorials/plot_configuration.htm
 <blockquote>
 <div><p>Number of permutations to run in parallel (requires joblib package).</p>
 </div></blockquote>
-<p><strong>seed</strong> : int or None</p>
+<p><strong>seed</strong> : int | instance of RandomState | None</p>
 <blockquote>
-<div><p>Seed the random number generator for results reproducibility.
-Note that if n_permutations &gt;= 2^(n_samples) [or (2^(n_samples-1)) for
-two-tailed tests], this value will be ignored since an exact test
-(full permutation test) will be performed.</p>
+<div><p>Seed the random number generator for results reproducibility.</p>
 </div></blockquote>
 <p><strong>max_step</strong> : int</p>
 <blockquote>
@@ -274,7 +273,7 @@ for a small block of variables.</p>
 </div></blockquote>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>T_obs</strong> : array of shape [n_tests]</p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>T_obs</strong> : array, shape (n_times * n_vertices,)</p>
 <blockquote>
 <div><p>T-statistic observed for all variables.</p>
 </div></blockquote>
@@ -286,7 +285,7 @@ for a small block of variables.</p>
 <blockquote>
 <div><p>P-value for each cluster</p>
 </div></blockquote>
-<p><strong>H0</strong> : array of shape [n_permutations]</p>
+<p><strong>H0</strong> : array, shape (n_permutations,)</p>
 <blockquote class="last">
 <div><p>Max cluster level stats observed under permutation.</p>
 </div></blockquote>
@@ -295,25 +294,38 @@ for a small block of variables.</p>
 </tbody>
 </table>
 <p class="rubric">Notes</p>
-<p>Reference:
-Cluster permutation algorithm as described in
-Maris/Oostenveld (2007),
-“Nonparametric statistical testing of EEG- and MEG-data”
-Journal of Neuroscience Methods, Vol. 164, No. 1., pp. 177-190.
-doi:10.1016/j.jneumeth.2007.03.024</p>
-<p>TFCE originally described in Smith/Nichols (2009),
-“Threshold-free cluster enhancement: Addressing problems of
-smoothing, threshold dependence, and localisation in cluster
-inference”, NeuroImage 44 (2009) 83-98.</p>
+<p>If <code class="docutils literal"><span class="pre">n_permutations</span> <span class="pre">&gt;=</span> <span class="pre">2</span> <span class="pre">**</span> <span class="pre">(n_samples</span> <span class="pre">-</span> <span class="pre">(tail</span> <span class="pre">==</span> <span class="pre">0))</span></code>,
+<code class="docutils literal"><span class="pre">n_permutations</span></code> and <code class="docutils literal"><span class="pre">seed</span></code> will be ignored since an exact test
+(full permutation test) will be performed.</p>
+<p>If no initial clusters are found, i.e., all points in the true
+distribution are below the threshold, then <code class="docutils literal"><span class="pre">clusters</span></code>, <code class="docutils literal"><span class="pre">cluster_pv</span></code>,
+and <code class="docutils literal"><span class="pre">H0</span></code> will all be empty arrays.</p>
+<p class="rubric">References</p>
+<table class="docutils citation" frame="void" id="r169170" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[R169170]</td><td><em>(<a class="fn-backref" href="#id1">1</a>, <a class="fn-backref" href="#id3">2</a>)</em> Maris/Oostenveld, “Nonparametric statistical testing of
+EEG- and MEG-data” Journal of Neuroscience Methods,
+Vol. 164, No. 1., pp. 177-190. doi:10.1016/j.jneumeth.2007.03.024</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="r170170" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[R170170]</td><td><em>(<a class="fn-backref" href="#id2">1</a>, <a class="fn-backref" href="#id4">2</a>)</em> Smith/Nichols (2009), “Threshold-free cluster enhancement:
+Addressing problems of smoothing, threshold dependence, and
+localisation in cluster inference”, NeuroImage 44 (2009) 83-98.</td></tr>
+</tbody>
+</table>
 </dd></dl>
 
 <div class="section" id="examples-using-mne-stats-spatio-temporal-cluster-1samp-test">
 <h2>Examples using <code class="docutils literal"><span class="pre">mne.stats.spatio_temporal_cluster_1samp_test</span></code><a class="headerlink" href="#examples-using-mne-stats-spatio-temporal-cluster-1samp-test" title="Permalink to this headline">¶</a></h2>
-<div class="sphx-glr-thumbcontainer" tooltip="Following the illustrative example of Ridgway et al. 2012 [1]_, this demonstrates some basic id..."><div class="figure" id="id1">
+<div class="sphx-glr-thumbcontainer" tooltip="Following the illustrative example of Ridgway et al. 2012 [1]_, this demonstrates some basic id..."><div class="figure" id="id5">
 <img alt="../_images/sphx_glr_plot_stats_cluster_methods_thumb.png" src="../_images/sphx_glr_plot_stats_cluster_methods_thumb.png" />
 <p class="caption"><span class="caption-text"><a class="reference internal" href="../auto_tutorials/plot_stats_cluster_methods.html#sphx-glr-auto-tutorials-plot-stats-cluster-methods-py"><span class="std std-ref">Permutation t-test on toy data with spatial clustering</span></a></span></p>
 </div>
-</div><div class="sphx-glr-thumbcontainer" tooltip="Tests if the evoked response is significantly different between conditions across subjects (sim..."><div class="figure" id="id2">
+</div><div class="sphx-glr-thumbcontainer" tooltip="Tests if the evoked response is significantly different between conditions across subjects (sim..."><div class="figure" id="id6">
 <img alt="../_images/sphx_glr_plot_stats_cluster_spatio_temporal_thumb.png" src="../_images/sphx_glr_plot_stats_cluster_spatio_temporal_thumb.png" />
 <p class="caption"><span class="caption-text"><a class="reference internal" href="../auto_tutorials/plot_stats_cluster_spatio_temporal.html#sphx-glr-auto-tutorials-plot-stats-cluster-spatio-temporal-py"><span class="std std-ref">Permutation t-test on source data with spatio-temporal clustering</span></a></span></p>
 </div>
@@ -340,7 +352,7 @@ inference”, NeuroImage 44 (2009) 83-98.</p>
       <li><a href="faq.html#cite">Cite MNE</a></li>
       <li class="pull-right"><a href="#">Back to top</a></li>
     </ul>
-    <p>&copy; Copyright 2012-2017, MNE Developers. Last updated on 2017-08-19.</p>
+    <p>&copy; Copyright 2012-2017, MNE Developers. Last updated on 2017-08-31.</p>
   </div>
 </footer>
   </body>
