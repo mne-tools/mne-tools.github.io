@@ -18,17 +18,23 @@ Visualize Epochs data
     import mne
 
     data_path = op.join(mne.datasets.sample.data_path(), 'MEG', 'sample')
-    raw = mne.io.read_raw_fif(op.join(data_path, 'sample_audvis_raw.fif'))
+    raw = mne.io.read_raw_fif(op.join(data_path, 'sample_audvis_raw.fif'
+                                      ), preload=True).load_data().filter(None, 9)
     raw.set_eeg_reference('average', projection=True)  # set EEG average reference
     event_id = {'auditory/left': 1, 'auditory/right': 2, 'visual/left': 3,
                 'visual/right': 4, 'smiley': 5, 'button': 32}
     events = mne.read_events(op.join(data_path, 'sample_audvis_raw-eve.fif'))
-    epochs = mne.Epochs(raw, events, event_id=event_id, tmin=-0.2, tmax=1.)
+    epochs = mne.Epochs(raw, events, event_id=event_id, tmin=-0.2, tmax=.5)
 
 
 
 
 
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    fir_design defaults to "firwin2" in 0.15 but will change to "firwin" in 0.16, set it explicitly to avoid this warning.
 
 
 This tutorial focuses on visualization of epoched data. All of the functions
@@ -124,7 +130,7 @@ button. Hitting space bar resets the scale.
 
 .. code-block:: python
 
-    epochs.plot_image(278, cmap='interactive')
+    epochs.plot_image(278, cmap='interactive', sigma=1., vmin=-250, vmax=250)
 
 
 
@@ -133,6 +139,53 @@ button. Hitting space bar resets the scale.
     :align: center
 
 
+
+
+We can also give an overview of all channels by calculating  the global
+field power (or other other aggregation methods). However, combining
+multiple channel types (e.g., MEG and EEG) in this way is not sensible.
+Instead, we can use the ``group_by`` parameter. Setting ``group_by`` to
+'type' combines channels by type.
+``group_by`` can also be used to group channels into arbitrary groups, e.g.
+regions of interests, by providing a dictionary containing
+group name -> channel indices mappings.
+
+
+
+.. code-block:: python
+
+    epochs.plot_image(combine='gfp', group_by='type', sigma=2., cmap="inferno")
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+    *
+
+      .. image:: /auto_tutorials/images/sphx_glr_plot_visualize_epochs_005.png
+            :scale: 47
+
+    *
+
+      .. image:: /auto_tutorials/images/sphx_glr_plot_visualize_epochs_006.png
+            :scale: 47
+
+    *
+
+      .. image:: /auto_tutorials/images/sphx_glr_plot_visualize_epochs_007.png
+            :scale: 47
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    Projection vector "Average EEG reference" has magnitude 0.02 (should be unity), applying projector with 1/59 of the original channels available may be dangerous, consider recomputing and adding projection vectors for channels that are eventually used. If this is intentional, consider using info.normalize_proj()
+    Projection vector "PCA-v1" has magnitude 0.03 (should be unity), applying projector with 1/102 of the original channels available may be dangerous, consider recomputing and adding projection vectors for channels that are eventually used. If this is intentional, consider using info.normalize_proj()
+    Projection vector "PCA-v2" has magnitude 0.00 (should be unity), applying projector with 1/102 of the original channels available may be dangerous, consider recomputing and adding projection vectors for channels that are eventually used. If this is intentional, consider using info.normalize_proj()
+    Projection vector "PCA-v3" has magnitude 0.15 (should be unity), applying projector with 1/102 of the original channels available may be dangerous, consider recomputing and adding projection vectors for channels that are eventually used. If this is intentional, consider using info.normalize_proj()
 
 
 You also have functions for plotting channelwise information arranged into a
@@ -144,17 +197,17 @@ to be a bit off. Here we define the limits by hand.
 
 .. code-block:: python
 
-    epochs.plot_topo_image(vmin=-200, vmax=200, title='ERF images')
+    epochs.plot_topo_image(vmin=-250, vmax=250, title='ERF images', sigma=2.)
 
 
 
-.. image:: /auto_tutorials/images/sphx_glr_plot_visualize_epochs_005.png
+.. image:: /auto_tutorials/images/sphx_glr_plot_visualize_epochs_008.png
     :align: center
 
 
 
 
-**Total running time of the script:** ( 0 minutes  32.381 seconds)
+**Total running time of the script:** ( 0 minutes  42.565 seconds)
 
 
 
