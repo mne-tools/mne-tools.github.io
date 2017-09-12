@@ -51,6 +51,8 @@ modeling with continuous inputs is described in:
     #
     # License: BSD (3-clause)
 
+    # sphinx_gallery_thumbnail_number = 7
+
     import numpy as np
     import matplotlib.pyplot as plt
 
@@ -108,7 +110,7 @@ defines how the signal will respond to power in this receptive field space.
 
 .. code-block:: python
 
-    n_freqs = 16
+    n_freqs = 20
     tmin, tmax = -.4, 0.1
 
     # To simulate the data we'll create explicit delays here
@@ -207,7 +209,7 @@ information.
     X_plt = scale(np.hstack(X[:2]).T).T
     y_plt = scale(np.hstack(y[:2]))
     time = np.arange(X_plt.shape[-1]) / sfreq
-    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(10, 10), sharex=True)
+    fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(6, 6), sharex=True)
     ax1.pcolormesh(time, freqs, X_plt, vmin=0, vmax=4, cmap='viridis')
     ax1.set_title('Input auditory features')
     ax1.set(ylim=[freqs.min(), freqs.max()], ylabel='Frequency (Hz)')
@@ -245,7 +247,7 @@ inputs and outputs.
     X_train, X_test, y_train, y_test = [np.rollaxis(ii, -1, 0) for ii in
                                         (X_train, X_test, y_train, y_test)]
     # Model the simulated data as a function of the spectrogram input
-    alphas = np.logspace(-4, 0, 10)
+    alphas = np.logspace(-3, 3, 7)
     scores = np.zeros_like(alphas)
     models = []
     for ii, alpha in enumerate(alphas):
@@ -265,7 +267,7 @@ inputs and outputs.
     best_pred = best_mod.predict(X_test)[:, 0]
 
     # Plot the original STRF, and the one that we recovered with modeling.
-    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(10, 5), sharey=True, sharex=True)
+    fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(6, 3), sharey=True, sharex=True)
     ax1.pcolormesh(delays_sec, freqs, weights, **kwargs)
     ax2.pcolormesh(times, rf.feature_names, coefs, **kwargs)
     ax1.set_title('Original STRF')
@@ -320,11 +322,11 @@ in [1]_, [2]_, and [4]_.
 
 
     # Plot model score for each ridge parameter
-    fig = plt.figure(figsize=(20, 4))
-    ax = plt.subplot2grid([2, 10], [1, 0], 1, 10)
+    fig = plt.figure(figsize=(10, 4))
+    ax = plt.subplot2grid([2, len(alphas)], [1, 0], 1, len(alphas))
     ax.plot(np.arange(len(alphas)), scores, marker='o', color='r')
     ax.annotate('Best parameter', (ix_best_alpha, scores[ix_best_alpha]),
-                (ix_best_alpha - 1, scores[ix_best_alpha] - .01),
+                (ix_best_alpha, scores[ix_best_alpha] - .1),
                 arrowprops={'arrowstyle': '->'})
     plt.xticks(np.arange(len(alphas)), ["%.0e" % ii for ii in alphas])
     ax.set(xlabel="Ridge regularization value", ylabel="Score ($R^2$)",
@@ -333,7 +335,7 @@ in [1]_, [2]_, and [4]_.
 
     # Plot the STRF of each ridge parameter
     for ii, (rf, i_alpha) in enumerate(zip(models, alphas)):
-        ax = plt.subplot2grid([2, 10], [0, ii], 1, 1)
+        ax = plt.subplot2grid([2, len(alphas)], [0, ii], 1, 1)
         ax.pcolormesh(times, rf.feature_names, rf.coef_[0], **kwargs)
         plt.xticks([], [])
         plt.yticks([], [])
@@ -383,10 +385,8 @@ Quoting [5]_:
 .. code-block:: python
 
 
-    alphas = np.logspace(-4, 0, 10)
-    old_scores = scores
-    scores = np.zeros_like(alphas)
-    models = []
+    scores_lap = np.zeros_like(alphas)
+    models_lap = []
     for ii, alpha in enumerate(alphas):
         estimator = TimeDelayingRidge(tmin, tmax, sfreq, reg_type='laplacian',
                                       alpha=alpha)
@@ -394,10 +394,10 @@ Quoting [5]_:
         rf.fit(X_train, y_train)
 
         # Now make predictions about the model output, given input stimuli.
-        scores[ii] = rf.score(X_test, y_test)
-        models.append(rf)
+        scores_lap[ii] = rf.score(X_test, y_test)
+        models_lap.append(rf)
 
-    ix_best_alpha = np.argmax(scores)
+    ix_best_alpha_lap = np.argmax(scores_lap)
 
 
 
@@ -419,15 +419,16 @@ model fit.
 .. code-block:: python
 
 
-    fig = plt.figure(figsize=(20, 4))
-    ax = plt.subplot2grid([2, 10], [1, 0], 1, 10)
-    ax.plot(np.arange(len(alphas)), scores, marker='o', color='r')
-    ax.plot(np.arange(len(alphas)), old_scores, marker='o', color='0.5', ls=':')
-    ax.annotate('Best parameter', (ix_best_alpha, scores[ix_best_alpha]),
-                (ix_best_alpha - 0.8, scores[ix_best_alpha] - .01),
+    fig = plt.figure(figsize=(10, 6))
+    ax = plt.subplot2grid([3, len(alphas)], [2, 0], 1, len(alphas))
+    ax.plot(np.arange(len(alphas)), scores_lap, marker='o', color='r')
+    ax.plot(np.arange(len(alphas)), scores, marker='o', color='0.5', ls=':')
+    ax.annotate('Best Laplacian', (ix_best_alpha_lap,
+                                   scores_lap[ix_best_alpha_lap]),
+                (ix_best_alpha_lap, scores_lap[ix_best_alpha_lap] - .1),
                 arrowprops={'arrowstyle': '->'})
-    ax.annotate('Ridge regularization', (ix_best_alpha, old_scores[ix_best_alpha]),
-                (ix_best_alpha - 0.5, old_scores[ix_best_alpha] - .02),
+    ax.annotate('Best Ridge', (ix_best_alpha, scores[ix_best_alpha]),
+                (ix_best_alpha, scores[ix_best_alpha] - .1),
                 arrowprops={'arrowstyle': '->'})
     plt.xticks(np.arange(len(alphas)), ["%.0e" % ii for ii in alphas])
     ax.set(xlabel="Laplacian regularization value", ylabel="Score ($R^2$)",
@@ -435,16 +436,21 @@ model fit.
     mne.viz.tight_layout()
 
     # Plot the STRF of each ridge parameter
-    for ii, (rf, i_alpha) in enumerate(zip(models, alphas)):
-        ax = plt.subplot2grid([2, 10], [0, ii], 1, 1)
+    xlim = times[[0, -1]]
+    for ii, (rf_lap, rf, i_alpha) in enumerate(zip(models_lap, models, alphas)):
+        ax = plt.subplot2grid([3, len(alphas)], [0, ii], 1, 1)
+        ax.pcolormesh(times, rf_lap.feature_names, rf_lap.coef_[0], **kwargs)
+        ax.set(xticks=[], yticks=[], xlim=xlim)
+        if ii == 0:
+            ax.set(ylabel='Laplacian')
+        ax = plt.subplot2grid([3, len(alphas)], [1, ii], 1, 1)
         ax.pcolormesh(times, rf.feature_names, rf.coef_[0], **kwargs)
-        plt.xticks([], [])
-        plt.yticks([], [])
-        plt.autoscale(tight=True)
+        ax.set(xticks=[], yticks=[], xlim=xlim)
+        if ii == 0:
+            ax.set(ylabel='Ridge')
     fig.suptitle('Model coefficients / scores for laplacian regularization', y=1)
     mne.viz.tight_layout()
 
-    plt.show()
 
 
 
@@ -454,7 +460,37 @@ model fit.
 
 
 
-**Total running time of the script:** ( 0 minutes  4.821 seconds)
+Plot the original STRF, and the one that we recovered with modeling.
+
+
+
+.. code-block:: python
+
+    rf = models[ix_best_alpha]
+    rf_lap = models_lap[ix_best_alpha_lap]
+    fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(9, 3),
+                                        sharey=True, sharex=True)
+    ax1.pcolormesh(delays_sec, freqs, weights, **kwargs)
+    ax2.pcolormesh(times, rf.feature_names, rf.coef_[0], **kwargs)
+    ax3.pcolormesh(times, rf_lap.feature_names, rf_lap.coef_[0], **kwargs)
+    ax1.set_title('Original STRF')
+    ax2.set_title('Best Ridge STRF')
+    ax3.set_title('Best Laplacian STRF')
+    plt.setp([iax.get_xticklabels() for iax in [ax1, ax2, ax3]], rotation=45)
+    plt.autoscale(tight=True)
+    mne.viz.tight_layout()
+
+    plt.show()
+
+
+
+.. image:: /auto_tutorials/images/sphx_glr_plot_receptive_field_007.png
+    :align: center
+
+
+
+
+**Total running time of the script:** ( 0 minutes  11.696 seconds)
 
 
 
