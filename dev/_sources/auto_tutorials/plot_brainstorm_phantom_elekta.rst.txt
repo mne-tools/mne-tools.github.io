@@ -30,6 +30,7 @@ References
 
     import os.path as op
     import numpy as np
+    import matplotlib.pyplot as plt
 
     import mne
     from mne import find_events, fit_dipole
@@ -94,7 +95,7 @@ to save memory:
 .. code-block:: python
 
 
-    raw.plot_psd(tmax=60.)
+    raw.plot_psd(tmax=60., average=False)
 
 
 
@@ -154,7 +155,7 @@ we can also decimate our data to save memory.
     tmin, tmax = -0.1, 0.1
     event_id = list(range(1, 33))
     epochs = mne.Epochs(raw, events, event_id, tmin, tmax, baseline=(None, -0.01),
-                        decim=5, preload=True)
+                        decim=3, preload=True)
     epochs['1'].average().plot()
 
 
@@ -166,20 +167,45 @@ we can also decimate our data to save memory.
 
 
 
-Let's do some dipole fits. The phantom is properly modeled by a single-shell
-sphere with origin (0., 0., 0.). We compute covariance, then do the fits.
+Let's use a sphere head geometry model and let's see the coordinate
+alignement and the sphere location. The phantom is properly modeled by
+a single-shell sphere with origin (0., 0., 0.).
+
+
+
+.. code-block:: python
+
+    sphere = mne.make_sphere_model(r0=(0., 0., 0.), head_radius=None)
+
+    mne.viz.plot_alignment(raw.info, subject='sample',
+                           meg='helmet', bem=sphere, dig=True,
+                           surfaces=['brain'])
+
+
+
+
+.. image:: /auto_tutorials/images/sphx_glr_plot_brainstorm_phantom_elekta_005.png
+    :align: center
+
+
+
+
+Let's do some dipole fits. We first compute the noise covariance,
+then do the fits for each event_id taking the time instant that maximizes
+the global field power.
 
 
 
 .. code-block:: python
 
 
-    t_peak = 60e-3  # ~60 MS at largest peak
-    sphere = mne.make_sphere_model(r0=(0., 0., 0.), head_radius=None)
     cov = mne.compute_covariance(epochs, tmax=0)
     data = []
-    for ii in range(1, 33):
-        evoked = epochs[str(ii)].average().crop(t_peak, t_peak)
+    for ii in event_id:
+        evoked = epochs[str(ii)].average()
+        idx_peak = np.argmax(evoked.copy().pick_types(meg='grad').data.std(axis=0))
+        t_peak = evoked.times[idx_peak]
+        evoked.crop(t_peak, t_peak)
         data.append(evoked.data[:, 0])
     evoked = mne.EvokedArray(np.array(data).T, evoked.info, tmin=0.)
     del epochs, raw
@@ -198,55 +224,48 @@ Now we can compare to the actual locations, taking the difference in mm:
 .. code-block:: python
 
 
-    actual_pos = mne.dipole.get_phantom_dipoles()[0]
+    actual_pos, actual_ori = mne.dipole.get_phantom_dipoles()
+    actual_amp = 100.  # nAm
+
+    fig, (ax1, ax2, ax3) = plt.subplots(nrows=3, ncols=1, figsize=(6, 7))
+
     diffs = 1000 * np.sqrt(np.sum((dip.pos - actual_pos) ** 2, axis=-1))
-    print('Differences (mm):\n%s' % diffs[:, np.newaxis])
-    print('μ = %s' % (np.mean(diffs),))
+    print('mean(position error) = %s' % (np.mean(diffs),))
+    ax1.bar(event_id, diffs)
+    ax1.set_xlabel('Dipole index')
+    ax1.set_ylabel('Loc. error (mm)')
+
+    angles = np.arccos(np.abs(np.sum(dip.ori * actual_ori, axis=1)))
+    print('mean(angle error) = %s' % (np.mean(angles),))
+    ax2.bar(event_id, angles)
+    ax2.set_xlabel('Dipole index')
+    ax2.set_ylabel('Angle error (rad)')
+
+    amps = actual_amp - dip.amplitude / 1e-9
+    print('mean(abs amplitude error) = %s' % (np.mean(np.abs(amps)),))
+    ax3.bar(event_id, amps)
+    ax3.set_xlabel('Dipole index')
+    ax3.set_ylabel('Amplitude error (nAm)')
+
+    fig.tight_layout()
+    plt.show()
 
 
+
+.. image:: /auto_tutorials/images/sphx_glr_plot_brainstorm_phantom_elekta_006.png
+    :align: center
 
 
 .. rst-class:: sphx-glr-script-out
 
  Out::
 
-    Differences (mm):
-    [[ 1.68387415]
-     [ 1.83224718]
-     [ 2.37887102]
-     [ 2.25758722]
-     [ 2.42013533]
-     [ 2.30889621]
-     [ 3.0501879 ]
-     [ 1.27021693]
-     [ 1.68353895]
-     [ 1.70684502]
-     [ 1.11192606]
-     [ 1.60902251]
-     [ 2.46878857]
-     [ 2.39310186]
-     [ 1.57425717]
-     [ 1.9897179 ]
-     [ 2.74117768]
-     [ 2.51914871]
-     [ 2.43854667]
-     [ 1.32178777]
-     [ 1.79400508]
-     [ 2.27785451]
-     [ 2.50578827]
-     [ 1.04612731]
-     [ 2.09432487]
-     [ 2.2089234 ]
-     [ 1.38642163]
-     [ 1.39399076]
-     [ 2.72623918]
-     [ 2.32290118]
-     [ 1.36459152]
-     [ 4.12061999]]
-    μ = 2.06255195372
+    mean(position error) = 2.18618128671
+    mean(angle error) = 0.0270683846629
+    mean(abs amplitude error) = 14.0768365498
 
 
-**Total running time of the script:** ( 0 minutes  32.286 seconds)
+**Total running time of the script:** ( 0 minutes  35.143 seconds)
 
 
 
