@@ -202,7 +202,6 @@ Computational Intelligence and Neuroscience, vol. 2011, Article ID
 <span class="kn">from</span> <span class="nn">mne.minimum_norm</span> <span class="kn">import</span> <a href="../generated/mne.minimum_norm.apply_inverse.html#mne.minimum_norm.apply_inverse" title="View documentation for mne.minimum_norm.apply_inverse"><span class="n">apply_inverse</span></a>
 <span class="kn">from</span> <span class="nn">mne.datasets.brainstorm</span> <span class="kn">import</span> <span class="n">bst_auditory</span>
 <span class="kn">from</span> <span class="nn">mne.io</span> <span class="kn">import</span> <a href="../generated/mne.io.read_raw_ctf.html#mne.io.read_raw_ctf" title="View documentation for mne.io.read_raw_ctf"><span class="n">read_raw_ctf</span></a>
-<span class="kn">from</span> <span class="nn">mne.filter</span> <span class="kn">import</span> <a href="../generated/mne.filter.notch_filter.html#mne.filter.notch_filter" title="View documentation for mne.filter.notch_filter"><span class="n">notch_filter</span></a><span class="p">,</span> <a href="../generated/mne.filter.filter_data.html#mne.filter.filter_data" title="View documentation for mne.filter.filter_data"><span class="n">filter_data</span></a>
 
 <span class="k">print</span><span class="p">(</span><span class="vm">__doc__</span><span class="p">)</span>
 </pre></div>
@@ -445,7 +444,7 @@ usually would do.</p>
     <span class="n">meg_picks</span> <span class="o">=</span> <a href="../generated/mne.pick_types.html#mne.pick_types" title="View documentation for mne.pick_types"><span class="n">mne</span><span class="o">.</span><span class="n">pick_types</span></a><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">meg</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">eeg</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
     <span class="n">raw</span><span class="o">.</span><span class="n">plot_psd</span><span class="p">(</span><span class="n">tmax</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="n">picks</span><span class="o">=</span><span class="n">meg_picks</span><span class="p">)</span>
     <span class="n">notches</span> <span class="o">=</span> <a href="http://docs.scipy.org/doc/numpy/reference/generated/numpy.arange.html#numpy.arange" title="View documentation for numpy.arange"><span class="n">np</span><span class="o">.</span><span class="n">arange</span></a><span class="p">(</span><span class="mi">60</span><span class="p">,</span> <span class="mi">181</span><span class="p">,</span> <span class="mi">60</span><span class="p">)</span>
-    <span class="n">raw</span><span class="o">.</span><a href="../generated/mne.filter.notch_filter.html#mne.filter.notch_filter" title="View documentation for mne.filter.notch_filter"><span class="n">notch_filter</span></a><span class="p">(</span><span class="n">notches</span><span class="p">)</span>
+    <span class="n">raw</span><span class="o">.</span><span class="n">notch_filter</span><span class="p">(</span><span class="n">notches</span><span class="p">,</span> <span class="n">phase</span><span class="o">=</span><span class="s1">&#39;zero-double&#39;</span><span class="p">,</span> <span class="n">fir_design</span><span class="o">=</span><span class="s1">&#39;firwin2&#39;</span><span class="p">)</span>
     <span class="n">raw</span><span class="o">.</span><span class="n">plot_psd</span><span class="p">(</span><span class="n">tmax</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">inf</span><span class="p">,</span> <span class="n">picks</span><span class="o">=</span><span class="n">meg_picks</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -576,36 +575,22 @@ epoch from the second run corresponds to index 182.</p>
 </pre></div>
 </div>
 <p>Typical preprocessing step is the removal of power line artifact (50 Hz or
-60 Hz). Here we notch filter the data at 60, 120 and 180 to remove the
-original 60 Hz artifact and the harmonics. Normally this would be done to
-raw data (with <a class="reference internal" href="../generated/mne.io.Raw.html#mne.io.Raw.filter" title="mne.io.Raw.filter"><code class="xref py py-func docutils literal"><span class="pre">mne.io.Raw.filter()</span></code></a>), but to reduce memory consumption
-of this tutorial, we do it at evoked stage.</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="n">use_precomputed</span><span class="p">:</span>
-    <span class="n">sfreq</span> <span class="o">=</span> <span class="n">evoked_std</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;sfreq&#39;</span><span class="p">]</span>
-    <span class="n">notches</span> <span class="o">=</span> <span class="p">[</span><span class="mi">60</span><span class="p">,</span> <span class="mi">120</span><span class="p">,</span> <span class="mi">180</span><span class="p">]</span>
-    <span class="k">for</span> <span class="n">evoked</span> <span class="ow">in</span> <span class="p">(</span><span class="n">evoked_std</span><span class="p">,</span> <span class="n">evoked_dev</span><span class="p">):</span>
-        <span class="n">evoked</span><span class="o">.</span><span class="n">data</span><span class="p">[:]</span> <span class="o">=</span> <a href="../generated/mne.filter.notch_filter.html#mne.filter.notch_filter" title="View documentation for mne.filter.notch_filter"><span class="n">notch_filter</span></a><span class="p">(</span><span class="n">evoked</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">sfreq</span><span class="p">,</span> <span class="n">notches</span><span class="p">)</span>
-        <span class="n">evoked</span><span class="o">.</span><span class="n">data</span><span class="p">[:]</span> <span class="o">=</span> <a href="../generated/mne.filter.filter_data.html#mne.filter.filter_data" title="View documentation for mne.filter.filter_data"><span class="n">filter_data</span></a><span class="p">(</span><span class="n">evoked</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">sfreq</span><span class="p">,</span> <span class="n">l_freq</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-                                     <span class="n">h_freq</span><span class="o">=</span><span class="mf">100.</span><span class="p">)</span>
+60 Hz). Here we lowpass filter the data at 40 Hz, which will remove all
+line artifacts (and high frequency information). Normally this would be done
+to raw data (with <a class="reference internal" href="../generated/mne.io.Raw.html#mne.io.Raw.filter" title="mne.io.Raw.filter"><code class="xref py py-func docutils literal"><span class="pre">mne.io.Raw.filter()</span></code></a>), but to reduce memory
+consumption of this tutorial, we do it at evoked stage. (At the raw stage,
+you could alternatively notch filter with <a class="reference internal" href="../generated/mne.io.Raw.html#mne.io.Raw.notch_filter" title="mne.io.Raw.notch_filter"><code class="xref py py-func docutils literal"><span class="pre">mne.io.Raw.notch_filter()</span></code></a>.)</p>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">evoked</span> <span class="ow">in</span> <span class="p">(</span><span class="n">evoked_std</span><span class="p">,</span> <span class="n">evoked_dev</span><span class="p">):</span>
+    <span class="n">evoked</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">l_freq</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">h_freq</span><span class="o">=</span><span class="mf">40.</span><span class="p">,</span> <span class="n">fir_design</span><span class="o">=</span><span class="s1">&#39;firwin&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-default"><div class="highlight"><pre><span></span><span class="n">Setting</span> <span class="n">up</span> <span class="n">band</span><span class="o">-</span><span class="n">stop</span> <span class="nb">filter</span>
-<span class="n">fir_design</span> <span class="n">defaults</span> <span class="n">to</span> <span class="s2">&quot;firwin2&quot;</span> <span class="ow">in</span> <span class="mf">0.15</span> <span class="n">but</span> <span class="n">will</span> <span class="n">change</span> <span class="n">to</span> <span class="s2">&quot;firwin&quot;</span> <span class="ow">in</span> <span class="mf">0.16</span><span class="p">,</span> <span class="nb">set</span> <span class="n">it</span> <span class="n">explicitly</span> <span class="n">to</span> <span class="n">avoid</span> <span class="n">this</span> <span class="n">warning</span><span class="o">.</span>
-<span class="n">Filter</span> <span class="n">length</span> <span class="n">of</span> <span class="mi">7920</span> <span class="n">samples</span> <span class="p">(</span><span class="mf">13.200</span> <span class="n">sec</span><span class="p">)</span> <span class="n">selected</span>
-<span class="n">filter_length</span> <span class="p">(</span><span class="mi">7921</span><span class="p">)</span> <span class="ow">is</span> <span class="n">longer</span> <span class="n">than</span> <span class="n">the</span> <span class="n">signal</span> <span class="p">(</span><span class="mi">360</span><span class="p">),</span> <span class="n">distortion</span> <span class="ow">is</span> <span class="n">likely</span><span class="o">.</span> <span class="n">Reduce</span> <span class="nb">filter</span> <span class="n">length</span> <span class="ow">or</span> <span class="nb">filter</span> <span class="n">a</span> <span class="n">longer</span> <span class="n">signal</span><span class="o">.</span>
-<span class="n">Setting</span> <span class="n">up</span> <span class="n">low</span><span class="o">-</span><span class="k">pass</span> <span class="nb">filter</span> <span class="n">at</span> <span class="mf">1e+02</span> <span class="n">Hz</span>
-<span class="n">fir_design</span> <span class="n">defaults</span> <span class="n">to</span> <span class="s2">&quot;firwin2&quot;</span> <span class="ow">in</span> <span class="mf">0.15</span> <span class="n">but</span> <span class="n">will</span> <span class="n">change</span> <span class="n">to</span> <span class="s2">&quot;firwin&quot;</span> <span class="ow">in</span> <span class="mf">0.16</span><span class="p">,</span> <span class="nb">set</span> <span class="n">it</span> <span class="n">explicitly</span> <span class="n">to</span> <span class="n">avoid</span> <span class="n">this</span> <span class="n">warning</span><span class="o">.</span>
-<span class="n">h_trans_bandwidth</span> <span class="n">chosen</span> <span class="n">to</span> <span class="n">be</span> <span class="mf">25.0</span> <span class="n">Hz</span>
-<span class="n">Filter</span> <span class="n">length</span> <span class="n">of</span> <span class="mi">158</span> <span class="n">samples</span> <span class="p">(</span><span class="mf">0.263</span> <span class="n">sec</span><span class="p">)</span> <span class="n">selected</span>
-<span class="n">Setting</span> <span class="n">up</span> <span class="n">band</span><span class="o">-</span><span class="n">stop</span> <span class="nb">filter</span>
-<span class="n">fir_design</span> <span class="n">defaults</span> <span class="n">to</span> <span class="s2">&quot;firwin2&quot;</span> <span class="ow">in</span> <span class="mf">0.15</span> <span class="n">but</span> <span class="n">will</span> <span class="n">change</span> <span class="n">to</span> <span class="s2">&quot;firwin&quot;</span> <span class="ow">in</span> <span class="mf">0.16</span><span class="p">,</span> <span class="nb">set</span> <span class="n">it</span> <span class="n">explicitly</span> <span class="n">to</span> <span class="n">avoid</span> <span class="n">this</span> <span class="n">warning</span><span class="o">.</span>
-<span class="n">Filter</span> <span class="n">length</span> <span class="n">of</span> <span class="mi">7920</span> <span class="n">samples</span> <span class="p">(</span><span class="mf">13.200</span> <span class="n">sec</span><span class="p">)</span> <span class="n">selected</span>
-<span class="n">filter_length</span> <span class="p">(</span><span class="mi">7921</span><span class="p">)</span> <span class="ow">is</span> <span class="n">longer</span> <span class="n">than</span> <span class="n">the</span> <span class="n">signal</span> <span class="p">(</span><span class="mi">360</span><span class="p">),</span> <span class="n">distortion</span> <span class="ow">is</span> <span class="n">likely</span><span class="o">.</span> <span class="n">Reduce</span> <span class="nb">filter</span> <span class="n">length</span> <span class="ow">or</span> <span class="nb">filter</span> <span class="n">a</span> <span class="n">longer</span> <span class="n">signal</span><span class="o">.</span>
-<span class="n">Setting</span> <span class="n">up</span> <span class="n">low</span><span class="o">-</span><span class="k">pass</span> <span class="nb">filter</span> <span class="n">at</span> <span class="mf">1e+02</span> <span class="n">Hz</span>
-<span class="n">fir_design</span> <span class="n">defaults</span> <span class="n">to</span> <span class="s2">&quot;firwin2&quot;</span> <span class="ow">in</span> <span class="mf">0.15</span> <span class="n">but</span> <span class="n">will</span> <span class="n">change</span> <span class="n">to</span> <span class="s2">&quot;firwin&quot;</span> <span class="ow">in</span> <span class="mf">0.16</span><span class="p">,</span> <span class="nb">set</span> <span class="n">it</span> <span class="n">explicitly</span> <span class="n">to</span> <span class="n">avoid</span> <span class="n">this</span> <span class="n">warning</span><span class="o">.</span>
-<span class="n">h_trans_bandwidth</span> <span class="n">chosen</span> <span class="n">to</span> <span class="n">be</span> <span class="mf">25.0</span> <span class="n">Hz</span>
-<span class="n">Filter</span> <span class="n">length</span> <span class="n">of</span> <span class="mi">158</span> <span class="n">samples</span> <span class="p">(</span><span class="mf">0.263</span> <span class="n">sec</span><span class="p">)</span> <span class="n">selected</span>
+<div class="sphx-glr-script-out highlight-default"><div class="highlight"><pre><span></span><span class="n">Setting</span> <span class="n">up</span> <span class="n">low</span><span class="o">-</span><span class="k">pass</span> <span class="nb">filter</span> <span class="n">at</span> <span class="mi">40</span> <span class="n">Hz</span>
+<span class="n">h_trans_bandwidth</span> <span class="n">chosen</span> <span class="n">to</span> <span class="n">be</span> <span class="mf">10.0</span> <span class="n">Hz</span>
+<span class="n">Filter</span> <span class="n">length</span> <span class="n">of</span> <span class="mi">198</span> <span class="n">samples</span> <span class="p">(</span><span class="mf">0.330</span> <span class="n">sec</span><span class="p">)</span> <span class="n">selected</span>
+<span class="n">Setting</span> <span class="n">up</span> <span class="n">low</span><span class="o">-</span><span class="k">pass</span> <span class="nb">filter</span> <span class="n">at</span> <span class="mi">40</span> <span class="n">Hz</span>
+<span class="n">h_trans_bandwidth</span> <span class="n">chosen</span> <span class="n">to</span> <span class="n">be</span> <span class="mf">10.0</span> <span class="n">Hz</span>
+<span class="n">Filter</span> <span class="n">length</span> <span class="n">of</span> <span class="mi">198</span> <span class="n">samples</span> <span class="p">(</span><span class="mf">0.330</span> <span class="n">sec</span><span class="p">)</span> <span class="n">selected</span>
 </pre></div>
 </div>
 <p>Here we plot the ERF of standard and deviant conditions. In both conditions
@@ -716,11 +701,9 @@ information: <a class="reference internal" href="../manual/cookbook.html#chdbbce
     <span class="n">Desired</span> <span class="n">named</span> <span class="n">matrix</span> <span class="p">(</span><span class="n">kind</span> <span class="o">=</span> <span class="mi">3523</span><span class="p">)</span> <span class="ow">not</span> <span class="n">available</span>
     <span class="n">Read</span> <span class="n">MEG</span> <span class="n">forward</span> <span class="n">solution</span> <span class="p">(</span><span class="mi">8196</span> <span class="n">sources</span><span class="p">,</span> <span class="mi">270</span> <span class="n">channels</span><span class="p">,</span> <span class="n">free</span> <span class="n">orientations</span><span class="p">)</span>
     <span class="n">Source</span> <span class="n">spaces</span> <span class="n">transformed</span> <span class="n">to</span> <span class="n">the</span> <span class="n">forward</span> <span class="n">solution</span> <span class="n">coordinate</span> <span class="n">frame</span>
-    <span class="n">Cartesian</span> <span class="n">source</span> <span class="n">orientations</span><span class="o">...</span>
-<span class="p">[</span><span class="n">done</span><span class="p">]</span>
-    <span class="n">Converting</span> <span class="n">to</span> <span class="n">surface</span><span class="o">-</span><span class="n">based</span> <span class="n">source</span> <span class="n">orientations</span><span class="o">...</span>
     <span class="n">Average</span> <span class="n">patch</span> <span class="n">normals</span> <span class="n">will</span> <span class="n">be</span> <span class="n">employed</span> <span class="ow">in</span> <span class="n">the</span> <span class="n">rotation</span> <span class="n">to</span> <span class="n">the</span> <span class="n">local</span> <span class="n">surface</span> <span class="n">coordinates</span><span class="o">....</span>
-<span class="p">[</span><span class="n">done</span><span class="p">]</span>
+    <span class="n">Converting</span> <span class="n">to</span> <span class="n">surface</span><span class="o">-</span><span class="n">based</span> <span class="n">source</span> <span class="n">orientations</span><span class="o">...</span>
+    <span class="p">[</span><span class="n">done</span><span class="p">]</span>
 <span class="n">Forward</span> <span class="n">does</span> <span class="ow">not</span> <span class="n">have</span> <span class="n">surf_ori</span><span class="o">=</span><span class="kc">True</span><span class="o">.</span> <span class="n">Automatically</span> <span class="n">convert</span> <span class="n">forward</span> <span class="n">solution</span>
 <span class="n">Computing</span> <span class="n">inverse</span> <span class="n">operator</span> <span class="k">with</span> <span class="mi">270</span> <span class="n">channels</span><span class="o">.</span>
     <span class="n">Created</span> <span class="n">an</span> <span class="n">SSP</span> <span class="n">operator</span> <span class="p">(</span><span class="n">subspace</span> <span class="n">dimension</span> <span class="o">=</span> <span class="mi">2</span><span class="p">)</span>
@@ -768,18 +751,6 @@ Standard condition.</p>
 <span class="n">combining</span> <span class="n">the</span> <span class="n">current</span> <span class="n">components</span><span class="o">...</span>
 <span class="p">(</span><span class="n">dSPM</span><span class="p">)</span><span class="o">...</span>
 <span class="p">[</span><span class="n">done</span><span class="p">]</span>
-<span class="n">Updating</span> <span class="n">smoothing</span> <span class="n">matrix</span><span class="p">,</span> <span class="n">be</span> <span class="n">patient</span><span class="o">..</span>
-<span class="n">Smoothing</span> <span class="n">matrix</span> <span class="n">creation</span><span class="p">,</span> <span class="n">step</span> <span class="mi">1</span>
-<span class="n">Smoothing</span> <span class="n">matrix</span> <span class="n">creation</span><span class="p">,</span> <span class="n">step</span> <span class="mi">2</span>
-<span class="n">Smoothing</span> <span class="n">matrix</span> <span class="n">creation</span><span class="p">,</span> <span class="n">step</span> <span class="mi">3</span>
-<span class="n">Smoothing</span> <span class="n">matrix</span> <span class="n">creation</span><span class="p">,</span> <span class="n">step</span> <span class="mi">4</span>
-<span class="n">Smoothing</span> <span class="n">matrix</span> <span class="n">creation</span><span class="p">,</span> <span class="n">step</span> <span class="mi">5</span>
-<span class="n">Smoothing</span> <span class="n">matrix</span> <span class="n">creation</span><span class="p">,</span> <span class="n">step</span> <span class="mi">6</span>
-<span class="n">Smoothing</span> <span class="n">matrix</span> <span class="n">creation</span><span class="p">,</span> <span class="n">step</span> <span class="mi">7</span>
-<span class="n">Smoothing</span> <span class="n">matrix</span> <span class="n">creation</span><span class="p">,</span> <span class="n">step</span> <span class="mi">8</span>
-<span class="n">Smoothing</span> <span class="n">matrix</span> <span class="n">creation</span><span class="p">,</span> <span class="n">step</span> <span class="mi">9</span>
-<span class="n">Smoothing</span> <span class="n">matrix</span> <span class="n">creation</span><span class="p">,</span> <span class="n">step</span> <span class="mi">10</span>
-<span class="n">colormap</span><span class="p">:</span> <span class="n">fmin</span><span class="o">=</span><span class="mf">4.75e+00</span> <span class="n">fmid</span><span class="o">=</span><span class="mf">5.62e+00</span> <span class="n">fmax</span><span class="o">=</span><span class="mf">1.57e+01</span> <span class="n">transparent</span><span class="o">=</span><span class="mi">1</span>
 </pre></div>
 </div>
 <p>Deviant condition.</p>
@@ -805,18 +776,6 @@ Standard condition.</p>
 <span class="n">combining</span> <span class="n">the</span> <span class="n">current</span> <span class="n">components</span><span class="o">...</span>
 <span class="p">(</span><span class="n">dSPM</span><span class="p">)</span><span class="o">...</span>
 <span class="p">[</span><span class="n">done</span><span class="p">]</span>
-<span class="n">Updating</span> <span class="n">smoothing</span> <span class="n">matrix</span><span class="p">,</span> <span class="n">be</span> <span class="n">patient</span><span class="o">..</span>
-<span class="n">Smoothing</span> <span class="n">matrix</span> <span class="n">creation</span><span class="p">,</span> <span class="n">step</span> <span class="mi">1</span>
-<span class="n">Smoothing</span> <span class="n">matrix</span> <span class="n">creation</span><span class="p">,</span> <span class="n">step</span> <span class="mi">2</span>
-<span class="n">Smoothing</span> <span class="n">matrix</span> <span class="n">creation</span><span class="p">,</span> <span class="n">step</span> <span class="mi">3</span>
-<span class="n">Smoothing</span> <span class="n">matrix</span> <span class="n">creation</span><span class="p">,</span> <span class="n">step</span> <span class="mi">4</span>
-<span class="n">Smoothing</span> <span class="n">matrix</span> <span class="n">creation</span><span class="p">,</span> <span class="n">step</span> <span class="mi">5</span>
-<span class="n">Smoothing</span> <span class="n">matrix</span> <span class="n">creation</span><span class="p">,</span> <span class="n">step</span> <span class="mi">6</span>
-<span class="n">Smoothing</span> <span class="n">matrix</span> <span class="n">creation</span><span class="p">,</span> <span class="n">step</span> <span class="mi">7</span>
-<span class="n">Smoothing</span> <span class="n">matrix</span> <span class="n">creation</span><span class="p">,</span> <span class="n">step</span> <span class="mi">8</span>
-<span class="n">Smoothing</span> <span class="n">matrix</span> <span class="n">creation</span><span class="p">,</span> <span class="n">step</span> <span class="mi">9</span>
-<span class="n">Smoothing</span> <span class="n">matrix</span> <span class="n">creation</span><span class="p">,</span> <span class="n">step</span> <span class="mi">10</span>
-<span class="n">colormap</span><span class="p">:</span> <span class="n">fmin</span><span class="o">=</span><span class="mf">7.00e+00</span> <span class="n">fmid</span><span class="o">=</span><span class="mf">8.16e+00</span> <span class="n">fmax</span><span class="o">=</span><span class="mf">1.84e+01</span> <span class="n">transparent</span><span class="o">=</span><span class="mi">1</span>
 </pre></div>
 </div>
 <p>Difference.</p>
@@ -841,21 +800,9 @@ Standard condition.</p>
 <span class="n">combining</span> <span class="n">the</span> <span class="n">current</span> <span class="n">components</span><span class="o">...</span>
 <span class="p">(</span><span class="n">dSPM</span><span class="p">)</span><span class="o">...</span>
 <span class="p">[</span><span class="n">done</span><span class="p">]</span>
-<span class="n">Updating</span> <span class="n">smoothing</span> <span class="n">matrix</span><span class="p">,</span> <span class="n">be</span> <span class="n">patient</span><span class="o">..</span>
-<span class="n">Smoothing</span> <span class="n">matrix</span> <span class="n">creation</span><span class="p">,</span> <span class="n">step</span> <span class="mi">1</span>
-<span class="n">Smoothing</span> <span class="n">matrix</span> <span class="n">creation</span><span class="p">,</span> <span class="n">step</span> <span class="mi">2</span>
-<span class="n">Smoothing</span> <span class="n">matrix</span> <span class="n">creation</span><span class="p">,</span> <span class="n">step</span> <span class="mi">3</span>
-<span class="n">Smoothing</span> <span class="n">matrix</span> <span class="n">creation</span><span class="p">,</span> <span class="n">step</span> <span class="mi">4</span>
-<span class="n">Smoothing</span> <span class="n">matrix</span> <span class="n">creation</span><span class="p">,</span> <span class="n">step</span> <span class="mi">5</span>
-<span class="n">Smoothing</span> <span class="n">matrix</span> <span class="n">creation</span><span class="p">,</span> <span class="n">step</span> <span class="mi">6</span>
-<span class="n">Smoothing</span> <span class="n">matrix</span> <span class="n">creation</span><span class="p">,</span> <span class="n">step</span> <span class="mi">7</span>
-<span class="n">Smoothing</span> <span class="n">matrix</span> <span class="n">creation</span><span class="p">,</span> <span class="n">step</span> <span class="mi">8</span>
-<span class="n">Smoothing</span> <span class="n">matrix</span> <span class="n">creation</span><span class="p">,</span> <span class="n">step</span> <span class="mi">9</span>
-<span class="n">Smoothing</span> <span class="n">matrix</span> <span class="n">creation</span><span class="p">,</span> <span class="n">step</span> <span class="mi">10</span>
-<span class="n">colormap</span><span class="p">:</span> <span class="n">fmin</span><span class="o">=</span><span class="mf">4.90e+00</span> <span class="n">fmid</span><span class="o">=</span><span class="mf">5.73e+00</span> <span class="n">fmax</span><span class="o">=</span><span class="mf">1.47e+01</span> <span class="n">transparent</span><span class="o">=</span><span class="mi">1</span>
 </pre></div>
 </div>
-<p><strong>Total running time of the script:</strong> ( 1 minutes  25.416 seconds)</p>
+<p><strong>Total running time of the script:</strong> ( 1 minutes  19.233 seconds)</p>
 <div class="sphx-glr-footer docutils container">
 <div class="sphx-glr-download docutils container">
 <a class="reference download internal" href="../_downloads/plot_brainstorm_auditory.py" download=""><code class="xref download docutils literal"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">plot_brainstorm_auditory.py</span></code></a></div>
@@ -886,7 +833,7 @@ Standard condition.</p>
       <li><a href="faq.html#cite">Cite MNE</a></li>
       <li class="pull-right"><a href="#">Back to top</a></li>
     </ul>
-    <p>&copy; Copyright 2012-2017, MNE Developers. Last updated on 2017-09-25.</p>
+    <p>&copy; Copyright 2012-2017, MNE Developers. Last updated on 2017-09-29.</p>
   </div>
 </footer>
   </body>

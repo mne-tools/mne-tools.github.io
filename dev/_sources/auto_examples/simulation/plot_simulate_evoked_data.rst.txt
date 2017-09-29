@@ -51,7 +51,9 @@ Load real data as templates
     ave_fname = data_path + '/MEG/sample/sample_audvis-no-filter-ave.fif'
     cov_fname = data_path + '/MEG/sample/sample_audvis-cov.fif'
 
-    fwd = mne.read_forward_solution(fwd_fname, force_fixed=True, surf_ori=True)
+    fwd = mne.read_forward_solution(fwd_fname)
+    fwd = mne.convert_forward_solution(fwd, force_fixed=True, surf_ori=True,
+                                       use_cps=True)
     fwd = mne.pick_types_forward(fwd, meg=True, eeg=True, exclude=raw.info['bads'])
     cov = mne.read_cov(cov_fname)
     info = mne.io.read_info(ave_fname)
@@ -101,7 +103,8 @@ Load real data as templates
         Read EEG forward solution (7498 sources, 60 channels, free orientations)
         MEG and EEG forward solutions combined
         Source spaces transformed to the forward solution coordinate frame
-        Changing to fixed-orientation forward solution with surface-based source orientations...
+        Average patch normals will be employed in the rotation to the local surface coordinates....
+        Converting to surface-based source orientations...
         [done]
         364 out of 366 channels remain after picking
         366 x 366 full covariance (kind = 1) found.
@@ -132,6 +135,7 @@ Generate source time courses from 2 dipoles and the correspond evoked data
         """Function to generate random source time courses"""
         return (50e-9 * np.sin(30. * times) *
                 np.exp(- (times - 0.15 + 0.05 * rng.randn(1)) ** 2 / 0.01))
+
 
     stc = simulate_sparse_stc(fwd['src'], n_dipoles=2, times=times,
                               random_state=42, labels=labels, data_fun=data_fun)
@@ -212,7 +216,7 @@ Plot
     Total number of active sources: 2
 
 
-**Total running time of the script:** ( 0 minutes  4.734 seconds)
+**Total running time of the script:** ( 0 minutes  6.331 seconds)
 
 
 
