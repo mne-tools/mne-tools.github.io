@@ -1,0 +1,170 @@
+
+
+.. _sphx_glr_auto_examples_decoding_plot_decoding_spoc_CMC.py:
+
+
+====================================
+Continuous Target Decoding with SPoC
+====================================
+
+Source Power Comodulation (SPoC) [1]_ allows to identify the composition of
+orthogonal spatial filters that maximally correlate with a continuous target.
+
+SPoC can be seen as an extension of the CSP for continuous variables.
+
+Here, SPoC is applied to decode the (continuous) fluctuation of an
+electromyogram from MEG beta activity using data from `Cortico-Muscular
+Coherence example of fieldtrip
+<http://www.fieldtriptoolbox.org/tutorial/coherence>`_
+
+References
+----------
+
+.. [1] Dahne, S., et al (2014). SPoC: a novel framework for relating the
+       amplitude of neuronal oscillations to behaviorally relevant parameters.
+       NeuroImage, 86, 111-122.
+
+
+
+
+.. image:: /auto_examples/decoding/images/sphx_glr_plot_decoding_spoc_CMC_001.png
+    :align: center
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    Successfully extracted to: [u'/home/ubuntu/mne_data/MNE-fieldtrip_cmc-data']
+    ds directory : /home/ubuntu/mne_data/MNE-fieldtrip_cmc-data/SubjectCMC.ds
+        res4 data read.
+        hc data read.
+        Separate EEG position data file not present.
+        Quaternion matching (desired vs. transformed):
+           0.33   78.32    0.00 mm <->    0.33   78.32    0.00 mm (orig :  -71.62   40.46 -256.48 mm) diff =    0.000 mm
+          -0.33  -78.32   -0.00 mm <->   -0.33  -78.32   -0.00 mm (orig :   39.27  -70.16 -258.60 mm) diff =    0.000 mm
+         114.65    0.00   -0.00 mm <->  114.65    0.00    0.00 mm (orig :   64.35   66.64 -262.01 mm) diff =    0.000 mm
+        Coordinate transformations established.
+        Polhemus data for 3 HPI coils added
+        Device coordinate locations for 3 HPI coils added
+    Picked positions of 4 EEG channels from channel info
+        4 EEG locations added to Polhemus data.
+        Measurement info composed.
+    Finding samples for /home/ubuntu/mne_data/MNE-fieldtrip_cmc-data/SubjectCMC.ds/SubjectCMC.meg4: 
+        System clock channel is available, checking which samples are valid.
+        75 x 12000 = 911610 samples from 191 chs
+        390 samples omitted at the end
+    Current compensation grade : 0
+    Reading 0 ... 240000  =      0.000 ...   200.000 secs...
+    Setting up high-pass filter at 20 Hz
+    l_trans_bandwidth chosen to be 5.0 Hz
+    Filter length of 792 samples (0.660 sec) selected
+    Setting up band-pass filter from 15 - 30 Hz
+    l_trans_bandwidth chosen to be 3.8 Hz
+    h_trans_bandwidth chosen to be 7.5 Hz
+    Filter length of 1056 samples (0.880 sec) selected
+    800 matching events found
+    0 projection items activated
+    800 matching events found
+    0 projection items activated
+    Loading data for 800 events and 1801 original time points ...
+    5 bad epochs dropped
+    Loading data for 800 events and 1801 original time points ...
+    5 bad epochs dropped
+
+
+
+
+|
+
+
+.. code-block:: python
+
+
+    # Author: Alexandre Barachant <alexandre.barachant@gmail.com>
+    #         Jean-Remi King <jeanremi.king@gmail.com>
+    #
+    # License: BSD (3-clause)
+
+    import matplotlib.pyplot as plt
+
+    import mne
+    from mne import Epochs
+    from mne.decoding import SPoC
+    from mne.datasets.fieldtrip_cmc import data_path
+
+    from sklearn.pipeline import make_pipeline
+    from sklearn.linear_model import Ridge
+    from sklearn.model_selection import KFold, cross_val_predict
+
+    # define parameters
+    fname = data_path() + '/SubjectCMC.ds'
+    raw = mne.io.read_raw_ctf(fname)
+    raw.crop(50., 250.).load_data()  # crop for memory purposes
+
+    # Filter muscular activity to only keep high frequencies
+    emg = raw.copy().pick_channels(['EMGlft'])
+    emg.filter(20., None, fir_design='firwin')
+
+    # Filter MEG data to focus on alpha band
+    raw.pick_types(meg=True, ref_meg=True, eeg=False, eog=False)
+    raw.filter(15., 30., fir_design='firwin')
+
+    # Build epochs as sliding windows over the continuous raw file
+    events = mne.make_fixed_length_events(raw, id=1, duration=.250)
+
+    # Epoch length is 1.5 second
+    meg_epochs = Epochs(raw, events, tmin=0., tmax=1.500, baseline=None,
+                        detrend=1, decim=8)
+    emg_epochs = Epochs(emg, events, tmin=0., tmax=1.500, baseline=None)
+
+    # Prepare classification
+    X = meg_epochs.get_data()
+    y = emg_epochs.get_data().var(axis=2)[:, 0]  # target is EMG power
+
+    # Classification pipeline with SPoC spatial filtering and Ridge Regression
+    clf = make_pipeline(SPoC(n_components=2, log=True, reg='oas'), Ridge())
+
+    # Define a two fold cross-validation
+    cv = KFold(n_splits=2, shuffle=False)
+
+    # Run cross validaton
+    y_preds = cross_val_predict(clf, X, y, cv=cv)
+
+    # plot the True EMG power and the EMG power predicted from MEG data
+    fig, ax = plt.subplots(1, 1, figsize=[10, 4])
+    times = raw.times[meg_epochs.events[:, 0] - raw.first_samp]
+    ax.plot(times, y_preds, color='b', label='Predicted EMG')
+    ax.plot(times, y, color='r', label='True EMG')
+    ax.set_xlabel('Time (s)')
+    ax.set_ylabel('EMG Power')
+    ax.set_title('SPoC MEG Predictions')
+    plt.legend()
+    mne.viz.tight_layout()
+    plt.show()
+
+**Total running time of the script:** ( 0 minutes  16.237 seconds)
+
+
+
+.. only :: html
+
+ .. container:: sphx-glr-footer
+
+
+  .. container:: sphx-glr-download
+
+     :download:`Download Python source code: plot_decoding_spoc_CMC.py <plot_decoding_spoc_CMC.py>`
+
+
+
+  .. container:: sphx-glr-download
+
+     :download:`Download Jupyter notebook: plot_decoding_spoc_CMC.ipynb <plot_decoding_spoc_CMC.ipynb>`
+
+
+.. only:: html
+
+ .. rst-class:: sphx-glr-signature
+
+    `Gallery generated by Sphinx-Gallery <https://sphinx-gallery.readthedocs.io>`_

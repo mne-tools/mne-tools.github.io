@@ -4,7 +4,7 @@
 Source localization with MNE/dSPM/sLORETA
 =========================================
 
-The aim of this tutorials is to teach you how to compute and apply a linear
+The aim of this tutorial is to teach you how to compute and apply a linear
 inverse method such as MNE/dSPM/sLORETA on evoked/raw/epochs data.
 
 """
@@ -16,14 +16,15 @@ from mne.datasets import sample
 from mne.minimum_norm import (make_inverse_operator, apply_inverse,
                               write_inverse_operator)
 
+# sphinx_gallery_thumbnail_number = 9
+
 ###############################################################################
 # Process MEG data
 
 data_path = sample.data_path()
 raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
 
-raw = mne.io.read_raw_fif(raw_fname)
-raw.set_eeg_reference()  # set EEG average reference
+raw = mne.io.read_raw_fif(raw_fname)  # already has an average reference
 events = mne.find_events(raw, stim_channel='STI 014')
 
 event_id = dict(aud_r=1)  # event trigger and conditions
@@ -67,7 +68,8 @@ evoked.plot_white(noise_cov)
 # Read the forward solution and compute the inverse operator
 
 fname_fwd = data_path + '/MEG/sample/sample_audvis-meg-oct-6-fwd.fif'
-fwd = mne.read_forward_solution(fname_fwd, surf_ori=True)
+fwd = mne.read_forward_solution(fname_fwd)
+fwd = mne.convert_forward_solution(fwd, surf_ori=True)
 
 # Restrict forward solution as necessary for MEG
 fwd = mne.pick_types_forward(fwd, meg=True, eeg=False)
@@ -90,13 +92,14 @@ lambda2 = 1. / snr ** 2
 stc = apply_inverse(evoked, inverse_operator, lambda2,
                     method=method, pick_ori=None)
 
-del fwd, inverse_operator, epochs  # to save memory
+del fwd, epochs  # to save memory
 
 ###############################################################################
 # Visualization
 # -------------
 # View activation time-series
 
+plt.figure()
 plt.plot(1e3 * stc.times, stc.data[::100, :].T)
 plt.xlabel('time (ms)')
 plt.ylabel('%s value' % method)
@@ -120,16 +123,40 @@ brain.show_view('lateral')
 # Morph data to average brain
 # ---------------------------
 
-fs_vertices = [np.arange(10242)] * 2
+fs_vertices = [np.arange(10242)] * 2  # fsaverage is special this way
 morph_mat = mne.compute_morph_matrix('sample', 'fsaverage', stc.vertices,
                                      fs_vertices, smooth=None,
                                      subjects_dir=subjects_dir)
 stc_fsaverage = stc.morph_precomputed('fsaverage', fs_vertices, morph_mat)
-brain_fsaverage = stc_fsaverage.plot(surface='inflated', hemi='rh',
-                                     subjects_dir=subjects_dir,
-                                     clim=dict(kind='value', lims=[8, 12, 15]),
-                                     initial_time=time_max, time_unit='s')
+brain_fsaverage = stc_fsaverage.plot(
+    surface='inflated', hemi='rh', subjects_dir=subjects_dir,
+    clim=dict(kind='value', lims=[8, 12, 15]), initial_time=time_max,
+    time_unit='s', size=(800, 800), smoothing_steps=5)
 brain_fsaverage.show_view('lateral')
+
+###############################################################################
+# Dipole orientations
+# -------------------
+# The ``pick_ori`` parameter of the
+# :func:`mne.minimum_norm.apply_inverse` function controls
+# the orientation of the dipoles. One useful setting is ``pick_ori='vector'``,
+# which will return an estimate that does not only contain the source power at
+# each dipole, but also the orientation of the dipoles.
+
+stc_vec = apply_inverse(evoked, inverse_operator, lambda2,
+                        method=method, pick_ori='vector')
+stc_vec.plot(hemi='rh', subjects_dir=subjects_dir,
+             clim=dict(kind='value', lims=[8, 12, 15]),
+             initial_time=time_max, time_unit='s')
+
+###############################################################################
+# Note that there is a relationship between the orientation of the dipoles and
+# the surface of the cortex. For this reason, we do not use an inflated
+# cortical surface for visualization, but the original surface used to define
+# the source space.
+#
+# For more information about dipole orientations, see
+# :ref:`tut_dipole_orentiations`.
 
 ###############################################################################
 # Exercise

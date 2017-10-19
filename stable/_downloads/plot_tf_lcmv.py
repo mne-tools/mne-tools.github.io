@@ -92,7 +92,7 @@ epochs_noise = mne.Epochs(raw_noise, events_noise, event_id, tmin, tmax,
 epochs_noise = epochs_noise[:len(epochs.events)]
 
 # Read forward operator
-forward = mne.read_forward_solution(fname_fwd, surf_ori=True)
+forward = mne.read_forward_solution(fname_fwd)
 
 # Read label
 label = mne.read_label(fname_label)
@@ -121,7 +121,7 @@ subtract_evoked = False
 noise_covs = []
 for (l_freq, h_freq) in freq_bins:
     raw_band = raw_noise.copy()
-    raw_band.filter(l_freq, h_freq, n_jobs=1)
+    raw_band.filter(l_freq, h_freq, n_jobs=1, fir_design='firwin')
     epochs_band = mne.Epochs(raw_band, epochs_noise.events, event_id,
                              tmin=tmin_plot, tmax=tmax_plot, baseline=None,
                              proj=True)

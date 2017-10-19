@@ -41,7 +41,7 @@ Setup for reading the raw data
     raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
     event_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw-eve.fif'
     raw = mne.io.read_raw_fif(raw_fname, preload=True)
-    raw.set_eeg_reference()  # set EEG average reference
+    raw.set_eeg_reference('average', projection=True)  # set EEG average reference
 
 
 
@@ -85,14 +85,14 @@ By looking at the measurement info you will see that we have now
 
  Out::
 
-    <Info | 19 non-empty fields
+    <Info | 20 non-empty fields
         bads : list | 0 items
-        buffer_size_sec : numpy.float64 | 13.3196808772
+        buffer_size_sec : float64 | 13.3196808772
         ch_names : list | EEG 001, EEG 002, EEG 003, EEG 004, EEG 005, EEG 006, ...
         chs : list | 60 items (EEG: 59, EOG: 1)
         comps : list | 0 items
         custom_ref_applied : bool | False
-        dev_head_t : 'mne.transforms.Transform | 3 items
+        dev_head_t : Transform | 3 items
         dig : list | 146 items
         events : list | 0 items
         file_id : dict | 4 items
@@ -100,9 +100,10 @@ By looking at the measurement info you will see that we have now
         hpi_meas : list | 1 items
         hpi_results : list | 1 items
         lowpass : float | 40.0 Hz
-        meas_date : numpy.ndarray | 2002-12-03 19:01:10
+        meas_date : ndarray | 2002-12-03 19:01:10 GMT
         meas_id : dict | 4 items
         nchan : int | 60
+        proc_history : list | 0 items
         projs : list | PCA-v1: off, PCA-v2: off, PCA-v3: off, ...
         sfreq : float | 150.153747559 Hz
         acq_pars : NoneType
@@ -141,14 +142,14 @@ to treat an EOG channel as EEG you can change its type using
 
  Out::
 
-    <Info | 19 non-empty fields
+    <Info | 20 non-empty fields
         bads : list | 0 items
-        buffer_size_sec : numpy.float64 | 13.3196808772
+        buffer_size_sec : float64 | 13.3196808772
         ch_names : list | EEG 001, EEG 002, EEG 003, EEG 004, EEG 005, EEG 006, ...
         chs : list | 60 items (EEG: 60)
         comps : list | 0 items
         custom_ref_applied : bool | False
-        dev_head_t : 'mne.transforms.Transform | 3 items
+        dev_head_t : Transform | 3 items
         dig : list | 146 items
         events : list | 0 items
         file_id : dict | 4 items
@@ -156,9 +157,10 @@ to treat an EOG channel as EEG you can change its type using
         hpi_meas : list | 1 items
         hpi_results : list | 1 items
         lowpass : float | 40.0 Hz
-        meas_date : numpy.ndarray | 2002-12-03 19:01:10
+        meas_date : ndarray | 2002-12-03 19:01:10 GMT
         meas_id : dict | 4 items
         nchan : int | 60
+        proc_history : list | 0 items
         projs : list | PCA-v1: off, PCA-v2: off, PCA-v3: off, ...
         sfreq : float | 150.153747559 Hz
         acq_pars : NoneType
@@ -229,7 +231,7 @@ For the first channel we get
 
 
 And it's actually possible to plot the channel locations using
-the :func:`mne.io.Raw.plot_sensors` method
+:func:`mne.io.Raw.plot_sensors`.
 
 
 
@@ -262,7 +264,7 @@ Setting EEG montage
 -------------------
 
 In the case where your data don't have locations you can set them
-using a :func:`mne.channels.Montage`. MNE comes with a set of default
+using a :class:`mne.channels.Montage`. MNE comes with a set of default
 montages. To read one of them do:
 
 
@@ -357,7 +359,7 @@ be added explicitly.
 
 .. code-block:: python
 
-    raw_car, _ = mne.set_eeg_reference(raw)
+    raw_car, _ = mne.set_eeg_reference(raw, 'average', projection=True)
     evoked_car = mne.Epochs(raw_car, **epochs_params).average()
     del raw_car  # save memory
 
@@ -505,7 +507,7 @@ As an example, first, we create individual ERPs for each condition.
 
  Out::
 
-    [<Evoked  |  comment : 'auditory+left', kind : average, time : [-0.199795, 0.499488], n_epochs : 185, n_channels x n_times : 59 x 106, ~3.1 MB>, <Evoked  |  comment : 'auditory+right', kind : average, time : [-0.199795, 0.499488], n_epochs : 174, n_channels x n_times : 59 x 106, ~3.1 MB>, <Evoked  |  comment : 'visual+left', kind : average, time : [-0.199795, 0.499488], n_epochs : 179, n_channels x n_times : 59 x 106, ~3.1 MB>, <Evoked  |  comment : 'visual+right', kind : average, time : [-0.199795, 0.499488], n_epochs : 185, n_channels x n_times : 59 x 106, ~3.1 MB>]
+    [<Evoked  |  comment : '0.33 * left/auditory + 0.33 * left/visual + 0.33 * right/auditory', kind : average, time : [-0.199795, 0.499488], n_epochs : 185, n_channels x n_times : 59 x 106, ~3.1 MB>, <Evoked  |  comment : '0.33 * left/auditory + 0.34 * right/auditory + 0.33 * right/visual', kind : average, time : [-0.199795, 0.499488], n_epochs : 174, n_channels x n_times : 59 x 106, ~3.1 MB>, <Evoked  |  comment : '0.33 * left/auditory + 0.34 * left/visual + 0.33 * right/visual', kind : average, time : [-0.199795, 0.499488], n_epochs : 179, n_channels x n_times : 59 x 106, ~3.1 MB>, <Evoked  |  comment : '0.34 * left/visual + 0.34 * right/auditory + 0.32 * right/visual', kind : average, time : [-0.199795, 0.499488], n_epochs : 185, n_channels x n_times : 59 x 106, ~3.1 MB>]
 
 
 This can be simplified with a Python list comprehension:
@@ -590,11 +592,13 @@ either different conditions, or different subjects.
     <Evoked  |  comment : 'left/auditory', kind : average, time : [-0.199795, 0.499488], n_epochs : 56, n_channels x n_times : 59 x 106, ~3.1 MB>
 
 
-**Total running time of the script:** ( 0 minutes  14.115 seconds)
+**Total running time of the script:** ( 0 minutes  9.604 seconds)
 
 
 
-.. container:: sphx-glr-footer
+.. only :: html
+
+ .. container:: sphx-glr-footer
 
 
   .. container:: sphx-glr-download
@@ -607,6 +611,9 @@ either different conditions, or different subjects.
 
      :download:`Download Jupyter notebook: plot_eeg_erp.ipynb <plot_eeg_erp.ipynb>`
 
-.. rst-class:: sphx-glr-signature
 
-    `Generated by Sphinx-Gallery <https://sphinx-gallery.readthedocs.io>`_
+.. only:: html
+
+ .. rst-class:: sphx-glr-signature
+
+    `Gallery generated by Sphinx-Gallery <https://sphinx-gallery.readthedocs.io>`_
