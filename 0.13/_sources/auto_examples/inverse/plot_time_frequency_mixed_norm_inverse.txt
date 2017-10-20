@@ -1,0 +1,345 @@
+
+
+.. _sphx_glr_auto_examples_inverse_plot_time_frequency_mixed_norm_inverse.py:
+
+
+=============================================
+Compute MxNE with time-frequency sparse prior
+=============================================
+
+The TF-MxNE solver is a distributed inverse method (like dSPM or sLORETA)
+that promotes focal (sparse) sources (such as dipole fitting techniques).
+The benefit of this approach is that:
+
+  - it is spatio-temporal without assuming stationarity (sources properties
+    can vary over time)
+  - activations are localized in space, time and frequency in one step.
+  - with a built-in filtering process based on a short time Fourier
+    transform (STFT), data does not need to be low passed (just high pass
+    to make the signals zero mean).
+  - the solver solves a convex optimization problem, hence cannot be
+    trapped in local minima.
+
+References:
+
+A. Gramfort, D. Strohmeier, J. Haueisen, M. Hamalainen, M. Kowalski
+Time-Frequency Mixed-Norm Estimates: Sparse M/EEG imaging with
+non-stationary source activations
+Neuroimage, Volume 70, 15 April 2013, Pages 410-422, ISSN 1053-8119,
+DOI: 10.1016/j.neuroimage.2012.12.051.
+
+A. Gramfort, D. Strohmeier, J. Haueisen, M. Hamalainen, M. Kowalski
+Functional Brain Imaging with M/EEG Using Structured Sparsity in
+Time-Frequency Dictionaries
+Proceedings Information Processing in Medical Imaging
+Lecture Notes in Computer Science, 2011, Volume 6801/2011,
+600-611, DOI: 10.1007/978-3-642-22092-0_49
+http://dx.doi.org/10.1007/978-3-642-22092-0_49
+
+
+
+.. code-block:: python
+
+    # Author: Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
+    #
+    # License: BSD (3-clause)
+
+    import mne
+    from mne.datasets import sample
+    from mne.minimum_norm import make_inverse_operator, apply_inverse
+    from mne.inverse_sparse import tf_mixed_norm
+    from mne.viz import plot_sparse_source_estimates
+
+    print(__doc__)
+
+    data_path = sample.data_path()
+    subjects_dir = data_path + '/subjects'
+    fwd_fname = data_path + '/MEG/sample/sample_audvis-meg-eeg-oct-6-fwd.fif'
+    ave_fname = data_path + '/MEG/sample/sample_audvis-no-filter-ave.fif'
+    cov_fname = data_path + '/MEG/sample/sample_audvis-shrunk-cov.fif'
+
+    # Read noise covariance matrix
+    cov = mne.read_cov(cov_fname)
+
+    # Handling average file
+    condition = 'Left visual'
+    evoked = mne.read_evokeds(ave_fname, condition=condition, baseline=(None, 0))
+    evoked = mne.pick_channels_evoked(evoked)
+    # We make the window slightly larger than what you'll eventually be interested
+    # in ([-0.05, 0.3]) to avoid edge effects.
+    evoked.crop(tmin=-0.1, tmax=0.4)
+
+    # Handling forward solution
+    forward = mne.read_forward_solution(fwd_fname, force_fixed=False,
+                                        surf_ori=True)
+
+
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    365 x 365 full covariance (kind = 1) found.
+        Read a total of 4 projection items:
+            PCA-v1 (1 x 102) active
+            PCA-v2 (1 x 102) active
+            PCA-v3 (1 x 102) active
+            Average EEG reference (1 x 59) active
+    Reading /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis-no-filter-ave.fif ...
+        Read a total of 4 projection items:
+            PCA-v1 (1 x 102) active
+            PCA-v2 (1 x 102) active
+            PCA-v3 (1 x 102) active
+            Average EEG reference (1 x 60) active
+        Found the data of interest:
+            t =    -199.80 ...     499.49 ms (Left visual)
+            0 CTF compensation matrices available
+            nave = 64 - aspect type = 100
+    Projections have already been applied. Setting proj attribute to True.
+    No baseline correction applied
+    Applying baseline correction (mode: mean)
+    Reading forward solution from /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis-meg-eeg-oct-6-fwd.fif...
+        Reading a source space...
+        Computing patch statistics...
+        Patch information added...
+        Distance information added...
+        [done]
+        Reading a source space...
+        Computing patch statistics...
+        Patch information added...
+        Distance information added...
+        [done]
+        2 source spaces read
+        Desired named matrix (kind = 3523) not available
+        Read MEG forward solution (7498 sources, 306 channels, free orientations)
+        Desired named matrix (kind = 3523) not available
+        Read EEG forward solution (7498 sources, 60 channels, free orientations)
+        MEG and EEG forward solutions combined
+        Source spaces transformed to the forward solution coordinate frame
+        Converting to surface-based source orientations...
+        Average patch normals will be employed in the rotation to the local surface coordinates....
+    [done]
+
+
+Run solver
+
+
+
+.. code-block:: python
+
+
+    # alpha_space regularization parameter is between 0 and 100 (100 is high)
+    alpha_space = 50.  # spatial regularization parameter
+    # alpha_time parameter promotes temporal smoothness
+    # (0 means no temporal regularization)
+    alpha_time = 1.  # temporal regularization parameter
+
+    loose, depth = 0.2, 0.9  # loose orientation & depth weighting
+
+    # Compute dSPM solution to be used as weights in MxNE
+    inverse_operator = make_inverse_operator(evoked.info, forward, cov,
+                                             loose=loose, depth=depth)
+    stc_dspm = apply_inverse(evoked, inverse_operator, lambda2=1. / 9.,
+                             method='dSPM')
+
+    # Compute TF-MxNE inverse solution
+    stc, residual = tf_mixed_norm(evoked, forward, cov, alpha_space, alpha_time,
+                                  loose=loose, depth=depth, maxit=200, tol=1e-4,
+                                  weights=stc_dspm, weights_min=8., debias=True,
+                                  wsize=16, tstep=4, window=0.05,
+                                  return_residual=True)
+
+    # Crop to remove edges
+    stc.crop(tmin=-0.05, tmax=0.3)
+    evoked.crop(tmin=-0.05, tmax=0.3)
+    residual.crop(tmin=-0.05, tmax=0.3)
+
+    # Show the evoked response and the residual for gradiometers
+    ylim = dict(grad=[-120, 120])
+    evoked.pick_types(meg='grad', exclude='bads')
+    evoked.plot(titles=dict(grad='Evoked Response: Gradiometers'), ylim=ylim,
+                proj=True)
+
+    residual.pick_types(meg='grad', exclude='bads')
+    residual.plot(titles=dict(grad='Residuals: Gradiometers'), ylim=ylim,
+                  proj=True)
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+    *
+
+      .. image:: /auto_examples/inverse/images/sphx_glr_plot_time_frequency_mixed_norm_inverse_001.png
+            :scale: 47
+
+    *
+
+      .. image:: /auto_examples/inverse/images/sphx_glr_plot_time_frequency_mixed_norm_inverse_002.png
+            :scale: 47
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    info["bads"] and noise_cov["bads"] do not match, excluding bad channels from both
+    Computing inverse operator with 364 channels.
+        Created an SSP operator (subspace dimension = 4)
+    estimated rank (mag + grad): 302
+    Setting small MEG eigenvalues to zero.
+    Not doing PCA for MEG.
+    estimated rank (eeg): 58
+    Setting small EEG eigenvalues to zero.
+    Not doing PCA for EEG.
+    Total rank is 360
+    Creating the depth weighting matrix...
+        203 planar channels
+        limit = 7262/7498 = 10.020865
+        scale = 2.58122e-08 exp = 0.9
+    Computing inverse operator with 364 channels.
+    Creating the source covariance matrix
+    Applying loose dipole orientations. Loose value of 0.2.
+    Whitening the forward solution.
+    Adjusting source covariance matrix.
+    Computing SVD of whitened and weighted lead field matrix.
+        largest singular value = 5.96729
+        scaling factor to adjust the trace = 9.38524e+18
+    Preparing the inverse operator for use...
+        Scaled noise and source covariance from nave = 1 to nave = 64
+        Created the regularized inverter
+        Created an SSP operator (subspace dimension = 4)
+        Created the whitener using a full noise covariance matrix (4 small eigenvalues omitted)
+        Computing noise-normalization factors (dSPM)...
+    [done]
+    Picked 364 channels from the data
+    Computing inverse...
+    (eigenleads need to be weighted)...
+    combining the current components...
+    (dSPM)...
+    [done]
+    info["bads"] and noise_cov["bads"] do not match, excluding bad channels from both
+    Computing inverse operator with 364 channels.
+        Created an SSP operator (subspace dimension = 4)
+    estimated rank (mag + grad): 302
+    Setting small MEG eigenvalues to zero.
+    Not doing PCA for MEG.
+    estimated rank (eeg): 58
+    Setting small EEG eigenvalues to zero.
+    Not doing PCA for EEG.
+    Reducing data rank to 360
+    Total rank is 360
+    Whitening lead field matrix.
+    Applying loose dipole orientations. Loose value of 0.2.
+    Reducing source space to 985 sources
+    Whitening data matrix.
+    Using block coordinate descent and active set approach
+    Iteration 1
+    Iteration 1
+    Iteration 2
+    Iteration 3
+    Iteration 1
+    Iteration 1
+    Iteration 2
+    Iteration 3
+    Iteration 4
+    Iteration 5
+    Iteration 6
+    Iteration 7
+    Iteration 8
+    Iteration 9
+    Iteration 10
+    Iteration 11
+    Iteration 12
+    Iteration 13
+    Iteration 14
+    Convergence reached !
+    Iteration 1
+    Convergence reached !
+    Debiasing converged after 376 iterations max(|D - D0| = 1.305445e-07 < 1.000000e-06)
+    4 projection items deactivated
+    Created an SSP operator (subspace dimension = 4)
+    4 projection items activated
+    SSP projectors applied...
+    0 projection items deactivated
+    combining the current components...
+    [done]
+
+
+View in 2D and 3D ("glass" brain like 3D plot)
+
+
+
+.. code-block:: python
+
+    plot_sparse_source_estimates(forward['src'], stc, bgcolor=(1, 1, 1),
+                                 opacity=0.1, fig_name="TF-MxNE (cond %s)"
+                                 % condition, modes=['sphere'], scale_factors=[1.])
+
+    time_label = 'TF-MxNE time=%0.2f ms'
+    clim = dict(kind='value', lims=[10e-9, 15e-9, 20e-9])
+    brain = stc.plot('sample', 'inflated', 'rh', views='medial',
+                     clim=clim, time_label=time_label, smoothing_steps=5,
+                     subjects_dir=subjects_dir, initial_time=150, time_unit='ms')
+    brain.add_label("V1", color="yellow", scalar_thresh=.5, borders=True)
+    brain.add_label("V2", color="red", scalar_thresh=.5, borders=True)
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+    *
+
+      .. image:: /auto_examples/inverse/images/sphx_glr_plot_time_frequency_mixed_norm_inverse_003.png
+            :scale: 47
+
+    *
+
+      .. image:: /auto_examples/inverse/images/sphx_glr_plot_time_frequency_mixed_norm_inverse_004.png
+            :scale: 47
+
+    *
+
+      .. image:: /auto_examples/inverse/images/sphx_glr_plot_time_frequency_mixed_norm_inverse_005.png
+            :scale: 47
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    Total number of active sources: 2
+    Updating smoothing matrix, be patient..
+    Smoothing matrix creation, step 1
+    Smoothing matrix creation, step 2
+    Smoothing matrix creation, step 3
+    Smoothing matrix creation, step 4
+    Smoothing matrix creation, step 5
+    colormap: fmin=1.00e-08 fmid=1.50e-08 fmax=2.00e-08 transparent=1
+
+
+**Total running time of the script:** ( 0 minutes  31.865 seconds)
+
+
+
+.. container:: sphx-glr-footer
+
+
+  .. container:: sphx-glr-download
+
+     :download:`Download Python source code: plot_time_frequency_mixed_norm_inverse.py <plot_time_frequency_mixed_norm_inverse.py>`
+
+
+
+  .. container:: sphx-glr-download
+
+     :download:`Download Jupyter notebook: plot_time_frequency_mixed_norm_inverse.ipynb <plot_time_frequency_mixed_norm_inverse.ipynb>`
+
+.. rst-class:: sphx-glr-signature
+
+    `Generated by Sphinx-Gallery <http://sphinx-gallery.readthedocs.io>`_

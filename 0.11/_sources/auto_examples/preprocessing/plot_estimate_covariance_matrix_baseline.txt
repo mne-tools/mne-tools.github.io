@@ -1,0 +1,131 @@
+
+
+.. _sphx_glr_auto_examples_preprocessing_plot_estimate_covariance_matrix_baseline.py:
+
+
+===============================================
+Estimate covariance matrix from Epochs baseline
+===============================================
+
+We first define a set of Epochs from events and a raw file.
+Then we estimate the noise covariance of prestimulus data,
+a.k.a. baseline.
+
+
+
+.. code-block:: python
+
+    # Author: Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
+    #
+    # License: BSD (3-clause)
+
+    import mne
+    from mne import io
+    from mne.datasets import sample
+
+    print(__doc__)
+
+    data_path = sample.data_path()
+    fname = data_path + '/MEG/sample/sample_audvis_raw.fif'
+    event_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw-eve.fif'
+    event_id, tmin, tmax = 1, -0.2, 0.5
+
+    raw = io.Raw(fname)
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+
+
+Set parameters
+
+
+.. code-block:: python
+
+    raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
+
+    #   Setup for reading the raw data
+    raw = io.Raw(raw_fname)
+    events = mne.read_events(event_fname)
+
+    #   Set up pick list: EEG + STI 014 - bad channels (modify to your needs)
+    include = []  # or stim channels ['STI 014']
+    raw.info['bads'] += ['EEG 053']  # bads + 1 more
+
+    # pick EEG channels
+    picks = mne.pick_types(raw.info, meg=True, eeg=True, stim=False, eog=True,
+                           include=include, exclude='bads')
+    # Read epochs, with proj off by default so we can plot either way later
+    reject = dict(grad=4000e-13, mag=4e-12, eeg=80e-6, eog=150e-6)
+    epochs = mne.Epochs(raw, events, event_id, tmin, tmax, picks=picks,
+                        baseline=(None, 0), reject=reject, proj=False)
+
+    # Compute the covariance on baseline
+    cov = mne.compute_covariance(epochs, tmin=None, tmax=0)
+    print(cov)
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+
+**Script output**:
+
+.. rst-class:: sphx-glr-script-out
+
+  ::
+
+    Too few samples (required : 1825 got : 1550), covariance estimate may be unreliable
+    <Covariance  |  size : 364 x 364, n_samples : 1550, data : [[  2.17480518e-23   4.84850400e-24   3.91758511e-25 ...,   1.03065612e-17
+        7.64207335e-18   1.28858842e-17]
+     [  4.84850400e-24   5.79013178e-24   1.94232469e-25 ...,   3.11878643e-18
+        2.46667507e-18   5.03048653e-18]
+     [  3.91758511e-25   1.94232469e-25   7.77903075e-26 ...,  -9.44582275e-20
+       -1.06957056e-19   1.11311519e-19]
+     ..., 
+     [  1.03065612e-17   3.11878643e-18  -9.44582275e-20 ...,   4.11215027e-11
+        3.91783262e-11   3.35989155e-11]
+     [  7.64207335e-18   2.46667507e-18  -1.06957056e-19 ...,   3.91783262e-11
+        4.12365671e-11   3.14221308e-11]
+     [  1.28858842e-17   5.03048653e-18   1.11311519e-19 ...,   3.35989155e-11
+        3.14221308e-11   3.27110450e-11]]>
+
+
+Show covariance
+
+
+.. code-block:: python
+
+    mne.viz.plot_cov(cov, raw.info, colorbar=True, proj=True)
+    # try setting proj to False to see the effect
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+    *
+
+      .. image:: /auto_examples/preprocessing/images/sphx_glr_plot_estimate_covariance_matrix_baseline_001.png
+            :scale: 47
+
+    *
+
+      .. image:: /auto_examples/preprocessing/images/sphx_glr_plot_estimate_covariance_matrix_baseline_002.png
+            :scale: 47
+
+
+
+
+**Total running time of the script:**
+(0 minutes 2.936 seconds)
+
+
+
+**Download Python source code:** :download:`plot_estimate_covariance_matrix_baseline.py <plot_estimate_covariance_matrix_baseline.py>`
