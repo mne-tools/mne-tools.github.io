@@ -7,7 +7,7 @@
 Re-referencing the EEG signal
 =============================
 
-Load raw data and apply some EEG referencing schemes.
+This example shows how to load raw data and apply some EEG referencing schemes.
 
 
 
@@ -59,7 +59,12 @@ Load raw data and apply some EEG referencing schemes.
     Reading 0 ... 41699  =      0.000 ...   277.709 secs...
 
 
-Apply different EEG referencing schemes and plot the resulting evokeds.
+We will now apply different EEG referencing schemes and plot the resulting
+evoked potentials. Note that when we construct epochs with ``mne.Epochs``, we
+supply the ``proj=True`` argument. This means that any available projectors
+are applied automatically. Specifically, if there is an average reference
+projector set by ``raw.set_eeg_reference('average', projection=True)``, MNE
+applies this projector when creating epochs.
 
 
 
@@ -68,30 +73,31 @@ Apply different EEG referencing schemes and plot the resulting evokeds.
 
     reject = dict(eog=150e-6)
     epochs_params = dict(events=events, event_id=event_id, tmin=tmin, tmax=tmax,
-                         picks=picks, reject=reject)
+                         picks=picks, reject=reject, proj=True)
 
     fig, (ax1, ax2, ax3) = plt.subplots(nrows=3, ncols=1, sharex=True)
 
     # No reference. This assumes that the EEG has already been referenced properly.
-    # This explicitly prevents MNE from adding a default EEG reference.
+    # This explicitly prevents MNE from adding a default EEG reference. Any average
+    # reference projector is automatically removed.
     raw.set_eeg_reference([])
     evoked_no_ref = mne.Epochs(raw, **epochs_params).average()
 
-    evoked_no_ref.plot(axes=ax1, titles=dict(eeg='EEG Original reference'))
+    evoked_no_ref.plot(axes=ax1, titles=dict(eeg='Original reference'), show=False)
 
     # Average reference. This is normally added by default, but can also be added
     # explicitly.
     raw.set_eeg_reference('average', projection=True)
     evoked_car = mne.Epochs(raw, **epochs_params).average()
 
-    evoked_car.plot(axes=ax2, titles=dict(eeg='EEG Average reference'))
+    evoked_car.plot(axes=ax2, titles=dict(eeg='Average reference'), show=False)
 
     # Re-reference from an average reference to the mean of channels EEG 001 and
     # EEG 002.
     raw.set_eeg_reference(['EEG 001', 'EEG 002'])
     evoked_custom = mne.Epochs(raw, **epochs_params).average()
 
-    evoked_custom.plot(axes=ax3, titles=dict(eeg='EEG Custom reference'))
+    evoked_custom.plot(axes=ax3, titles=dict(eeg='Custom reference'))
 
 
 
@@ -104,9 +110,10 @@ Apply different EEG referencing schemes and plot the resulting evokeds.
  Out::
 
     EEG data marked as already having the desired reference. Preventing automatic future re-referencing to an average reference.
+    Removing existing average EEG reference projection.
+    Created an SSP operator (subspace dimension = 3)
     72 matching events found
-    Created an SSP operator (subspace dimension = 1)
-    4 projection items activated
+    3 projection items activated
         Rejecting  epoch based on EOG : [u'EOG 061']
         Rejecting  epoch based on EOG : [u'EOG 061']
         Rejecting  epoch based on EOG : [u'EOG 061']
@@ -123,7 +130,9 @@ Apply different EEG referencing schemes and plot the resulting evokeds.
         Rejecting  epoch based on EOG : [u'EOG 061']
         Rejecting  epoch based on EOG : [u'EOG 061']
         Rejecting  epoch based on EOG : [u'EOG 061']
-    An average reference projection was already added. The data has been left untouched.
+    Adding average EEG reference projection.
+    1 projection items deactivated
+    Average reference projection was added, but has not been applied yet. Use the apply_proj method to apply it.
     72 matching events found
     Created an SSP operator (subspace dimension = 1)
     4 projection items activated
@@ -166,7 +175,7 @@ Apply different EEG referencing schemes and plot the resulting evokeds.
         Rejecting  epoch based on EOG : [u'EOG 061']
 
 
-**Total running time of the script:** ( 0 minutes  1.766 seconds)
+**Total running time of the script:** ( 0 minutes  1.785 seconds)
 
 
 
