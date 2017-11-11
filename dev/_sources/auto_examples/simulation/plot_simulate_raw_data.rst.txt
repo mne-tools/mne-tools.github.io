@@ -40,6 +40,7 @@ activation multiple times.
 
     # Load real data as the template
     raw = mne.io.read_raw_fif(raw_fname)
+    raw.set_eeg_reference(projection=True)
     raw = raw.crop(0., 30.)  # 30 sec is enough
 
 
@@ -59,6 +60,8 @@ activation multiple times.
         Range : 25800 ... 192599 =     42.956 ...   320.670 secs
     Ready.
     Current compensation grade : 0
+    Adding average EEG reference projection.
+    1 projection items deactivated
 
 
 Generate dipole time series
@@ -85,6 +88,7 @@ Generate dipole time series
         data *= window
         return data
 
+
     times = raw.times[:int(raw.info['sfreq'] * epoch_duration)]
     src = read_source_spaces(src_fname)
     stc = simulate_sparse_stc(src, n_dipoles=n_dipoles, times=times,
@@ -93,7 +97,7 @@ Generate dipole time series
     fig, ax = plt.subplots(1)
     ax.plot(times, 1e9 * stc.data.T)
     ax.set(ylabel='Amplitude (nAm)', xlabel='Time (sec)')
-    fig.show()
+    mne.viz.utils.plt_show()
 
 
 
@@ -148,8 +152,6 @@ Simulate raw data
     Event information stored on channel:              STI 014
     Setting up forward solutions
     Computing gain matrix for transform #1/1
-    The default settings controlling the application of cortical patch statistics (cps) in the creation of forward operators with fixed orientation will be modified in 0.16. The cps (if available) will then be applied by default. To avoid this warning, set use_cps explicitly to False (the current default) or True (the new default).
-    The default settings controlling the application of cortical patch statistics (cps) in the creation of forward operators with fixed orientation will be modified in 0.16. The cps (if available) will then be applied by default. To avoid this warning, set use_cps explicitly to False (the current default) or True (the new default).
       Simulating data for 0.000-30.001 sec with 16 events
     Done
 
@@ -162,7 +164,8 @@ Plot evoked data
 
     events = find_events(raw_sim)  # only 1 pos, so event number == 1
     epochs = Epochs(raw_sim, events, 1, -0.2, epoch_duration)
-    cov = compute_covariance(epochs, tmax=0., method='empirical')  # quick calc
+    cov = compute_covariance(epochs, tmax=0., method='empirical',
+                             verbose='error')  # quick calc
     evoked = epochs.average()
     evoked.plot_white(cov)
 
@@ -180,29 +183,22 @@ Plot evoked data
     15 events found
     Events id: [1]
     15 matching events found
+    Applying baseline correction (mode: mean)
     Not setting metadata
-    Created an SSP operator (subspace dimension = 3)
-    3 projection items activated
-    Loading data for 15 events and 1322 original time points ...
-    1 bad epochs dropped
-    Too few samples (required : 1825 got : 1694), covariance estimate may be unreliable
-    Estimating covariance using EMPIRICAL
-    Done.
-    Number of samples used : 1694
-    [done]
-    estimated rank (eeg): 59
+    Created an SSP operator (subspace dimension = 4)
+    4 projection items activated
+    estimated rank (eeg): 58
     estimated rank (grad): 203
     estimated rank (mag): 99
-        Created an SSP operator (subspace dimension = 3)
+        Created an SSP operator (subspace dimension = 4)
     Setting small MEG eigenvalues to zero.
     Not doing PCA for MEG.
     Setting small EEG eigenvalues to zero.
     Not doing PCA for EEG.
-    No average EEG reference present in info["projs"], covariance may be adversely affected. Consider recomputing covariance using with an average eeg reference projector added.
-    Total rank is 361
+    Total rank is 360
 
 
-**Total running time of the script:** ( 0 minutes  33.721 seconds)
+**Total running time of the script:** ( 0 minutes  32.465 seconds)
 
 
 

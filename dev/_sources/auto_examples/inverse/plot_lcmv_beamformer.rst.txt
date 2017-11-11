@@ -19,6 +19,8 @@ visualisation.
     #
     # License: BSD (3-clause)
 
+    # sphinx_gallery_thumbnail_number = 3
+
     import matplotlib.pyplot as plt
     import numpy as np
 
@@ -82,58 +84,13 @@ Get epochs
     noise_cov = mne.compute_covariance(epochs, tmin=tmin, tmax=0, method='shrunk')
     data_cov = mne.compute_covariance(epochs, tmin=0.04, tmax=0.15,
                                       method='shrunk')
-
-    plt.close('all')
-
-    pick_oris = [None, 'normal', 'max-power']
-    names = ['free', 'normal', 'max-power']
-    descriptions = ['Free orientation, voxel: %i', 'Normal orientation, voxel: %i',
-                    'Max-power orientation, voxel: %i']
-    colors = ['b', 'k', 'r']
-
-    for pick_ori, name, desc, color in zip(pick_oris, names, descriptions, colors):
-        # compute unit-noise-gain beamformer with whitening of the leadfield and
-        # data (enabled by passing a noise covariance matrix)
-        stc = lcmv(evoked, forward, noise_cov, data_cov, reg=0.05,
-                   pick_ori=pick_ori, weight_norm='unit-noise-gain',
-                   max_ori_out='signed')
-
-        # View activation time-series in maximum voxel at 100 ms:
-        time_idx = stc.time_as_index(0.1)
-        max_vox = np.argmax(stc.data[:, time_idx])
-        plt.plot(stc.times, stc.data[max_vox, :], color, hold=True,
-                 label=desc % max_vox)
-
-    plt.xlabel('Time (ms)')
-    plt.ylabel('LCMV value')
-    plt.ylim(-0.8, 2.2)
-    plt.title('LCMV in maximum voxel')
-    plt.legend()
-    plt.show()
-
-
-    # take absolute value for plotting
-    stc.data[:, :] = np.abs(stc.data)
-
-    # Plot last stc in the brain in 3D with PySurfer if available
-    brain = stc.plot(hemi='lh', subjects_dir=subjects_dir,
-                     initial_time=0.1, time_unit='s')
-    brain.show_view('lateral')
+    evoked.plot()
 
 
 
-.. rst-class:: sphx-glr-horizontal
 
-
-    *
-
-      .. image:: /auto_examples/inverse/images/sphx_glr_plot_lcmv_beamformer_001.png
-            :scale: 47
-
-    *
-
-      .. image:: /auto_examples/inverse/images/sphx_glr_plot_lcmv_beamformer_002.png
-            :scale: 47
+.. image:: /auto_examples/inverse/images/sphx_glr_plot_lcmv_beamformer_001.png
+    :align: center
 
 
 .. rst-class:: sphx-glr-script-out
@@ -150,6 +107,7 @@ Get epochs
     Current compensation grade : 0
     Reading 0 ... 166799  =      0.000 ...   277.714 secs...
     72 matching events found
+    Applying baseline correction (mode: mean)
     Not setting metadata
     Created an SSP operator (subspace dimension = 3)
     3 projection items activated
@@ -201,7 +159,54 @@ Get epochs
     Done.
     Number of samples used : 3685
     [done]
-        305 out of 366 channels remain after picking
+
+
+Run beamformers and look at maximum outputs
+
+
+
+.. code-block:: python
+
+
+    pick_oris = [None, 'normal', 'max-power']
+    names = ['free', 'normal', 'max-power']
+    descriptions = ['Free orientation, voxel: %i', 'Normal orientation, voxel: %i',
+                    'Max-power orientation, voxel: %i']
+    colors = ['b', 'k', 'r']
+
+    fig, ax = plt.subplots(1)
+    max_voxs = list()
+    for pick_ori, name, desc, color in zip(pick_oris, names, descriptions, colors):
+        # compute unit-noise-gain beamformer with whitening of the leadfield and
+        # data (enabled by passing a noise covariance matrix)
+        stc = lcmv(evoked, forward, noise_cov, data_cov, reg=0.05,
+                   pick_ori=pick_ori, weight_norm='unit-noise-gain',
+                   max_ori_out='signed')
+
+        # View activation time-series in maximum voxel at 100 ms:
+        time_idx = stc.time_as_index(0.1)
+        max_idx = np.argmax(stc.data[:, time_idx])
+        # we know these are all left hemi, so we can just use vertices[0]
+        max_voxs.append(stc.vertices[0][max_idx])
+        ax.plot(stc.times, stc.data[max_idx, :], color, label=desc % max_idx)
+
+    ax.set(xlabel='Time (ms)', ylabel='LCMV value', ylim=(-0.8, 2.2),
+           title='LCMV in maximum voxel')
+    ax.legend()
+    mne.viz.utils.plt_show()
+
+
+
+
+.. image:: /auto_examples/inverse/images/sphx_glr_plot_lcmv_beamformer_002.png
+    :align: center
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    305 out of 366 channels remain after picking
         Created an SSP operator (subspace dimension = 3)
     estimated rank (mag + grad): 302
     Setting small MEG eigenvalues to zero.
@@ -222,7 +227,33 @@ Get epochs
     Total rank is 302
 
 
-**Total running time of the script:** ( 0 minutes  46.368 seconds)
+We can also look at the spatial distribution
+
+
+
+.. code-block:: python
+
+
+    # take absolute value for plotting
+    np.abs(stc.data, out=stc.data)
+
+    # Plot last stc in the brain in 3D with PySurfer if available
+    brain = stc.plot(hemi='lh', subjects_dir=subjects_dir,
+                     initial_time=0.1, time_unit='s')
+    brain.show_view('lateral')
+    for color, vertex in zip(colors, max_voxs):
+        brain.add_foci([vertex], coords_as_verts=True, scale_factor=0.5,
+                       hemi='lh', color=color)
+
+
+
+.. image:: /auto_examples/inverse/images/sphx_glr_plot_lcmv_beamformer_003.png
+    :align: center
+
+
+
+
+**Total running time of the script:** ( 0 minutes  51.200 seconds)
 
 
 
