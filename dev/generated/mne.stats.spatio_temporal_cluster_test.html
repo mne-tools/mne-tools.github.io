@@ -182,11 +182,11 @@ This documentation is for <strong>development version 0.16.dev0</strong>.
 <h1>mne.stats.spatio_temporal_cluster_test<a class="headerlink" href="#mne-stats-spatio-temporal-cluster-test" title="Permalink to this headline">¶</a></h1>
 <dl class="function">
 <dt id="mne.stats.spatio_temporal_cluster_test">
-<code class="descclassname">mne.stats.</code><code class="descname">spatio_temporal_cluster_test</code><span class="sig-paren">(</span><em>X</em>, <em>threshold=1.67</em>, <em>n_permutations=1024</em>, <em>tail=0</em>, <em>stat_fun=&lt;function f_oneway&gt;</em>, <em>connectivity=None</em>, <em>verbose=None</em>, <em>n_jobs=1</em>, <em>seed=None</em>, <em>max_step=1</em>, <em>spatial_exclude=None</em>, <em>step_down_p=0</em>, <em>t_power=1</em>, <em>out_type='indices'</em>, <em>check_disjoint=False</em>, <em>buffer_size=1000</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/stats/cluster_level.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.stats.spatio_temporal_cluster_test" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">mne.stats.</code><code class="descname">spatio_temporal_cluster_test</code><span class="sig-paren">(</span><em>X</em>, <em>threshold=None</em>, <em>n_permutations=1024</em>, <em>tail=0</em>, <em>stat_fun=None</em>, <em>connectivity=None</em>, <em>verbose=None</em>, <em>n_jobs=1</em>, <em>seed=None</em>, <em>max_step=1</em>, <em>spatial_exclude=None</em>, <em>step_down_p=0</em>, <em>t_power=1</em>, <em>out_type='indices'</em>, <em>check_disjoint=False</em>, <em>buffer_size=1000</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/stats/cluster_level.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.stats.spatio_temporal_cluster_test" title="Permalink to this definition">¶</a></dt>
 <dd><p>Non-parametric cluster-level test for spatio-temporal data.</p>
 <p>This function provides a convenient wrapper for data organized in the form
 (observations x time x space) to use
-<a class="reference internal" href="mne.stats.permutation_cluster_test.html#mne.stats.permutation_cluster_test" title="mne.stats.permutation_cluster_test"><code class="xref py py-func docutils literal"><span class="pre">mne.stats.permutation_cluster_test()</span></code></a>. See <a class="reference internal" href="#r183183" id="id1">[R183183]</a> for more information.</p>
+<a class="reference internal" href="mne.stats.permutation_cluster_test.html#mne.stats.permutation_cluster_test" title="mne.stats.permutation_cluster_test"><code class="xref py py-func docutils literal"><span class="pre">mne.stats.permutation_cluster_test()</span></code></a>. See <a class="reference internal" href="#r189189" id="id1">[R189189]</a> for more information.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -196,9 +196,14 @@ This documentation is for <strong>development version 0.16.dev0</strong>.
 <div><p>List of data arrays, shape <code class="docutils literal"><span class="pre">(n_observations,</span> <span class="pre">n_times,</span> <span class="pre">n_vertices)</span></code>
 in each group.</p>
 </div></blockquote>
-<p><strong>threshold: float</strong></p>
+<p><strong>threshold</strong> : float | dict | None</p>
 <blockquote>
-<div><p>The threshold for the statistic.</p>
+<div><p>If threshold is None, it will choose an F-threshold equivalent to
+p &lt; 0.05 for the given number of observations (only valid when
+using an F-statistic). If a dict is used, then threshold-free
+cluster enhancement (TFCE) will be used, and it must have keys
+<code class="docutils literal"><span class="pre">'start'</span></code> and <code class="docutils literal"><span class="pre">'step'</span></code> to specify the integration parameters,
+see the <a class="reference internal" href="../auto_tutorials/plot_background_statistics.html#tfce-example"><span class="std std-ref">TFCE example</span></a>.</p>
 </div></blockquote>
 <p><strong>n_permutations: int</strong></p>
 <blockquote>
@@ -208,10 +213,10 @@ in each group.</p>
 <blockquote>
 <div><p>See permutation_cluster_test.</p>
 </div></blockquote>
-<p><strong>stat_fun</strong> : function</p>
+<p><strong>stat_fun</strong> : callable | None</p>
 <blockquote>
-<div><p>function called to calculate statistics, must accept 1d-arrays as
-arguments (default: scipy.stats.f_oneway)</p>
+<div><p>Function called to calculate statistics, must accept 1d-arrays as
+arguments (default None uses <a class="reference internal" href="mne.stats.f_oneway.html#mne.stats.f_oneway" title="mne.stats.f_oneway"><code class="xref py py-func docutils literal"><span class="pre">mne.stats.f_oneway()</span></code></a>).</p>
 </div></blockquote>
 <p><strong>connectivity</strong> : sparse matrix or None</p>
 <blockquote>
@@ -253,7 +258,7 @@ but costs computation time.</p>
 </div></blockquote>
 <p><strong>t_power</strong> : float</p>
 <blockquote>
-<div><p>Power to raise the statistical values (usually f-values) by before
+<div><p>Power to raise the statistical values (usually F-values) by before
 summing (sign will be retained). Note that t_power == 0 will give a
 count of nodes in each cluster, t_power == 1 will weight each node by
 its statistical score.</p>
@@ -284,9 +289,9 @@ for a small block of variables.</p>
 </div></blockquote>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>T_obs</strong> : array, shape (n_times * n_vertices,)</p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>t_obs</strong> : array, shape (n_times * n_vertices,)</p>
 <blockquote>
-<div><p>T-statistic observed for all variables</p>
+<div><p>Statistic (t by default) observed for all variables</p>
 </div></blockquote>
 <p><strong>clusters</strong> : list</p>
 <blockquote>
@@ -305,10 +310,10 @@ for a small block of variables.</p>
 </tbody>
 </table>
 <p class="rubric">References</p>
-<table class="docutils citation" frame="void" id="r183183" rules="none">
+<table class="docutils citation" frame="void" id="r189189" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
-<tr><td class="label">[R183183]</td><td><em>(<a class="fn-backref" href="#id1">1</a>, <a class="fn-backref" href="#id2">2</a>)</em> Maris/Oostenveld (2007), “Nonparametric statistical testing of
+<tr><td class="label">[R189189]</td><td><em>(<a class="fn-backref" href="#id1">1</a>, <a class="fn-backref" href="#id2">2</a>)</em> Maris/Oostenveld (2007), “Nonparametric statistical testing of
 EEG- and MEG-data”, Journal of Neuroscience Methods,
 Vol. 164, No. 1., pp. 177-190. doi:10.1016/j.jneumeth.2007.03.024.</td></tr>
 </tbody>
@@ -352,7 +357,7 @@ Vol. 164, No. 1., pp. 177-190. doi:10.1016/j.jneumeth.2007.03.024.</td></tr>
       <li><a href="faq.html#cite">Cite MNE</a></li>
       <li class="pull-right"><a href="#">Back to top</a></li>
     </ul>
-    <p>&copy; Copyright 2012-2017, MNE Developers. Last updated on 2017-11-15.</p>
+    <p>&copy; Copyright 2012-2017, MNE Developers. Last updated on 2017-11-16.</p>
   </div>
 </footer>
   </body>

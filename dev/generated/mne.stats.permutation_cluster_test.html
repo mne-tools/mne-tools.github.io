@@ -182,7 +182,7 @@ This documentation is for <strong>development version 0.16.dev0</strong>.
 <h1>mne.stats.permutation_cluster_test<a class="headerlink" href="#mne-stats-permutation-cluster-test" title="Permalink to this headline">¶</a></h1>
 <dl class="function">
 <dt id="mne.stats.permutation_cluster_test">
-<code class="descclassname">mne.stats.</code><code class="descname">permutation_cluster_test</code><span class="sig-paren">(</span><em>X</em>, <em>threshold=None</em>, <em>n_permutations=1024</em>, <em>tail=0</em>, <em>stat_fun=&lt;function f_oneway&gt;</em>, <em>connectivity=None</em>, <em>verbose=None</em>, <em>n_jobs=1</em>, <em>seed=None</em>, <em>max_step=1</em>, <em>exclude=None</em>, <em>step_down_p=0</em>, <em>t_power=1</em>, <em>out_type='mask'</em>, <em>check_disjoint=False</em>, <em>buffer_size=1000</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/stats/cluster_level.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.stats.permutation_cluster_test" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">mne.stats.</code><code class="descname">permutation_cluster_test</code><span class="sig-paren">(</span><em>X</em>, <em>threshold=None</em>, <em>n_permutations=1024</em>, <em>tail=0</em>, <em>stat_fun=None</em>, <em>connectivity=None</em>, <em>n_jobs=1</em>, <em>seed=None</em>, <em>max_step=1</em>, <em>exclude=None</em>, <em>step_down_p=0</em>, <em>t_power=1</em>, <em>out_type='mask'</em>, <em>check_disjoint=False</em>, <em>buffer_size=1000</em>, <em>verbose=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/stats/cluster_level.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.stats.permutation_cluster_test" title="Permalink to this definition">¶</a></dt>
 <dd><p>Cluster-level statistical permutation test.</p>
 <p>For a list of nd-arrays of data, e.g. 2d for time series or 3d for
 time-frequency power values, calculate some statistics corrected for
@@ -206,10 +206,12 @@ Each data point is of shape (50, 4).</p>
 </div></blockquote>
 <p><strong>threshold</strong> : float | dict | None</p>
 <blockquote>
-<div><p>If threshold is None, it will choose a t-threshold equivalent to
-p &lt; 0.05 for the given number of (within-subject) observations.
-If a dict is used, then threshold-free cluster enhancement (TFCE)
-will be used.</p>
+<div><p>If threshold is None, it will choose an F-threshold equivalent to
+p &lt; 0.05 for the given number of observations (only valid when
+using an F-statistic). If a dict is used, then threshold-free
+cluster enhancement (TFCE) will be used, and it must have keys
+<code class="docutils literal"><span class="pre">'start'</span></code> and <code class="docutils literal"><span class="pre">'step'</span></code> to specify the integration parameters,
+see the <a class="reference internal" href="../auto_tutorials/plot_background_statistics.html#tfce-example"><span class="std std-ref">TFCE example</span></a>.</p>
 </div></blockquote>
 <p><strong>n_permutations</strong> : int</p>
 <blockquote>
@@ -217,26 +219,22 @@ will be used.</p>
 </div></blockquote>
 <p><strong>tail</strong> : -1 or 0 or 1 (default = 0)</p>
 <blockquote>
-<div><p>If tail is 1, the statistic is thresholded above threshold.
-If tail is -1, the statistic is thresholded below threshold.
-If tail is 0, the statistic is thresholded on both sides of
-the distribution.</p>
+<div><p>If tail is 0, the statistic is thresholded on both sides of
+the distribution.
+If tail is 1, the statistic is thresholded above threshold.
+If tail is -1, the statistic is thresholded below threshold, and
+the values in <code class="docutils literal"><span class="pre">threshold</span></code> must correspondingly be negative.</p>
 </div></blockquote>
-<p><strong>stat_fun</strong> : callable</p>
+<p><strong>stat_fun</strong> : callable | None</p>
 <blockquote>
-<div><p>function called to calculate statistics, must accept 1d-arrays as
-arguments (default: scipy.stats.f_oneway).</p>
+<div><p>Function called to calculate statistics, must accept 1d-arrays as
+arguments (default None uses <a class="reference internal" href="mne.stats.f_oneway.html#mne.stats.f_oneway" title="mne.stats.f_oneway"><code class="xref py py-func docutils literal"><span class="pre">mne.stats.f_oneway()</span></code></a>).</p>
 </div></blockquote>
 <p><strong>connectivity</strong> : sparse matrix.</p>
 <blockquote>
 <div><p>Defines connectivity between features. The matrix is assumed to
 be symmetric and only the upper triangular half is used.
 Default is None, i.e, a regular lattice connectivity.</p>
-</div></blockquote>
-<p><strong>verbose</strong> : bool, str, int, or None</p>
-<blockquote>
-<div><p>If not None, override default verbose level (see <a class="reference internal" href="mne.verbose.html#mne.verbose" title="mne.verbose"><code class="xref py py-func docutils literal"><span class="pre">mne.verbose()</span></code></a>
-and <a class="reference internal" href="../auto_tutorials/plot_configuration.html#tut-logging"><span class="std std-ref">Logging documentation</span></a> for more).</p>
 </div></blockquote>
 <p><strong>n_jobs</strong> : int</p>
 <blockquote>
@@ -269,7 +267,7 @@ but costs computation time.</p>
 </div></blockquote>
 <p><strong>t_power</strong> : float</p>
 <blockquote>
-<div><p>Power to raise the statistical values (usually f-values) by before
+<div><p>Power to raise the statistical values (usually F-values) by before
 summing (sign will be retained). Note that t_power == 0 will give a
 count of nodes in each cluster, t_power == 1 will weight each node by
 its statistical score.</p>
@@ -298,11 +296,16 @@ processes is enabled (see set_cache_dir()), as X will be shared
 between processes and each process only needs to allocate space
 for a small block of variables.</p>
 </div></blockquote>
+<p><strong>verbose</strong> : bool, str, int, or None</p>
+<blockquote>
+<div><p>If not None, override default verbose level (see <a class="reference internal" href="mne.verbose.html#mne.verbose" title="mne.verbose"><code class="xref py py-func docutils literal"><span class="pre">mne.verbose()</span></code></a>
+and <a class="reference internal" href="../auto_tutorials/plot_configuration.html#tut-logging"><span class="std std-ref">Logging documentation</span></a> for more).</p>
+</div></blockquote>
 </td>
 </tr>
-<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>T_obs</strong> : array, shape (n_tests,)</p>
+<tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>F_obs</strong> : array, shape (n_tests,)</p>
 <blockquote>
-<div><p>T-statistic observed for all variables.</p>
+<div><p>Statistic (F by default) observed for all variables.</p>
 </div></blockquote>
 <p><strong>clusters</strong> : list</p>
 <blockquote>
@@ -321,10 +324,10 @@ for a small block of variables.</p>
 </tbody>
 </table>
 <p class="rubric">References</p>
-<table class="docutils citation" frame="void" id="r177177" rules="none">
+<table class="docutils citation" frame="void" id="r181181" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
-<tr><td class="label"><a class="fn-backref" href="#id1">[R177177]</a></td><td>Maris/Oostenveld (2007), “Nonparametric statistical testing of
+<tr><td class="label"><a class="fn-backref" href="#id1">[R181181]</a></td><td>Maris/Oostenveld (2007), “Nonparametric statistical testing of
 EEG- and MEG-data” Journal of Neuroscience Methods,
 Vol. 164, No. 1., pp. 177-190. doi:10.1016/j.jneumeth.2007.03.024.</td></tr>
 </tbody>
@@ -368,7 +371,7 @@ Vol. 164, No. 1., pp. 177-190. doi:10.1016/j.jneumeth.2007.03.024.</td></tr>
       <li><a href="faq.html#cite">Cite MNE</a></li>
       <li class="pull-right"><a href="#">Back to top</a></li>
     </ul>
-    <p>&copy; Copyright 2012-2017, MNE Developers. Last updated on 2017-11-15.</p>
+    <p>&copy; Copyright 2012-2017, MNE Developers. Last updated on 2017-11-16.</p>
   </div>
 </footer>
   </body>
