@@ -182,18 +182,15 @@ This documentation is for <strong>development version 0.16.dev0</strong>.
 <h1>mne.viz.plot_compare_evokeds<a class="headerlink" href="#mne-viz-plot-compare-evokeds" title="Permalink to this headline">¶</a></h1>
 <dl class="function">
 <dt id="mne.viz.plot_compare_evokeds">
-<code class="descclassname">mne.viz.</code><code class="descname">plot_compare_evokeds</code><span class="sig-paren">(</span><em>evokeds, picks=[], gfp=False, colors=None, linestyles=['-'], styles=None, vlines=[0.0], ci=0.95, truncate_yaxis=False, truncate_xaxis=True, ylim={}, invert_y=False, show_sensors=None, show_legend=True, axes=None, title=None, show=True</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/viz/evoked.py#L1443-L1836"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.viz.plot_compare_evokeds" title="Permalink to this definition">¶</a></dt>
-<dd><p>Plot evoked time courses for one or multiple channels and conditions.</p>
-<p>This function is useful for comparing ER[P/F]s at a specific location. It
-plots Evoked data or, if supplied with a list/dict of lists of evoked
-instances, grand averages plus confidence intervals.</p>
+<code class="descclassname">mne.viz.</code><code class="descname">plot_compare_evokeds</code><span class="sig-paren">(</span><em>evokeds, picks=None, gfp=False, colors=None, linestyles=['-'], styles=None, cmap=None, vlines='auto', ci=0.95, truncate_yaxis=False, truncate_xaxis=True, ylim={}, invert_y=False, show_sensors=None, show_legend=True, split_legend=False, axes=None, title=None, show=True</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/viz/evoked.py#L1578-L2053"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.viz.plot_compare_evokeds" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot evoked time courses for one or more conditions and/or channels.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><p class="first"><strong>evokeds</strong> : instance of mne.Evoked | list | dict</p>
 <blockquote>
-<div><p>If a single evoked instance, it is plotted as a time series.
+<div><p>If a single Evoked instance, it is plotted as a time series.
 If a dict whose values are Evoked objects, the contents are plotted as
 single time series each and the keys are used as condition labels.
 If a list of Evokeds, the contents are plotted with indices as labels.
@@ -203,16 +200,15 @@ area. All instances must have the same shape - channel numbers, time
 points etc.
 If dict, keys must be of type str.</p>
 </div></blockquote>
-<p><strong>picks</strong> : int | list of int</p>
+<p><strong>picks</strong> : None | int | list of int</p>
 <blockquote>
 <div><p>If int or list of int, the indices of the sensors to average and plot.
-Must all be of the same channel type.
-If the selected channels are gradiometers, the corresponding pairs
-will be selected.
 If multiple channel types are selected, one figure will be returned for
 each channel type.
-If an empty list, <cite>gfp</cite> will be set to True, and the Global Field
-Power plotted.</p>
+If the selected channels are gradiometers, the signal from
+corresponding (gradiometer) pairs will be combined.
+If None, it defaults to all data channels, in which case the global
+field power will be plotted for all channel type available.</p>
 </div></blockquote>
 <p><strong>gfp</strong> : bool</p>
 <blockquote>
@@ -227,7 +223,10 @@ conditions.
 For example, if <cite>evokeds</cite> is a dict with the keys “Aud/L”, “Aud/R”,
 “Vis/L”, “Vis/R”, <cite>colors</cite> can be <cite>dict(Aud=’r’, Vis=’b’)</cite> to map both
 Aud/L and Aud/R to the color red and both Visual conditions to blue.
-If None (default), a sequence of desaturated colors is used.</p>
+If None (default), a sequence of desaturated colors is used.
+If <cite>cmap</cite> is None, <cite>colors</cite> will indicate how each condition is
+colored with reference to its position on the colormap - see <cite>cmap</cite>
+below.</p>
 </div></blockquote>
 <p><strong>linestyles</strong> : list | dict</p>
 <blockquote>
@@ -247,16 +246,41 @@ be a dict of legal inputs to <cite>matplotlib.pyplot.plot</cite>. These
 parameters will be passed to the line plot call of the corresponding
 condition, overriding defaults.
 E.g., if evokeds is a dict with the keys “Aud/L”, “Aud/R”,
-“Vis/L”, “Vis/R”, <cite>styles</cite> can be <cite>{“Aud/L”:{“linewidth”:1}}</cite> to set
+“Vis/L”, “Vis/R”, <cite>styles</cite> can be <cite>{“Aud/L”: {“linewidth”: 1}}</cite> to set
 the linewidth for “Aud/L” to 1. Note that HED (‘/’-separated) tags are
 not supported.</p>
 </div></blockquote>
-<p><strong>vlines</strong> : list of int</p>
+<p><strong>cmap</strong> : None | str | tuple</p>
 <blockquote>
-<div><p>A list of integers corresponding to the positions, in seconds,
-at which to plot dashed vertical lines.</p>
+<div><p>If not None, plot evoked activity with colors from a color gradient
+(indicated by a str referencing a matplotlib colormap - e.g., “viridis”
+or “Reds”).
+If <code class="docutils literal"><span class="pre">evokeds</span></code> is a list and <code class="docutils literal"><span class="pre">colors</span></code> is <cite>None</cite>, the color will
+depend on the list position. If <code class="docutils literal"><span class="pre">colors</span></code> is a list, it must contain
+integers where the list positions correspond to <code class="docutils literal"><span class="pre">evokeds</span></code>, and the
+value corresponds to the position on the colorbar.
+If <code class="docutils literal"><span class="pre">evokeds</span></code> is a dict, <code class="docutils literal"><span class="pre">colors</span></code> should be a dict mapping from
+(potentially HED-style) condition tags to numbers corresponding to
+rank order positions on the colorbar. E.g.,</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">evokeds</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;cond1/A&quot;</span><span class="p">:</span> <span class="n">ev1</span><span class="p">,</span> <span class="s2">&quot;cond2/A&quot;</span><span class="p">:</span> <span class="n">ev2</span><span class="p">,</span> <span class="s2">&quot;cond3/A&quot;</span><span class="p">:</span> <span class="n">ev3</span><span class="p">,</span> <span class="s2">&quot;B&quot;</span><span class="p">:</span> <span class="n">ev4</span><span class="p">},</span>
+<span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;viridis&#39;</span><span class="p">,</span> <span class="n">colors</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">cond1</span><span class="o">=</span><span class="mi">1</span> <span class="n">cond2</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">cond3</span><span class="o">=</span><span class="mi">3</span><span class="p">),</span>
+<span class="n">linestyles</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;A&quot;</span><span class="p">:</span> <span class="s2">&quot;-&quot;</span><span class="p">,</span> <span class="s2">&quot;B&quot;</span><span class="p">:</span> <span class="s2">&quot;:&quot;</span><span class="p">}</span>
+</pre></div>
+</div>
+<p>If <code class="docutils literal"><span class="pre">cmap</span></code> is a tuple of length 2, the first item must be
+a string which will become the colorbar label, and the second one
+must indicate a colormap, e.g.</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">cmap</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;conds&#39;</span><span class="p">,</span> <span class="s1">&#39;viridis&#39;</span><span class="p">),</span> <span class="n">colors</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">cond1</span><span class="o">=</span><span class="mi">1</span> <span class="n">cond2</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">cond3</span><span class="o">=</span><span class="mi">3</span><span class="p">),</span>
+</pre></div>
+</div>
 </div></blockquote>
-<p><strong>ci</strong> : float | callable | None</p>
+<p><strong>vlines</strong> : “auto” | list of float</p>
+<blockquote>
+<div><p>A list in seconds at which to plot dashed vertical lines.
+If “auto” and the supplied data includes 0, it is set to [0.]
+and a vertical bar is plotted at time 0.</p>
+</div></blockquote>
+<p><strong>ci</strong> : float | callable | None | bool</p>
 <blockquote>
 <div><p>If not None and <code class="docutils literal"><span class="pre">evokeds</span></code> is a [list/dict] of lists, a shaded
 confidence interval is drawn around the individual time series. If
@@ -265,7 +289,8 @@ interval and this value determines the CI width. E.g., if this value is
 .95 (the default), the 95% confidence interval is drawn. If a callable,
 it must take as its single argument an array (observations x times) and
 return the upper and lower confidence bands.
-If None, no confidence band is plotted.</p>
+If None or False, no confidence band is plotted.
+If True, the 95% confidence interval is drawn.</p>
 </div></blockquote>
 <p><strong>truncate_yaxis</strong> : bool | str</p>
 <blockquote>
@@ -291,17 +316,24 @@ for each channel equals the pyplot default.</p>
 <div><p>If True, negative values are plotted up (as is sometimes done
 for ERPs out of tradition). Defaults to False.</p>
 </div></blockquote>
-<p><strong>show_sensors: bool | int | None</strong></p>
+<p><strong>show_sensors: bool | int | str | None</strong></p>
 <blockquote>
 <div><p>If not False, channel locations are plotted on a small head circle.
-If an int, the position of the axes (forwarded to
+If int or str, the position of the axes (forwarded to
 <code class="docutils literal"><span class="pre">mpl_toolkits.axes_grid1.inset_locator.inset_axes</span></code>).
 If None, defaults to True if <code class="docutils literal"><span class="pre">gfp</span></code> is False, else to False.</p>
 </div></blockquote>
-<p><strong>show_legend</strong> : bool | int</p>
+<p><strong>show_legend</strong> : bool | str | int</p>
 <blockquote>
-<div><p>If not False, show a legend. If int, the position of the axes
-(forwarded to <code class="docutils literal"><span class="pre">mpl_toolkits.axes_grid1.inset_locator.inset_axes</span></code>).</p>
+<div><p>If not False, show a legend. If int or str, it is the position of the
+legend axes (forwarded to
+<code class="docutils literal"><span class="pre">mpl_toolkits.axes_grid1.inset_locator.inset_axes</span></code>).</p>
+</div></blockquote>
+<p><strong>split_legend</strong> : bool</p>
+<blockquote>
+<div><p>If True, the legend shows color and linestyle separately; <cite>colors</cite> must
+not be None. Defaults to True if <code class="docutils literal"><span class="pre">cmap</span></code> is not None, else defaults to
+False.</p>
 </div></blockquote>
 <p><strong>axes</strong> : None | <cite>matplotlib.axes.Axes</cite> instance | list of <cite>axes</cite></p>
 <blockquote>
@@ -311,8 +343,8 @@ per channel type.</p>
 </div></blockquote>
 <p><strong>title</strong> : None | str</p>
 <blockquote>
-<div><p>If str, will be plotted as figure title. If None, the channel
-names will be shown.</p>
+<div><p>If str, will be plotted as figure title. If None, the channel names
+will be shown.</p>
 </div></blockquote>
 <p><strong>show</strong> : bool</p>
 <blockquote>
@@ -322,12 +354,35 @@ names will be shown.</p>
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><p class="first"><strong>fig</strong> : Figure | list of Figures</p>
 <blockquote class="last">
-<div><p>The figure(s) in which the plot is drawn.</p>
+<div><p>The figure(s) in which the plot is drawn. When plotting multiple
+channel types, a list of figures, one for each channel type is
+returned.</p>
 </div></blockquote>
 </td>
 </tr>
 </tbody>
 </table>
+<p class="rubric">Notes</p>
+<p>When multiple channels are passed, this function combines them all, to
+get one time course for each condition. If gfp is True it combines
+channels using global field power (GFP) computation, else it is taking
+a plain mean.</p>
+<p>This function is useful for comparing multiple ER[P/F]s - e.g., for
+multiple conditions - at a specific location.</p>
+<p>It can plot:</p>
+<ul class="simple">
+<li>a simple <a class="reference internal" href="mne.Evoked.html#mne.Evoked" title="mne.Evoked"><code class="xref py py-class docutils literal"><span class="pre">mne.Evoked</span></code></a> object,</li>
+<li>a list or dict of <a class="reference internal" href="mne.Evoked.html#mne.Evoked" title="mne.Evoked"><code class="xref py py-class docutils literal"><span class="pre">mne.Evoked</span></code></a> objects (e.g., for multiple
+conditions),</li>
+<li>a list or dict of lists of <a class="reference internal" href="mne.Evoked.html#mne.Evoked" title="mne.Evoked"><code class="xref py py-class docutils literal"><span class="pre">mne.Evoked</span></code></a> (e.g., for multiple
+subjects in multiple conditions).</li>
+</ul>
+<p>In the last case, it can show a confidence interval (across e.g. subjects)
+using parametric or bootstrap estimation.</p>
+<p>When <code class="docutils literal"><span class="pre">picks</span></code> includes more than one planar gradiometer, the planar
+gradiometers are combined with RMSE. For example data from a
+VectorView system with 204 gradiometers will be transformed to
+102 channels.</p>
 </dd></dl>
 
 <div class="section" id="examples-using-mne-viz-plot-compare-evokeds">
@@ -336,13 +391,13 @@ names will be shown.</p>
 <img alt="../_images/sphx_glr_plot_hf_sef_data_thumb.png" src="../_images/sphx_glr_plot_hf_sef_data_thumb.png" />
 <p class="caption"><span class="caption-text"><a class="reference internal" href="../auto_examples/datasets/plot_hf_sef_data.html#sphx-glr-auto-examples-datasets-plot-hf-sef-data-py"><span class="std std-ref">HF-SEF dataset</span></a></span></p>
 </div>
-</div><div class="sphx-glr-thumbcontainer" tooltip="Demonstrating pandas-style string querying with Epochs metadata. For related uses of :class:`mn..."><div class="figure" id="id2">
-<img alt="../_images/sphx_glr_plot_metadata_epochs_thumb.png" src="../_images/sphx_glr_plot_metadata_epochs_thumb.png" />
-<p class="caption"><span class="caption-text"><a class="reference internal" href="../auto_tutorials/plot_metadata_epochs.html#sphx-glr-auto-tutorials-plot-metadata-epochs-py"><span class="std std-ref">Pandas querying and metadata with Epochs objects</span></a></span></p>
-</div>
-</div><div class="sphx-glr-thumbcontainer" tooltip="In this tutorial we focus on plotting functions of :class:`mne.Evoked`. "><div class="figure" id="id3">
+</div><div class="sphx-glr-thumbcontainer" tooltip="In this tutorial we focus on plotting functions of :class:`mne.Evoked`. "><div class="figure" id="id2">
 <img alt="../_images/sphx_glr_plot_visualize_evoked_thumb.png" src="../_images/sphx_glr_plot_visualize_evoked_thumb.png" />
 <p class="caption"><span class="caption-text"><a class="reference internal" href="../auto_tutorials/plot_visualize_evoked.html#sphx-glr-auto-tutorials-plot-visualize-evoked-py"><span class="std std-ref">Visualize Evoked data</span></a></span></p>
+</div>
+</div><div class="sphx-glr-thumbcontainer" tooltip="Demonstrating pandas-style string querying with Epochs metadata. For related uses of :class:`mn..."><div class="figure" id="id3">
+<img alt="../_images/sphx_glr_plot_metadata_epochs_thumb.png" src="../_images/sphx_glr_plot_metadata_epochs_thumb.png" />
+<p class="caption"><span class="caption-text"><a class="reference internal" href="../auto_tutorials/plot_metadata_epochs.html#sphx-glr-auto-tutorials-plot-metadata-epochs-py"><span class="std std-ref">Pandas querying and metadata with Epochs objects</span></a></span></p>
 </div>
 </div><div style='clear:both'></div></div>
 </div>
@@ -367,7 +422,7 @@ names will be shown.</p>
       <li><a href="faq.html#cite">Cite MNE</a></li>
       <li class="pull-right"><a href="#">Back to top</a></li>
     </ul>
-    <p>&copy; Copyright 2012-2017, MNE Developers. Last updated on 2017-11-16.</p>
+    <p>&copy; Copyright 2012-2017, MNE Developers. Last updated on 2017-11-28.</p>
   </div>
 </footer>
   </body>
