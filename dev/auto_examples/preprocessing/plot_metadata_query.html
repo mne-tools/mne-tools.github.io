@@ -179,7 +179,7 @@ This documentation is for <strong>development version 0.16.dev0</strong>.
 <span id="sphx-glr-auto-examples-preprocessing-plot-metadata-query-py"></span><h1>Querying epochs with rich metadata<a class="headerlink" href="#querying-epochs-with-rich-metadata" title="Permalink to this headline">¶</a></h1>
 <p>Selecting a subset of epochs based on rich metadata.</p>
 <p>MNE allows you to include metadata along with your <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal"><span class="pre">mne.Epochs</span></code></a> objects.
-This is in the form of a <a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.21.0)"><code class="xref py py-class docutils literal"><span class="pre">pandas.DataFrame</span></code></a> that has one row for each
+This is in the form of a <a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.21.1)"><code class="xref py py-class docutils literal"><span class="pre">pandas.DataFrame</span></code></a> that has one row for each
 event, and an arbitrary number of columns corresponding to different
 features that were collected. Columns may be of type int, float, or str.</p>
 <p>If an <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal"><span class="pre">mne.Epochs</span></code></a> object has a metadata attribute, you can select
@@ -241,11 +241,14 @@ a few examples of how this looks.</p>
 </pre></div>
 </div>
 <p>First we’ll create our metadata object. This should be a
-<a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.21.0)"><code class="xref py py-class docutils literal"><span class="pre">pandas.DataFrame</span></code></a> with each row corresponding to an event.</p>
+<a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/generated/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v0.21.1)"><code class="xref py py-class docutils literal"><span class="pre">pandas.DataFrame</span></code></a> with each row corresponding to an event.</p>
 <div class="admonition warning">
 <p class="first admonition-title">Warning</p>
-<p class="last">The Dataframe Index can change during MNE I/O operations, so
-do not rely on it to query your metadata.</p>
+<p class="last">Do not set or change the Dataframe index of <code class="docutils literal"><span class="pre">epochs.metadata</span></code>.
+It will be controlled by MNE to mirror <code class="docutils literal"><span class="pre">epochs.selection</span></code>.
+Also, while some inplace operations on <code class="docutils literal"><span class="pre">epochs.metadata</span></code> are
+possible, do not manually drop or add rows, as this will
+create inconsistency between the metadata and actual data.</p>
 </div>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">metadata</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;event_time&#39;</span><span class="p">:</span> <span class="n">events</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;sfreq&#39;</span><span class="p">],</span>
             <span class="s1">&#39;trial_number&#39;</span><span class="p">:</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">events</span><span class="p">)),</span>
@@ -284,22 +287,12 @@ example, you can select a subset of events based on the value of a column.</p>
 </pre></div>
 </div>
 <img alt="../../_images/sphx_glr_plot_metadata_query_001.png" class="align-center" src="../../_images/sphx_glr_plot_metadata_query_001.png" />
-<p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-default"><div class="highlight"><pre><span></span><span class="n">Replacing</span> <span class="n">existing</span> <span class="n">metadata</span> <span class="k">with</span> <span class="mi">4</span> <span class="n">columns</span>
-<span class="n">Replacing</span> <span class="n">existing</span> <span class="n">metadata</span> <span class="k">with</span> <span class="mi">4</span> <span class="n">columns</span>
-</pre></div>
-</div>
 <p>If a column has numeric values, you can also use numeric-style queries:</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">query</span> <span class="o">=</span> <span class="s1">&#39;trial_number &lt; 10&#39;</span>
 <span class="n">plot_query_results</span><span class="p">(</span><span class="n">query</span><span class="p">)</span>
 </pre></div>
 </div>
 <img alt="../../_images/sphx_glr_plot_metadata_query_002.png" class="align-center" src="../../_images/sphx_glr_plot_metadata_query_002.png" />
-<p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-default"><div class="highlight"><pre><span></span><span class="n">Replacing</span> <span class="n">existing</span> <span class="n">metadata</span> <span class="k">with</span> <span class="mi">4</span> <span class="n">columns</span>
-<span class="n">Replacing</span> <span class="n">existing</span> <span class="n">metadata</span> <span class="k">with</span> <span class="mi">4</span> <span class="n">columns</span>
-</pre></div>
-</div>
 <p>It is possible to chain these queries together, giving you more expressive
 ways to select particular epochs:</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">query</span> <span class="o">=</span> <span class="s1">&#39;trial_number &lt; 10 and side == &quot;left&quot;&#39;</span>
@@ -307,11 +300,6 @@ ways to select particular epochs:</p>
 </pre></div>
 </div>
 <img alt="../../_images/sphx_glr_plot_metadata_query_003.png" class="align-center" src="../../_images/sphx_glr_plot_metadata_query_003.png" />
-<p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-default"><div class="highlight"><pre><span></span><span class="n">Replacing</span> <span class="n">existing</span> <span class="n">metadata</span> <span class="k">with</span> <span class="mi">4</span> <span class="n">columns</span>
-<span class="n">Replacing</span> <span class="n">existing</span> <span class="n">metadata</span> <span class="k">with</span> <span class="mi">4</span> <span class="n">columns</span>
-</pre></div>
-</div>
 <p>Any query that works with <code class="docutils literal"><span class="pre">DataFrame.query</span></code> will work for selecting epochs.</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">plot_events</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;smiley&#39;</span><span class="p">,</span> <span class="s1">&#39;button&#39;</span><span class="p">]</span>
 <span class="n">query</span> <span class="o">=</span> <span class="s1">&#39;kind in {}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">plot_events</span><span class="p">)</span>
@@ -319,12 +307,7 @@ ways to select particular epochs:</p>
 </pre></div>
 </div>
 <img alt="../../_images/sphx_glr_plot_metadata_query_004.png" class="align-center" src="../../_images/sphx_glr_plot_metadata_query_004.png" />
-<p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-default"><div class="highlight"><pre><span></span><span class="n">Replacing</span> <span class="n">existing</span> <span class="n">metadata</span> <span class="k">with</span> <span class="mi">4</span> <span class="n">columns</span>
-<span class="n">Replacing</span> <span class="n">existing</span> <span class="n">metadata</span> <span class="k">with</span> <span class="mi">4</span> <span class="n">columns</span>
-</pre></div>
-</div>
-<p><strong>Total running time of the script:</strong> ( 0 minutes  11.796 seconds)</p>
+<p><strong>Total running time of the script:</strong> ( 0 minutes  9.057 seconds)</p>
 <div class="sphx-glr-footer docutils container">
 <div class="sphx-glr-download docutils container">
 <a class="reference download internal" href="../../_downloads/plot_metadata_query.py" download=""><code class="xref download docutils literal"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">plot_metadata_query.py</span></code></a></div>
@@ -354,7 +337,7 @@ ways to select particular epochs:</p>
       <li><a href="faq.html#cite">Cite MNE</a></li>
       <li class="pull-right"><a href="#">Back to top</a></li>
     </ul>
-    <p>&copy; Copyright 2012-2017, MNE Developers. Last updated on 2017-12-06.</p>
+    <p>&copy; Copyright 2012-2017, MNE Developers. Last updated on 2017-12-15.</p>
   </div>
 </footer>
   </body>
