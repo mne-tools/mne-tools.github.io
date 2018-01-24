@@ -31,10 +31,7 @@ Freeview.
 
     print(__doc__)
 
-    data_path = sample.data_path()
-    raw_fname = data_path + '/MEG/sample/sample_audvis_raw.fif'
-    event_fname = data_path + '/MEG/sample/sample_audvis_raw-eve.fif'
-    fname_fwd = data_path + '/MEG/sample/sample_audvis-meg-vol-7-fwd.fif'
+    # sphinx_gallery_thumbnail_number = 3
 
 
 
@@ -42,26 +39,34 @@ Freeview.
 
 
 
-Get epochs
+
+Data preprocessing:
 
 
 
 .. code-block:: python
 
-    event_id, tmin, tmax = 1, -0.2, 0.5
+
+    data_path = sample.data_path()
+    raw_fname = data_path + '/MEG/sample/sample_audvis_raw.fif'
+    event_fname = data_path + '/MEG/sample/sample_audvis_raw-eve.fif'
+    fname_fwd = data_path + '/MEG/sample/sample_audvis-meg-vol-7-fwd.fif'
+
+    # Get epochs
+    event_id, tmin, tmax = [1, 2], -0.2, 0.5
 
     # Setup for reading the raw data
     raw = mne.io.read_raw_fif(raw_fname, preload=True)
     raw.info['bads'] = ['MEG 2443', 'EEG 053']  # 2 bads channels
     events = mne.read_events(event_fname)
 
-    # Set up pick list: EEG + MEG - bad channels (modify to your needs)
-    left_temporal_channels = mne.read_selection('Left-temporal')
+    # Set up pick list: gradiometers and magnetometers, excluding bad channels
     picks = mne.pick_types(raw.info, meg=True, eeg=False, stim=True, eog=True,
-                           exclude='bads', selection=left_temporal_channels)
+                           exclude='bads')
 
     # Pick the channels of interest
     raw.pick_channels([raw.ch_names[pick] for pick in picks])
+
     # Re-normalize our empty-room projectors, so they are fine after subselection
     raw.info.normalize_proj()
 
@@ -72,55 +77,9 @@ Get epochs
                         reject=dict(grad=4000e-13, mag=4e-12, eog=150e-6))
     evoked = epochs.average()
 
-    forward = mne.read_forward_solution(fname_fwd)
+    # Visualize sensor space data
+    evoked.plot_joint()
 
-    # Read regularized noise covariance and compute regularized data covariance
-    noise_cov = mne.compute_covariance(epochs, tmin=tmin, tmax=0, method='shrunk')
-    data_cov = mne.compute_covariance(epochs, tmin=0.04, tmax=0.15,
-                                      method='shrunk')
-
-    # Compute weights of free orientation (vector) beamformer with weight
-    # normalization (neural activity index, NAI). Providing a noise covariance
-    # matrix enables whitening of the data and forward solution. Source orientation
-    # is optimized by setting pick_ori to 'max-power'.
-    # weight_norm can also be set to 'unit-noise-gain'. Source orientation can also
-    # be 'normal' (but only when using a surface-based source space) or None,
-    # which computes a vector beamfomer. Note, however, that not all combinations
-    # of orientation selection and weight normalization are implemented yet.
-    filters = make_lcmv(evoked.info, forward, data_cov, reg=0.05,
-                        noise_cov=noise_cov, pick_ori='max-power',
-                        weight_norm='nai')
-
-    # Apply this spatial filter to the evoked data. The output of these two steps
-    # is equivalent to calling lcmv() and enables the application of the spatial
-    # filter to separate data sets, e.g. when using a common spatial filter to
-    # compare conditions.
-    stc = apply_lcmv(evoked, filters, max_ori_out='signed')
-
-    # take absolute values for plotting
-    stc.data[:, :] = np.abs(stc.data)
-
-    # Save result in stc files
-    stc.save('lcmv-vol')
-
-    stc.crop(0.0, 0.2)
-
-    # Save result in a 4D nifti file
-    img = mne.save_stc_as_volume('lcmv_inverse.nii.gz', stc,
-                                 forward['src'], mri_resolution=False)
-
-    t1_fname = data_path + '/subjects/sample/mri/T1.mgz'
-
-    # Plotting with nilearn ######################################################
-    plot_stat_map(index_img(img, 61), t1_fname, threshold=1.35,
-                  title='LCMV (t=%.1f s.)' % stc.times[61])
-
-    # plot source time courses with the maximum peak amplitudes
-    plt.figure()
-    plt.plot(stc.times, stc.data[np.argsort(np.max(stc.data, axis=1))[-40:]].T)
-    plt.xlabel('Time (ms)')
-    plt.ylabel('LCMV value')
-    plt.show()
 
 
 
@@ -151,11 +110,25 @@ Get epochs
     Ready.
     Current compensation grade : 0
     Reading 0 ... 166799  =      0.000 ...   277.714 secs...
-    72 matching events found
+    145 matching events found
     Applying baseline correction (mode: mean)
     Not setting metadata
     Created an SSP operator (subspace dimension = 3)
-    Loading data for 72 events and 421 original time points ...
+    Loading data for 145 events and 421 original time points ...
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on MAG : [u'MEG 1711']
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on EOG : [u'EOG 061']
+        Rejecting  epoch based on MAG : [u'MEG 1711']
         Rejecting  epoch based on EOG : [u'EOG 061']
         Rejecting  epoch based on EOG : [u'EOG 061']
         Rejecting  epoch based on EOG : [u'EOG 061']
@@ -172,7 +145,59 @@ Get epochs
         Rejecting  epoch based on EOG : [u'EOG 061']
         Rejecting  epoch based on EOG : [u'EOG 061']
         Rejecting  epoch based on EOG : [u'EOG 061']
-    16 bad epochs dropped
+        Rejecting  epoch based on EOG : [u'EOG 061']
+    31 bad epochs dropped
+
+
+Compute covariance matrices, fit and apply  spatial filter.
+
+
+
+.. code-block:: python
+
+
+    # Read regularized noise covariance and compute regularized data covariance
+    noise_cov = mne.compute_covariance(epochs, tmin=tmin, tmax=0, method='shrunk')
+    data_cov = mne.compute_covariance(epochs, tmin=0.04, tmax=0.15,
+                                      method='shrunk')
+
+    # Read forward model
+    forward = mne.read_forward_solution(fname_fwd)
+
+    # Compute weights of free orientation (vector) beamformer with weight
+    # normalization (neural activity index, NAI). Providing a noise covariance
+    # matrix enables whitening of the data and forward solution. Source orientation
+    # is optimized by setting pick_ori to 'max-power'.
+    # weight_norm can also be set to 'unit-noise-gain'. Source orientation can also
+    # be 'normal' (but only when using a surface-based source space) or None,
+    # which computes a vector beamfomer. Note, however, that not all combinations
+    # of orientation selection and weight normalization are implemented yet.
+    filters = make_lcmv(evoked.info, forward, data_cov, reg=0.05,
+                        noise_cov=noise_cov, pick_ori='max-power',
+                        weight_norm='nai')
+
+    # Apply this spatial filter to the evoked data. The output of these two steps
+    # is equivalent to calling lcmv() and enables the application of the spatial
+    # filter to separate data sets, e.g. when using a common spatial filter to
+    # compare conditions.
+    stc = apply_lcmv(evoked, filters, max_ori_out='signed')
+
+
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    Estimating covariance using SHRUNK
+    Done.
+    Number of samples used : 13794
+    [done]
+    Estimating covariance using SHRUNK
+    Done.
+    Number of samples used : 7638
+    [done]
     Reading forward solution from /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis-meg-vol-7-fwd.fif...
         Reading a source space...
         [done]
@@ -180,25 +205,75 @@ Get epochs
         Desired named matrix (kind = 3523) not available
         Read MEG forward solution (3757 sources, 306 channels, free orientations)
         Source spaces transformed to the forward solution coordinate frame
-    Estimating covariance using SHRUNK
-    Done.
-    Number of samples used : 6776
-    [done]
-    Estimating covariance using SHRUNK
-    Done.
-    Number of samples used : 3752
-    [done]
-        39 out of 306 channels remain after picking
+        305 out of 306 channels remain after picking
         Created an SSP operator (subspace dimension = 3)
-    estimated rank (mag + grad): 36
+    estimated rank (mag + grad): 302
     Setting small MEG eigenvalues to zero.
     Not doing PCA for MEG.
-    Total rank is 36
+    Total rank is 302
+
+
+Plot source space activity:
+
+
+
+.. code-block:: python
+
+
+    # take absolute values for plotting
+    stc.data[:, :] = np.abs(stc.data)
+
+    # Save result in stc files
+    stc.save('lcmv-vol')
+
+    stc.crop(0.0, 0.2)
+
+    # Save result in a 4D nifti file
+    img = mne.save_stc_as_volume('lcmv_inverse.nii.gz', stc,
+                                 forward['src'], mri_resolution=False)
+
+    t1_fname = data_path + '/subjects/sample/mri/T1.mgz'
+
+    # Plotting with nilearn ######################################################
+    # Based on the visualization of the sensor space data (gradiometers), plot
+    # activity at 88 ms
+    idx = stc.time_as_index(0.088)
+    plot_stat_map(index_img(img, idx), t1_fname, threshold=0.45,
+                  title='LCMV (t=%.3f s.)' % stc.times[idx])
+
+    # plot source time courses with the maximum peak amplitudes at 88 ms
+    plt.figure()
+    plt.plot(stc.times, stc.data[np.argsort(np.max(stc.data[:, idx],
+                                                   axis=1))[-40:]].T)
+    plt.xlabel('Time (ms)')
+    plt.ylabel('LCMV value')
+    plt.show()
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+    *
+
+      .. image:: /auto_examples/inverse/images/sphx_glr_plot_lcmv_beamformer_volume_003.png
+            :scale: 47
+
+    *
+
+      .. image:: /auto_examples/inverse/images/sphx_glr_plot_lcmv_beamformer_volume_004.png
+            :scale: 47
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
     Writing STC to disk...
     [done]
 
 
-**Total running time of the script:** ( 0 minutes  7.645 seconds)
+**Total running time of the script:** ( 0 minutes  46.665 seconds)
 
 
 
