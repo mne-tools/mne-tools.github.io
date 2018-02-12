@@ -184,8 +184,8 @@ This documentation is for <strong>development version 0.16.dev0</strong>.
 <dt id="mne.compute_covariance">
 <code class="descclassname">mne.</code><code class="descname">compute_covariance</code><span class="sig-paren">(</span><em>epochs</em>, <em>keep_sample_mean=True</em>, <em>tmin=None</em>, <em>tmax=None</em>, <em>projs=None</em>, <em>method='empirical'</em>, <em>method_params=None</em>, <em>cv=3</em>, <em>scalings=None</em>, <em>n_jobs=1</em>, <em>return_estimators=False</em>, <em>on_mismatch='raise'</em>, <em>verbose=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/cov.py"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.compute_covariance" title="Permalink to this definition">¶</a></dt>
 <dd><p>Estimate noise covariance matrix from epochs.</p>
-<p>The noise covariance is typically estimated on pre-stim periods
-when the stim onset is defined from events.</p>
+<p>The noise covariance is typically estimated on pre-stimulus periods
+when the stimulus onset is defined from events.</p>
 <p>If the covariance is computed for multiple event types (events
 with different IDs), the following two options can be used and combined:</p>
 <blockquote>
@@ -196,28 +196,6 @@ a list of Epochs is passed to this function.</li>
 to this function.</li>
 </ol>
 </div></blockquote>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">Baseline correction should be used when creating the Epochs.
-Otherwise the computed covariance matrix will be inaccurate.</p>
-</div>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">For multiple event types, it is also possible to create a
-single Epochs object with events obtained using
-merge_events(). However, the resulting covariance matrix
-will only be correct if keep_sample_mean is True.</p>
-</div>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last">The covariance can be unstable if the number of samples is
-not sufficient. In that case it is common to regularize a
-covariance estimate. The <code class="docutils literal"><span class="pre">method</span></code> parameter of this
-function allows to regularize the covariance in an
-automated way. It also allows to select between different
-alternative estimation algorithms which themselves achieve
-regularization. Details are described in <a class="reference internal" href="#r7477" id="id1">[R7477]</a>.</p>
-</div>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -251,35 +229,42 @@ inherited. If None, then projectors from all epochs must match.</p>
 <p><strong>method</strong> : str | list | None (default ‘empirical’)</p>
 <blockquote>
 <div><p>The method used for covariance estimation. If ‘empirical’ (default),
-the sample covariance will be computed. A list can be passed to run a
-set of the different methods.
+the sample covariance will be computed. A list can be passed to
+perform estimates using multiple methods.
 If ‘auto’ or a list of methods, the best estimator will be determined
 based on log-likelihood and cross-validation on unseen data as
-described in <a class="reference internal" href="#r7477" id="id2">[R7477]</a>. Valid methods are:</p>
-<blockquote>
-<div><ul class="simple">
-<li><code class="docutils literal"><span class="pre">'empirical'</span></code>: the empirical or sample covariance</li>
-<li><code class="docutils literal"><span class="pre">'diagonal_fixed'</span></code>: a diagonal regularization as in
-mne.cov.regularize (see MNE manual)</li>
-<li><code class="docutils literal"><span class="pre">'ledoit_wolf'</span></code>: the Ledoit-Wolf estimator <a class="reference internal" href="#r7577" id="id3">[R7577]</a></li>
-<li><code class="docutils literal"><span class="pre">'shrunk'</span></code>: like ‘ledoit_wolf’ with cross-validation for
-optimal alpha (see scikit-learn documentation on covariance
-estimation)</li>
-<li><code class="docutils literal"><span class="pre">'pca'</span></code>: probabilistic PCA with low rank <a class="reference internal" href="#r7677" id="id4">[R7677]</a></li>
-<li><code class="docutils literal"><span class="pre">'factor_analysis'</span></code>: Factor Analysis with low rank <a class="reference internal" href="#r7777" id="id5">[R7777]</a></li>
+described in <a class="reference internal" href="#r7478" id="id1">[R7478]</a>. Valid methods are:</p>
+<ul>
+<li><p class="first"><code class="docutils literal"><span class="pre">'empirical'</span></code>: the empirical or sample covariance (default)</p>
+</li>
+<li><p class="first"><code class="docutils literal"><span class="pre">'diagonal_fixed'</span></code>: a diagonal regularization based on
+channel types as in <a class="reference internal" href="mne.cov.regularize.html#mne.cov.regularize" title="mne.cov.regularize"><code class="xref py py-func docutils literal"><span class="pre">mne.cov.regularize()</span></code></a>.</p>
+</li>
+<li><p class="first"><code class="docutils literal"><span class="pre">'shrinkage'</span></code> : covariance estimator with fixed shrinkage.</p>
+<div class="versionadded">
+<p><span class="versionmodified">New in version 0.16.</span></p>
+</div>
+</li>
+<li><p class="first"><code class="docutils literal"><span class="pre">'ledoit_wolf'</span></code>: the Ledoit-Wolf estimator, which uses an
+empirical formula for the optimal shrinkage value <a class="reference internal" href="#r7578" id="id2">[R7578]</a>.</p>
+</li>
+<li><p class="first"><code class="docutils literal"><span class="pre">'oas'</span></code>: the OAS estimator <a class="reference internal" href="#r7878" id="id3">[R7878]</a>, which uses a different
+empricial formula for the optimal shrinkage value.</p>
+<div class="versionadded">
+<p><span class="versionmodified">New in version 0.16.</span></p>
+</div>
+</li>
+<li><p class="first"><code class="docutils literal"><span class="pre">'shrunk'</span></code>: like ‘ledoit_wolf’, but with cross-validation
+for optimal alpha.</p>
+</li>
+<li><p class="first"><code class="docutils literal"><span class="pre">'pca'</span></code>: probabilistic PCA with low rank <a class="reference internal" href="#r7678" id="id4">[R7678]</a>.</p>
+</li>
+<li><p class="first"><code class="docutils literal"><span class="pre">'factor_analysis'</span></code>: factor analysis with low rank <a class="reference internal" href="#r7778" id="id5">[R7778]</a>.</p>
+</li>
 </ul>
-</div></blockquote>
 <p>If <code class="docutils literal"><span class="pre">'auto'</span></code>, this expands to:</p>
 <div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">[</span><span class="s1">&#39;shrunk&#39;</span><span class="p">,</span> <span class="s1">&#39;diagonal_fixed&#39;</span><span class="p">,</span> <span class="s1">&#39;empirical&#39;</span><span class="p">,</span> <span class="s1">&#39;factor_analysis&#39;</span><span class="p">]</span>
 </pre></div>
-</div>
-<div class="admonition note">
-<p class="first admonition-title">Note</p>
-<p class="last"><code class="docutils literal"><span class="pre">'ledoit_wolf'</span></code> and <code class="docutils literal"><span class="pre">'pca'</span></code> are similar to
-<code class="docutils literal"><span class="pre">'shrunk'</span></code> and <code class="docutils literal"><span class="pre">'factor_analysis'</span></code>, respectively. They are not
-included to avoid redundancy. In most cases <code class="docutils literal"><span class="pre">'shrunk'</span></code> and
-<code class="docutils literal"><span class="pre">'factor_analysis'</span></code> represent more appropriate default
-choices.</p>
 </div>
 <p>The <code class="docutils literal"><span class="pre">'auto'</span></code> mode is not recommended if there are many
 segments of data, since computation can take a long time.</p>
@@ -290,17 +275,15 @@ segments of data, since computation can take a long time.</p>
 <p><strong>method_params</strong> : dict | None (default None)</p>
 <blockquote>
 <div><p>Additional parameters to the estimation procedure. Only considered if
-method is not None. Keys must correspond to the value(s) of <cite>method</cite>.
-If None (default), expands to:</p>
-<div class="highlight-default"><div class="highlight"><pre><span></span><span class="s1">&#39;empirical&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;store_precision&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> <span class="s1">&#39;assume_centered&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
-<span class="s1">&#39;diagonal_fixed&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;grad&#39;</span><span class="p">:</span> <span class="mf">0.01</span><span class="p">,</span> <span class="s1">&#39;mag&#39;</span><span class="p">:</span> <span class="mf">0.01</span><span class="p">,</span> <span class="s1">&#39;eeg&#39;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
-                   <span class="s1">&#39;store_precision&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-                   <span class="s1">&#39;assume_centered&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
-<span class="s1">&#39;ledoit_wolf&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;store_precision&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> <span class="s1">&#39;assume_centered&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
-<span class="s1">&#39;shrunk&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;shrinkage&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">logspace</span><span class="p">(</span><span class="o">-</span><span class="mi">4</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">30</span><span class="p">),</span>
-           <span class="s1">&#39;store_precision&#39;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> <span class="s1">&#39;assume_centered&#39;</span><span class="p">:</span> <span class="kc">True</span><span class="p">},</span>
-<span class="s1">&#39;pca&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;iter_n_components&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">},</span>
-<span class="s1">&#39;factor_analysis&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;iter_n_components&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">}</span>
+method is not None. Keys must correspond to the value(s) of <code class="docutils literal"><span class="pre">method</span></code>.
+If None (default), expands to the following (with the addition of
+<code class="docutils literal"><span class="pre">{'store_precision':</span> <span class="pre">False,</span> <span class="pre">'assume_centered':</span> <span class="pre">True}</span> <span class="pre">for</span> <span class="pre">all</span> <span class="pre">methods</span>
+<span class="pre">except</span> <span class="pre">``'factor_analysis'</span></code> and <code class="docutils literal"><span class="pre">'pca'</span></code>):</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">{</span><span class="s1">&#39;diagonal_fixed&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;grad&#39;</span><span class="p">:</span> <span class="mf">0.01</span><span class="p">,</span> <span class="s1">&#39;mag&#39;</span><span class="p">:</span> <span class="mf">0.01</span><span class="p">,</span> <span class="s1">&#39;eeg&#39;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">},</span>
+ <span class="s1">&#39;shrinkage&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;shrikage&#39;</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">},</span>
+ <span class="s1">&#39;shrunk&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;shrinkage&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">logspace</span><span class="p">(</span><span class="o">-</span><span class="mi">4</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">30</span><span class="p">)},</span>
+ <span class="s1">&#39;pca&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;iter_n_components&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">},</span>
+ <span class="s1">&#39;factor_analysis&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;iter_n_components&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">}}</span>
 </pre></div>
 </div>
 </div></blockquote>
@@ -313,8 +296,8 @@ with 3 splits.</p>
 <p><strong>scalings</strong> : dict | None (default None)</p>
 <blockquote>
 <div><p>Defaults to <code class="docutils literal"><span class="pre">dict(mag=1e15,</span> <span class="pre">grad=1e13,</span> <span class="pre">eeg=1e6)</span></code>.
-These defaults will scale magnetometers and gradiometers
-at the same unit.</p>
+These defaults will scale data to roughly the same order of
+magnitude.</p>
 </div></blockquote>
 <p><strong>n_jobs</strong> : int (default 1)</p>
 <blockquote>
@@ -360,91 +343,120 @@ to worst).</p>
 <dd>Estimate noise covariance from raw data</dd>
 </dl>
 </div>
+<p class="rubric">Notes</p>
+<p>Baseline correction or sufficient high-passing should be used
+when creating the <a class="reference internal" href="mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal"><span class="pre">Epochs</span></code></a> to ensure that the data are zero mean,
+otherwise the computed covariance matrix will be inaccurate.</p>
+<p>For multiple event types, it is also possible to create a
+single <a class="reference internal" href="mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal"><span class="pre">Epochs</span></code></a> object with events obtained using
+<a class="reference internal" href="mne.merge_events.html#mne.merge_events" title="mne.merge_events"><code class="xref py py-func docutils literal"><span class="pre">mne.merge_events()</span></code></a>. However, the resulting covariance matrix
+will only be correct if <code class="docutils literal"><span class="pre">keep_sample_mean</span> <span class="pre">is</span> <span class="pre">True</span></code>.</p>
+<p>The covariance can be unstable if the number of samples is small.
+In that case it is common to regularize the covariance estimate.
+The <code class="docutils literal"><span class="pre">method</span></code> parameter allows to regularize the covariance in an
+automated way. It also allows to select between different alternative
+estimation algorithms which themselves achieve regularization.
+Details are described in <a class="reference internal" href="#r7478" id="id6">[R7478]</a>.</p>
+<p><code class="docutils literal"><span class="pre">'ledoit_wolf'</span></code> and <code class="docutils literal"><span class="pre">'pca'</span></code> are similar to <code class="docutils literal"><span class="pre">'shrunk'</span></code> and
+<code class="docutils literal"><span class="pre">'factor_analysis'</span></code>, respectively, except that they use
+cross validation (which is useful when samples are correlated, which
+is often the case for M/EEG data). The former two are not included in
+the <code class="docutils literal"><span class="pre">'auto'</span></code> mode to avoid redundancy.</p>
+<p>For more information on the advanced estimation methods, see
+<a class="reference external" href="http://scikit-learn.org/stable/modules/covariance.html#covariance" title="(in scikit-learn v0.19.1)"><span class="xref std std-ref">the sklearn manual</span></a>.</p>
 <p class="rubric">References</p>
-<table class="docutils citation" frame="void" id="r7477" rules="none">
+<table class="docutils citation" frame="void" id="r7478" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
-<tr><td class="label">[R7477]</td><td><em>(<a class="fn-backref" href="#id1">1</a>, <a class="fn-backref" href="#id2">2</a>, <a class="fn-backref" href="#id6">3</a>)</em> Engemann D. and Gramfort A. (2015) Automated model selection in
+<tr><td class="label">[R7478]</td><td><em>(<a class="fn-backref" href="#id1">1</a>, <a class="fn-backref" href="#id6">2</a>, <a class="fn-backref" href="#id7">3</a>)</em> Engemann D. and Gramfort A. (2015) Automated model selection in
 covariance estimation and spatial whitening of MEG and EEG
 signals, vol. 108, 328-342, NeuroImage.</td></tr>
 </tbody>
 </table>
-<table class="docutils citation" frame="void" id="r7577" rules="none">
+<table class="docutils citation" frame="void" id="r7578" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
-<tr><td class="label">[R7577]</td><td><em>(<a class="fn-backref" href="#id3">1</a>, <a class="fn-backref" href="#id7">2</a>)</em> Ledoit, O., Wolf, M., (2004). A well-conditioned estimator for
+<tr><td class="label">[R7578]</td><td><em>(<a class="fn-backref" href="#id2">1</a>, <a class="fn-backref" href="#id8">2</a>)</em> Ledoit, O., Wolf, M., (2004). A well-conditioned estimator for
 large-dimensional covariance matrices. Journal of Multivariate
 Analysis 88 (2), 365 - 411.</td></tr>
 </tbody>
 </table>
-<table class="docutils citation" frame="void" id="r7677" rules="none">
+<table class="docutils citation" frame="void" id="r7678" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
-<tr><td class="label">[R7677]</td><td><em>(<a class="fn-backref" href="#id4">1</a>, <a class="fn-backref" href="#id8">2</a>)</em> Tipping, M. E., Bishop, C. M., (1999). Probabilistic principal
+<tr><td class="label">[R7678]</td><td><em>(<a class="fn-backref" href="#id4">1</a>, <a class="fn-backref" href="#id9">2</a>)</em> Tipping, M. E., Bishop, C. M., (1999). Probabilistic principal
 component analysis. Journal of the Royal Statistical Society:
 Series B (Statistical Methodology) 61 (3), 611 - 622.</td></tr>
 </tbody>
 </table>
-<table class="docutils citation" frame="void" id="r7777" rules="none">
+<table class="docutils citation" frame="void" id="r7778" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
-<tr><td class="label">[R7777]</td><td><em>(<a class="fn-backref" href="#id5">1</a>, <a class="fn-backref" href="#id9">2</a>)</em> Barber, D., (2012). Bayesian reasoning and machine learning.
+<tr><td class="label">[R7778]</td><td><em>(<a class="fn-backref" href="#id5">1</a>, <a class="fn-backref" href="#id10">2</a>)</em> Barber, D., (2012). Bayesian reasoning and machine learning.
 Cambridge University Press., Algorithm 21.1</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="r7878" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[R7878]</td><td><em>(<a class="fn-backref" href="#id3">1</a>, <a class="fn-backref" href="#id11">2</a>)</em> Chen et al. (2010). Shrinkage Algorithms for MMSE Covariance
+Estimation. IEEE Trans. on Sign. Proc., Volume 58, Issue 10,
+October 2010.</td></tr>
 </tbody>
 </table>
 </dd></dl>
 
 <div class="section" id="examples-using-mne-compute-covariance">
 <h2>Examples using <code class="docutils literal"><span class="pre">mne.compute_covariance</span></code><a class="headerlink" href="#examples-using-mne-compute-covariance" title="Permalink to this headline">¶</a></h2>
-<div class="sphx-glr-thumbcontainer" tooltip="Runs a full pipeline using MNE-Python:"><div class="figure" id="id10">
+<div class="sphx-glr-thumbcontainer" tooltip="Runs a full pipeline using MNE-Python:"><div class="figure" id="id12">
 <img alt="../_images/sphx_glr_plot_spm_faces_dataset_thumb.png" src="../_images/sphx_glr_plot_spm_faces_dataset_thumb.png" />
 <p class="caption"><span class="caption-text"><a class="reference internal" href="../auto_examples/datasets/plot_spm_faces_dataset.html#sphx-glr-auto-examples-datasets-plot-spm-faces-dataset-py"><span class="std std-ref">From raw data to dSPM on SPM Faces dataset</span></a></span></p>
 </div>
-</div><div class="sphx-glr-thumbcontainer" tooltip="Compute LCMV beamformer solutions on an evoked dataset for three different choices of source or..."><div class="figure" id="id11">
+</div><div class="sphx-glr-thumbcontainer" tooltip="Compute LCMV beamformer solutions on an evoked dataset for three different choices of source or..."><div class="figure" id="id13">
 <img alt="../_images/sphx_glr_plot_lcmv_beamformer_thumb.png" src="../_images/sphx_glr_plot_lcmv_beamformer_thumb.png" />
 <p class="caption"><span class="caption-text"><a class="reference internal" href="../auto_examples/inverse/plot_lcmv_beamformer.html#sphx-glr-auto-examples-inverse-plot-lcmv-beamformer-py"><span class="std std-ref">Compute LCMV beamformer on evoked data</span></a></span></p>
 </div>
-</div><div class="sphx-glr-thumbcontainer" tooltip="Compute LCMV inverse solution on an auditory evoked dataset in a volume source space. It stores..."><div class="figure" id="id12">
+</div><div class="sphx-glr-thumbcontainer" tooltip="Compute LCMV inverse solution on an auditory evoked dataset in a volume source space. It stores..."><div class="figure" id="id14">
 <img alt="../_images/sphx_glr_plot_lcmv_beamformer_volume_thumb.png" src="../_images/sphx_glr_plot_lcmv_beamformer_volume_thumb.png" />
 <p class="caption"><span class="caption-text"><a class="reference internal" href="../auto_examples/inverse/plot_lcmv_beamformer_volume.html#sphx-glr-auto-examples-inverse-plot-lcmv-beamformer-volume-py"><span class="std std-ref">Compute LCMV inverse solution on evoked data in volume source space</span></a></span></p>
 </div>
-</div><div class="sphx-glr-thumbcontainer" tooltip="This example demonstrates the relationship between the noise covariance estimate and the MNE / ..."><div class="figure" id="id13">
+</div><div class="sphx-glr-thumbcontainer" tooltip="This example demonstrates the relationship between the noise covariance estimate and the MNE / ..."><div class="figure" id="id15">
 <img alt="../_images/sphx_glr_plot_covariance_whitening_dspm_thumb.png" src="../_images/sphx_glr_plot_covariance_whitening_dspm_thumb.png" />
 <p class="caption"><span class="caption-text"><a class="reference internal" href="../auto_examples/inverse/plot_covariance_whitening_dspm.html#sphx-glr-auto-examples-inverse-plot-covariance-whitening-dspm-py"><span class="std std-ref">Demonstrate impact of whitening on source estimates</span></a></span></p>
 </div>
-</div><div class="sphx-glr-thumbcontainer" tooltip="Compute LCMV source power [1]_ in a grid of time-frequency windows and display results."><div class="figure" id="id14">
+</div><div class="sphx-glr-thumbcontainer" tooltip="Compute LCMV source power [1]_ in a grid of time-frequency windows and display results."><div class="figure" id="id16">
 <img alt="../_images/sphx_glr_plot_tf_lcmv_thumb.png" src="../_images/sphx_glr_plot_tf_lcmv_thumb.png" />
 <p class="caption"><span class="caption-text"><a class="reference internal" href="../auto_examples/inverse/plot_tf_lcmv.html#sphx-glr-auto-examples-inverse-plot-tf-lcmv-py"><span class="std std-ref">Time-frequency beamforming using LCMV</span></a></span></p>
 </div>
-</div><div class="sphx-glr-thumbcontainer" tooltip="This demonstrates denoising using the OTP algorithm [1]_ on data with with sensor artifacts (fl..."><div class="figure" id="id15">
+</div><div class="sphx-glr-thumbcontainer" tooltip="This demonstrates denoising using the OTP algorithm [1]_ on data with with sensor artifacts (fl..."><div class="figure" id="id17">
 <img alt="../_images/sphx_glr_plot_otp_thumb.png" src="../_images/sphx_glr_plot_otp_thumb.png" />
 <p class="caption"><span class="caption-text"><a class="reference internal" href="../auto_examples/preprocessing/plot_otp.html#sphx-glr-auto-examples-preprocessing-plot-otp-py"><span class="std std-ref">Plot sensor denoising using oversampled temporal projection</span></a></span></p>
 </div>
-</div><div class="sphx-glr-thumbcontainer" tooltip="This example generates raw data by repeating a desired source activation multiple times."><div class="figure" id="id16">
+</div><div class="sphx-glr-thumbcontainer" tooltip="This example generates raw data by repeating a desired source activation multiple times."><div class="figure" id="id18">
 <img alt="../_images/sphx_glr_plot_simulate_raw_data_thumb.png" src="../_images/sphx_glr_plot_simulate_raw_data_thumb.png" />
 <p class="caption"><span class="caption-text"><a class="reference internal" href="../auto_examples/simulation/plot_simulate_raw_data.html#sphx-glr-auto-examples-simulation-plot-simulate-raw-data-py"><span class="std std-ref">Generate simulated raw data</span></a></span></p>
 </div>
-</div><div class="sphx-glr-thumbcontainer" tooltip="Evoked data are loaded and then whitened using a given noise covariance matrix. It's an excelle..."><div class="figure" id="id17">
+</div><div class="sphx-glr-thumbcontainer" tooltip="Evoked data are loaded and then whitened using a given noise covariance matrix. It's an excelle..."><div class="figure" id="id19">
 <img alt="../_images/sphx_glr_plot_evoked_whitening_thumb.png" src="../_images/sphx_glr_plot_evoked_whitening_thumb.png" />
 <p class="caption"><span class="caption-text"><a class="reference internal" href="../auto_examples/visualization/plot_evoked_whitening.html#sphx-glr-auto-examples-visualization-plot-evoked-whitening-py"><span class="std std-ref">Whitening evoked data with a noise covariance</span></a></span></p>
 </div>
-</div><div class="sphx-glr-thumbcontainer" tooltip="Many methods in MNE, including e.g. source estimation and some classification algorithms, requi..."><div class="figure" id="id18">
+</div><div class="sphx-glr-thumbcontainer" tooltip="Many methods in MNE, including source estimation and some classification algorithms, require co..."><div class="figure" id="id20">
 <img alt="../_images/sphx_glr_plot_compute_covariance_thumb.png" src="../_images/sphx_glr_plot_compute_covariance_thumb.png" />
 <p class="caption"><span class="caption-text"><a class="reference internal" href="../auto_tutorials/plot_compute_covariance.html#sphx-glr-auto-tutorials-plot-compute-covariance-py"><span class="std std-ref">Computing covariance matrix</span></a></span></p>
 </div>
-</div><div class="sphx-glr-thumbcontainer" tooltip="Here we read 4DBTi epochs data obtained with a spherical phantom using four different dipole lo..."><div class="figure" id="id19">
+</div><div class="sphx-glr-thumbcontainer" tooltip="Here we read 4DBTi epochs data obtained with a spherical phantom using four different dipole lo..."><div class="figure" id="id21">
 <img alt="../_images/sphx_glr_plot_phantom_4DBTi_thumb.png" src="../_images/sphx_glr_plot_phantom_4DBTi_thumb.png" />
 <p class="caption"><span class="caption-text"><a class="reference internal" href="../auto_tutorials/plot_phantom_4DBTi.html#sphx-glr-auto-tutorials-plot-phantom-4dbti-py"><span class="std std-ref">4D Neuroimaging/BTi phantom dataset tutorial</span></a></span></p>
 </div>
-</div><div class="sphx-glr-thumbcontainer" tooltip="Here we compute the evoked from raw for the Brainstorm Elekta phantom tutorial dataset. For com..."><div class="figure" id="id20">
+</div><div class="sphx-glr-thumbcontainer" tooltip="Here we compute the evoked from raw for the Brainstorm Elekta phantom tutorial dataset. For com..."><div class="figure" id="id22">
 <img alt="../_images/sphx_glr_plot_brainstorm_phantom_elekta_thumb.png" src="../_images/sphx_glr_plot_brainstorm_phantom_elekta_thumb.png" />
 <p class="caption"><span class="caption-text"><a class="reference internal" href="../auto_tutorials/plot_brainstorm_phantom_elekta.html#sphx-glr-auto-tutorials-plot-brainstorm-phantom-elekta-py"><span class="std std-ref">Brainstorm Elekta phantom dataset tutorial</span></a></span></p>
 </div>
-</div><div class="sphx-glr-thumbcontainer" tooltip="The aim of this tutorial is to teach you how to compute and apply a linear inverse method such ..."><div class="figure" id="id21">
+</div><div class="sphx-glr-thumbcontainer" tooltip="The aim of this tutorial is to teach you how to compute and apply a linear inverse method such ..."><div class="figure" id="id23">
 <img alt="../_images/sphx_glr_plot_mne_dspm_source_localization_thumb.png" src="../_images/sphx_glr_plot_mne_dspm_source_localization_thumb.png" />
 <p class="caption"><span class="caption-text"><a class="reference internal" href="../auto_tutorials/plot_mne_dspm_source_localization.html#sphx-glr-auto-tutorials-plot-mne-dspm-source-localization-py"><span class="std std-ref">Source localization with MNE/dSPM/sLORETA</span></a></span></p>
 </div>
-</div><div class="sphx-glr-thumbcontainer" tooltip="The aim of this tutorial is to demonstrate how to put a known signal at a desired location(s) i..."><div class="figure" id="id22">
+</div><div class="sphx-glr-thumbcontainer" tooltip="The aim of this tutorial is to demonstrate how to put a known signal at a desired location(s) i..."><div class="figure" id="id24">
 <img alt="../_images/sphx_glr_plot_point_spread_thumb.png" src="../_images/sphx_glr_plot_point_spread_thumb.png" />
 <p class="caption"><span class="caption-text"><a class="reference internal" href="../auto_tutorials/plot_point_spread.html#sphx-glr-auto-tutorials-plot-point-spread-py"><span class="std std-ref">Corrupt known signal with point spread</span></a></span></p>
 </div>
@@ -471,7 +483,7 @@ Cambridge University Press., Algorithm 21.1</td></tr>
       <li><a href="faq.html#cite">Cite MNE</a></li>
       <li class="pull-right"><a href="#">Back to top</a></li>
     </ul>
-    <p>&copy; Copyright 2012-2018, MNE Developers. Last updated on 2018-02-08.</p>
+    <p>&copy; Copyright 2012-2018, MNE Developers. Last updated on 2018-02-12.</p>
   </div>
 </footer>
   </body>
