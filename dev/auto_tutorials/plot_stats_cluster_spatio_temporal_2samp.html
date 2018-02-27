@@ -196,7 +196,7 @@ permutation test across space and time.</p>
 <span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">stats</span> <span class="k">as</span> <span class="n">stats</span>
 
 <span class="kn">import</span> <span class="nn">mne</span>
-<span class="kn">from</span> <span class="nn">mne</span> <span class="kn">import</span> <a href="../generated/mne.spatial_tris_connectivity.html#mne.spatial_tris_connectivity" title="View documentation for mne.spatial_tris_connectivity"><span class="n">spatial_tris_connectivity</span></a><span class="p">,</span> <a href="../generated/mne.grade_to_tris.html#mne.grade_to_tris" title="View documentation for mne.grade_to_tris"><span class="n">grade_to_tris</span></a>
+<span class="kn">from</span> <span class="nn">mne</span> <span class="kn">import</span> <a href="../generated/mne.spatial_src_connectivity.html#mne.spatial_src_connectivity" title="View documentation for mne.spatial_src_connectivity"><span class="n">spatial_src_connectivity</span></a>
 <span class="kn">from</span> <span class="nn">mne.stats</span> <span class="kn">import</span> <a href="../generated/mne.stats.spatio_temporal_cluster_test.html#mne.stats.spatio_temporal_cluster_test" title="View documentation for mne.stats.spatio_temporal_cluster_test"><span class="n">spatio_temporal_cluster_test</span></a><span class="p">,</span> <a href="../generated/mne.stats.summarize_clusters_stc.html#mne.stats.summarize_clusters_stc" title="View documentation for mne.stats.summarize_clusters_stc"><span class="n">summarize_clusters_stc</span></a>
 <span class="kn">from</span> <span class="nn">mne.datasets</span> <span class="kn">import</span> <span class="n">sample</span>
 
@@ -208,13 +208,17 @@ permutation test across space and time.</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">data_path</span> <span class="o">=</span> <a href="../generated/mne.datasets.sample.data_path.html#mne.datasets.sample.data_path" title="View documentation for mne.datasets.sample.data_path"><span class="n">sample</span><span class="o">.</span><span class="n">data_path</span></a><span class="p">()</span>
 <span class="n">stc_fname</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis-meg-lh.stc&#39;</span>
 <span class="n">subjects_dir</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/subjects&#39;</span>
+<span class="n">src_fname</span> <span class="o">=</span> <span class="n">subjects_dir</span> <span class="o">+</span> <span class="s1">&#39;/fsaverage/bem/fsaverage-ico-5-src.fif&#39;</span>
 
 <span class="c1"># Load stc to in common cortical space (fsaverage)</span>
 <span class="n">stc</span> <span class="o">=</span> <a href="../generated/mne.read_source_estimate.html#mne.read_source_estimate" title="View documentation for mne.read_source_estimate"><span class="n">mne</span><span class="o">.</span><span class="n">read_source_estimate</span></a><span class="p">(</span><span class="n">stc_fname</span><span class="p">)</span>
 <span class="n">stc</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="mi">50</span><span class="p">,</span> <span class="n">npad</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">)</span>
 
-<span class="n">stc</span> <span class="o">=</span> <a href="../generated/mne.morph_data.html#mne.morph_data" title="View documentation for mne.morph_data"><span class="n">mne</span><span class="o">.</span><span class="n">morph_data</span></a><span class="p">(</span><span class="s1">&#39;sample&#39;</span><span class="p">,</span> <span class="s1">&#39;fsaverage&#39;</span><span class="p">,</span> <span class="n">stc</span><span class="p">,</span> <span class="n">grade</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">smooth</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
-                     <span class="n">subjects_dir</span><span class="o">=</span><span class="n">subjects_dir</span><span class="p">)</span>
+<span class="c1"># Read the source space we are morphing to</span>
+<span class="n">src</span> <span class="o">=</span> <a href="../generated/mne.read_source_spaces.html#mne.read_source_spaces" title="View documentation for mne.read_source_spaces"><span class="n">mne</span><span class="o">.</span><span class="n">read_source_spaces</span></a><span class="p">(</span><span class="n">src_fname</span><span class="p">)</span>
+<span class="n">fsave_vertices</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="p">[</span><span class="s1">&#39;vertno&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">src</span><span class="p">]</span>
+<span class="n">stc</span> <span class="o">=</span> <a href="../generated/mne.morph_data.html#mne.morph_data" title="View documentation for mne.morph_data"><span class="n">mne</span><span class="o">.</span><span class="n">morph_data</span></a><span class="p">(</span><span class="s1">&#39;sample&#39;</span><span class="p">,</span> <span class="s1">&#39;fsaverage&#39;</span><span class="p">,</span> <span class="n">stc</span><span class="p">,</span> <span class="n">grade</span><span class="o">=</span><span class="n">fsave_vertices</span><span class="p">,</span>
+                     <span class="n">smooth</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">subjects_dir</span><span class="o">=</span><span class="n">subjects_dir</span><span class="p">)</span>
 <span class="n">n_vertices_fsave</span><span class="p">,</span> <span class="n">n_times</span> <span class="o">=</span> <span class="n">stc</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span>
 <span class="n">tstep</span> <span class="o">=</span> <span class="n">stc</span><span class="o">.</span><span class="n">tstep</span>
 
@@ -244,7 +248,7 @@ permutation test across space and time.</p>
 <p>To use an algorithm optimized for spatio-temporal clustering, we
 just pass the spatial connectivity matrix (instead of spatio-temporal)</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="s1">&#39;Computing connectivity.&#39;</span><span class="p">)</span>
-<span class="n">connectivity</span> <span class="o">=</span> <a href="../generated/mne.spatial_tris_connectivity.html#mne.spatial_tris_connectivity" title="View documentation for mne.spatial_tris_connectivity"><span class="n">spatial_tris_connectivity</span></a><span class="p">(</span><a href="../generated/mne.grade_to_tris.html#mne.grade_to_tris" title="View documentation for mne.grade_to_tris"><span class="n">grade_to_tris</span></a><span class="p">(</span><span class="mi">5</span><span class="p">))</span>
+<span class="n">connectivity</span> <span class="o">=</span> <a href="../generated/mne.spatial_src_connectivity.html#mne.spatial_src_connectivity" title="View documentation for mne.spatial_src_connectivity"><span class="n">spatial_src_connectivity</span></a><span class="p">(</span><span class="n">src</span><span class="p">)</span>
 
 <span class="c1">#    Note that X needs to be a list of multi-dimensional array of shape</span>
 <span class="c1">#    samples (subjects_k) x time x space, so we permute dimensions</span>
@@ -304,7 +308,7 @@ just pass the spatial connectivity matrix (instead of spatio-temporal)</p>
 <span class="n">setting</span> <span class="n">roll</span>
 </pre></div>
 </div>
-<p><strong>Total running time of the script:</strong> ( 1 minutes  46.908 seconds)</p>
+<p><strong>Total running time of the script:</strong> ( 1 minutes  51.087 seconds)</p>
 <div class="sphx-glr-footer class sphx-glr-footer-example docutils container">
 <div class="sphx-glr-download docutils container">
 <a class="reference download internal" href="../_downloads/plot_stats_cluster_spatio_temporal_2samp.py" download=""><code class="xref download docutils literal"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">plot_stats_cluster_spatio_temporal_2samp.py</span></code></a></div>
@@ -335,7 +339,7 @@ just pass the spatial connectivity matrix (instead of spatio-temporal)</p>
       <li><a href="faq.html#cite">Cite MNE</a></li>
       <li class="pull-right"><a href="#">Back to top</a></li>
     </ul>
-    <p>&copy; Copyright 2012-2018, MNE Developers. Last updated on 2018-02-26.</p>
+    <p>&copy; Copyright 2012-2018, MNE Developers. Last updated on 2018-02-27.</p>
   </div>
 </footer>
   </body>

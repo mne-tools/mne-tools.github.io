@@ -201,8 +201,6 @@ permutation test across space and time.</p>
 <span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">stats</span> <span class="k">as</span> <span class="n">stats</span>
 
 <span class="kn">import</span> <span class="nn">mne</span>
-<span class="kn">from</span> <span class="nn">mne</span> <span class="kn">import</span> <span class="p">(</span><span class="n">io</span><span class="p">,</span> <a href="../generated/mne.spatial_tris_connectivity.html#mne.spatial_tris_connectivity" title="View documentation for mne.spatial_tris_connectivity"><span class="n">spatial_tris_connectivity</span></a><span class="p">,</span> <a href="../generated/mne.compute_morph_matrix.html#mne.compute_morph_matrix" title="View documentation for mne.compute_morph_matrix"><span class="n">compute_morph_matrix</span></a><span class="p">,</span>
-                 <a href="../generated/mne.grade_to_tris.html#mne.grade_to_tris" title="View documentation for mne.grade_to_tris"><span class="n">grade_to_tris</span></a><span class="p">)</span>
 <span class="kn">from</span> <span class="nn">mne.epochs</span> <span class="kn">import</span> <a href="../generated/mne.epochs.equalize_epoch_counts.html#mne.epochs.equalize_epoch_counts" title="View documentation for mne.epochs.equalize_epoch_counts"><span class="n">equalize_epoch_counts</span></a>
 <span class="kn">from</span> <span class="nn">mne.stats</span> <span class="kn">import</span> <span class="p">(</span><a href="../generated/mne.stats.spatio_temporal_cluster_1samp_test.html#mne.stats.spatio_temporal_cluster_1samp_test" title="View documentation for mne.stats.spatio_temporal_cluster_1samp_test"><span class="n">spatio_temporal_cluster_1samp_test</span></a><span class="p">,</span>
                        <a href="../generated/mne.stats.summarize_clusters_stc.html#mne.stats.summarize_clusters_stc" title="View documentation for mne.stats.summarize_clusters_stc"><span class="n">summarize_clusters_stc</span></a><span class="p">)</span>
@@ -218,12 +216,13 @@ permutation test across space and time.</p>
 <span class="n">raw_fname</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis_filt-0-40_raw.fif&#39;</span>
 <span class="n">event_fname</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis_filt-0-40_raw-eve.fif&#39;</span>
 <span class="n">subjects_dir</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/subjects&#39;</span>
+<span class="n">src_fname</span> <span class="o">=</span> <span class="n">subjects_dir</span> <span class="o">+</span> <span class="s1">&#39;/fsaverage/bem/fsaverage-ico-5-src.fif&#39;</span>
 
 <span class="n">tmin</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.2</span>
 <span class="n">tmax</span> <span class="o">=</span> <span class="mf">0.3</span>  <span class="c1"># Use a lower tmax to reduce multiple comparisons</span>
 
 <span class="c1">#   Setup for reading the raw data</span>
-<span class="n">raw</span> <span class="o">=</span> <a href="../generated/mne.io.read_raw_fif.html#mne.io.read_raw_fif" title="View documentation for mne.io.read_raw_fif"><span class="n">io</span><span class="o">.</span><span class="n">read_raw_fif</span></a><span class="p">(</span><span class="n">raw_fname</span><span class="p">)</span>
+<span class="n">raw</span> <span class="o">=</span> <a href="../generated/mne.io.read_raw_fif.html#mne.io.read_raw_fif" title="View documentation for mne.io.read_raw_fif"><span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read_raw_fif</span></a><span class="p">(</span><span class="n">raw_fname</span><span class="p">)</span>
 <span class="n">events</span> <span class="o">=</span> <a href="../generated/mne.read_events.html#mne.read_events" title="View documentation for mne.read_events"><span class="n">mne</span><span class="o">.</span><span class="n">read_events</span></a><span class="p">(</span><span class="n">event_fname</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -416,9 +415,11 @@ with vertices 0:10242 for each hemisphere. Usually you’d have to morph
 each subject’s data separately (and you might want to use morph_data
 instead), but here since all estimates are on ‘sample’ we can use one
 morph matrix for all the heavy lifting.</p>
-<div class="highlight-python"><div class="highlight"><pre><span></span><span class="n">fsave_vertices</span> <span class="o">=</span> <span class="p">[</span><a href="https://docs.scipy.org/doc/numpy-dev/reference/generated/numpy.arange.html#numpy.arange" title="View documentation for numpy.arange"><span class="n">np</span><span class="o">.</span><span class="n">arange</span></a><span class="p">(</span><span class="mi">10242</span><span class="p">),</span> <a href="https://docs.scipy.org/doc/numpy-dev/reference/generated/numpy.arange.html#numpy.arange" title="View documentation for numpy.arange"><span class="n">np</span><span class="o">.</span><span class="n">arange</span></a><span class="p">(</span><span class="mi">10242</span><span class="p">)]</span>
-<span class="n">morph_mat</span> <span class="o">=</span> <a href="../generated/mne.compute_morph_matrix.html#mne.compute_morph_matrix" title="View documentation for mne.compute_morph_matrix"><span class="n">compute_morph_matrix</span></a><span class="p">(</span><span class="s1">&#39;sample&#39;</span><span class="p">,</span> <span class="s1">&#39;fsaverage&#39;</span><span class="p">,</span> <span class="n">sample_vertices</span><span class="p">,</span>
-                                 <span class="n">fsave_vertices</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="n">subjects_dir</span><span class="p">)</span>
+<div class="highlight-python"><div class="highlight"><pre><span></span><span class="c1"># Read the source space we are morphing to</span>
+<span class="n">src</span> <span class="o">=</span> <a href="../generated/mne.read_source_spaces.html#mne.read_source_spaces" title="View documentation for mne.read_source_spaces"><span class="n">mne</span><span class="o">.</span><span class="n">read_source_spaces</span></a><span class="p">(</span><span class="n">src_fname</span><span class="p">)</span>
+<span class="n">fsave_vertices</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="p">[</span><span class="s1">&#39;vertno&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">src</span><span class="p">]</span>
+<span class="n">morph_mat</span> <span class="o">=</span> <a href="../generated/mne.compute_morph_matrix.html#mne.compute_morph_matrix" title="View documentation for mne.compute_morph_matrix"><span class="n">mne</span><span class="o">.</span><span class="n">compute_morph_matrix</span></a><span class="p">(</span><span class="s1">&#39;sample&#39;</span><span class="p">,</span> <span class="s1">&#39;fsaverage&#39;</span><span class="p">,</span> <span class="n">sample_vertices</span><span class="p">,</span>
+                                     <span class="n">fsave_vertices</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="n">subjects_dir</span><span class="p">)</span>
 <span class="n">n_vertices_fsave</span> <span class="o">=</span> <span class="n">morph_mat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
 <span class="c1">#    We have to change the shape for the dot() to work properly</span>
@@ -429,7 +430,12 @@ morph matrix for all the heavy lifting.</p>
 </pre></div>
 </div>
 <p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-default"><div class="highlight"><pre><span></span><span class="n">Computing</span> <span class="n">morph</span> <span class="n">matrix</span><span class="o">...</span>
+<div class="sphx-glr-script-out highlight-default"><div class="highlight"><pre><span></span><span class="n">Reading</span> <span class="n">a</span> <span class="n">source</span> <span class="n">space</span><span class="o">...</span>
+    <span class="p">[</span><span class="n">done</span><span class="p">]</span>
+    <span class="n">Reading</span> <span class="n">a</span> <span class="n">source</span> <span class="n">space</span><span class="o">...</span>
+    <span class="p">[</span><span class="n">done</span><span class="p">]</span>
+    <span class="mi">2</span> <span class="n">source</span> <span class="n">spaces</span> <span class="n">read</span>
+<span class="n">Computing</span> <span class="n">morph</span> <span class="n">matrix</span><span class="o">...</span>
     <span class="n">Left</span><span class="o">-</span><span class="n">hemisphere</span> <span class="nb">map</span> <span class="n">read</span><span class="o">.</span>
     <span class="n">Right</span><span class="o">-</span><span class="n">hemisphere</span> <span class="nb">map</span> <span class="n">read</span><span class="o">.</span>
     <span class="mi">20</span> <span class="n">smooth</span> <span class="n">iterations</span> <span class="n">done</span><span class="o">.</span>
@@ -451,7 +457,7 @@ it so condition1 &gt; condition2 shows up as “red blobs” (instead of blue).<
 <p>To use an algorithm optimized for spatio-temporal clustering, we
 just pass the spatial connectivity matrix (instead of spatio-temporal)</p>
 <div class="highlight-python"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="s1">&#39;Computing connectivity.&#39;</span><span class="p">)</span>
-<span class="n">connectivity</span> <span class="o">=</span> <a href="../generated/mne.spatial_tris_connectivity.html#mne.spatial_tris_connectivity" title="View documentation for mne.spatial_tris_connectivity"><span class="n">spatial_tris_connectivity</span></a><span class="p">(</span><a href="../generated/mne.grade_to_tris.html#mne.grade_to_tris" title="View documentation for mne.grade_to_tris"><span class="n">grade_to_tris</span></a><span class="p">(</span><span class="mi">5</span><span class="p">))</span>
+<span class="n">connectivity</span> <span class="o">=</span> <a href="../generated/mne.spatial_src_connectivity.html#mne.spatial_src_connectivity" title="View documentation for mne.spatial_src_connectivity"><span class="n">mne</span><span class="o">.</span><span class="n">spatial_src_connectivity</span></a><span class="p">(</span><span class="n">src</span><span class="p">)</span>
 
 <span class="c1">#    Note that X needs to be a multi-dimensional array of shape</span>
 <span class="c1">#    samples (subjects) x time x space, so we permute dimensions</span>
@@ -517,7 +523,7 @@ just pass the spatial connectivity matrix (instead of spatio-temporal)</p>
 <span class="n">setting</span> <span class="n">roll</span>
 </pre></div>
 </div>
-<p><strong>Total running time of the script:</strong> ( 0 minutes  46.080 seconds)</p>
+<p><strong>Total running time of the script:</strong> ( 0 minutes  44.671 seconds)</p>
 <div class="sphx-glr-footer class sphx-glr-footer-example docutils container">
 <div class="sphx-glr-download docutils container">
 <a class="reference download internal" href="../_downloads/plot_stats_cluster_spatio_temporal.py" download=""><code class="xref download docutils literal"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">plot_stats_cluster_spatio_temporal.py</span></code></a></div>
@@ -548,7 +554,7 @@ just pass the spatial connectivity matrix (instead of spatio-temporal)</p>
       <li><a href="faq.html#cite">Cite MNE</a></li>
       <li class="pull-right"><a href="#">Back to top</a></li>
     </ul>
-    <p>&copy; Copyright 2012-2018, MNE Developers. Last updated on 2018-02-26.</p>
+    <p>&copy; Copyright 2012-2018, MNE Developers. Last updated on 2018-02-27.</p>
   </div>
 </footer>
   </body>
