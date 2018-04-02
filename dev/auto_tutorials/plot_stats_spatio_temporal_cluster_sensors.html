@@ -158,7 +158,10 @@ This documentation is for <strong>development version 0.16.dev0</strong>.
 <li><a class="reference internal" href="#find-the-fieldtrip-neighbor-definition-to-setup-sensor-connectivity">Find the FieldTrip neighbor definition to setup sensor connectivity</a></li>
 <li><a class="reference internal" href="#compute-permutation-statistic">Compute permutation statistic</a></li>
 <li><a class="reference internal" href="#visualize-clusters">Visualize clusters</a></li>
-<li><a class="reference internal" href="#exercises">Exercises</a></li>
+<li><a class="reference internal" href="#exercises">Exercises</a><ul>
+<li><a class="reference internal" href="#references">References</a></li>
+</ul>
+</li>
 </ul>
 </li>
 </ul>
@@ -180,9 +183,12 @@ This documentation is for <strong>development version 0.16.dev0</strong>.
 one condition using a permutation clustering test.
 The FieldTrip neighbor templates will be used to determine
 the adjacency between sensors. This serves as a spatial prior
-to the clustering. Significant spatiotemporal clusters will then
+to the clustering. Spatiotemporal clusters will then
 be visualized using custom matplotlib code.</p>
+<p>Caveat for the interpretation of “significant” clusters: see
+the <a class="reference external" href="http://www.fieldtriptoolbox.org/faq/how_not_to_interpret_results_from_a_cluster-based_permutation_test#noqa">FieldTrip website</a>.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Authors: Denis Engemann &lt;denis.engemann@gmail.com&gt;</span>
+<span class="c1">#          Jona Sassenhagen &lt;jona.sassenhagen@gmail.com&gt;</span>
 <span class="c1">#</span>
 <span class="c1"># License: BSD (3-clause)</span>
 
@@ -195,6 +201,7 @@ be visualized using custom matplotlib code.</p>
 <span class="kn">from</span> <span class="nn">mne.stats</span> <span class="kn">import</span> <a href="../generated/mne.stats.spatio_temporal_cluster_test.html#mne.stats.spatio_temporal_cluster_test" title="View documentation for mne.stats.spatio_temporal_cluster_test"><span class="n">spatio_temporal_cluster_test</span></a>
 <span class="kn">from</span> <span class="nn">mne.datasets</span> <span class="kn">import</span> <span class="n">sample</span>
 <span class="kn">from</span> <span class="nn">mne.channels</span> <span class="kn">import</span> <a href="../generated/mne.channels.find_ch_connectivity.html#mne.channels.find_ch_connectivity" title="View documentation for mne.channels.find_ch_connectivity"><span class="n">find_ch_connectivity</span></a>
+<span class="kn">from</span> <span class="nn">mne.viz</span> <span class="kn">import</span> <a href="../generated/mne.viz.plot_compare_evokeds.html#mne.viz.plot_compare_evokeds" title="View documentation for mne.viz.plot_compare_evokeds"><span class="n">plot_compare_evokeds</span></a>
 
 <span class="k">print</span><span class="p">(</span><span class="vm">__doc__</span><span class="p">)</span>
 </pre></div>
@@ -204,7 +211,7 @@ be visualized using custom matplotlib code.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">data_path</span> <span class="o">=</span> <a href="../generated/mne.datasets.sample.data_path.html#mne.datasets.sample.data_path" title="View documentation for mne.datasets.sample.data_path"><span class="n">sample</span><span class="o">.</span><span class="n">data_path</span></a><span class="p">()</span>
 <span class="n">raw_fname</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis_filt-0-40_raw.fif&#39;</span>
 <span class="n">event_fname</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis_filt-0-40_raw-eve.fif&#39;</span>
-<span class="n">event_id</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Aud_L&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;Aud_R&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;Vis_L&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s1">&#39;Vis_R&#39;</span><span class="p">:</span> <span class="mi">4</span><span class="p">}</span>
+<span class="n">event_id</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Aud/L&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;Aud/R&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;Vis/L&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s1">&#39;Vis/R&#39;</span><span class="p">:</span> <span class="mi">4</span><span class="p">}</span>
 <span class="n">tmin</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.2</span>
 <span class="n">tmax</span> <span class="o">=</span> <span class="mf">0.5</span>
 
@@ -243,8 +250,7 @@ be visualized using custom matplotlib code.</p>
 <span class="n">epochs</span><span class="o">.</span><span class="n">drop_channels</span><span class="p">([</span><span class="s1">&#39;EOG 061&#39;</span><span class="p">])</span>
 <span class="n">epochs</span><span class="o">.</span><span class="n">equalize_event_counts</span><span class="p">(</span><span class="n">event_id</span><span class="p">)</span>
 
-<span class="n">condition_names</span> <span class="o">=</span> <span class="s1">&#39;Aud_L&#39;</span><span class="p">,</span> <span class="s1">&#39;Aud_R&#39;</span><span class="p">,</span> <span class="s1">&#39;Vis_L&#39;</span><span class="p">,</span> <span class="s1">&#39;Vis_R&#39;</span>
-<span class="n">X</span> <span class="o">=</span> <span class="p">[</span><span class="n">epochs</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">get_data</span><span class="p">()</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">condition_names</span><span class="p">]</span>  <span class="c1"># as 3D matrix</span>
+<span class="n">X</span> <span class="o">=</span> <span class="p">[</span><span class="n">epochs</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">get_data</span><span class="p">()</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">event_id</span><span class="p">]</span>  <span class="c1"># as 3D matrix</span>
 <span class="n">X</span> <span class="o">=</span> <span class="p">[</span><a href="https://docs.scipy.org/doc/numpy-dev/reference/generated/numpy.transpose.html#numpy.transpose" title="View documentation for numpy.transpose"><span class="n">np</span><span class="o">.</span><span class="n">transpose</span></a><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">))</span> <span class="k">for</span> <span class="n">x</span> <span class="ow">in</span> <span class="n">X</span><span class="p">]</span>  <span class="c1"># transpose for clustering</span>
 </pre></div>
 </div>
@@ -405,17 +411,16 @@ It can be used for single trials or for groups of subjects.</p>
 <div class="section" id="visualize-clusters">
 <h2>Visualize clusters<a class="headerlink" href="#visualize-clusters" title="Permalink to this headline">¶</a></h2>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># configure variables for visualization</span>
-<span class="n">times</span> <span class="o">=</span> <span class="n">epochs</span><span class="o">.</span><span class="n">times</span> <span class="o">*</span> <span class="mf">1e3</span>
-<span class="n">colors</span> <span class="o">=</span> <span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="s1">&#39;steelblue&#39;</span><span class="p">,</span> <span class="s1">&#39;steelblue&#39;</span>
-<span class="n">linestyles</span> <span class="o">=</span> <span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="s1">&#39;--&#39;</span><span class="p">,</span> <span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="s1">&#39;--&#39;</span>
-
-<span class="c1"># grand average as numpy arrray</span>
-<span class="n">grand_ave</span> <span class="o">=</span> <a href="https://docs.scipy.org/doc/numpy-dev/reference/generated/numpy.array.html#numpy.array" title="View documentation for numpy.array"><span class="n">np</span><span class="o">.</span><span class="n">array</span></a><span class="p">(</span><span class="n">X</span><span class="p">)</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="n">colors</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Aud&quot;</span><span class="p">:</span> <span class="s2">&quot;crimson&quot;</span><span class="p">,</span> <span class="s2">&quot;Vis&quot;</span><span class="p">:</span> <span class="s1">&#39;steelblue&#39;</span><span class="p">}</span>
+<span class="n">linestyles</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;L&quot;</span><span class="p">:</span> <span class="s1">&#39;-&#39;</span><span class="p">,</span> <span class="s2">&quot;R&quot;</span><span class="p">:</span> <span class="s1">&#39;--&#39;</span><span class="p">}</span>
 
 <span class="c1"># get sensor positions via layout</span>
 <span class="n">pos</span> <span class="o">=</span> <span class="n">mne</span><span class="o">.</span><span class="n">find_layout</span><span class="p">(</span><span class="n">epochs</span><span class="o">.</span><span class="n">info</span><span class="p">)</span><span class="o">.</span><span class="n">pos</span>
 
-<span class="c1"># loop over significant clusters</span>
+<span class="c1"># organize data for plotting</span>
+<span class="n">evokeds</span> <span class="o">=</span> <span class="p">{</span><span class="n">cond</span><span class="p">:</span> <span class="n">epochs</span><span class="p">[</span><span class="n">cond</span><span class="p">]</span><span class="o">.</span><span class="n">average</span><span class="p">()</span> <span class="k">for</span> <span class="n">cond</span> <span class="ow">in</span> <span class="n">event_id</span><span class="p">}</span>
+
+<span class="c1"># loop over clusters</span>
 <span class="k">for</span> <span class="n">i_clu</span><span class="p">,</span> <span class="n">clu_idx</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">good_cluster_inds</span><span class="p">):</span>
     <span class="c1"># unpack cluster information, get unique indices</span>
     <span class="n">time_inds</span><span class="p">,</span> <span class="n">space_inds</span> <span class="o">=</span> <a href="https://docs.scipy.org/doc/numpy-dev/reference/generated/numpy.squeeze.html#numpy.squeeze" title="View documentation for numpy.squeeze"><span class="n">np</span><span class="o">.</span><span class="n">squeeze</span></a><span class="p">(</span><span class="n">clusters</span><span class="p">[</span><span class="n">clu_idx</span><span class="p">])</span>
@@ -425,9 +430,8 @@ It can be used for single trials or for groups of subjects.</p>
     <span class="c1"># get topography for F stat</span>
     <span class="n">f_map</span> <span class="o">=</span> <span class="n">T_obs</span><span class="p">[</span><span class="n">time_inds</span><span class="p">,</span> <span class="o">...</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
-    <span class="c1"># get signals at significant sensors</span>
-    <span class="n">signals</span> <span class="o">=</span> <span class="n">grand_ave</span><span class="p">[</span><span class="o">...</span><span class="p">,</span> <span class="n">ch_inds</span><span class="p">]</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-    <span class="n">sig_times</span> <span class="o">=</span> <span class="n">times</span><span class="p">[</span><span class="n">time_inds</span><span class="p">]</span>
+    <span class="c1"># get signals at the sensors contributing to the cluster</span>
+    <span class="n">sig_times</span> <span class="o">=</span> <span class="n">epochs</span><span class="o">.</span><span class="n">times</span><span class="p">[</span><span class="n">time_inds</span><span class="p">]</span>
 
     <span class="c1"># create spatial mask</span>
     <span class="n">mask</span> <span class="o">=</span> <a href="https://docs.scipy.org/doc/numpy-dev/reference/generated/numpy.zeros.html#numpy.zeros" title="View documentation for numpy.zeros"><span class="n">np</span><span class="o">.</span><span class="n">zeros</span></a><span class="p">((</span><span class="n">f_map</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="mi">1</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">bool</span><span class="p">)</span>
@@ -435,42 +439,33 @@ It can be used for single trials or for groups of subjects.</p>
 
     <span class="c1"># initialize figure</span>
     <span class="n">fig</span><span class="p">,</span> <span class="n">ax_topo</span> <span class="o">=</span> <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.subplots.html#matplotlib.pyplot.subplots" title="View documentation for matplotlib.pyplot.subplots"><span class="n">plt</span><span class="o">.</span><span class="n">subplots</span></a><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">3</span><span class="p">))</span>
-    <span class="n">title</span> <span class="o">=</span> <span class="s1">&#39;Cluster #{0}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i_clu</span> <span class="o">+</span> <span class="mi">1</span><span class="p">)</span>
-    <span class="n">fig</span><span class="o">.</span><span class="n">suptitle</span><span class="p">(</span><span class="n">title</span><span class="p">,</span> <span class="n">fontsize</span><span class="o">=</span><span class="mi">14</span><span class="p">)</span>
 
     <span class="c1"># plot average test statistic and mark significant sensors</span>
-    <span class="n">image</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <a href="../generated/mne.viz.plot_topomap.html#mne.viz.plot_topomap" title="View documentation for mne.viz.plot_topomap"><span class="n">plot_topomap</span></a><span class="p">(</span><span class="n">f_map</span><span class="p">,</span> <span class="n">pos</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="n">mask</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="n">ax_topo</span><span class="p">,</span>
-                            <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;Reds&#39;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">)</span>
+    <span class="n">image</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <a href="../generated/mne.viz.plot_topomap.html#mne.viz.plot_topomap" title="View documentation for mne.viz.plot_topomap"><span class="n">plot_topomap</span></a><span class="p">(</span><span class="n">f_map</span><span class="p">,</span> <span class="n">pos</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="n">mask</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="n">ax_topo</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;Reds&#39;</span><span class="p">,</span>
+                            <span class="n">vmin</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
 
-    <span class="c1"># advanced matplotlib for showing image with figure and colorbar</span>
-    <span class="c1"># in one plot</span>
+    <span class="c1"># create additional axes (for ERF and colorbar)</span>
     <span class="n">divider</span> <span class="o">=</span> <span class="n">make_axes_locatable</span><span class="p">(</span><span class="n">ax_topo</span><span class="p">)</span>
 
     <span class="c1"># add axes for colorbar</span>
     <span class="n">ax_colorbar</span> <span class="o">=</span> <span class="n">divider</span><span class="o">.</span><span class="n">append_axes</span><span class="p">(</span><span class="s1">&#39;right&#39;</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="s1">&#39;5%&#39;</span><span class="p">,</span> <span class="n">pad</span><span class="o">=</span><span class="mf">0.05</span><span class="p">)</span>
     <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.colorbar.html#matplotlib.pyplot.colorbar" title="View documentation for matplotlib.pyplot.colorbar"><span class="n">plt</span><span class="o">.</span><span class="n">colorbar</span></a><span class="p">(</span><span class="n">image</span><span class="p">,</span> <span class="n">cax</span><span class="o">=</span><span class="n">ax_colorbar</span><span class="p">)</span>
-    <span class="n">ax_topo</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;Averaged F-map ({:0.1f} - {:0.1f} ms)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span>
-        <span class="o">*</span><span class="n">sig_times</span><span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]]</span>
-    <span class="p">))</span>
+    <span class="n">ax_topo</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span>
+        <span class="s1">&#39;Averaged F-map ({:0.3f} - {:0.3f} s)&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="o">*</span><span class="n">sig_times</span><span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]]))</span>
 
     <span class="c1"># add new axis for time courses and plot time courses</span>
     <span class="n">ax_signals</span> <span class="o">=</span> <span class="n">divider</span><span class="o">.</span><span class="n">append_axes</span><span class="p">(</span><span class="s1">&#39;right&#39;</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="s1">&#39;300%&#39;</span><span class="p">,</span> <span class="n">pad</span><span class="o">=</span><span class="mf">1.2</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">signal</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">col</span><span class="p">,</span> <span class="n">ls</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">signals</span><span class="p">,</span> <span class="n">condition_names</span><span class="p">,</span> <span class="n">colors</span><span class="p">,</span>
-                                     <span class="n">linestyles</span><span class="p">):</span>
-        <span class="n">ax_signals</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">times</span><span class="p">,</span> <span class="n">signal</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">col</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="n">ls</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="n">name</span><span class="p">)</span>
+    <span class="n">title</span> <span class="o">=</span> <span class="s1">&#39;Cluster #{0}, {1} sensor&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">i_clu</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">ch_inds</span><span class="p">))</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">ch_inds</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">1</span><span class="p">:</span>
+        <span class="n">title</span> <span class="o">+=</span> <span class="s2">&quot;s (mean)&quot;</span>
+    <a href="../generated/mne.viz.plot_compare_evokeds.html#mne.viz.plot_compare_evokeds" title="View documentation for mne.viz.plot_compare_evokeds"><span class="n">plot_compare_evokeds</span></a><span class="p">(</span><span class="n">evokeds</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">title</span><span class="p">,</span> <span class="n">picks</span><span class="o">=</span><span class="n">ch_inds</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="n">ax_signals</span><span class="p">,</span>
+                         <span class="n">colors</span><span class="o">=</span><span class="n">colors</span><span class="p">,</span> <span class="n">linestyles</span><span class="o">=</span><span class="n">linestyles</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+                         <span class="n">split_legend</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">truncate_yaxis</span><span class="o">=</span><span class="s1">&#39;max_ticks&#39;</span><span class="p">)</span>
 
-    <span class="c1"># add information</span>
-    <span class="n">ax_signals</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;:&#39;</span><span class="p">,</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;stimulus onset&#39;</span><span class="p">)</span>
-    <span class="n">ax_signals</span><span class="o">.</span><span class="n">set_xlim</span><span class="p">([</span><span class="n">times</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">times</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]])</span>
-    <span class="n">ax_signals</span><span class="o">.</span><span class="n">set_xlabel</span><span class="p">(</span><span class="s1">&#39;time [ms]&#39;</span><span class="p">)</span>
-    <span class="n">ax_signals</span><span class="o">.</span><span class="n">set_ylabel</span><span class="p">(</span><span class="s1">&#39;evoked magnetic fields [fT]&#39;</span><span class="p">)</span>
-
-    <span class="c1"># plot significant time range</span>
+    <span class="c1"># plot temporal cluster extent</span>
     <span class="n">ymin</span><span class="p">,</span> <span class="n">ymax</span> <span class="o">=</span> <span class="n">ax_signals</span><span class="o">.</span><span class="n">get_ylim</span><span class="p">()</span>
     <span class="n">ax_signals</span><span class="o">.</span><span class="n">fill_betweenx</span><span class="p">((</span><span class="n">ymin</span><span class="p">,</span> <span class="n">ymax</span><span class="p">),</span> <span class="n">sig_times</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">sig_times</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span>
                              <span class="n">color</span><span class="o">=</span><span class="s1">&#39;orange&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
-    <span class="n">ax_signals</span><span class="o">.</span><span class="n">legend</span><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s1">&#39;lower right&#39;</span><span class="p">)</span>
-    <span class="n">ax_signals</span><span class="o">.</span><span class="n">set_ylim</span><span class="p">(</span><span class="n">ymin</span><span class="p">,</span> <span class="n">ymax</span><span class="p">)</span>
 
     <span class="c1"># clean up viz</span>
     <span class="n">mne</span><span class="o">.</span><span class="n">viz</span><span class="o">.</span><span class="n">tight_layout</span><span class="p">(</span><span class="n">fig</span><span class="o">=</span><span class="n">fig</span><span class="p">)</span>
@@ -500,18 +495,14 @@ It can be used for single trials or for groups of subjects.</p>
 <div class="section" id="exercises">
 <h2>Exercises<a class="headerlink" href="#exercises" title="Permalink to this headline">¶</a></h2>
 <ul class="simple">
-<li><dl class="first docutils">
-<dt>What is the smallest p-value you can obtain, given the finite number of</dt>
-<dd>permutations?</dd>
-</dl>
-</li>
-<li><dl class="first docutils">
-<dt>use an F distribution to compute the threshold by traditional significance</dt>
-<dd>levels. Hint: take a look at <code class="docutils literal notranslate"><span class="pre">scipy.stats.distributions.f</span></code></dd>
-</dl>
-</li>
+<li>What is the smallest p-value you can obtain, given the finite number of
+permutations?</li>
+<li>use an F distribution to compute the threshold by traditional significance
+levels. Hint: take a look at <a class="reference external" href="https://scipy.github.io/devdocs/generated/scipy.stats.f.html#scipy.stats.f" title="(in SciPy v1.1.0.dev0+45f14e1)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scipy.stats.f</span></code></a></li>
 </ul>
-<p><strong>Total running time of the script:</strong> ( 0 minutes  20.254 seconds)</p>
+<div class="section" id="references">
+<h3>References<a class="headerlink" href="#references" title="Permalink to this headline">¶</a></h3>
+<p><strong>Total running time of the script:</strong> ( 0 minutes  20.319 seconds)</p>
 <div class="sphx-glr-footer class sphx-glr-footer-example docutils container">
 <div class="sphx-glr-download docutils container">
 <a class="reference download internal" href="../_downloads/plot_stats_spatio_temporal_cluster_sensors.py" download=""><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">plot_stats_spatio_temporal_cluster_sensors.py</span></code></a></div>
@@ -519,6 +510,7 @@ It can be used for single trials or for groups of subjects.</p>
 <a class="reference download internal" href="../_downloads/plot_stats_spatio_temporal_cluster_sensors.ipynb" download=""><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">plot_stats_spatio_temporal_cluster_sensors.ipynb</span></code></a></div>
 </div>
 <p class="sphx-glr-signature"><a class="reference external" href="https://sphinx-gallery.readthedocs.io">Gallery generated by Sphinx-Gallery</a></p>
+</div>
 </div>
 </div>
 
