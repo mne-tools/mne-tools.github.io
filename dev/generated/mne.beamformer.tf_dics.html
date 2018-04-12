@@ -173,18 +173,13 @@ This documentation is for <strong>development version 0.16.dev0</strong>.
 <h1>mne.beamformer.tf_dics<a class="headerlink" href="#mne-beamformer-tf-dics" title="Permalink to this headline">¶</a></h1>
 <dl class="function">
 <dt id="mne.beamformer.tf_dics">
-<code class="descclassname">mne.beamformer.</code><code class="descname">tf_dics</code><span class="sig-paren">(</span><em>epochs</em>, <em>forward</em>, <em>noise_csds</em>, <em>tmin</em>, <em>tmax</em>, <em>tstep</em>, <em>win_lengths</em>, <em>freq_bins</em>, <em>subtract_evoked=False</em>, <em>mode='fourier'</em>, <em>n_ffts=None</em>, <em>mt_bandwidths=None</em>, <em>mt_adaptive=False</em>, <em>mt_low_bias=True</em>, <em>reg=0.05</em>, <em>label=None</em>, <em>pick_ori=None</em>, <em>real_filter=False</em>, <em>verbose=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/../doc/&lt;string&gt;#L406-L607"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.beamformer.tf_dics" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">mne.beamformer.</code><code class="descname">tf_dics</code><span class="sig-paren">(</span><em>epochs</em>, <em>forward</em>, <em>noise_csds</em>, <em>tmin</em>, <em>tmax</em>, <em>tstep</em>, <em>win_lengths</em>, <em>subtract_evoked=False</em>, <em>mode='fourier'</em>, <em>freq_bins=None</em>, <em>frequencies=None</em>, <em>n_ffts=None</em>, <em>mt_bandwidths=None</em>, <em>mt_adaptive=False</em>, <em>mt_low_bias=True</em>, <em>cwt_n_cycles=7</em>, <em>decim=1</em>, <em>reg=0.05</em>, <em>label=None</em>, <em>pick_ori=None</em>, <em>inversion='single'</em>, <em>weight_norm=None</em>, <em>normalize_fwd=True</em>, <em>real_filter=False</em>, <em>reduce_rank=False</em>, <em>verbose=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/../doc/&lt;string&gt;#L967-L1279"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.beamformer.tf_dics" title="Permalink to this definition">¶</a></dt>
 <dd><p>5D time-frequency beamforming based on DICS.</p>
 <p>Calculate source power in time-frequency windows using a spatial filter
 based on the Dynamic Imaging of Coherent Sources (DICS) beamforming
-approach <a class="reference internal" href="#r24787c541d0a-1" id="id1">[1]</a>. For each time window and frequency bin combination
-cross-spectral density (CSD) is computed and used to create a beamformer
-spatial filter with noise CSD used for normalization.</p>
-<div class="admonition warning">
-<p class="first admonition-title">Warning</p>
-<p class="last">This implementation has not been heavily tested so please
-report any issues or suggestions.</p>
-</div>
+approach <a class="reference internal" href="#r24787c541d0a-1" id="id1">[1]</a>. For each time window and frequency bin combination,
+cross-spectral density (CSD) is computed and used to create a DICS
+beamformer spatial filter.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
@@ -196,8 +191,12 @@ report any issues or suggestions.</p>
 <dt><strong>forward</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
 <dd><p class="first last">Forward operator.</p>
 </dd>
-<dt><strong>noise_csds</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list of instances of CrossSpectralDensity</span></dt>
-<dd><p class="first last">Noise cross-spectral density for each frequency bin.</p>
+<dt><strong>noise_csds</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list of instances of CrossSpectralDensity | None</span></dt>
+<dd><p class="first last">Noise cross-spectral density for each frequency bin. If these are
+specified, the DICS filters will be applied to both the signal and
+noise CSDs. The source power estimates for each frequency bin will be
+scaled by the estimated noise power (signal / noise).
+Specifying <code class="docutils literal notranslate"><span class="pre">None</span></code> will disable performing noise normalization.</p>
 </dd>
 <dt><strong>tmin</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
 <dd><p class="first last">Minimum time instant to consider.</p>
@@ -213,46 +212,114 @@ equal to the shortest time window length.</p>
 <dd><p class="first last">Time window lengths in seconds. One time window length should be
 provided for each frequency bin.</p>
 </dd>
-<dt><strong>freq_bins</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list of tuples of float</span></dt>
-<dd><p class="first last">Start and end point of frequency bins of interest.</p>
-</dd>
 <dt><strong>subtract_evoked</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
 <dd><p class="first last">If True, subtract the averaged evoked response prior to computing the
-tf source grid.</p>
+tf source grid. Defaults to False.</p>
 </dd>
-<dt><strong>mode</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str</span></dt>
-<dd><p class="first last">Spectrum estimation mode can be either: ‘multitaper’ or ‘fourier’.</p>
+<dt><strong>mode</strong> <span class="classifier-delimiter">:</span> <span class="classifier">‘fourier’ | ‘multitaper’ | ‘cwt_morlet’</span></dt>
+<dd><p class="first last">Spectrum estimation mode. Defaults to ‘fourier’.</p>
+</dd>
+<dt><strong>freq_bins</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list of tuples of float</span></dt>
+<dd><p class="first last">Start and end point of frequency bins of interest.
+Only used in ‘multitaper’ or ‘fourier’ mode. For ‘cwt_morlet’ mode, use
+the <code class="docutils literal notranslate"><span class="pre">frequencies</span></code> parameter instead.</p>
+</dd>
+<dt><strong>frequencies</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list of float | list of lists of float</span></dt>
+<dd><p class="first last">The frequencies to compute the source power for. If you want to compute
+the average power for multiple frequency bins, specify a list of
+lists: each list containing the frequencies for the corresponding bin.
+Only used in ‘cwt_morlet’ mode. In other modes, use the <code class="docutils literal notranslate"><span class="pre">freq_bins</span></code>
+parameter instead.</p>
 </dd>
 <dt><strong>n_ffts</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list | None</span></dt>
-<dd><p class="first last">FFT lengths to use for each frequency bin.</p>
+<dd><p class="first last">Length of the FFT for each frequency bin. If <code class="docutils literal notranslate"><span class="pre">None</span></code> (the default),
+the exact number of samples between <code class="docutils literal notranslate"><span class="pre">tmin</span></code> and <code class="docutils literal notranslate"><span class="pre">tmax</span></code> will be used.
+Only used in ‘multitaper’ or ‘fourier’ mode.</p>
 </dd>
 <dt><strong>mt_bandwidths</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list of float</span></dt>
 <dd><p class="first last">The bandwidths of the multitaper windowing function in Hz. Only used in
-‘multitaper’ mode. One value should be provided for each frequency bin.</p>
+‘multitaper’ mode. One value should be provided for each frequency bin.
+Defaults to None.</p>
 </dd>
 <dt><strong>mt_adaptive</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
 <dd><p class="first last">Use adaptive weights to combine the tapered spectra into CSD. Only used
-in ‘multitaper’ mode.</p>
+in ‘multitaper’ mode. Defaults to False.</p>
 </dd>
 <dt><strong>mt_low_bias</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
 <dd><p class="first last">Only use tapers with more than 90% spectral concentration within
-bandwidth. Only used in ‘multitaper’ mode.</p>
+bandwidth. Only used in ‘multitaper’ mode. Defaults to True.</p>
+</dd>
+<dt><strong>cwt_n_cycles: float | list of float | None</strong></dt>
+<dd><p class="first last">Number of cycles to use when constructing Morlet wavelets. Fixed number
+or one per frequency. Defaults to 7.
+Only used in ‘cwt_morlet’ mode.</p>
+</dd>
+<dt><strong>decim</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int | slice</span></dt>
+<dd><p class="first">To reduce memory usage, decimation factor during time-frequency
+decomposition. Defaults to 1 (no decimation).
+Only used in ‘cwt_morlet’ mode.</p>
+<p class="last">If <cite>int</cite>, uses tfr[…, ::decim].
+If <cite>slice</cite>, uses tfr[…, decim].</p>
 </dd>
 <dt><strong>reg</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
-<dd><p class="first last">The regularization for the cross-spectral density.</p>
+<dd><p class="first last">Regularization to use for the DICS beamformer computation.
+Defaults to 0.05.</p>
 </dd>
 <dt><strong>label</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Label | None</span></dt>
-<dd><p class="first last">Restricts the solution to a given label.</p>
+<dd><p class="first last">Restricts the solution to a given label. Defaults to None.</p>
 </dd>
-<dt><strong>pick_ori</strong> <span class="classifier-delimiter">:</span> <span class="classifier">None | ‘normal’</span></dt>
-<dd><p class="first last">If ‘normal’, rather than pooling the orientations by taking the norm,
-only the radial component is kept.</p>
+<dt><strong>pick_ori</strong> <span class="classifier-delimiter">:</span> <span class="classifier">None | ‘normal’ | ‘max-power’</span></dt>
+<dd><p class="first">The source orientation to estimate source power for:</p>
+<blockquote>
+<div><dl class="docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">None</span></code> :</dt>
+<dd><p class="first last">orientations are pooled. (Default)</p>
+</dd>
+<dt>‘normal’ :</dt>
+<dd><p class="first last">filters are computed for the orientation tangential to the
+cortical surface</p>
+</dd>
+<dt>‘max-power’ :</dt>
+<dd><p class="first last">filters are computer for the orientation that maximizes
+spectral power.</p>
+</dd>
+</dl>
+</div></blockquote>
+<p class="last">Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
+<dt><strong>inversion</strong> <span class="classifier-delimiter">:</span> <span class="classifier">‘single’ | ‘matrix’</span></dt>
+<dd><p class="first last">This determines how the beamformer deals with source spaces in “free”
+orientation. Such source spaces define three orthogonal dipoles at each
+source point. When <code class="docutils literal notranslate"><span class="pre">inversion='single'</span></code>, each dipole is considered
+as an individual source and the corresponding spatial filter is
+computed for each dipole separately. When <code class="docutils literal notranslate"><span class="pre">inversion='matrix'</span></code>, all
+three dipoles at a source vertex are considered as a group and the
+spatial filters are computed jointly using a matrix inversion. While
+<code class="docutils literal notranslate"><span class="pre">inversion='single'</span></code> is more stable, <code class="docutils literal notranslate"><span class="pre">inversion='matrix'</span></code> is more
+precise. See section 5 of <a href="#id8"><span class="problematic" id="id2">[4]_</span></a>.  Defaults to ‘single’.</p>
+</dd>
+<dt><strong>weight_norm</strong> <span class="classifier-delimiter">:</span> <span class="classifier">None | ‘unit-noise-gain’</span></dt>
+<dd><p class="first last">How to normalize the beamformer weights. None means no normalization is
+performed.  If ‘unit-noise-gain’, the unit-noise gain minimum variance
+beamformer will be computed (Borgiotti-Kaplan beamformer) <a class="reference internal" href="#r24787c541d0a-2" id="id3">[2]</a>.
+Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+</dd>
+<dt><strong>normalize_fwd</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">Whether to normalize the forward solution. Defaults to <code class="docutils literal notranslate"><span class="pre">True</span></code>. Note
+that this normalization is not required when weight normalization
+(<code class="docutils literal notranslate"><span class="pre">weight_norm</span></code>) is used.</p>
 </dd>
 <dt><strong>real_filter</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
-<dd><p class="first last">If True, take only the real part of the part of the
-cross-spectral-density matrices to compute real filters.</p>
+<dd><p class="first last">If <code class="docutils literal notranslate"><span class="pre">True</span></code>, take only the real part of the cross-spectral-density
+matrices to compute real filters. Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
 </dd>
-<dt><strong>verbose</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, str, int, or None</span></dt>
+<dt><strong>reduce_rank</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If <code class="docutils literal notranslate"><span class="pre">True</span></code>, the rank of the forward operator will be reduced by 1 for
+each spatial location, prior to inversion. This may be necessary when
+you use a single sphere model for MEG and <code class="docutils literal notranslate"><span class="pre">mode='vertex'</span></code>.
+Defaults to <code class="docutils literal notranslate"><span class="pre">False</span></code>.</p>
+</dd>
+<dt><strong>verbose</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, str, int, None</span></dt>
 <dd><p class="first last">If not None, override default verbose level (see <a class="reference internal" href="mne.verbose.html#mne.verbose" title="mne.verbose"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.verbose()</span></code></a>
 and <a class="reference internal" href="../auto_tutorials/plot_configuration.html#tut-logging"><span class="std std-ref">Logging documentation</span></a> for more).</p>
 </dd>
@@ -270,22 +337,32 @@ for each frequency bin.</p>
 </tbody>
 </table>
 <p class="rubric">Notes</p>
-<p>Dalal et al. <a class="reference internal" href="#r24787c541d0a-1" id="id2">[1]</a> used a synthetic aperture magnetometry beamformer (SAM)
+<p>Dalal et al. <a class="reference internal" href="#r24787c541d0a-1" id="id4">[1]</a> used a synthetic aperture magnetometry beamformer (SAM)
 in each time-frequency window instead of DICS.</p>
+<p>An alternative to using noise CSDs is to normalize the forward solution
+(<code class="docutils literal notranslate"><span class="pre">normalize_fwd</span></code>) or the beamformer weights (<code class="docutils literal notranslate"><span class="pre">weight_norm</span></code>). In
+this case, <code class="docutils literal notranslate"><span class="pre">noise_csds</span></code> may be set to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
 <p class="rubric">References</p>
 <table class="docutils citation" frame="void" id="r24787c541d0a-1" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
-<tr><td class="label">[1]</td><td><em>(<a class="fn-backref" href="#id1">1</a>, <a class="fn-backref" href="#id2">2</a>, <a class="fn-backref" href="#id3">3</a>)</em> Dalal et al. Five-dimensional neuroimaging: Localization of the
+<tr><td class="label">[1]</td><td><em>(<a class="fn-backref" href="#id1">1</a>, <a class="fn-backref" href="#id4">2</a>, <a class="fn-backref" href="#id5">3</a>)</em> Dalal et al. Five-dimensional neuroimaging: Localization of the
 time-frequency dynamics of cortical activity.
 NeuroImage (2008) vol. 40 (4) pp. 1686-1700</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="r24787c541d0a-2" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[2]</td><td><em>(<a class="fn-backref" href="#id3">1</a>, <a class="fn-backref" href="#id6">2</a>)</em> Sekihara &amp; Nagarajan. Adaptive spatial filters for electromagnetic
+brain imaging (2008) Springer Science &amp; Business Media</td></tr>
 </tbody>
 </table>
 </dd></dl>
 
 <div class="section" id="examples-using-mne-beamformer-tf-dics">
 <h2>Examples using <code class="docutils literal notranslate"><span class="pre">mne.beamformer.tf_dics</span></code><a class="headerlink" href="#examples-using-mne-beamformer-tf-dics" title="Permalink to this headline">¶</a></h2>
-<div class="sphx-glr-thumbcontainer" tooltip="Compute DICS source power [1]_ in a grid of time-frequency windows and display results."><div class="figure" id="id4">
+<div class="sphx-glr-thumbcontainer" tooltip="Compute DICS source power [1]_ in a grid of time-frequency windows and display results."><div class="figure" id="id7">
 <img alt="../_images/sphx_glr_plot_tf_dics_thumb.png" src="../_images/sphx_glr_plot_tf_dics_thumb.png" />
 <p class="caption"><span class="caption-text"><a class="reference internal" href="../auto_examples/inverse/plot_tf_dics.html#sphx-glr-auto-examples-inverse-plot-tf-dics-py"><span class="std std-ref">Time-frequency beamforming using DICS</span></a></span></p>
 </div>
