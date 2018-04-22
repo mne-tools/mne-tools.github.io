@@ -9,6 +9,86 @@ Command line tools using Python
 
 
 
+.. _gen_mne_bti2fiff:
+
+mne bti2fiff
+----------------------------------------------------------
+
+.. raw:: html
+
+   <div>
+   <pre>
+
+Usage: mne bti2fiff [options]
+
+Import BTi / 4D MagnesWH3600 data to fif file.
+
+Options:
+  --version             show program's version number and exit
+  -h, --help            show this help message and exit
+  -p FILE, --pdf=FILE   Input data file name
+  -c FILE, --config=FILE
+                        Input config file name
+  --head_shape=FILE     Headshape file name
+  -o OUT_FNAME, --out_fname=OUT_FNAME
+                        Name of the resulting fiff file
+  -r ROTATION_X, --rotation_x=ROTATION_X
+                        Compensatory rotation about Neuromag x axis, deg
+  -T TRANSLATION, --translation=TRANSLATION
+                        Default translation, meter
+  --ecg_ch=ECG_CH       4D ECG channel name
+  --eog_ch=EOG_CH       4D EOG channel names
+
+example usage: mne bti2fiff --pdf C,rfDC -o my_raw.fif
+
+Note.
+1) Currently direct inclusion of reference channel weights
+is not supported. Please use \'mne_create_comp_data\' to include
+the weights or use the low level functions from this module to
+include them by yourself.
+2) The informed guess for the 4D name is E31 for the ECG channel and
+E63, E63 for the EOG channels. Pleas check and adjust if those channels
+are present in your dataset but 'ECG 01' and 'EOG 01', 'EOG 02' don't
+appear in the channel names of the raw object.
+
+
+.. raw:: html
+
+   </pre>
+   </div>
+
+
+
+.. _gen_mne_compare_fiff:
+
+mne compare_fiff
+----------------------------------------------------------
+
+.. raw:: html
+
+   <div>
+   <pre>
+
+Usage: mne compare_fiff <file_a> <file_b>
+
+Compare FIFF files.
+
+Options:
+  --version   show program's version number and exit
+  -h, --help  show this help message and exit
+
+You can do for example:
+
+$ mne compare_fiff test_raw.fif test_raw_sss.fif
+
+
+.. raw:: html
+
+   </pre>
+   </div>
+
+
+
 .. _gen_mne_maxfilter:
 
 mne maxfilter
@@ -66,6 +146,83 @@ $ mne maxfilter -i sample_audvis_raw.fif --st
 This will apply MaxFilter with the MaxSt extension. The origin used
 by MaxFilter is computed by mne-python by fitting a sphere to the
 headshape points.
+
+
+.. raw:: html
+
+   </pre>
+   </div>
+
+
+
+.. _gen_mne_compute_proj_ecg:
+
+mne compute_proj_ecg
+----------------------------------------------------------
+
+.. raw:: html
+
+   <div>
+   <pre>
+
+Usage: mne compute_proj_ecg [options]
+
+Compute SSP/PCA projections for ECG artifacts.
+
+Options:
+  --version             show program's version number and exit
+  -h, --help            show this help message and exit
+  -i FILE, --in=FILE    Input raw FIF file
+  --tmin=TMIN           Time before event in seconds
+  --tmax=TMAX           Time after event in seconds
+  -g N_GRAD, --n-grad=N_GRAD
+                        Number of SSP vectors for gradiometers
+  -m N_MAG, --n-mag=N_MAG
+                        Number of SSP vectors for magnetometers
+  -e N_EEG, --n-eeg=N_EEG
+                        Number of SSP vectors for EEG
+  --l-freq=L_FREQ       Filter low cut-off frequency in Hz
+  --h-freq=H_FREQ       Filter high cut-off frequency in Hz
+  --ecg-l-freq=ECG_L_FREQ
+                        Filter low cut-off frequency in Hz used for ECG event
+                        detection
+  --ecg-h-freq=ECG_H_FREQ
+                        Filter high cut-off frequency in Hz used for ECG event
+                        detection
+  -p PRELOAD, --preload=PRELOAD
+                        Temporary file used during computation (to save
+                        memory)
+  -a, --average         Compute SSP after averaging
+  --proj=PROJ           Use SSP projections from a fif file.
+  --filtersize=FILTER_LENGTH
+                        Number of taps to use for filtering
+  -j N_JOBS, --n-jobs=N_JOBS
+                        Number of jobs to run in parallel
+  -c CH_NAME, --channel=CH_NAME
+                        Channel to use for ECG detection (Required if no ECG
+                        found)
+  --rej-grad=REJ_GRAD   Gradiometers rejection parameter in fT/cm (peak to
+                        peak amplitude)
+  --rej-mag=REJ_MAG     Magnetometers rejection parameter in fT (peak to peak
+                        amplitude)
+  --rej-eeg=REJ_EEG     EEG rejection parameter in uV (peak to peak amplitude)
+  --rej-eog=REJ_EOG     EOG rejection parameter in uV (peak to peak amplitude)
+  --avg-ref             Add EEG average reference proj
+  --no-proj             Exclude the SSP projectors currently in the fiff file
+  --bad=BAD_FNAME       Text file containing bad channels list (one per line)
+  --event-id=EVENT_ID   ID to use for events
+  --event-raw=RAW_EVENT_FNAME
+                        raw file to use for event detection
+  --tstart=TSTART       Start artifact detection after tstart seconds
+  --qrsthr=QRS_THRESHOLD
+                        QRS detection threshold. Between 0 and 1. Can also be
+                        'auto' for automatic selection
+
+You can do for example:
+
+$ mne compute_proj_ecg -i sample_audvis_raw.fif -c "MEG 1531" \
+                       --l-freq 1 --h-freq 100 \
+                       --rej-grad 3000 --rej-mag 4000 --rej-eeg 100
 
 
 .. raw:: html
@@ -146,71 +303,6 @@ $ mne flash_bem --subject sample
 
 
 
-.. _gen_mne_show_fiff:
-
-mne show_fiff
-----------------------------------------------------------
-
-.. raw:: html
-
-   <div>
-   <pre>
-
-Usage: mne show_fiff <file>
-
-Show the contents of a FIFF file.
-
-Options:
-  --version          show program's version number and exit
-  -h, --help         show this help message and exit
-  -t TAG, --tag=TAG  provide information about this tag
-
-You can do for example:
-
-$ mne show_fiff test_raw.fif
-
-To see only tag 102:
-
-$ mne show_fiff test_raw.fif --tag=102
-
-
-.. raw:: html
-
-   </pre>
-   </div>
-
-
-
-.. _gen_mne_compare_fiff:
-
-mne compare_fiff
-----------------------------------------------------------
-
-.. raw:: html
-
-   <div>
-   <pre>
-
-Usage: mne compare_fiff <file_a> <file_b>
-
-Compare FIFF files.
-
-Options:
-  --version   show program's version number and exit
-  -h, --help  show this help message and exit
-
-You can do for example:
-
-$ mne compare_fiff test_raw.fif test_raw_sss.fif
-
-
-.. raw:: html
-
-   </pre>
-   </div>
-
-
-
 .. _gen_mne_make_scalp_surfaces:
 
 mne make_scalp_surfaces
@@ -238,97 +330,6 @@ Options:
   -n, --no-decimate     Disable medium and sparse decimations (dense only)
 
 example usage: mne make_scalp_surfaces --overwrite --subject sample
-
-
-.. raw:: html
-
-   </pre>
-   </div>
-
-
-
-.. _gen_mne_coreg:
-
-mne coreg
-----------------------------------------------------------
-
-.. raw:: html
-
-   <div>
-   <pre>
-
-Usage: mne coreg [options]
-
-Open the coregistration GUI.
-
-Options:
-  --version             show program's version number and exit
-  -h, --help            show this help message and exit
-  -d SUBJECTS_DIR, --subjects-dir=SUBJECTS_DIR
-                        Subjects directory
-  -s SUBJECT, --subject=SUBJECT
-                        Subject name
-  -f INST, --fiff=INST  FIFF file with digitizer data for coregistration
-  -t, --tabbed          Option for small screens: Combine the data source
-                        panel and the coregistration panel into a single panel
-                        with tabs.
-  --no-guess-mri        Prevent the GUI from automatically guessing and
-                        changing the MRI subject when a new head shape source
-                        file is selected.
-  --head-opacity=HEAD_OPACITY
-                        The opacity of the head surface, in the range [0, 1].
-  --high-res-head       Use a high-resolution head surface.
-  --low-res-head        Use a low-resolution head surface.
-  --trans=TRANS         Head<->MRI transform FIF file ("-trans.fif")
-  --project-eeg         Project EEG electrodes to the head surface (for
-                        visualization purposes only)
-  --orient-to-surface   Orient points to the surface.
-  --scale-by-distance   Scale points by distance from the surface.
-  --mark-inside         Mark points inside the head using a different color.
-  --interaction=INTERACTION
-                        Interaction style to use, can be "trackball" or
-                        "terrain".
-  --scale=SCALE         Scale factor for the scene.
-  --verbose             Turn on verbose mode.
-
-example usage:  $ mne coreg
-
-
-.. raw:: html
-
-   </pre>
-   </div>
-
-
-
-.. _gen_mne_freeview_bem_surfaces:
-
-mne freeview_bem_surfaces
-----------------------------------------------------------
-
-.. raw:: html
-
-   <div>
-   <pre>
-
-Usage: mne freeview_bem_surfaces [options]
-
-View the 3-Layers BEM model using Freeview.
-
-Options:
-  --version             show program's version number and exit
-  -h, --help            show this help message and exit
-  -s SUBJECT, --subject=SUBJECT
-                        Subject name
-  -d SUBJECTS_DIR, --subjects-dir=SUBJECTS_DIR
-                        Subjects directory
-  -m METHOD, --method=METHOD
-                        Method used to generate the BEM model. Can be flash or
-                        watershed.
-
-You can do for example:
-
-$ mne freeview_bem_surfaces -s sample
 
 
 .. raw:: html
@@ -372,9 +373,9 @@ ${SUBJECTS_DIR}/${SUBJECT}/bem/${SUBJECT}-head.fif --id=4
 
 
 
-.. _gen_mne_kit2fiff:
+.. _gen_mne_show_info:
 
-mne kit2fiff
+mne show_info
 ----------------------------------------------------------
 
 .. raw:: html
@@ -382,112 +383,17 @@ mne kit2fiff
    <div>
    <pre>
 
-Usage: mne kit2fiff [options]
+Usage: mne show_info <file>
 
-Import KIT / NYU data to fif file.
-
-Options:
-  --version           show program's version number and exit
-  -h, --help          show this help message and exit
-  --input=filename    Input data file name
-  --mrk=filename      MEG Marker file name
-  --elp=filename      Headshape points file name
-  --hsp=filename      Headshape file name
-  --stim=chs          Colon Separated Stimulus Trigger Channels
-  --slope=slope       Slope direction
-  --stimthresh=value  Threshold value for trigger channels
-  --output=filename   Name of the resulting fiff file
-  --debug             Set logging level for terminal output to debug
-
-example usage:  $ mne kit2fiff --input input.sqd --output output.fif
-Use without arguments to invoke GUI:  $ mne kt2fiff
-
-
-
-.. raw:: html
-
-   </pre>
-   </div>
-
-
-
-.. _gen_mne_report:
-
-mne report
-----------------------------------------------------------
-
-.. raw:: html
-
-   <div>
-   <pre>
-
-Usage: mne report [options]
-
-Create mne report for a folder.
+Show measurement info from .fif file.
 
 Options:
-  --version             show program's version number and exit
-  -h, --help            show this help message and exit
-  -p PATH, --path=PATH  Path to folder who MNE-Report must be created
-  -i FILE, --info=FILE  File from which info dictionary is to be read
-  -c FILE, --cov=FILE   File from which noise covariance is to be read
-  --bmin=BMIN           Time at which baseline correction starts for evokeds
-  --bmax=BMAX           Time at which baseline correction stops for evokeds
-  -d SUBJECTS_DIR, --subjects-dir=SUBJECTS_DIR
-                        The subjects directory
-  -s SUBJECT, --subject=SUBJECT
-                        The subject name
-  -v, --verbose         run in verbose mode
-  --no-browser          Do not open MNE-Report in browser
-  --overwrite           Overwrite html report if it already exists
-  -j N_JOBS, --jobs=N_JOBS
-                        Number of jobs to run in parallel
-  -m MRI_DECIM, --mri-decim=MRI_DECIM
-                        Integer factor used to decimate BEM plots
-  --image-format=IMAGE_FORMAT
-                        Image format to use (can be 'png' or 'svg')
-
-Example usage
-
-mne report -p MNE-sample-data/ -i \
-MNE-sample-data/MEG/sample/sample_audvis-ave.fif -d MNE-sample-data/subjects/ \
--s sample
-
-
-
-.. raw:: html
-
-   </pre>
-   </div>
-
-
-
-.. _gen_mne_clean_eog_ecg:
-
-mne clean_eog_ecg
-----------------------------------------------------------
-
-.. raw:: html
-
-   <div>
-   <pre>
-
-Usage: mne clean_eog_ecg [options]
-
-Clean a raw file from EOG and ECG artifacts with PCA (ie SSP).
-
-Options:
-  --version            show program's version number and exit
-  -h, --help           show this help message and exit
-  -i FILE, --in=FILE   Input raw FIF file
-  -o FILE, --out=FILE  Output raw FIF file
-  -e, --no-eog         Remove EOG
-  -c, --no-ecg         Remove ECG
-  -q, --quiet          Suppress mne_process_raw output
+  --version   show program's version number and exit
+  -h, --help  show this help message and exit
 
 You can do for example:
 
-$ mne clean_eog_ecg -i in_raw.fif -o clean_raw.fif -e -c
+$ mne show_info sample_audvis_raw.fif
 
 
 .. raw:: html
@@ -554,9 +460,9 @@ $ mne browse_raw --raw sample_audvis_raw.fif \
 
 
 
-.. _gen_mne_compute_proj_ecg:
+.. _gen_mne_clean_eog_ecg:
 
-mne compute_proj_ecg
+mne clean_eog_ecg
 ----------------------------------------------------------
 
 .. raw:: html
@@ -564,64 +470,98 @@ mne compute_proj_ecg
    <div>
    <pre>
 
-Usage: mne compute_proj_ecg [options]
+Usage: mne clean_eog_ecg [options]
 
-Compute SSP/PCA projections for ECG artifacts.
+Clean a raw file from EOG and ECG artifacts with PCA (ie SSP).
+
+Options:
+  --version            show program's version number and exit
+  -h, --help           show this help message and exit
+  -i FILE, --in=FILE   Input raw FIF file
+  -o FILE, --out=FILE  Output raw FIF file
+  -e, --no-eog         Remove EOG
+  -c, --no-ecg         Remove ECG
+  -q, --quiet          Suppress mne_process_raw output
+
+You can do for example:
+
+$ mne clean_eog_ecg -i in_raw.fif -o clean_raw.fif -e -c
+
+
+.. raw:: html
+
+   </pre>
+   </div>
+
+
+
+.. _gen_mne_kit2fiff:
+
+mne kit2fiff
+----------------------------------------------------------
+
+.. raw:: html
+
+   <div>
+   <pre>
+
+Usage: mne kit2fiff [options]
+
+Import KIT / NYU data to fif file.
+
+Options:
+  --version           show program's version number and exit
+  -h, --help          show this help message and exit
+  --input=filename    Input data file name
+  --mrk=filename      MEG Marker file name
+  --elp=filename      Headshape points file name
+  --hsp=filename      Headshape file name
+  --stim=chs          Colon Separated Stimulus Trigger Channels
+  --slope=slope       Slope direction
+  --stimthresh=value  Threshold value for trigger channels
+  --output=filename   Name of the resulting fiff file
+  --debug             Set logging level for terminal output to debug
+
+example usage:  $ mne kit2fiff --input input.sqd --output output.fif
+Use without arguments to invoke GUI:  $ mne kt2fiff
+
+
+
+.. raw:: html
+
+   </pre>
+   </div>
+
+
+
+.. _gen_mne_freeview_bem_surfaces:
+
+mne freeview_bem_surfaces
+----------------------------------------------------------
+
+.. raw:: html
+
+   <div>
+   <pre>
+
+Usage: mne freeview_bem_surfaces [options]
+
+View the 3-Layers BEM model using Freeview.
 
 Options:
   --version             show program's version number and exit
   -h, --help            show this help message and exit
-  -i FILE, --in=FILE    Input raw FIF file
-  --tmin=TMIN           Time before event in seconds
-  --tmax=TMAX           Time after event in seconds
-  -g N_GRAD, --n-grad=N_GRAD
-                        Number of SSP vectors for gradiometers
-  -m N_MAG, --n-mag=N_MAG
-                        Number of SSP vectors for magnetometers
-  -e N_EEG, --n-eeg=N_EEG
-                        Number of SSP vectors for EEG
-  --l-freq=L_FREQ       Filter low cut-off frequency in Hz
-  --h-freq=H_FREQ       Filter high cut-off frequency in Hz
-  --ecg-l-freq=ECG_L_FREQ
-                        Filter low cut-off frequency in Hz used for ECG event
-                        detection
-  --ecg-h-freq=ECG_H_FREQ
-                        Filter high cut-off frequency in Hz used for ECG event
-                        detection
-  -p PRELOAD, --preload=PRELOAD
-                        Temporary file used during computation (to save
-                        memory)
-  -a, --average         Compute SSP after averaging
-  --proj=PROJ           Use SSP projections from a fif file.
-  --filtersize=FILTER_LENGTH
-                        Number of taps to use for filtering
-  -j N_JOBS, --n-jobs=N_JOBS
-                        Number of jobs to run in parallel
-  -c CH_NAME, --channel=CH_NAME
-                        Channel to use for ECG detection (Required if no ECG
-                        found)
-  --rej-grad=REJ_GRAD   Gradiometers rejection parameter in fT/cm (peak to
-                        peak amplitude)
-  --rej-mag=REJ_MAG     Magnetometers rejection parameter in fT (peak to peak
-                        amplitude)
-  --rej-eeg=REJ_EEG     EEG rejection parameter in uV (peak to peak amplitude)
-  --rej-eog=REJ_EOG     EOG rejection parameter in uV (peak to peak amplitude)
-  --avg-ref             Add EEG average reference proj
-  --no-proj             Exclude the SSP projectors currently in the fiff file
-  --bad=BAD_FNAME       Text file containing bad channels list (one per line)
-  --event-id=EVENT_ID   ID to use for events
-  --event-raw=RAW_EVENT_FNAME
-                        raw file to use for event detection
-  --tstart=TSTART       Start artifact detection after tstart seconds
-  --qrsthr=QRS_THRESHOLD
-                        QRS detection threshold. Between 0 and 1. Can also be
-                        'auto' for automatic selection
+  -s SUBJECT, --subject=SUBJECT
+                        Subject name
+  -d SUBJECTS_DIR, --subjects-dir=SUBJECTS_DIR
+                        Subjects directory
+  -m METHOD, --method=METHOD
+                        Method used to generate the BEM model. Can be flash or
+                        watershed.
 
 You can do for example:
 
-$ mne compute_proj_ecg -i sample_audvis_raw.fif -c "MEG 1531" \
-                       --l-freq 1 --h-freq 100 \
-                       --rej-grad 3000 --rej-mag 4000 --rej-eeg 100
+$ mne freeview_bem_surfaces -s sample
 
 
 .. raw:: html
@@ -713,6 +653,57 @@ to exclude ECG artifacts from projection computation.
 
 
 
+.. _gen_mne_report:
+
+mne report
+----------------------------------------------------------
+
+.. raw:: html
+
+   <div>
+   <pre>
+
+Usage: mne report [options]
+
+Create mne report for a folder.
+
+Options:
+  --version             show program's version number and exit
+  -h, --help            show this help message and exit
+  -p PATH, --path=PATH  Path to folder who MNE-Report must be created
+  -i FILE, --info=FILE  File from which info dictionary is to be read
+  -c FILE, --cov=FILE   File from which noise covariance is to be read
+  --bmin=BMIN           Time at which baseline correction starts for evokeds
+  --bmax=BMAX           Time at which baseline correction stops for evokeds
+  -d SUBJECTS_DIR, --subjects-dir=SUBJECTS_DIR
+                        The subjects directory
+  -s SUBJECT, --subject=SUBJECT
+                        The subject name
+  -v, --verbose         run in verbose mode
+  --no-browser          Do not open MNE-Report in browser
+  --overwrite           Overwrite html report if it already exists
+  -j N_JOBS, --jobs=N_JOBS
+                        Number of jobs to run in parallel
+  -m MRI_DECIM, --mri-decim=MRI_DECIM
+                        Integer factor used to decimate BEM plots
+  --image-format=IMAGE_FORMAT
+                        Image format to use (can be 'png' or 'svg')
+
+Example usage
+
+mne report -p MNE-sample-data/ -i \
+MNE-sample-data/MEG/sample/sample_audvis-ave.fif -d MNE-sample-data/subjects/ \
+-s sample
+
+
+
+.. raw:: html
+
+   </pre>
+   </div>
+
+
+
 .. _gen_mne_watershed_bem:
 
 mne watershed_bem
@@ -755,9 +746,9 @@ $ mne watershed_bem -s sample
 
 
 
-.. _gen_mne_show_info:
+.. _gen_mne_show_fiff:
 
-mne show_info
+mne show_fiff
 ----------------------------------------------------------
 
 .. raw:: html
@@ -765,17 +756,22 @@ mne show_info
    <div>
    <pre>
 
-Usage: mne show_info <file>
+Usage: mne show_fiff <file>
 
-Show measurement info from .fif file.
+Show the contents of a FIFF file.
 
 Options:
-  --version   show program's version number and exit
-  -h, --help  show this help message and exit
+  --version          show program's version number and exit
+  -h, --help         show this help message and exit
+  -t TAG, --tag=TAG  provide information about this tag
 
 You can do for example:
 
-$ mne show_info sample_audvis_raw.fif
+$ mne show_fiff test_raw.fif
+
+To see only tag 102:
+
+$ mne show_fiff test_raw.fif --tag=102
 
 
 .. raw:: html
@@ -785,9 +781,9 @@ $ mne show_info sample_audvis_raw.fif
 
 
 
-.. _gen_mne_bti2fiff:
+.. _gen_mne_coreg:
 
-mne bti2fiff
+mne coreg
 ----------------------------------------------------------
 
 .. raw:: html
@@ -795,37 +791,41 @@ mne bti2fiff
    <div>
    <pre>
 
-Usage: mne bti2fiff [options]
+Usage: mne coreg [options]
 
-Import BTi / 4D MagnesWH3600 data to fif file.
+Open the coregistration GUI.
 
 Options:
   --version             show program's version number and exit
   -h, --help            show this help message and exit
-  -p FILE, --pdf=FILE   Input data file name
-  -c FILE, --config=FILE
-                        Input config file name
-  --head_shape=FILE     Headshape file name
-  -o OUT_FNAME, --out_fname=OUT_FNAME
-                        Name of the resulting fiff file
-  -r ROTATION_X, --rotation_x=ROTATION_X
-                        Compensatory rotation about Neuromag x axis, deg
-  -T TRANSLATION, --translation=TRANSLATION
-                        Default translation, meter
-  --ecg_ch=ECG_CH       4D ECG channel name
-  --eog_ch=EOG_CH       4D EOG channel names
+  -d SUBJECTS_DIR, --subjects-dir=SUBJECTS_DIR
+                        Subjects directory
+  -s SUBJECT, --subject=SUBJECT
+                        Subject name
+  -f INST, --fiff=INST  FIFF file with digitizer data for coregistration
+  -t, --tabbed          Option for small screens: Combine the data source
+                        panel and the coregistration panel into a single panel
+                        with tabs.
+  --no-guess-mri        Prevent the GUI from automatically guessing and
+                        changing the MRI subject when a new head shape source
+                        file is selected.
+  --head-opacity=HEAD_OPACITY
+                        The opacity of the head surface, in the range [0, 1].
+  --high-res-head       Use a high-resolution head surface.
+  --low-res-head        Use a low-resolution head surface.
+  --trans=TRANS         Head<->MRI transform FIF file ("-trans.fif")
+  --project-eeg         Project EEG electrodes to the head surface (for
+                        visualization purposes only)
+  --orient-to-surface   Orient points to the surface.
+  --scale-by-distance   Scale points by distance from the surface.
+  --mark-inside         Mark points inside the head using a different color.
+  --interaction=INTERACTION
+                        Interaction style to use, can be "trackball" or
+                        "terrain".
+  --scale=SCALE         Scale factor for the scene.
+  --verbose             Turn on verbose mode.
 
-example usage: mne bti2fiff --pdf C,rfDC -o my_raw.fif
-
-Note.
-1) Currently direct inclusion of reference channel weights
-is not supported. Please use \'mne_create_comp_data\' to include
-the weights or use the low level functions from this module to
-include them by yourself.
-2) The informed guess for the 4D name is E31 for the ECG channel and
-E63, E63 for the EOG channels. Pleas check and adjust if those channels
-are present in your dataset but 'ECG 01' and 'EOG 01', 'EOG 02' don't
-appear in the channel names of the raw object.
+example usage:  $ mne coreg
 
 
 .. raw:: html
