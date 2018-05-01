@@ -1,6 +1,4 @@
 """
-.. _tut_stats_cluster_source_rANOVA:
-
 ======================================================================
 Repeated measures ANOVA on source data with spatio-temporal clustering
 ======================================================================
@@ -27,8 +25,6 @@ from numpy.random import randn
 import matplotlib.pyplot as plt
 
 import mne
-from mne import (io, spatial_tris_connectivity, compute_morph_matrix,
-                 grade_to_tris)
 from mne.stats import (spatio_temporal_cluster_test, f_threshold_mway_rm,
                        f_mway_rm, summarize_clusters_stc)
 
@@ -44,12 +40,13 @@ data_path = sample.data_path()
 raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
 event_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw-eve.fif'
 subjects_dir = data_path + '/subjects'
+src_fname = subjects_dir + '/fsaverage/bem/fsaverage-ico-5-src.fif'
 
 tmin = -0.2
 tmax = 0.3  # Use a lower tmax to reduce multiple comparisons
 
 #   Setup for reading the raw data
-raw = io.read_raw_fif(raw_fname)
+raw = mne.io.read_raw_fif(raw_fname)
 events = mne.read_events(event_fname)
 
 ###############################################################################
@@ -74,7 +71,7 @@ epochs.equalize_event_counts(event_id)
 fname_inv = data_path + '/MEG/sample/sample_audvis-meg-oct-6-meg-inv.fif'
 snr = 3.0
 lambda2 = 1.0 / snr ** 2
-method = "dSPM"  # use dSPM method (could also be MNE or sLORETA)
+method = "dSPM"  # use dSPM method (could also be MNE, sLORETA, or eLORETA)
 inverse_operator = read_inverse_operator(fname_inv)
 
 # we'll only use one hemisphere to speed up this example
@@ -116,14 +113,16 @@ for ii, condition in enumerate(conditions):
 
 ###############################################################################
 # It's a good idea to spatially smooth the data, and for visualization
-# purposes, let's morph these to fsaverage, which is a grade 5 source space
+# purposes, let's morph these to fsaverage, which is a grade 5 ICO source space
 # with vertices 0:10242 for each hemisphere. Usually you'd have to morph
-# each subject's data separately (and you might want to use morph_data
-# instead), but here since all estimates are on 'sample' we can use one
-# morph matrix for all the heavy lifting.
-fsave_vertices = [np.arange(10242), np.array([], int)]  # right hemi is empty
-morph_mat = compute_morph_matrix('sample', 'fsaverage', sample_vertices,
-                                 fsave_vertices, 20, subjects_dir)
+# each subject's data separately, but here since all estimates are on
+# 'sample' we can use one morph matrix for all the heavy lifting.
+
+# Read the source space we are morphing to (just left hemisphere)
+src = mne.read_source_spaces(src_fname)
+fsave_vertices = [src[0]['vertno'], []]
+morph_mat = mne.compute_morph_matrix('sample', 'fsaverage', sample_vertices,
+                                     fsave_vertices, 20, subjects_dir)
 n_vertices_fsave = morph_mat.shape[0]
 
 #    We have to change the shape for the dot() to work properly
@@ -169,7 +168,7 @@ n_times = X[0].shape[1]
 n_conditions = 4
 
 ###############################################################################
-# A stat_fun must deal with a variable number of input arguments.
+# A ``stat_fun`` must deal with a variable number of input arguments.
 #
 # Inside the clustering function each condition will be passed as flattened
 # array, necessitated by the clustering procedure. The ANOVA however expects an
@@ -178,15 +177,16 @@ n_conditions = 4
 # The following function catches the list input and swaps the first and the
 # second dimension, and finally calls ANOVA.
 #
-# Note. for further details on this ANOVA function consider the
-# corresponding
-# :ref:`time-frequency tutorial <tut_stats_cluster_sensor_rANOVA_tfr>`.
+# .. note:: For further details on this ANOVA function consider the
+#           corresponding
+#           :ref:`time-frequency tutorial <sphx_glr_auto_tutorials_plot_stats_cluster_time_frequency_repeated_measures_anova.py>`.  # noqa: E501
 
 
 def stat_fun(*args):
+    # get f-values only.
     return f_mway_rm(np.swapaxes(args, 1, 0), factor_levels=factor_levels,
                      effects=effects, return_pvals=return_pvals)[0]
-    # get f-values only.
+
 
 ###############################################################################
 # Compute clustering statistic
@@ -195,11 +195,9 @@ def stat_fun(*args):
 # To use an algorithm optimized for spatio-temporal clustering, we
 # just pass the spatial connectivity matrix (instead of spatio-temporal).
 
-source_space = grade_to_tris(5)
 # as we only have one hemisphere we need only need half the connectivity
-lh_source_space = source_space[source_space[:, 0] < 10242]
 print('Computing connectivity.')
-connectivity = spatial_tris_connectivity(lh_source_space)
+connectivity = mne.spatial_src_connectivity(src[:1])
 
 #    Now let's actually do the clustering. Please relax, on a small
 #    notebook and one single thread only this will take a couple of minutes ...

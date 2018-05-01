@@ -1,265 +1,370 @@
+# -*- coding: utf-8 -*-
 """
-=========================================
-Receptive Field Estimation and Prediction
-=========================================
+=====================================================================
+Spectro-temporal receptive field (STRF) estimation on continuous data
+=====================================================================
 
-This example reproduces figures from Lalor et al's mTRF toolbox in
-matlab [1]_. We will show how the :class:`mne.decoding.ReceptiveField` class
-can perform a similar function along with scikit-learn. We will first fit a
-linear encoding model using the continuously-varying speech envelope to predict
-activity of a 128 channel EEG system. Then, we will take the reverse approach
-and try to predict the speech envelope from the EEG (known in the litterature
-as a decoding model, or simply stimulus reconstruction).
+This demonstrates how an encoding model can be fit with multiple continuous
+inputs. In this case, we simulate the model behind a spectro-temporal receptive
+field (or STRF). First, we create a linear filter that maps patterns in
+spectro-temporal space onto an output, representing neural activity. We fit
+a receptive field model that attempts to recover the original linear filter
+that was used to create this data.
 
 References
 ----------
-.. [1] Crosse, M. J., Di Liberto, G. M., Bednar, A. & Lalor, E. C. (2016).
+Estimation of spectro-temporal and spatio-temporal receptive fields using
+modeling with continuous inputs is described in:
+
+.. [1] Theunissen, F. E. et al. Estimating spatio-temporal receptive
+       fields of auditory and visual neurons from their responses to
+       natural stimuli. Network 12, 289-316 (2001).
+
+.. [2] Willmore, B. & Smyth, D. Methods for first-order kernel
+       estimation: simple-cell receptive fields from responses to
+       natural scenes. Network 14, 553-77 (2003).
+
+.. [3] Crosse, M. J., Di Liberto, G. M., Bednar, A. & Lalor, E. C. (2016).
+       The Multivariate Temporal Response Function (mTRF) Toolbox:
+       A MATLAB Toolbox for Relating Neural Signals to Continuous Stimuli.
+       Frontiers in Human Neuroscience 10, 604.
+       doi:10.3389/fnhum.2016.00604
+
+.. [4] Holdgraf, C. R. et al. Rapid tuning shifts in human auditory cortex
+       enhance speech intelligibility. Nature Communications, 7, 13654 (2016).
+       doi:10.1038/ncomms13654
+
+.. [5] Crosse, M. J., Di Liberto, G. M., Bednar, A. & Lalor, E. C. (2016).
        The Multivariate Temporal Response Function (mTRF) Toolbox:
        A MATLAB Toolbox for Relating Neural Signals to Continuous Stimuli.
        Frontiers in Human Neuroscience 10, 604. doi:10.3389/fnhum.2016.00604
-
-.. [2] Haufe, S., Meinecke, F., Goergen, K., Daehne, S., Haynes, J.-D.,
-       Blankertz, B., & Biessmann, F. (2014). On the interpretation of weight
-       vectors of linear models in multivariate neuroimaging. NeuroImage, 87,
-       96-110. doi:10.1016/j.neuroimage.2013.10.067
-
-.. _figure 1: http://journal.frontiersin.org/article/10.3389/fnhum.2016.00604/full#F1
-.. _figure 2: http://journal.frontiersin.org/article/10.3389/fnhum.2016.00604/full#F2
-.. _figure 5: http://journal.frontiersin.org/article/10.3389/fnhum.2016.00604/full#F5
-"""  # noqa: E501
-
+"""
 # Authors: Chris Holdgraf <choldgraf@gmail.com>
 #          Eric Larson <larson.eric.d@gmail.com>
-#          Nicolas Barascud <nicolas.barascud@ens.fr>
 #
 # License: BSD (3-clause)
-# sphinx_gallery_thumbnail_number = 3
+
+# sphinx_gallery_thumbnail_number = 7
 
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.io import loadmat
-from os.path import join
 
 import mne
-from mne.decoding import ReceptiveField
-from sklearn.model_selection import KFold
-from sklearn.preprocessing import scale
+from mne.decoding import ReceptiveField, TimeDelayingRidge
 
+from scipy.stats import multivariate_normal
+from scipy.io import loadmat
+from sklearn.preprocessing import scale
+rng = np.random.RandomState(1337)  # To make this example reproducible
 
 ###############################################################################
-# Load the data from the publication
-# ----------------------------------
+# Load audio data
+# ---------------
 #
-# First we will load the data collected in [1]_. In this experiment subjects
-# listened to natural speech. Raw EEG and the speech stimulus are provided.
-# We will load these below, downsampling the data in order to speed up
-# computation since we know that our features are primarily low-frequency in
-# nature. Then we'll visualize both the EEG and speech envelope.
+# We'll read in the audio data from [3]_ in order to simulate a response.
+#
+# In addition, we'll downsample the data along the time dimension in order to
+# speed up computation. Note that depending on the input values, this may
+# not be desired. For example if your input stimulus varies more quickly than
+# 1/2 the sampling rate to which we are downsampling.
 
-path = mne.datasets.mtrf.data_path()
-decim = 2
-data = loadmat(join(path, 'speech_data.mat'))
-raw = data['EEG'].T
-speech = data['envelope'].T
-sfreq = float(data['Fs'])
-sfreq /= decim
-speech = mne.filter.resample(speech, down=decim, npad='auto')
-raw = mne.filter.resample(raw, down=decim, npad='auto')
+# Read in audio that's been recorded in epochs.
+path_audio = mne.datasets.mtrf.data_path()
+data = loadmat(path_audio + '/speech_data.mat')
+audio = data['spectrogram'].T
+sfreq = float(data['Fs'][0, 0])
+n_decim = 2
+audio = mne.filter.resample(audio, down=n_decim, npad='auto')
+sfreq /= n_decim
 
-# Read in channel positions and create our MNE objects from the raw data
-montage = mne.channels.read_montage('biosemi128')
-montage.selection = montage.selection[:128]
-info = mne.create_info(montage.ch_names[:128], sfreq, 'eeg', montage=montage)
-raw = mne.io.RawArray(raw, info)
-n_channels = len(raw.ch_names)
+###############################################################################
+# Create a receptive field
+# ------------------------
+#
+# We'll simulate a linear receptive field for a theoretical neural signal. This
+# defines how the signal will respond to power in this receptive field space.
+n_freqs = 20
+tmin, tmax = -0.1, 0.4
 
-# Plot a sample of brain and stimulus activity
+# To simulate the data we'll create explicit delays here
+delays_samp = np.arange(np.round(tmin * sfreq),
+                        np.round(tmax * sfreq) + 1).astype(int)
+delays_sec = delays_samp / sfreq
+freqs = np.linspace(50, 5000, n_freqs)
+grid = np.array(np.meshgrid(delays_sec, freqs))
+
+# We need data to be shaped as n_epochs, n_features, n_times, so swap axes here
+grid = grid.swapaxes(0, -1).swapaxes(0, 1)
+
+# Simulate a temporal receptive field with a Gabor filter
+means_high = [.1, 500]
+means_low = [.2, 2500]
+cov = [[.001, 0], [0, 500000]]
+gauss_high = multivariate_normal.pdf(grid, means_high, cov)
+gauss_low = -1 * multivariate_normal.pdf(grid, means_low, cov)
+weights = gauss_high + gauss_low  # Combine to create the "true" STRF
+kwargs = dict(vmax=np.abs(weights).max(), vmin=-np.abs(weights).max(),
+              cmap='RdBu_r', shading='gouraud')
+
 fig, ax = plt.subplots()
-lns = ax.plot(scale(raw[:, :800][0].T), color='k', alpha=.1)
-ln1 = ax.plot(scale(speech[0, :800]), color='r', lw=2)
-ax.legend([lns[0], ln1[0]], ['EEG', 'Speech Envelope'], frameon=False)
-ax.set(title="Sample activity", xlabel="Time (s)")
+ax.pcolormesh(delays_sec, freqs, weights, **kwargs)
+ax.set(title='Simulated STRF', xlabel='Time Lags (s)', ylabel='Frequency (Hz)')
+plt.setp(ax.get_xticklabels(), rotation=45)
+plt.autoscale(tight=True)
 mne.viz.tight_layout()
 
+
 ###############################################################################
-# Create and fit a receptive field model
-# --------------------------------------
+# Simulate a neural response
+# --------------------------
 #
-# We will construct an encoding model to find the linear relationship between
-# a time-delayed version of the speech envelope and the EEG signal. This allows
-# us to make predictions about the response to new stimuli.
+# Using this receptive field, we'll create an artificial neural response to
+# a stimulus.
+#
+# To do this, we'll create a time-delayed version of the receptive field, and
+# then calculate the dot product between this and the stimulus. Note that this
+# is effectively doing a convolution between the stimulus and the receptive
+# field. See `here <https://en.wikipedia.org/wiki/Convolution>`_ for more
+# information.
 
-# Define the delays that we will use in the receptive field
-tmin, tmax = -.2, .4
+# Reshape audio to split into epochs, then make epochs the first dimension.
+n_epochs, n_seconds = 16, 5
+audio = audio[:, :int(n_seconds * sfreq * n_epochs)]
+X = audio.reshape([n_freqs, n_epochs, -1]).swapaxes(0, 1)
+n_times = X.shape[-1]
 
-# Initialize the model
-rf = ReceptiveField(tmin, tmax, sfreq, feature_names=['envelope'],
-                    estimator=1., scoring='corrcoef')
-# We'll have (tmax - tmin) * sfreq delays
-# and an extra 2 delays since we are inclusive on the beginning / end index
-n_delays = int((tmax - tmin) * sfreq) + 2
+# Delay the spectrogram according to delays so it can be combined w/ the STRF
+# Lags will now be in axis 1, then we reshape to vectorize
+delays = np.arange(np.round(tmin * sfreq),
+                   np.round(tmax * sfreq) + 1).astype(int)
 
-n_splits = 3
-cv = KFold(n_splits)
+# Iterate through indices and append
+X_del = np.zeros((len(delays),) + X.shape)
+for ii, ix_delay in enumerate(delays):
+    # These arrays will take/put particular indices in the data
+    take = [slice(None)] * X.ndim
+    put = [slice(None)] * X.ndim
+    if ix_delay > 0:
+        take[-1] = slice(None, -ix_delay)
+        put[-1] = slice(ix_delay, None)
+    elif ix_delay < 0:
+        take[-1] = slice(-ix_delay, None)
+        put[-1] = slice(None, ix_delay)
+    X_del[ii][put] = X[take]
 
-# Prepare model data (make time the first dimension)
-speech = speech.T
-Y, _ = raw[:]  # Outputs for the model
-Y = Y.T
+# Now set the delayed axis to the 2nd dimension
+X_del = np.rollaxis(X_del, 0, 3)
+X_del = X_del.reshape([n_epochs, -1, n_times])
+n_features = X_del.shape[1]
+weights_sim = weights.ravel()
 
-# Iterate through splits, fit the model, and predict/test on held-out data
-coefs = np.zeros((n_splits, n_channels, n_delays))
-scores = np.zeros((n_splits, n_channels))
-for ii, (train, test) in enumerate(cv.split(speech)):
-    print('split %s / %s' % (ii + 1, n_splits))
-    rf.fit(speech[train], Y[train])
-    scores[ii] = rf.score(speech[test], Y[test])
-    # coef_ is shape (n_outputs, n_features, n_delays). we only have 1 feature
-    coefs[ii] = rf.coef_[:, 0, :]
+# Simulate a neural response to the sound, given this STRF
+y = np.zeros((n_epochs, n_times))
+for ii, iep in enumerate(X_del):
+    # Simulate this epoch and add random noise
+    noise_amp = .002
+    y[ii] = np.dot(weights_sim, iep) + noise_amp * rng.randn(n_times)
+
+# Plot the first 2 trials of audio and the simulated electrode activity
+X_plt = scale(np.hstack(X[:2]).T).T
+y_plt = scale(np.hstack(y[:2]))
+time = np.arange(X_plt.shape[-1]) / sfreq
+fig, (ax1, ax2) = plt.subplots(2, 1, figsize=(6, 6), sharex=True)
+ax1.pcolormesh(time, freqs, X_plt, vmin=0, vmax=4, cmap='Reds')
+ax1.set_title('Input auditory features')
+ax1.set(ylim=[freqs.min(), freqs.max()], ylabel='Frequency (Hz)')
+ax2.plot(time, y_plt)
+ax2.set(xlim=[time.min(), time.max()], title='Simulated response',
+        xlabel='Time (s)', ylabel='Activity (a.u.)')
+mne.viz.tight_layout()
+
+
+###############################################################################
+# Fit a model to recover this receptive field
+# -------------------------------------------
+#
+# Finally, we'll use the :class:`mne.decoding.ReceptiveField` class to recover
+# the linear receptive field of this signal. Note that properties of the
+# receptive field (e.g. smoothness) will depend on the autocorrelation in the
+# inputs and outputs.
+
+# Create training and testing data
+train, test = np.arange(n_epochs - 1), n_epochs - 1
+X_train, X_test, y_train, y_test = X[train], X[test], y[train], y[test]
+X_train, X_test, y_train, y_test = [np.rollaxis(ii, -1, 0) for ii in
+                                    (X_train, X_test, y_train, y_test)]
+# Model the simulated data as a function of the spectrogram input
+alphas = np.logspace(-3, 3, 7)
+scores = np.zeros_like(alphas)
+models = []
+for ii, alpha in enumerate(alphas):
+    rf = ReceptiveField(tmin, tmax, sfreq, freqs, estimator=alpha)
+    rf.fit(X_train, y_train)
+
+    # Now make predictions about the model output, given input stimuli.
+    scores[ii] = rf.score(X_test, y_test)
+    models.append(rf)
+
 times = rf.delays_ / float(rf.sfreq)
 
-# Average scores and coefficients across CV splits
-mean_coefs = coefs.mean(axis=0)
-mean_scores = scores.mean(axis=0)
+# Choose the model that performed best on the held out data
+ix_best_alpha = np.argmax(scores)
+best_mod = models[ix_best_alpha]
+coefs = best_mod.coef_[0]
+best_pred = best_mod.predict(X_test)[:, 0]
 
-# Plot mean prediction scores across all channels
+# Plot the original STRF, and the one that we recovered with modeling.
+fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(6, 3), sharey=True, sharex=True)
+ax1.pcolormesh(delays_sec, freqs, weights, **kwargs)
+ax2.pcolormesh(times, rf.feature_names, coefs, **kwargs)
+ax1.set_title('Original STRF')
+ax2.set_title('Best Reconstructed STRF')
+plt.setp([iax.get_xticklabels() for iax in [ax1, ax2]], rotation=45)
+plt.autoscale(tight=True)
+mne.viz.tight_layout()
+
+# Plot the actual response and the predicted response on a held out stimulus
+time_pred = np.arange(best_pred.shape[0]) / sfreq
 fig, ax = plt.subplots()
-ix_chs = np.arange(n_channels)
-ax.plot(ix_chs, mean_scores)
-ax.axhline(0, ls='--', color='r')
-ax.set(title="Mean prediction score", xlabel="Channel", ylabel="Score ($r$)")
-mne.viz.tight_layout()
-
-###############################################################################
-# Investigate model coefficients
-# ==============================
-# Finally, we will look at how the linear coefficients (sometimes
-# referred to as beta values) are distributed across time delays as well as
-# across the scalp. We will recreate `figure 1`_ and `figure 2`_ from [1]_.
-
-# Print mean coefficients across all time delays / channels (see Fig 1 in [1])
-time_plot = 0.180  # For highlighting a specific time.
-fig, ax = plt.subplots(figsize=(4, 8))
-max_coef = mean_coefs.max()
-ax.pcolormesh(times, ix_chs, mean_coefs, cmap='RdBu_r',
-              vmin=-max_coef, vmax=max_coef, shading='gouraud')
-ax.axvline(time_plot, ls='--', color='k', lw=2)
-ax.set(xlabel='Delay (s)', ylabel='Channel', title="Mean Model\nCoefficients",
-       xlim=times[[0, -1]], ylim=[len(ix_chs) - 1, 0],
-       xticks=np.arange(tmin, tmax + .2, .2))
-plt.setp(ax.get_xticklabels(), rotation=45)
-mne.viz.tight_layout()
-
-# Make a topographic map of coefficients for a given delay (see Fig 2C in [1])
-ix_plot = np.argmin(np.abs(time_plot - times))
-fig, ax = plt.subplots()
-mne.viz.plot_topomap(mean_coefs[:, ix_plot], pos=info, axes=ax, show=False,
-                     vmin=-max_coef, vmax=max_coef)
-ax.set(title="Topomap of model coefficients\nfor delay %s" % time_plot)
+ax.plot(time_pred, y_test, color='k', alpha=.2, lw=4)
+ax.plot(time_pred, best_pred, color='r', lw=1)
+ax.set(title='Original and predicted activity', xlabel='Time (s)')
+ax.legend(['Original', 'Predicted'])
+plt.autoscale(tight=True)
 mne.viz.tight_layout()
 
 
 ###############################################################################
-# Create and fit a stimulus reconstruction model
-# ----------------------------------------------
+# Visualize the effects of regularization
+# ---------------------------------------
 #
-# We will now demonstrate another use case for the for the
-# :class:`mne.decoding.ReceptiveField` class as we try to predict the stimulus
-# activity from the EEG data. This is known in the literature as a decoding, or
-# stimulus reconstruction model [1]_. A decoding model aims to find the
-# relationship between the speech signal and a time-delayed version of the EEG.
-# This can be useful as we exploit all of the available neural data in a
-# multivariate context, compared to the encoding case which treats each M/EEG
-# channel as an independent feature. Therefore, decoding models might provide a
-# better quality of fit (at the expense of not controlling for stimulus
-# covariance), especially for low SNR stimuli such as speech.
+# Above we fit a :class:`mne.decoding.ReceptiveField` model for one of many
+# values for the ridge regularization parameter. Here we will plot the model
+# score as well as the model coefficients for each value, in order to
+# visualize how coefficients change with different levels of regularization.
+# These issues as well as the STRF pipeline are described in detail
+# in [1]_, [2]_, and [4]_.
 
-# We use the same lags as in [1]. Negative lags now index the relationship
-# between the neural response and the speech envelope earlier in time, whereas
-# positive lags would index how a unit change in the amplitude of the EEG would
-# affect later stimulus activity (obviously this should have an amplitude of
-# zero).
-tmin, tmax = -.2, 0.
+# Plot model score for each ridge parameter
+fig = plt.figure(figsize=(10, 4))
+ax = plt.subplot2grid([2, len(alphas)], [1, 0], 1, len(alphas))
+ax.plot(np.arange(len(alphas)), scores, marker='o', color='r')
+ax.annotate('Best parameter', (ix_best_alpha, scores[ix_best_alpha]),
+            (ix_best_alpha, scores[ix_best_alpha] - .1),
+            arrowprops={'arrowstyle': '->'})
+plt.xticks(np.arange(len(alphas)), ["%.0e" % ii for ii in alphas])
+ax.set(xlabel="Ridge regularization value", ylabel="Score ($R^2$)",
+       xlim=[-.4, len(alphas) - .6])
+mne.viz.tight_layout()
 
-# Initialize the model. Here the features are the EEG data. We also specify
-# ``patterns=True`` to compute inverse-transformed coefficients during model
-# fitting (cf. next section). We'll use a ridge regression estimator with an
-# alpha value similar to [1].
-sr = ReceptiveField(tmin, tmax, sfreq, feature_names=raw.ch_names,
-                    estimator=1e4, scoring='corrcoef', patterns=True)
-# We'll have (tmax - tmin) * sfreq delays
-# and an extra 2 delays since we are inclusive on the beginning / end index
-n_delays = int((tmax - tmin) * sfreq) + 2
-
-n_splits = 3
-cv = KFold(n_splits)
-
-# Iterate through splits, fit the model, and predict/test on held-out data
-coefs = np.zeros((n_splits, n_channels, n_delays))
-patterns = coefs.copy()
-scores = np.zeros((n_splits,))
-for ii, (train, test) in enumerate(cv.split(speech)):
-    print('split %s / %s' % (ii + 1, n_splits))
-    sr.fit(Y[train], speech[train])
-    scores[ii] = sr.score(Y[test], speech[test])[0]
-    # coef_ is shape (n_outputs, n_features, n_delays). We have 128 features
-    coefs[ii] = sr.coef_[0, :, :]
-    patterns[ii] = sr.patterns_[0, :, :]
-times = sr.delays_ / float(sr.sfreq)
-
-# Average scores and coefficients across CV splits
-mean_coefs = coefs.mean(axis=0)
-mean_patterns = patterns.mean(axis=0)
-mean_scores = scores.mean(axis=0)
-max_coef = np.abs(mean_coefs).max()
-max_patterns = np.abs(mean_patterns).max()
-
-###############################################################################
-# Visualize stimulus reconstruction
-# =================================
-#
-# To get a sense of our model performance, we can plot the actual and predicted
-# stimulus envelopes side by side.
-
-y_pred = sr.predict(Y[test])
-time = np.linspace(0, 2., 5 * int(sfreq))
-fig, ax = plt.subplots(figsize=(8, 4))
-ax.plot(time, speech[test][sr.valid_samples_][:int(5 * sfreq)],
-        color='grey', lw=2, ls='--')
-ax.plot(time, y_pred[sr.valid_samples_][:int(5 * sfreq)], color='r', lw=2)
-ax.legend([lns[0], ln1[0]], ['Envelope', 'Reconstruction'], frameon=False)
-ax.set(title="Stimulus reconstruction")
-ax.set_xlabel('Time (s)')
+# Plot the STRF of each ridge parameter
+for ii, (rf, i_alpha) in enumerate(zip(models, alphas)):
+    ax = plt.subplot2grid([2, len(alphas)], [0, ii], 1, 1)
+    ax.pcolormesh(times, rf.feature_names, rf.coef_[0], **kwargs)
+    plt.xticks([], [])
+    plt.yticks([], [])
+    plt.autoscale(tight=True)
+fig.suptitle('Model coefficients / scores for many ridge parameters', y=1)
 mne.viz.tight_layout()
 
 ###############################################################################
-# Investigate model coefficients
-# ==============================
+# Using different regularization types
+# ------------------------------------
+# In addition to the standard ridge regularization, the
+# :class:`mne.decoding.TimeDelayingRidge` class also exposes
+# `Laplacian <https://en.wikipedia.org/wiki/Laplacian_matrix>`_ regularization
+# term as:
 #
-# Finally, we will look at how the decoding model coefficients are distributed
-# across the scalp. We will attempt to recreate `figure 5`_ from [1]_. The
-# decoding model weights reflect the channels that contribute most toward
-# reconstructing the stimulus signal, but are not directly interpretable in a
-# neurophysiological sense. Here we also look at the coefficients obtained
-# via an inversion procedure [2]_, which have a more straightforward
-# interpretation as their value (and sign) directly relates to the stimulus
-# signal's strength (and effect direction).
+# .. math::
+#    \left[\begin{matrix}
+#         1 & -1 &   &   & & \\
+#        -1 &  2 & -1 &   & & \\
+#           & -1 & 2 & -1 & & \\
+#           & & \ddots & \ddots & \ddots & \\
+#           & & & -1 & 2 & -1 \\
+#           & & &    & -1 & 1\end{matrix}\right]
+#
+# This imposes a smoothness constraint of nearby time samples and/or features.
+# Quoting [5]_:
+#
+#    Tikhonov [identity] regularization (Equation 5) reduces overfitting by
+#    smoothing the TRF estimate in a way that is insensitive to
+#    the amplitude of the signal of interest. However, the Laplacian
+#    approach (Equation 6) reduces off-sample error whilst preserving
+#    signal amplitude (Lalor et al., 2006). As a result, this approach
+#    usually leads to an improved estimate of the system’s response (as
+#    indexed by MSE) compared to Tikhonov regularization.
+#
 
-time_plot = (-.140, -.125)  # To average between two timepoints.
-ix_plot = np.arange(np.argmin(np.abs(time_plot[0] - times)),
-                    np.argmin(np.abs(time_plot[1] - times)))
-fig, ax = plt.subplots(1, 2)
-mne.viz.plot_topomap(np.mean(mean_coefs[:, ix_plot], axis=1),
-                     pos=info, axes=ax[0], show=False,
-                     vmin=-max_coef, vmax=max_coef)
-ax[0].set(title="Model coefficients\nbetween delays %s and %s"
-          % (time_plot[0], time_plot[1]))
+scores_lap = np.zeros_like(alphas)
+models_lap = []
+for ii, alpha in enumerate(alphas):
+    estimator = TimeDelayingRidge(tmin, tmax, sfreq, reg_type='laplacian',
+                                  alpha=alpha)
+    rf = ReceptiveField(tmin, tmax, sfreq, freqs, estimator=estimator)
+    rf.fit(X_train, y_train)
 
-mne.viz.plot_topomap(np.mean(mean_patterns[:, ix_plot], axis=1),
-                     pos=info, axes=ax[1],
-                     show=False, vmin=-max_patterns, vmax=max_patterns)
-ax[1].set(title="Inverse-transformed coefficients\nbetween delays %s and %s"
-          % (time_plot[0], time_plot[1]))
+    # Now make predictions about the model output, given input stimuli.
+    scores_lap[ii] = rf.score(X_test, y_test)
+    models_lap.append(rf)
+
+ix_best_alpha_lap = np.argmax(scores_lap)
+
+###############################################################################
+# Compare model performance
+# -------------------------
+# Below we visualize the model performance of each regularization method
+# (ridge vs. Laplacian) for different levels of alpha. As you can see, the
+# Laplacian method performs better in general, because it imposes a smoothness
+# constraint along the time and feature dimensions of the coefficients.
+# This matches the "true" receptive field structure and results in a better
+# model fit.
+
+fig = plt.figure(figsize=(10, 6))
+ax = plt.subplot2grid([3, len(alphas)], [2, 0], 1, len(alphas))
+ax.plot(np.arange(len(alphas)), scores_lap, marker='o', color='r')
+ax.plot(np.arange(len(alphas)), scores, marker='o', color='0.5', ls=':')
+ax.annotate('Best Laplacian', (ix_best_alpha_lap,
+                               scores_lap[ix_best_alpha_lap]),
+            (ix_best_alpha_lap, scores_lap[ix_best_alpha_lap] - .1),
+            arrowprops={'arrowstyle': '->'})
+ax.annotate('Best Ridge', (ix_best_alpha, scores[ix_best_alpha]),
+            (ix_best_alpha, scores[ix_best_alpha] - .1),
+            arrowprops={'arrowstyle': '->'})
+plt.xticks(np.arange(len(alphas)), ["%.0e" % ii for ii in alphas])
+ax.set(xlabel="Laplacian regularization value", ylabel="Score ($R^2$)",
+       xlim=[-.4, len(alphas) - .6])
 mne.viz.tight_layout()
 
+# Plot the STRF of each ridge parameter
+xlim = times[[0, -1]]
+for ii, (rf_lap, rf, i_alpha) in enumerate(zip(models_lap, models, alphas)):
+    ax = plt.subplot2grid([3, len(alphas)], [0, ii], 1, 1)
+    ax.pcolormesh(times, rf_lap.feature_names, rf_lap.coef_[0], **kwargs)
+    ax.set(xticks=[], yticks=[], xlim=xlim)
+    if ii == 0:
+        ax.set(ylabel='Laplacian')
+    ax = plt.subplot2grid([3, len(alphas)], [1, ii], 1, 1)
+    ax.pcolormesh(times, rf.feature_names, rf.coef_[0], **kwargs)
+    ax.set(xticks=[], yticks=[], xlim=xlim)
+    if ii == 0:
+        ax.set(ylabel='Ridge')
+fig.suptitle('Model coefficients / scores for laplacian regularization', y=1)
+mne.viz.tight_layout()
+
+###############################################################################
+# Plot the original STRF, and the one that we recovered with modeling.
+rf = models[ix_best_alpha]
+rf_lap = models_lap[ix_best_alpha_lap]
+fig, (ax1, ax2, ax3) = plt.subplots(1, 3, figsize=(9, 3),
+                                    sharey=True, sharex=True)
+ax1.pcolormesh(delays_sec, freqs, weights, **kwargs)
+ax2.pcolormesh(times, rf.feature_names, rf.coef_[0], **kwargs)
+ax3.pcolormesh(times, rf_lap.feature_names, rf_lap.coef_[0], **kwargs)
+ax1.set_title('Original STRF')
+ax2.set_title('Best Ridge STRF')
+ax3.set_title('Best Laplacian STRF')
+plt.setp([iax.get_xticklabels() for iax in [ax1, ax2, ax3]], rotation=45)
+plt.autoscale(tight=True)
+mne.viz.tight_layout()
 plt.show()

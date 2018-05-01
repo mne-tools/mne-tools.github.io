@@ -33,9 +33,6 @@ from mne.minimum_norm import make_inverse_operator, apply_inverse
 from mne.time_frequency import csd_morlet
 from mne.beamformer import make_dics, apply_dics_csd
 
-# Suppress irrelevant output
-mne.set_log_level('ERROR')
-
 # We use the MEG and MRI setup from the MNE-sample dataset
 data_path = sample.data_path(download=False)
 subjects_dir = op.join(data_path, 'subjects')
@@ -249,7 +246,8 @@ mlab.title('MNE-dSPM inverse (RMS)', height=0.9)
 # pass activity originating from the vertex, while dampening activity from
 # other sources as much as possible.
 #
-# The :func:`make_dics` function has many switches that offer precise control
+# The :func:`mne.beamformer.make_dics` function has many switches that offer
+# precise control
 # over the way the filter weights are computed. Currently, there is no clear
 # consensus regarding the best approach. This is why we will demonstrate two
 # approaches here:

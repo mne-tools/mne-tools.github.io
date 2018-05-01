@@ -1,4 +1,8 @@
+.. note::
+    :class: sphx-glr-download-link-note
 
+    Click :ref:`here <sphx_glr_download_auto_examples_preprocessing_plot_movement_compensation.py>` to download the full example code
+.. rst-class:: sphx-glr-example-title
 
 .. _sphx_glr_auto_examples_preprocessing_plot_movement_compensation.py:
 
@@ -32,7 +36,7 @@ details:
 
     data_path = op.join(mne.datasets.misc.data_path(verbose=True), 'movement')
 
-    pos = mne.chpi.read_head_pos(op.join(data_path, 'simulated_quats.pos'))
+    head_pos = mne.chpi.read_head_pos(op.join(data_path, 'simulated_quats.pos'))
     raw = mne.io.read_raw_fif(op.join(data_path, 'simulated_movement_raw.fif'))
     raw_stat = mne.io.read_raw_fif(op.join(data_path,
                                            'simulated_stationary_raw.fif'))
@@ -43,43 +47,69 @@ details:
 
 .. rst-class:: sphx-glr-script-out
 
- Out::
+ Out:
 
-    Successfully extracted to: [u'/home/ubuntu/mne_data/MNE-misc-data']
-    Opening raw data file /home/ubuntu/mne_data/MNE-misc-data/movement/simulated_movement_raw.fif...
+ .. code-block:: none
+
+    Opening raw data file /home/circleci/mne_data/MNE-misc-data/movement/simulated_movement_raw.fif...
         Range : 25800 ... 34208 =     42.956 ...    56.955 secs
     Ready.
     Current compensation grade : 0
-    Opening raw data file /home/ubuntu/mne_data/MNE-misc-data/movement/simulated_stationary_raw.fif...
+    Opening raw data file /home/circleci/mne_data/MNE-misc-data/movement/simulated_stationary_raw.fif...
         Range : 25800 ... 34208 =     42.956 ...    56.955 secs
     Ready.
     Current compensation grade : 0
 
 
-Visualize the "subject" head movements (traces)
+Visualize the "subject" head movements. By providing the measurement
+information, the distance to the nearest sensor in each direction
+(e.g., left/right for the X direction, forward/backward for Y) can
+be shown in blue, and the destination (if given) shown in red.
 
 
 
 .. code-block:: python
 
 
-    mne.viz.plot_head_positions(pos, mode='traces')
+    mne.viz.plot_head_positions(
+        head_pos, mode='traces', destination=raw.info['dev_head_t'], info=raw.info)
 
 
 
 
 .. image:: /auto_examples/preprocessing/images/sphx_glr_plot_movement_compensation_001.png
-    :align: center
+    :class: sphx-glr-single-img
+
+
+
+
+This can also be visualized using a quiver.
+
+
+
+.. code-block:: python
+
+
+    mne.viz.plot_head_positions(
+        head_pos, mode='field', destination=raw.info['dev_head_t'], info=raw.info)
+
+
+
+
+.. image:: /auto_examples/preprocessing/images/sphx_glr_plot_movement_compensation_002.png
+    :class: sphx-glr-single-img
 
 
 .. rst-class:: sphx-glr-script-out
 
- Out::
+ Out:
 
-    viridis is unavailable on matplotlib < 1.4, using "YlGnBu_r"
+ .. code-block:: none
+
+    Getting helmet for system 306m
 
 
-Process our simulated raw data (taking into account head movements)
+Process our simulated raw data (taking into account head movements).
 
 
 
@@ -91,57 +121,106 @@ Process our simulated raw data (taking into account head movements)
     events[:, 2] = 1
     raw.plot(events=events)
 
-    topo_kwargs = dict(times=[0, 0.1, 0.2], ch_type='mag', vmin=-500, vmax=500)
+    topo_kwargs = dict(times=[0, 0.1, 0.2], ch_type='mag', vmin=-500, vmax=500,
+                       time_unit='s')
 
-    # 0. Take average of stationary data (bilateral auditory patterns)
+
+
+
+.. image:: /auto_examples/preprocessing/images/sphx_glr_plot_movement_compensation_003.png
+    :class: sphx-glr-single-img
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    14 events found
+    Event IDs: [ 1  2  3  4  5  6  7  8  9 10 11 12 13 14]
+
+
+First, take the average of stationary data (bilateral auditory patterns).
+
+
+
+.. code-block:: python
+
     evoked_stat = mne.Epochs(raw_stat, events, 1, -0.2, 0.8).average()
     evoked_stat.plot_topomap(title='Stationary', **topo_kwargs)
 
-    # 1. Take a naive average (smears activity)
+
+
+
+.. image:: /auto_examples/preprocessing/images/sphx_glr_plot_movement_compensation_004.png
+    :class: sphx-glr-single-img
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    14 matching events found
+    Applying baseline correction (mode: mean)
+    Not setting metadata
+    0 projection items activated
+
+
+Second, take a naive average, which averages across epochs that have been
+simulated to have different head positions and orientations, thereby
+spatially smearing the activity.
+
+
+
+.. code-block:: python
+
     evoked = mne.Epochs(raw, events, 1, -0.2, 0.8).average()
     evoked.plot_topomap(title='Moving: naive average', **topo_kwargs)
 
-    # 2. Use raw movement compensation (restores pattern)
-    raw_sss = maxwell_filter(raw, head_pos=pos)
+
+
+
+.. image:: /auto_examples/preprocessing/images/sphx_glr_plot_movement_compensation_005.png
+    :class: sphx-glr-single-img
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    14 matching events found
+    Applying baseline correction (mode: mean)
+    Not setting metadata
+    0 projection items activated
+
+
+Third, use raw movement compensation (restores pattern).
+
+
+
+.. code-block:: python
+
+    raw_sss = maxwell_filter(raw, head_pos=head_pos)
     evoked_raw_mc = mne.Epochs(raw_sss, events, 1, -0.2, 0.8).average()
     evoked_raw_mc.plot_topomap(title='Moving: movement compensated', **topo_kwargs)
 
 
 
-.. rst-class:: sphx-glr-horizontal
-
-
-    *
-
-      .. image:: /auto_examples/preprocessing/images/sphx_glr_plot_movement_compensation_002.png
-            :scale: 47
-
-    *
-
-      .. image:: /auto_examples/preprocessing/images/sphx_glr_plot_movement_compensation_003.png
-            :scale: 47
-
-    *
-
-      .. image:: /auto_examples/preprocessing/images/sphx_glr_plot_movement_compensation_004.png
-            :scale: 47
-
-    *
-
-      .. image:: /auto_examples/preprocessing/images/sphx_glr_plot_movement_compensation_005.png
-            :scale: 47
+.. image:: /auto_examples/preprocessing/images/sphx_glr_plot_movement_compensation_006.png
+    :class: sphx-glr-single-img
 
 
 .. rst-class:: sphx-glr-script-out
 
- Out::
+ Out:
 
-    14 events found
-    Events id: [ 1  2  3  4  5  6  7  8  9 10 11 12 13 14]
-    14 matching events found
-    0 projection items activated
-    14 matching events found
-    0 projection items activated
+ .. code-block:: none
+
     Maxwell filtering raw data
         Appending head position result channels and loading raw data from disk
         No bad MEG channels
@@ -167,16 +246,22 @@ Process our simulated raw data (taking into account head movements)
             Used  14 head positions for    0.000 -   13.999 sec (#1/1)
     [done]
     14 matching events found
+    Applying baseline correction (mode: mean)
+    Not setting metadata
     0 projection items activated
 
 
-**Total running time of the script:** ( 0 minutes  6.263 seconds)
+**Total running time of the script:** ( 0 minutes  6.329 seconds)
 
+
+.. _sphx_glr_download_auto_examples_preprocessing_plot_movement_compensation.py:
 
 
 .. only :: html
 
  .. container:: sphx-glr-footer
+    :class: sphx-glr-footer-example
+
 
 
   .. container:: sphx-glr-download

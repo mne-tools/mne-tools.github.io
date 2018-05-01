@@ -1,10 +1,11 @@
+.. note::
+    :class: sphx-glr-download-link-note
 
+    Click :ref:`here <sphx_glr_download_auto_tutorials_plot_artifacts_correction_ica.py>` to download the full example code
+.. rst-class:: sphx-glr-example-title
 
 .. _sphx_glr_auto_tutorials_plot_artifacts_correction_ica.py:
 
-
-
-.. _tut_artifacts_correct_ica:
 
 Artifact Correction with ICA
 ============================
@@ -12,7 +13,7 @@ Artifact Correction with ICA
 ICA finds directions in the feature space
 corresponding to projections with high non-Gaussianity. We thus obtain
 a decomposition into independent components, and the artifact's contribution
-is localized in only a small number of components.
+is typically localized in only a small number of components.
 These components have to be correctly identified and removed.
 
 If EOG or ECG recordings are available, they can be used in ICA to
@@ -41,8 +42,8 @@ which we will review here.
     raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
 
     raw = mne.io.read_raw_fif(raw_fname, preload=True)
-    # 1Hz high pass is often helpful for fitting ICA
-    raw.filter(1., 40., n_jobs=2, fir_design='firwin')
+    # 1Hz high pass is often helpful for fitting ICA (already lowpassed @ 40 Hz)
+    raw.filter(1., None, n_jobs=1, fir_design='firwin')
 
     picks_meg = mne.pick_types(raw.info, meg=True, eeg=False, eog=False,
                                stim=False, exclude='bads')
@@ -53,10 +54,11 @@ which we will review here.
 
 .. rst-class:: sphx-glr-script-out
 
- Out::
+ Out:
 
-    Successfully extracted to: [u'/home/ubuntu/mne_data/MNE-sample-data']
-    Opening raw data file /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis_filt-0-40_raw.fif...
+ .. code-block:: none
+
+    Opening raw data file /home/circleci/mne_data/MNE-sample-data/MEG/sample/sample_audvis_filt-0-40_raw.fif...
         Read a total of 4 projection items:
             PCA-v1 (1 x 102)  idle
             PCA-v2 (1 x 102)  idle
@@ -66,14 +68,13 @@ which we will review here.
     Ready.
     Current compensation grade : 0
     Reading 0 ... 41699  =      0.000 ...   277.709 secs...
-    Setting up band-pass filter from 1 - 40 Hz
+    Setting up high-pass filter at 1 Hz
     l_trans_bandwidth chosen to be 1.0 Hz
-    h_trans_bandwidth chosen to be 10.0 Hz
     Filter length of 497 samples (3.310 sec) selected
 
 
 Before applying artifact correction please learn about your actual artifacts
-by reading :ref:`tut_artifacts_detect`.
+by reading :ref:`sphx_glr_auto_tutorials_plot_artifacts_detection.py`.
 
 .. warning:: ICA is sensitive to low-frequency drifts and therefore
              requires the data to be high-pass filtered prior to fitting.
@@ -92,15 +93,24 @@ by reading :ref:`tut_artifacts_detect`.
 Fit ICA
 -------
 
-ICA parameters:
+First, choose the ICA method. There are currently four possible choices:
+`fastica`, `picard`, `infomax` and `extended-infomax`.
+
+.. note:: The default method in MNE is FastICA, which along with Infomax is
+          one of the most widely used ICA algorithms. Picard is a
+          new algorithm that is expected to converge faster than FastICA and
+          Infomax, especially when the aim is to recover accurate maps with
+          a low tolerance parameter, see [1]_ for more information.
 
 
 
 .. code-block:: python
 
 
+    method = 'fastica'
+
+    # Choose other parameters
     n_components = 25  # if float, select n_components by explained variance of PCA
-    method = 'fastica'  # for comparison with EEGLAB try "extended-infomax" here
     decim = 3  # we need sufficient statistics, not all time points -> saves time
 
     # we will also set state of the random number generator - ICA is a
@@ -129,7 +139,9 @@ Define the ICA object instance
 
 .. rst-class:: sphx-glr-script-out
 
- Out::
+ Out:
+
+ .. code-block:: none
 
     <ICA  |  no decomposition, fit (fastica):  samples, no dimension reduction>
 
@@ -151,16 +163,18 @@ dominate the variance and decomposition
 
 .. rst-class:: sphx-glr-script-out
 
- Out::
+ Out:
 
-    Fitting ICA to data using 305 channels. 
-    Please be patient, this may take some time
-    Inferring max_pca_components from picks.
-        Rejecting  epoch based on MAG : [u'MEG 1711']
+ .. code-block:: none
+
+    Fitting ICA to data using 305 channels (please be patient, this may take a while)
+    Inferring max_pca_components from picks
+        Rejecting  epoch based on MAG : ['MEG 1711']
     Artifact detected in [4242, 4343]
-        Rejecting  epoch based on MAG : [u'MEG 1711']
+        Rejecting  epoch based on MAG : ['MEG 1711']
     Artifact detected in [5858, 5959]
     Selection by number: 25 components
+    Fitting ICA took 1.7s.
     <ICA  |  raw data decomposition, fit (fastica): 13635 samples, 25 components, channels used: "mag"; "grad">
 
 
@@ -182,12 +196,12 @@ Plot ICA components
     *
 
       .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_001.png
-            :scale: 47
+            :class: sphx-glr-multi-img
 
     *
 
       .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_002.png
-            :scale: 47
+            :class: sphx-glr-multi-img
 
 
 
@@ -209,9 +223,16 @@ Let's take a closer look at properties of first three independent components.
 
 
 .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_003.png
-    :align: center
+    :class: sphx-glr-single-img
 
 
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    using multitaper spectrum estimation with 7 DPSS windows
 
 
 we can see that the data were filtered so the spectrum plot is not
@@ -227,9 +248,16 @@ very informative, let's change that:
 
 
 .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_004.png
-    :align: center
+    :class: sphx-glr-single-img
 
 
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    using multitaper spectrum estimation with 7 DPSS windows
 
 
 we can also take a look at multiple different components at once:
@@ -249,28 +277,36 @@ we can also take a look at multiple different components at once:
     *
 
       .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_005.png
-            :scale: 47
+            :class: sphx-glr-multi-img
 
     *
 
       .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_006.png
-            :scale: 47
+            :class: sphx-glr-multi-img
 
 
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    using multitaper spectrum estimation with 7 DPSS windows
 
 
 Instead of opening individual figures with component properties, we can
-also pass an instance of Raw or Epochs in ``inst`` arument to
+also pass an instance of Raw or Epochs in ``inst`` argument to
 ``ica.plot_components``. This would allow us to open component properties
 interactively by clicking on individual component topomaps. In the notebook
-this woks only when running matplotlib in interactive mode (``%matplotlib``).
+this works only when running matplotlib in interactive mode
+(``%matplotlib``).
 
 
 
 .. code-block:: python
 
 
-    # uncomment the code below to test the inteactive mode of plot_components:
+    # uncomment the code below to test the interactive mode of plot_components:
     # ica.plot_components(picks=range(10), inst=raw)
 
 
@@ -282,7 +318,7 @@ this woks only when running matplotlib in interactive mode (``%matplotlib``).
 Advanced artifact detection
 ---------------------------
 
-Let's use a more efficient way to find artefacts
+Let's use a more efficient way to find artifacts
 
 
 
@@ -310,17 +346,19 @@ Let's use a more efficient way to find artefacts
     *
 
       .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_007.png
-            :scale: 47
+            :class: sphx-glr-multi-img
 
     *
 
       .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_008.png
-            :scale: 47
+            :class: sphx-glr-multi-img
 
 
 .. rst-class:: sphx-glr-script-out
 
- Out::
+ Out:
+
+ .. code-block:: none
 
     EOG channel index for this subject is: [375]
     Filtering the data to remove DC offset to help distinguish blinks from saccades
@@ -331,6 +369,8 @@ Let's use a more efficient way to find artefacts
     Now detecting blinks and generating corresponding events
     Number of EOG events detected : 46
     46 matching events found
+    No baseline correction applied
+    Not setting metadata
     Created an SSP operator (subspace dimension = 3)
     Loading data for 46 events and 151 original time points ...
     0 bad epochs dropped
@@ -343,6 +383,8 @@ Let's use a more efficient way to find artefacts
     Now detecting blinks and generating corresponding events
     Number of EOG events detected : 46
     46 matching events found
+    No baseline correction applied
+    Not setting metadata
     Created an SSP operator (subspace dimension = 4)
     Loading data for 46 events and 151 original time points ...
     0 bad epochs dropped
@@ -364,9 +406,16 @@ epochs image:
 
 
 .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_009.png
-    :align: center
+    :class: sphx-glr-single-img
 
 
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    using multitaper spectrum estimation with 7 DPSS windows
 
 
 That component is showing a prototypical average vertical EOG time course.
@@ -386,9 +435,11 @@ Pay attention to the labels, a customized read-out of the
 
 .. rst-class:: sphx-glr-script-out
 
- Out::
+ Out:
 
-    {u'eog/0/EOG 061': [2], 'eog': [2]}
+ .. code-block:: none
+
+    {'eog/0/EOG 061': [2], 'eog': [2]}
 
 
 These labels were used by the plotters and are added automatically
@@ -421,12 +472,14 @@ from the data.
 
 
 .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_010.png
-    :align: center
+    :class: sphx-glr-single-img
 
 
 .. rst-class:: sphx-glr-script-out
 
- Out::
+ Out:
+
+ .. code-block:: none
 
     Transforming to ICA space (25 components)
     Zeroing out 1 ICA components
@@ -450,12 +503,14 @@ this tutorial still works as intended.
 
 
 .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_011.png
-    :align: center
+    :class: sphx-glr-single-img
 
 
 .. rst-class:: sphx-glr-script-out
 
- Out::
+ Out:
+
+ .. code-block:: none
 
     Transforming to ICA space (25 components)
     Zeroing out 1 ICA components
@@ -480,34 +535,37 @@ Exercise: find and remove ECG artifacts using ICA!
     *
 
       .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_012.png
-            :scale: 47
+            :class: sphx-glr-multi-img
 
     *
 
       .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_013.png
-            :scale: 47
+            :class: sphx-glr-multi-img
 
     *
 
       .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_014.png
-            :scale: 47
+            :class: sphx-glr-multi-img
 
 
 .. rst-class:: sphx-glr-script-out
 
- Out::
+ Out:
+
+ .. code-block:: none
 
     Reconstructing ECG signal from Magnetometers
     Setting up band-pass filter from 8 - 16 Hz
     Filter length of 2048 samples (13.639 sec) selected
     Number of ECG events detected : 284 (average pulse 61 / min.)
-    Creating RawArray with float64 data, n_channels=1, n_times=41700
-        Range : 0 ... 41699 =      0.000 ...   277.709 secs
-    Ready.
     284 matching events found
+    No baseline correction applied
+    Not setting metadata
     Created an SSP operator (subspace dimension = 4)
     Loading data for 284 events and 151 original time points ...
     0 bad epochs dropped
+    Reconstructing ECG signal from Magnetometers
+        using multitaper spectrum estimation with 7 DPSS windows
 
 
 What if we don't have an EOG channel?
@@ -577,29 +635,31 @@ data sets instead.
 
 .. rst-class:: sphx-glr-script-out
 
- Out::
+ Out:
 
-    fitting ICA from 0.0 to 92.5695621499 seconds
-    Fitting ICA to data using 305 channels. 
-    Please be patient, this may take some time
-    Inferring max_pca_components from picks.
-        Rejecting  epoch based on MAG : [u'MEG 1711']
+ .. code-block:: none
+
+    fitting ICA from 0.0 to 92.56956214990684 seconds
+    Fitting ICA to data using 305 channels (please be patient, this may take a while)
+    Inferring max_pca_components from picks
+        Rejecting  epoch based on MAG : ['MEG 1711']
     Artifact detected in [12642, 12943]
     Selection by number: 25 components
-    fitting ICA from 92.5695621499 to 185.1391243 seconds
-    Fitting ICA to data using 305 channels. 
-    Please be patient, this may take some time
-    Inferring max_pca_components from picks.
-        Rejecting  epoch based on MAG : [u'MEG 1711']
+    Fitting ICA took 2.0s.
+    fitting ICA from 92.56956214990684 to 185.1391242998137 seconds
+    Fitting ICA to data using 305 channels (please be patient, this may take a while)
+    Inferring max_pca_components from picks
+        Rejecting  epoch based on MAG : ['MEG 1711']
     Artifact detected in [3612, 3913]
     Selection by number: 25 components
-    fitting ICA from 185.1391243 to 277.70868645 seconds
-    Fitting ICA to data using 305 channels. 
-    Please be patient, this may take some time
-    Inferring max_pca_components from picks.
-        Rejecting  epoch based on MAG : [u'MEG 1411']
+    Fitting ICA took 1.3s.
+    fitting ICA from 185.1391242998137 to 277.7086864497205 seconds
+    Fitting ICA to data using 305 channels (please be patient, this may take a while)
+    Inferring max_pca_components from picks
+        Rejecting  epoch based on MAG : ['MEG 1411']
     Artifact detected in [12341, 12642]
     Selection by number: 25 components
+    Fitting ICA took 1.9s.
 
 
 Remember, don't do this at home! Start by reading in a collection of ICA
@@ -619,7 +679,9 @@ solutions instead. Something like:
 
 .. rst-class:: sphx-glr-script-out
 
- Out::
+ Out:
+
+ .. code-block:: none
 
     [<ICA  |  raw data decomposition, fit (fastica): 13545 samples, 25 components, channels used: "mag"; "grad">, <ICA  |  raw data decomposition, fit (fastica): 13545 samples, 25 components, channels used: "mag"; "grad">, <ICA  |  raw data decomposition, fit (fastica): 13545 samples, 25 components, channels used: "mag"; "grad">]
 
@@ -655,12 +717,12 @@ Investigate our reference ICA:
     *
 
       .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_015.png
-            :scale: 47
+            :class: sphx-glr-multi-img
 
     *
 
       .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_016.png
-            :scale: 47
+            :class: sphx-glr-multi-img
 
 
 
@@ -679,7 +741,7 @@ yourself if no automatic detection was available.
 
 
 .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_017.png
-    :align: center
+    :class: sphx-glr-single-img
 
 
 
@@ -722,19 +784,21 @@ Now we can run the CORRMAP algorithm.
     *
 
       .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_018.png
-            :scale: 47
+            :class: sphx-glr-multi-img
 
     *
 
       .. image:: /auto_tutorials/images/sphx_glr_plot_artifacts_correction_ica_019.png
-            :scale: 47
+            :class: sphx-glr-multi-img
 
 
 .. rst-class:: sphx-glr-script-out
 
- Out::
+ Out:
 
-    Median correlation with constructed map: 0.996
+ .. code-block:: none
+
+    Median correlation with constructed map: 0.995
     Displaying selected ICs per subject.
     At least 1 IC detected for each subject.
 
@@ -766,16 +830,27 @@ also be used for other purposes than artifact correction.)
 You can also use SSP to correct for artifacts. It is a bit simpler and
 faster but also less precise than ICA and requires that you know the event
 timing of your artifact.
-See :ref:`tut_artifacts_correct_ssp`.
+See :ref:`sphx_glr_auto_tutorials_plot_artifacts_correction_ssp.py`.
 
 
-**Total running time of the script:** ( 0 minutes  52.128 seconds)
+References
+----------
+.. [1] Ablin, P., Cardoso, J.F., Gramfort, A., 2017. Faster Independent
+       Component Analysis by preconditioning with Hessian approximations.
+       arXiv:1706.08171
 
+
+**Total running time of the script:** ( 0 minutes  39.483 seconds)
+
+
+.. _sphx_glr_download_auto_tutorials_plot_artifacts_correction_ica.py:
 
 
 .. only :: html
 
  .. container:: sphx-glr-footer
+    :class: sphx-glr-footer-example
+
 
 
   .. container:: sphx-glr-download

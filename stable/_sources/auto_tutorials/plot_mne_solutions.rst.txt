@@ -1,0 +1,501 @@
+.. note::
+    :class: sphx-glr-download-link-note
+
+    Click :ref:`here <sphx_glr_download_auto_tutorials_plot_mne_solutions.py>` to download the full example code
+.. rst-class:: sphx-glr-example-title
+
+.. _sphx_glr_auto_tutorials_plot_mne_solutions.py:
+
+
+===============================
+Computing various MNE solutions
+===============================
+
+This example shows example fixed- and free-orientation source localizations
+produced by MNE, dSPM, sLORETA, and eLORETA.
+
+
+
+.. code-block:: python
+
+    # Author: Eric Larson <larson.eric.d@gmail.com>
+    #
+    # License: BSD (3-clause)
+
+    import mne
+    from mne.datasets import sample
+    from mne.minimum_norm import make_inverse_operator, apply_inverse
+
+    print(__doc__)
+
+    data_path = sample.data_path()
+    subjects_dir = data_path + '/subjects'
+
+    # Read data
+    fname_evoked = data_path + '/MEG/sample/sample_audvis-ave.fif'
+    evoked = mne.read_evokeds(fname_evoked, condition='Left Auditory',
+                              baseline=(None, 0))
+    fname_fwd = data_path + '/MEG/sample/sample_audvis-meg-eeg-oct-6-fwd.fif'
+    fname_cov = data_path + '/MEG/sample/sample_audvis-cov.fif'
+    fwd = mne.read_forward_solution(fname_fwd)
+    cov = mne.read_cov(fname_cov)
+
+
+
+
+
+
+
+Fixed orientation
+-----------------
+First let's create a fixed-orientation inverse, with the default weighting.
+
+
+
+.. code-block:: python
+
+
+    inv = make_inverse_operator(evoked.info, fwd, cov, loose=0., depth=0.8,
+                                verbose=True)
+
+
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    Forward is not surface oriented, converting.
+        Average patch normals will be employed in the rotation to the local surface coordinates....
+        Converting to surface-based source orientations...
+        [done]
+    Computing inverse operator with 364 channels.
+        Created an SSP operator (subspace dimension = 4)
+    estimated rank (mag + grad): 302
+    Setting small MEG eigenvalues to zero.
+    Not doing PCA for MEG.
+    estimated rank (eeg): 58
+    Setting small EEG eigenvalues to zero.
+    Not doing PCA for EEG.
+    Total rank is 360
+    Creating the depth weighting matrix...
+        203 planar channels
+        limit = 7262/7498 = 10.020865
+        scale = 2.58122e-08 exp = 0.8
+        Picked elements from a free-orientation depth-weighting prior into the fixed-orientation one
+        Average patch normals will be employed in the rotation to the local surface coordinates....
+        Converting to surface-based source orientations...
+        [done]
+    Computing inverse operator with 364 channels.
+    Creating the source covariance matrix
+    Whitening the forward solution.
+    Adjusting source covariance matrix.
+    Computing SVD of whitened and weighted lead field matrix.
+        largest singular value = 5.70263
+        scaling factor to adjust the trace = 1.18949e+19
+
+
+Let's look at the current estimates using MNE. We'll take the absolute
+value of the source estimates to simplify the visualization.
+
+
+
+.. code-block:: python
+
+
+    snr = 3.0
+    lambda2 = 1.0 / snr ** 2
+    kwargs = dict(initial_time=0.08, hemi='both', subjects_dir=subjects_dir,
+                  size=(600, 600))
+
+    stc = abs(apply_inverse(evoked, inv, lambda2, 'MNE', verbose=True))
+    brain = stc.plot(figure=1, **kwargs)
+    brain.add_text(0.1, 0.9, 'MNE', 'title', font_size=14)
+
+
+
+
+
+.. image:: /auto_tutorials/images/sphx_glr_plot_mne_solutions_001.png
+    :class: sphx-glr-single-img
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    Preparing the inverse operator for use...
+        Scaled noise and source covariance from nave = 1 to nave = 55
+        Created the regularized inverter
+        Created an SSP operator (subspace dimension = 4)
+        Created the whitener using a full noise covariance matrix (4 small eigenvalues omitted)
+    Applying inverse operator to "Left Auditory"...
+        Picked 364 channels from the data
+        Computing inverse...
+        Eigenleads need to be weighted ...
+    [done]
+
+
+Next let's use the default noise normalization, dSPM:
+
+
+
+.. code-block:: python
+
+
+    stc = abs(apply_inverse(evoked, inv, lambda2, 'dSPM', verbose=True))
+    brain = stc.plot(figure=2, **kwargs)
+    brain.add_text(0.1, 0.9, 'dSPM', 'title', font_size=14)
+
+
+
+
+.. image:: /auto_tutorials/images/sphx_glr_plot_mne_solutions_002.png
+    :class: sphx-glr-single-img
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    Preparing the inverse operator for use...
+        Scaled noise and source covariance from nave = 1 to nave = 55
+        Created the regularized inverter
+        Created an SSP operator (subspace dimension = 4)
+        Created the whitener using a full noise covariance matrix (4 small eigenvalues omitted)
+        Computing noise-normalization factors (dSPM)...
+    [done]
+    Applying inverse operator to "Left Auditory"...
+        Picked 364 channels from the data
+        Computing inverse...
+        Eigenleads need to be weighted ...
+        dSPM...
+    [done]
+
+
+And sLORETA:
+
+
+
+.. code-block:: python
+
+
+    stc = abs(apply_inverse(evoked, inv, lambda2, 'sLORETA', verbose=True))
+    brain = stc.plot(figure=3, **kwargs)
+    brain.add_text(0.1, 0.9, 'sLORETA', 'title', font_size=14)
+
+
+
+
+.. image:: /auto_tutorials/images/sphx_glr_plot_mne_solutions_003.png
+    :class: sphx-glr-single-img
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    Preparing the inverse operator for use...
+        Scaled noise and source covariance from nave = 1 to nave = 55
+        Created the regularized inverter
+        Created an SSP operator (subspace dimension = 4)
+        Created the whitener using a full noise covariance matrix (4 small eigenvalues omitted)
+        Computing noise-normalization factors (sLORETA)...
+    [done]
+    Applying inverse operator to "Left Auditory"...
+        Picked 364 channels from the data
+        Computing inverse...
+        Eigenleads need to be weighted ...
+        sLORETA...
+    [done]
+
+
+And finally eLORETA:
+
+
+
+.. code-block:: python
+
+
+    stc = abs(apply_inverse(evoked, inv, lambda2, 'eLORETA', verbose=True))
+    brain = stc.plot(figure=4, **kwargs)
+    brain.add_text(0.1, 0.9, 'eLORETA', 'title', font_size=14)
+
+
+
+
+.. image:: /auto_tutorials/images/sphx_glr_plot_mne_solutions_004.png
+    :class: sphx-glr-single-img
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    Preparing the inverse operator for use...
+        Scaled noise and source covariance from nave = 1 to nave = 55
+        Created the regularized inverter
+        Created an SSP operator (subspace dimension = 4)
+        Created the whitener using a full noise covariance matrix (4 small eigenvalues omitted)
+        Computing noise-normalization factors (eLORETA)...
+            Fitting up to 20 iterations...
+            Converged on iteration 11 (5.7e-07 < 1e-06)
+            Assembling eLORETA kernel and modifying inverse
+    [done]
+    Applying inverse operator to "Left Auditory"...
+        Picked 364 channels from the data
+        Computing inverse...
+        Eigenleads need to be weighted ...
+    [done]
+
+
+Free orientation
+----------------
+Now let's not constrain the orientation of the dipoles at all by creating
+a free-orientation inverse.
+
+
+
+.. code-block:: python
+
+
+    inv = make_inverse_operator(evoked.info, fwd, cov, loose=1., depth=0.8,
+                                verbose=True)
+
+
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    Forward is not surface oriented, converting.
+        Average patch normals will be employed in the rotation to the local surface coordinates....
+        Converting to surface-based source orientations...
+        [done]
+    Computing inverse operator with 364 channels.
+        Created an SSP operator (subspace dimension = 4)
+    estimated rank (mag + grad): 302
+    Setting small MEG eigenvalues to zero.
+    Not doing PCA for MEG.
+    estimated rank (eeg): 58
+    Setting small EEG eigenvalues to zero.
+    Not doing PCA for EEG.
+    Total rank is 360
+    Creating the depth weighting matrix...
+        203 planar channels
+        limit = 7262/7498 = 10.020865
+        scale = 2.58122e-08 exp = 0.8
+    Computing inverse operator with 364 channels.
+    Creating the source covariance matrix
+    Whitening the forward solution.
+    Adjusting source covariance matrix.
+    Computing SVD of whitened and weighted lead field matrix.
+        largest singular value = 5.2188
+        scaling factor to adjust the trace = 3.44205e+19
+
+
+Let's look at the current estimates using MNE. We'll take the absolute
+value of the source estimates to simplify the visualization.
+
+
+
+.. code-block:: python
+
+
+    stc = apply_inverse(evoked, inv, lambda2, 'MNE', verbose=True)
+    brain = stc.plot(figure=5, **kwargs)
+    brain.add_text(0.1, 0.9, 'MNE', 'title', font_size=14)
+
+
+
+
+
+.. image:: /auto_tutorials/images/sphx_glr_plot_mne_solutions_005.png
+    :class: sphx-glr-single-img
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    Preparing the inverse operator for use...
+        Scaled noise and source covariance from nave = 1 to nave = 55
+        Created the regularized inverter
+        Created an SSP operator (subspace dimension = 4)
+        Created the whitener using a full noise covariance matrix (4 small eigenvalues omitted)
+    Applying inverse operator to "Left Auditory"...
+        Picked 364 channels from the data
+        Computing inverse...
+        Eigenleads need to be weighted ...
+        Combining the current components...
+    [done]
+
+
+Next let's use the default noise normalization, dSPM:
+
+
+
+.. code-block:: python
+
+
+    stc = apply_inverse(evoked, inv, lambda2, 'dSPM', verbose=True)
+    brain = stc.plot(figure=6, **kwargs)
+    brain.add_text(0.1, 0.9, 'dSPM', 'title', font_size=14)
+
+
+
+
+.. image:: /auto_tutorials/images/sphx_glr_plot_mne_solutions_006.png
+    :class: sphx-glr-single-img
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    Preparing the inverse operator for use...
+        Scaled noise and source covariance from nave = 1 to nave = 55
+        Created the regularized inverter
+        Created an SSP operator (subspace dimension = 4)
+        Created the whitener using a full noise covariance matrix (4 small eigenvalues omitted)
+        Computing noise-normalization factors (dSPM)...
+    [done]
+    Applying inverse operator to "Left Auditory"...
+        Picked 364 channels from the data
+        Computing inverse...
+        Eigenleads need to be weighted ...
+        Combining the current components...
+        dSPM...
+    [done]
+
+
+And sLORETA:
+
+
+
+.. code-block:: python
+
+
+    stc = apply_inverse(evoked, inv, lambda2, 'sLORETA', verbose=True)
+    brain = stc.plot(figure=7, **kwargs)
+    brain.add_text(0.1, 0.9, 'sLORETA', 'title', font_size=14)
+
+
+
+
+.. image:: /auto_tutorials/images/sphx_glr_plot_mne_solutions_007.png
+    :class: sphx-glr-single-img
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    Preparing the inverse operator for use...
+        Scaled noise and source covariance from nave = 1 to nave = 55
+        Created the regularized inverter
+        Created an SSP operator (subspace dimension = 4)
+        Created the whitener using a full noise covariance matrix (4 small eigenvalues omitted)
+        Computing noise-normalization factors (sLORETA)...
+    [done]
+    Applying inverse operator to "Left Auditory"...
+        Picked 364 channels from the data
+        Computing inverse...
+        Eigenleads need to be weighted ...
+        Combining the current components...
+        sLORETA...
+    [done]
+
+
+And finally eLORETA:
+
+
+
+.. code-block:: python
+
+
+    stc = apply_inverse(evoked, inv, lambda2, 'eLORETA', verbose=True)
+    brain = stc.plot(figure=8, **kwargs)
+    brain.add_text(0.1, 0.9, 'eLORETA', 'title', font_size=14)
+
+
+
+.. image:: /auto_tutorials/images/sphx_glr_plot_mne_solutions_008.png
+    :class: sphx-glr-single-img
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    Preparing the inverse operator for use...
+        Scaled noise and source covariance from nave = 1 to nave = 55
+        Created the regularized inverter
+        Created an SSP operator (subspace dimension = 4)
+        Created the whitener using a full noise covariance matrix (4 small eigenvalues omitted)
+        Computing noise-normalization factors (eLORETA)...
+            Using independent orientation weights
+            Fitting up to 20 iterations (this make take a while)...
+            Converged on iteration 11 (4.6e-07 < 1e-06)
+            Assembling eLORETA kernel and modifying inverse
+    [done]
+    Applying inverse operator to "Left Auditory"...
+        Picked 364 channels from the data
+        Computing inverse...
+        Eigenleads need to be weighted ...
+        Combining the current components...
+    [done]
+
+
+**Total running time of the script:** ( 4 minutes  21.473 seconds)
+
+
+.. _sphx_glr_download_auto_tutorials_plot_mne_solutions.py:
+
+
+.. only :: html
+
+ .. container:: sphx-glr-footer
+    :class: sphx-glr-footer-example
+
+
+
+  .. container:: sphx-glr-download
+
+     :download:`Download Python source code: plot_mne_solutions.py <plot_mne_solutions.py>`
+
+
+
+  .. container:: sphx-glr-download
+
+     :download:`Download Jupyter notebook: plot_mne_solutions.ipynb <plot_mne_solutions.ipynb>`
+
+
+.. only:: html
+
+ .. rst-class:: sphx-glr-signature
+
+    `Gallery generated by Sphinx-Gallery <https://sphinx-gallery.readthedocs.io>`_
