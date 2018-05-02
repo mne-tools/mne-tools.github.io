@@ -1,24 +1,38 @@
+.. note::
+    :class: sphx-glr-download-link-note
 
+    Click :ref:`here <sphx_glr_download_auto_examples_stats_plot_sensor_regression.py>` to download the full example code
+.. rst-class:: sphx-glr-example-title
 
 .. _sphx_glr_auto_examples_stats_plot_sensor_regression.py:
 
 
-=====================================
-Sensor space least squares regression
-=====================================
+============================================================================
+Analysing continuous features with binning and regression in sensor space
+============================================================================
 
 Predict single trial activity from a continuous variable.
 A single-trial regression is performed in each sensor and timepoint
-individually, resulting in an Evoked object which contains the
-regression coefficient (beta value) for each combination of sensor
-and timepoint. Example also shows the T statistics and the associated
-p-values.
+individually, resulting in an :class:`mne.Evoked` object which contains the
+regression coefficient (beta value) for each combination of sensor and
+timepoint. Example shows the regression coefficient; the t and p values are
+also calculated automatically.
 
-Note that this example is for educational purposes and that the data used
-here do not contain any significant effect.
+Here, we repeat a few of the analyses from [1]_ by accessing the metadata
+object, which contains word-level information about various
+psycholinguistically relevant features of the words for which we have EEG
+activity.
 
-(See Hauk et al. (2006). The time course of visual word recognition as
-revealed by linear regression analysis of ERP data. Neuroimage.)
+For the general methodology, see e.g. [2]_
+
+
+References
+----------
+.. [1]  Dufau, S., Grainger, J., Midgley, KJ., Holcomb, PJ. A thousand
+   words are worth a picture: Snapshots of printed-word processing in an
+   event-related potential megastudy. Psychological Science, 2015
+.. [2]  Hauk et al. The time course of visual word recognition as revealed by
+   linear regression analysis of ERP data. Neuroimage, 2006
 
 
 
@@ -26,53 +40,20 @@ revealed by linear regression analysis of ERP data. Neuroimage.)
 
     # Authors: Tal Linzen <linzen@nyu.edu>
     #          Denis A. Engemann <denis.engemann@gmail.com>
+    #          Jona Sassenhagen <jona.sassenhagen@gmail.com>
     #
     # License: BSD (3-clause)
 
-    import numpy as np
-
+    import pandas as pd
     import mne
-    from mne.datasets import sample
-    from mne.stats.regression import linear_regression
+    from mne.stats import linear_regression, fdr_correction
+    from mne.viz import plot_compare_evokeds
+    from mne.datasets import kiloword
 
-    print(__doc__)
-
-    data_path = sample.data_path()
-
-
-
-
-
-.. rst-class:: sphx-glr-script-out
-
- Out::
-
-    Successfully extracted to: [u'/home/ubuntu/mne_data/MNE-sample-data']
-
-
-Set parameters and read data
-
-
-
-.. code-block:: python
-
-    raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
-    event_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw-eve.fif'
-    tmin, tmax = -0.2, 0.5
-    event_id = dict(aud_l=1, aud_r=2)
-
-    # Setup for reading the raw data
-    raw = mne.io.read_raw_fif(raw_fname)
-    events = mne.read_events(event_fname)
-
-    picks = mne.pick_types(raw.info, meg='mag', eeg=False, stim=False,
-                           eog=False, exclude='bads')
-
-    # Reject some epochs based on amplitude
-    reject = dict(mag=5e-12)
-    epochs = mne.Epochs(raw, events, event_id, tmin, tmax, proj=True,
-                        picks=picks, baseline=(None, 0), preload=True,
-                        reject=reject)
+    # Load the data
+    path = kiloword.data_path() + '/kword_metadata-epo.fif'
+    epochs = mne.read_epochs(path)
+    print(epochs.metadata.head())
 
 
 
@@ -82,52 +63,83 @@ Set parameters and read data
 
  Out::
 
-    Opening raw data file /home/ubuntu/mne_data/MNE-sample-data/MEG/sample/sample_audvis_filt-0-40_raw.fif...
-        Read a total of 4 projection items:
-            PCA-v1 (1 x 102)  idle
-            PCA-v2 (1 x 102)  idle
-            PCA-v3 (1 x 102)  idle
-            Average EEG reference (1 x 60)  idle
-        Range : 6450 ... 48149 =     42.956 ...   320.665 secs
-    Ready.
-    Current compensation grade : 0
-    145 matching events found
-    Created an SSP operator (subspace dimension = 3)
-    4 projection items activated
-    Loading data for 145 events and 106 original time points ...
-        Rejecting  epoch based on MAG : [u'MEG 1711']
-        Rejecting  epoch based on MAG : [u'MEG 1711']
-    2 bad epochs dropped
+    Reading /home/circleci/mne_data/MNE-kiloword-data/kword_metadata-epo.fif ...
+    Isotrak not found
+        Found the data of interest:
+            t =    -100.00 ...     920.00 ms
+            0 CTF compensation matrices available
+    960 matching events found
+    No baseline correction applied
+    960 matching events found
+    No baseline correction applied
+    Adding metadata with 8 columns
+    0 projection items activated
+       WORD  Concreteness  WordFrequency  OrthographicDistance  NumberOfLetters  \
+    0  film          5.45       3.189490                  1.75              4.0   
+    1  cent          5.90       3.700704                  1.35              4.0   
+    2  shot          4.60       2.858537                  1.20              4.0   
+    3  cold          3.70       3.454540                  1.15              4.0   
+    4  main          3.00       3.539076                  1.35              4.0   
+
+       BigramFrequency  ConsonantVowelProportion  VisualComplexity  
+    0           343.25                      0.75         55.783710  
+    1           546.75                      0.75         63.141553  
+    2           484.75                      0.75         64.600033  
+    3          1095.25                      0.75         63.657457  
+    4           686.00                      0.50         68.945661
 
 
-Run regression
+Psycholinguistically relevant word characteristics are continuous. I.e.,
+concreteness or imaginability is a graded property. In the metadata,
+we have concreteness ratings on a 5-point scale. We can show the dependence
+of the EEG on concreteness by dividing the data into bins and plotting the
+mean activity per bin, color coded.
 
 
 
 .. code-block:: python
 
-
-    names = ['intercept', 'trial-count']
-
-    intercept = np.ones((len(epochs),), dtype=np.float)
-    design_matrix = np.column_stack([intercept,  # intercept
-                                     np.linspace(0, 1, len(intercept))])
-
-    # also accepts source estimates
-    lm = linear_regression(epochs, design_matrix, names)
-
-
-    def plot_topomap(x, units):
-        x.plot_topomap(ch_type='mag', scalings=1., size=1.5, vmax=np.max,
-                       units=units, times=np.linspace(0.1, 0.2, 5))
+    name = "Concreteness"
+    df = epochs.metadata
+    df[name] = pd.cut(df[name], 11, labels=False) / 10
+    colors = {str(val): val for val in df[name].unique()}
+    epochs.metadata = df.assign(Intercept=1)  # Add an intercept for later
+    evokeds = {val: epochs[name + " == " + val].average() for val in colors}
+    plot_compare_evokeds(evokeds, colors=colors, split_legend=True,
+                         cmap=(name + " Percentile", "viridis"))
 
 
-    trial_count = lm['trial-count']
 
-    plot_topomap(trial_count.beta, units='z (beta)')
-    plot_topomap(trial_count.t_val, units='t')
-    plot_topomap(trial_count.mlog10_p_val, units='-log10 p')
-    plot_topomap(trial_count.stderr, units='z (error)')
+
+.. image:: /auto_examples/stats/images/sphx_glr_plot_sensor_regression_001.png
+    :class: sphx-glr-single-img
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out::
+
+    Replacing existing metadata with 9 columns
+    No picks, plotting the GFP ...
+    Float colors detected, mapping to percentiles ...
+
+
+We observe that there appears to be a monotonic dependence of EEG on
+concreteness. We can also conduct a continuous analysis: single-trial level
+regression with concreteness as a continuous (although here, binned)
+feature. We can plot the resulting regression coefficient just like an
+Event-related Potential.
+
+
+
+.. code-block:: python
+
+    names = ["Intercept", name]
+    res = linear_regression(epochs, epochs.metadata[names], names=names)
+    for cond in names:
+        res[cond].beta.plot_joint(title=cond, ts_args=dict(time_unit='s'),
+                                  topomap_args=dict(time_unit='s'))
+
 
 
 
@@ -136,40 +148,59 @@ Run regression
 
     *
 
-      .. image:: /auto_examples/stats/images/sphx_glr_plot_sensor_regression_001.png
-            :scale: 47
-
-    *
-
       .. image:: /auto_examples/stats/images/sphx_glr_plot_sensor_regression_002.png
-            :scale: 47
+            :class: sphx-glr-multi-img
 
     *
 
       .. image:: /auto_examples/stats/images/sphx_glr_plot_sensor_regression_003.png
-            :scale: 47
-
-    *
-
-      .. image:: /auto_examples/stats/images/sphx_glr_plot_sensor_regression_004.png
-            :scale: 47
+            :class: sphx-glr-multi-img
 
 
 .. rst-class:: sphx-glr-script-out
 
  Out::
 
-    Fitting linear model to epochs, (10812 targets, 2 regressors)
+    Fitting linear model to epochs, (7424 targets, 2 regressors)
     Done
 
 
-**Total running time of the script:** ( 0 minutes  2.560 seconds)
+Because the `linear_regression` function also estimates p values, we can --
+after applying FDR correction for multiple comparisons -- also visualise the
+statistical significance of the regression of word concreteness.
+The :func:`mne.viz.plot_evoked_image` function takes a `mask` parameter.
+If we supply it with a boolean mask of the positions where we can reject
+the null hypothesis, points that are not significant will be shown
+transparently, and if desired, in a different colour palette and surrounded
+by dark contour lines.
 
+
+
+.. code-block:: python
+
+    reject_H0, fdr_pvals = fdr_correction(res["Concreteness"].p_val.data)
+    evoked = res["Concreteness"].beta
+    evoked.plot_image(mask=reject_H0, time_unit='s')
+
+
+
+.. image:: /auto_examples/stats/images/sphx_glr_plot_sensor_regression_004.png
+    :class: sphx-glr-single-img
+
+
+
+
+**Total running time of the script:** ( 0 minutes  4.369 seconds)
+
+
+.. _sphx_glr_download_auto_examples_stats_plot_sensor_regression.py:
 
 
 .. only :: html
 
  .. container:: sphx-glr-footer
+    :class: sphx-glr-footer-example
+
 
 
   .. container:: sphx-glr-download
