@@ -73,23 +73,24 @@ we conduct t-tests on the difference between long and short words.
 .. code-block:: python
 
 
-    time_windows = ((200, 250), (350, 450))
+    time_windows = ((.2, .25), (.35, .45))
     elecs = ["Fz", "Cz", "Pz"]
 
     # display the EEG data in Pandas format (first 5 rows)
     print(epochs.to_data_frame()[elecs].head())
 
-    report = "{elec}, time: {tmin}-{tmax} msec; t({df})={t_val:.3f}, p={p:.3f}"
+    report = "{elec}, time: {tmin}-{tmax} s; t({df})={t_val:.3f}, p={p:.3f}"
     print("\nTargeted statistical test results:")
     for (tmin, tmax) in time_windows:
+        long_df = long.copy().crop(tmin, tmax).to_data_frame()
+        short_df = short.copy().crop(tmin, tmax).to_data_frame()
         for elec in elecs:
             # extract data
-            time_win = "{} < time < {}".format(tmin, tmax)
-            A = long.to_data_frame().query(time_win)[elec].groupby("condition")
-            B = short.to_data_frame().query(time_win)[elec].groupby("condition")
+            A = long_df[elec].groupby("condition").mean()
+            B = short_df[elec].groupby("condition").mean()
 
             # conduct t test
-            t, p = ttest_ind(A.mean(), B.mean())
+            t, p = ttest_ind(A, B)
 
             # display results
             format_dict = dict(elec=elec, tmin=tmin, tmax=tmax,
@@ -113,12 +114,12 @@ we conduct t-tests on the difference between long and short words.
                     -84   0.483485  0.159242 -0.312121
 
     Targeted statistical test results:
-    Fz, time: 200-250 msec; t(958)=-0.634, p=0.526
-    Cz, time: 200-250 msec; t(958)=-2.842, p=0.005
-    Pz, time: 200-250 msec; t(958)=-3.746, p=0.000
-    Fz, time: 350-450 msec; t(958)=5.192, p=0.000
-    Cz, time: 350-450 msec; t(958)=5.555, p=0.000
-    Pz, time: 350-450 msec; t(958)=6.353, p=0.000
+    Fz, time: 0.2-0.25 s; t(958)=-0.572, p=0.568
+    Cz, time: 0.2-0.25 s; t(958)=-2.836, p=0.005
+    Pz, time: 0.2-0.25 s; t(958)=-3.938, p=0.000
+    Fz, time: 0.35-0.45 s; t(958)=5.192, p=0.000
+    Cz, time: 0.35-0.45 s; t(958)=5.555, p=0.000
+    Pz, time: 0.35-0.45 s; t(958)=6.353, p=0.000
 
 
 Absent specific hypotheses, we can also conduct an exploratory
@@ -232,7 +233,7 @@ effects on the head.
 
 
 
-**Total running time of the script:** ( 0 minutes  35.912 seconds)
+**Total running time of the script:** ( 0 minutes  33.266 seconds)
 
 
 .. _sphx_glr_download_auto_tutorials_plot_stats_cluster_erp.py:
