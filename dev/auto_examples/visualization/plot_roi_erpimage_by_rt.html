@@ -190,6 +190,7 @@ and the trials are plotted, sorting by response time.</p>
 <span class="kn">from</span> <span class="nn">mne.datasets</span> <span class="kn">import</span> <span class="n">testing</span>
 <span class="kn">from</span> <span class="nn">mne</span> <span class="kn">import</span> <a href="../../generated/mne.Epochs.html#mne.Epochs" title="View documentation for mne.Epochs"><span class="n">Epochs</span></a><span class="p">,</span> <span class="n">io</span><span class="p">,</span> <a href="../../generated/mne.pick_types.html#mne.pick_types" title="View documentation for mne.pick_types"><span class="n">pick_types</span></a>
 <span class="kn">from</span> <span class="nn">mne.event</span> <span class="kn">import</span> <a href="../../generated/mne.event.define_target_events.html#mne.event.define_target_events" title="View documentation for mne.event.define_target_events"><span class="n">define_target_events</span></a>
+<span class="kn">from</span> <span class="nn">mne.channels</span> <span class="kn">import</span> <span class="n">make_1020_channel_selections</span>
 
 <span class="k">print</span><span class="p">(</span><span class="vm">__doc__</span><span class="p">)</span>
 </pre></div>
@@ -238,17 +239,12 @@ Not setting metadata
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Parameters for plotting</span>
 <span class="n">order</span> <span class="o">=</span> <span class="n">rts</span><span class="o">.</span><span class="n">argsort</span><span class="p">()</span>  <span class="c1"># sorting from fast to slow trials</span>
 
-<span class="n">rois</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>
-<span class="k">for</span> <span class="n">pick</span><span class="p">,</span> <span class="n">channel</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">epochs</span><span class="o">.</span><span class="n">ch_names</span><span class="p">):</span>
-    <span class="n">last_char</span> <span class="o">=</span> <span class="n">channel</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># for 10/20, last letter codes the hemisphere</span>
-    <span class="n">roi</span> <span class="o">=</span> <span class="p">(</span><span class="s2">&quot;Midline&quot;</span> <span class="k">if</span> <span class="n">last_char</span> <span class="ow">in</span> <span class="s2">&quot;z12&quot;</span> <span class="k">else</span>
-           <span class="p">(</span><span class="s2">&quot;Left&quot;</span> <span class="k">if</span> <span class="nb">int</span><span class="p">(</span><span class="n">last_char</span><span class="p">)</span> <span class="o">%</span> <span class="mi">2</span> <span class="k">else</span> <span class="s2">&quot;Right&quot;</span><span class="p">))</span>
-    <span class="n">rois</span><span class="p">[</span><span class="n">roi</span><span class="p">]</span> <span class="o">=</span> <span class="n">rois</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">roi</span><span class="p">,</span> <span class="nb">list</span><span class="p">())</span> <span class="o">+</span> <span class="p">[</span><span class="n">pick</span><span class="p">]</span>
+<span class="n">selections</span> <span class="o">=</span> <span class="n">make_1020_channel_selections</span><span class="p">(</span><span class="n">epochs</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">midline</span><span class="o">=</span><span class="s2">&quot;12z&quot;</span><span class="p">)</span>
 
 <span class="c1"># The actual plots</span>
 <span class="k">for</span> <span class="n">combine_measures</span> <span class="ow">in</span> <span class="p">(</span><span class="s1">&#39;gfp&#39;</span><span class="p">,</span> <span class="s1">&#39;median&#39;</span><span class="p">):</span>
-    <span class="n">epochs</span><span class="o">.</span><span class="n">plot_image</span><span class="p">(</span><span class="n">group_by</span><span class="o">=</span><span class="n">rois</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="n">order</span><span class="p">,</span> <span class="n">overlay_times</span><span class="o">=</span><span class="n">rts</span> <span class="o">/</span> <span class="mf">1000.</span><span class="p">,</span>
-                      <span class="n">sigma</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span> <span class="n">combine</span><span class="o">=</span><span class="n">combine_measures</span><span class="p">,</span>
+    <span class="n">epochs</span><span class="o">.</span><span class="n">plot_image</span><span class="p">(</span><span class="n">group_by</span><span class="o">=</span><span class="n">selections</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="n">order</span><span class="p">,</span> <span class="n">sigma</span><span class="o">=</span><span class="mf">1.5</span><span class="p">,</span>
+                      <span class="n">overlay_times</span><span class="o">=</span><span class="n">rts</span> <span class="o">/</span> <span class="mf">1000.</span><span class="p">,</span> <span class="n">combine</span><span class="o">=</span><span class="n">combine_measures</span><span class="p">,</span>
                       <span class="n">ts_args</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">vlines</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="n">rts</span><span class="o">.</span><span class="n">mean</span><span class="p">()</span> <span class="o">/</span> <span class="mf">1000.</span><span class="p">]))</span>
 </pre></div>
 </div>
@@ -302,7 +298,7 @@ Not setting metadata
 0 bad epochs dropped
 </pre></div>
 </div>
-<p><strong>Total running time of the script:</strong> ( 0 minutes  2.676 seconds)</p>
+<p><strong>Total running time of the script:</strong> ( 0 minutes  2.606 seconds)</p>
 <div class="sphx-glr-footer class sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-visualization-plot-roi-erpimage-by-rt-py">
 <div class="sphx-glr-download docutils container">
 <a class="reference download internal" href="../../_downloads/plot_roi_erpimage_by_rt.py" download=""><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">plot_roi_erpimage_by_rt.py</span></code></a></div>
@@ -332,7 +328,7 @@ Not setting metadata
       <li><a href="faq.html#cite">Cite MNE</a></li>
       <li class="pull-right"><a href="#">Back to top</a></li>
     </ul>
-    <p>&copy; Copyright 2012-2018, MNE Developers. Last updated on 2018-06-05.</p>
+    <p>&copy; Copyright 2012-2018, MNE Developers. Last updated on 2018-06-06.</p>
   </div>
 </footer>
   </body>

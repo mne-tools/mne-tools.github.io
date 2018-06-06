@@ -33,6 +33,7 @@ and the trials are plotted, sorting by response time.
     from mne.datasets import testing
     from mne import Epochs, io, pick_types
     from mne.event import define_target_events
+    from mne.channels import make_1020_channel_selections
 
     print(__doc__)
 
@@ -119,17 +120,12 @@ Plot
     # Parameters for plotting
     order = rts.argsort()  # sorting from fast to slow trials
 
-    rois = dict()
-    for pick, channel in enumerate(epochs.ch_names):
-        last_char = channel[-1]  # for 10/20, last letter codes the hemisphere
-        roi = ("Midline" if last_char in "z12" else
-               ("Left" if int(last_char) % 2 else "Right"))
-        rois[roi] = rois.get(roi, list()) + [pick]
+    selections = make_1020_channel_selections(epochs.info, midline="12z")
 
     # The actual plots
     for combine_measures in ('gfp', 'median'):
-        epochs.plot_image(group_by=rois, order=order, overlay_times=rts / 1000.,
-                          sigma=1.5, combine=combine_measures,
+        epochs.plot_image(group_by=selections, order=order, sigma=1.5,
+                          overlay_times=rts / 1000., combine=combine_measures,
                           ts_args=dict(vlines=[0, rts.mean() / 1000.]))
 
 
@@ -209,7 +205,7 @@ Plot
     0 bad epochs dropped
 
 
-**Total running time of the script:** ( 0 minutes  2.676 seconds)
+**Total running time of the script:** ( 0 minutes  2.606 seconds)
 
 
 .. _sphx_glr_download_auto_examples_visualization_plot_roi_erpimage_by_rt.py:
