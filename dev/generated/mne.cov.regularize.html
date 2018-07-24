@@ -7,13 +7,13 @@
     <title>mne.cov.regularize &#8212; MNE 0.17.dev0 documentation</title>
     <link rel="stylesheet" href="../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/gallery.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/reset-syntax.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/gallery.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/reset-syntax.css" />
     <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <script type="text/javascript" src="../_static/js/jquery-1.11.0.min.js"></script>
     <script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
     <script type="text/javascript" src="../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
@@ -91,6 +91,7 @@ This documentation is for <strong>development version 0.17.dev0</strong>.
                 <li><a href="../getting_started.html">Install</a></li>
                 <li><a href="../documentation.html">Documentation</a></li>
                 <li><a href="../python_reference.html">API</a></li>
+                <li><a href="../glossary.html">Glossary</a></li>
                 <li><a href="../auto_examples/index.html">Examples</a></li>
                 <li><a href="../contributing.html">Contribute</a></li>
             
@@ -175,7 +176,7 @@ This documentation is for <strong>development version 0.17.dev0</strong>.
 <h1>mne.cov.regularize<a class="headerlink" href="#mne-cov-regularize" title="Permalink to this headline">¶</a></h1>
 <dl class="function">
 <dt id="mne.cov.regularize">
-<code class="descclassname">mne.cov.</code><code class="descname">regularize</code><span class="sig-paren">(</span><em>cov</em>, <em>info</em>, <em>mag=0.1</em>, <em>grad=0.1</em>, <em>eeg=0.1</em>, <em>exclude='bads'</em>, <em>proj=True</em>, <em>seeg=0.1</em>, <em>ecog=0.1</em>, <em>hbo=0.1</em>, <em>hbr=0.1</em>, <em>verbose=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/../doc/&lt;string&gt;#L1427-L1555"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.cov.regularize" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">mne.cov.</code><code class="descname">regularize</code><span class="sig-paren">(</span><em>cov</em>, <em>info</em>, <em>mag=0.1</em>, <em>grad=0.1</em>, <em>eeg=0.1</em>, <em>exclude='bads'</em>, <em>proj=True</em>, <em>seeg=0.1</em>, <em>ecog=0.1</em>, <em>hbo=0.1</em>, <em>hbr=0.1</em>, <em>rank=''</em>, <em>scalings=None</em>, <em>verbose=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/cov.py#L1496-L1662"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.cov.regularize" title="Permalink to this definition">¶</a></dt>
 <dd><p>Regularize noise covariance matrix.</p>
 <p>This method works by adding a constant to the diagonal for each
 channel type separately. Special care is taken to keep the
@@ -204,7 +205,8 @@ for more information.</p>
 <dd><p class="first last">Regularization factor for MEG magnetometers.</p>
 </dd>
 <dt><strong>grad</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float (default 0.1)</span></dt>
-<dd><p class="first last">Regularization factor for MEG gradiometers.</p>
+<dd><p class="first last">Regularization factor for MEG gradiometers. Must be the same as
+<cite>mag</cite> if data have been processed with SSS.</p>
 </dd>
 <dt><strong>eeg</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float (default 0.1)</span></dt>
 <dd><p class="first last">Regularization factor for EEG.</p>
@@ -214,7 +216,7 @@ for more information.</p>
 are extracted from both info[‘bads’] and cov[‘bads’].</p>
 </dd>
 <dt><strong>proj</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool (default true)</span></dt>
-<dd><p class="first last">Apply or not projections to keep rank of data.</p>
+<dd><p class="first last">Apply projections to keep rank of data.</p>
 </dd>
 <dt><strong>seeg</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float (default 0.1)</span></dt>
 <dd><p class="first last">Regularization factor for sEEG signals.</p>
@@ -227,6 +229,26 @@ are extracted from both info[‘bads’] and cov[‘bads’].</p>
 </dd>
 <dt><strong>hbr</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float (default 0.1)</span></dt>
 <dd><p class="first last">Regularization factor for HBR signals.</p>
+</dd>
+<dt><strong>rank</strong> <span class="classifier-delimiter">:</span> <span class="classifier">None | int | dict | ‘full’</span></dt>
+<dd><p class="first">Specified rank of the noise covariance matrix. If None, the rank is
+detected automatically. If int, the rank is specified for the MEG
+channels. A dictionary with entries ‘eeg’, ‘meg’ or any other
+data channel type such as ‘seeg’ or ‘ecog’ can be used
+to specify the rank for each modality. If ‘full’ (default in 0.17),
+the covariance is assumed to be full-rank when regularizing
+(unless proj=True, in which case projections are accounted for).
+The default in 0.18 will be None.</p>
+<div class="last versionadded">
+<p><span class="versionmodified">New in version 0.17.</span></p>
+</div>
+</dd>
+<dt><strong>scalings</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict | None</span></dt>
+<dd><p class="first">Data will be rescaled before rank estimation to improve accuracy.
+See <a class="reference internal" href="mne.compute_covariance.html#mne.compute_covariance" title="mne.compute_covariance"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.compute_covariance()</span></code></a>.</p>
+<div class="last versionadded">
+<p><span class="versionmodified">New in version 0.17.</span></p>
+</div>
 </dd>
 <dt><strong>verbose</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool | str | int | None (default None)</span></dt>
 <dd><p class="first last">If not None, override default verbose level (see <a class="reference internal" href="mne.verbose.html#mne.verbose" title="mne.verbose"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.verbose()</span></code></a>).</p>
@@ -278,7 +300,7 @@ are extracted from both info[‘bads’] and cov[‘bads’].</p>
       <li><a href="faq.html#cite">Cite MNE</a></li>
       <li class="pull-right"><a href="#">Back to top</a></li>
     </ul>
-    <p>&copy; Copyright 2012-2018, MNE Developers. Last updated on 2018-07-20.</p>
+    <p>&copy; Copyright 2012-2018, MNE Developers. Last updated on 2018-11-19.</p>
   </div>
 </footer>
   </body>

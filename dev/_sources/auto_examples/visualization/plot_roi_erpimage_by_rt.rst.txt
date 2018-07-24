@@ -22,7 +22,6 @@ median and the Global Field Power within each channel group is calculated,
 and the trials are plotted, sorting by response time.
 
 
-
 .. code-block:: python
 
     # Authors: Jona Sassenhagen <jona.sassenhagen@gmail.com>
@@ -30,8 +29,6 @@ and the trials are plotted, sorting by response time.
     # License: BSD (3-clause)
 
     import mne
-    from mne.datasets import testing
-    from mne import Epochs, io, pick_types
     from mne.event import define_target_events
     from mne.channels import make_1020_channel_selections
 
@@ -46,19 +43,17 @@ and the trials are plotted, sorting by response time.
 Load EEGLAB example data (a small EEG dataset)
 
 
-
 .. code-block:: python
 
-    data_path = testing.data_path()
+    data_path = mne.datasets.testing.data_path()
     fname = data_path + "/EEGLAB/test_raw.set"
     montage = data_path + "/EEGLAB/test_chans.locs"
 
     event_id = {"rt": 1, "square": 2}  # must be specified for str events
     eog = {"FPz", "EOG1", "EOG2"}
-    raw = io.eeglab.read_raw_eeglab(fname, eog=eog, montage=montage,
-                                    event_id=event_id)
-    picks = pick_types(raw.info, eeg=True)
-    events = mne.find_events(raw)
+    raw = mne.io.read_raw_eeglab(fname, eog=eog, montage=montage,
+                                 stim_channel=False)
+    events = mne.events_from_annotations(raw, event_id)[0]
 
 
 
@@ -71,12 +66,10 @@ Load EEGLAB example data (a small EEG dataset)
  .. code-block:: none
 
     Reading /home/circleci/mne_data/MNE-testing-data/EEGLAB/test_raw.fdt
-    154 events found
-    Event IDs: [1 2]
+    Used Annotations descriptions: ['square', 'rt']
 
 
 Create Epochs
-
 
 
 .. code-block:: python
@@ -91,8 +84,8 @@ Create Epochs
     new_events, rts = define_target_events(events, reference_id, target_id, sfreq,
                                            tmin=0., tmax=tmax, new_id=2)
 
-    epochs = Epochs(raw, events=new_events, tmax=tmax + .1,
-                    event_id={"square": 2}, picks=picks)
+    epochs = mne.Epochs(raw, events=new_events, tmax=tmax + .1,
+                        event_id={"square": 2})
 
 
 
@@ -110,8 +103,7 @@ Create Epochs
     0 projection items activated
 
 
-Plot
-
+Plot using GFP
 
 
 .. code-block:: python
@@ -122,11 +114,11 @@ Plot
 
     selections = make_1020_channel_selections(epochs.info, midline="12z")
 
-    # The actual plots
-    for combine_measures in ('gfp', 'median'):
-        epochs.plot_image(group_by=selections, order=order, sigma=1.5,
-                          overlay_times=rts / 1000., combine=combine_measures,
-                          ts_args=dict(vlines=[0, rts.mean() / 1000.]))
+    # The actual plots (GFP)
+    epochs.plot_image(group_by=selections, order=order, sigma=1.5,
+                      overlay_times=rts / 1000., combine='gfp',
+                      ts_args=dict(vlines=[0, rts.mean() / 1000.]))
+
 
 
 
@@ -147,6 +139,47 @@ Plot
 
       .. image:: /auto_examples/visualization/images/sphx_glr_plot_roi_erpimage_by_rt_003.png
             :class: sphx-glr-multi-img
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    Loading data for 73 events and 129 original time points ...
+    0 bad epochs dropped
+    73 matching events found
+    No baseline correction applied
+    Not setting metadata
+    0 projection items activated
+    0 bad epochs dropped
+    73 matching events found
+    No baseline correction applied
+    Not setting metadata
+    0 projection items activated
+    0 bad epochs dropped
+    73 matching events found
+    No baseline correction applied
+    Not setting metadata
+    0 projection items activated
+    0 bad epochs dropped
+
+
+Plot using median
+
+
+.. code-block:: python
+
+
+    epochs.plot_image(group_by=selections, order=order, sigma=1.5,
+                      overlay_times=rts / 1000., combine='median',
+                      ts_args=dict(vlines=[0, rts.mean() / 1000.]))
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
 
     *
 
@@ -171,23 +204,6 @@ Plot
  .. code-block:: none
 
     Loading data for 73 events and 129 original time points ...
-    0 bad epochs dropped
-    73 matching events found
-    No baseline correction applied
-    Not setting metadata
-    0 projection items activated
-    0 bad epochs dropped
-    73 matching events found
-    No baseline correction applied
-    Not setting metadata
-    0 projection items activated
-    0 bad epochs dropped
-    73 matching events found
-    No baseline correction applied
-    Not setting metadata
-    0 projection items activated
-    0 bad epochs dropped
-    Loading data for 73 events and 129 original time points ...
     73 matching events found
     No baseline correction applied
     Not setting metadata
@@ -205,7 +221,12 @@ Plot
     0 bad epochs dropped
 
 
-**Total running time of the script:** ( 0 minutes  2.827 seconds)
+
+.. rst-class:: sphx-glr-timing
+
+   **Total running time of the script:** ( 0 minutes  4.400 seconds)
+
+**Estimated memory usage:**  9 MB
 
 
 .. _sphx_glr_download_auto_examples_visualization_plot_roi_erpimage_by_rt.py:

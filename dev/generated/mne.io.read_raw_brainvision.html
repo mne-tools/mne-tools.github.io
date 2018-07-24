@@ -7,13 +7,13 @@
     <title>mne.io.read_raw_brainvision &#8212; MNE 0.17.dev0 documentation</title>
     <link rel="stylesheet" href="../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/gallery.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/reset-syntax.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/gallery.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/reset-syntax.css" />
     <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <script type="text/javascript" src="../_static/js/jquery-1.11.0.min.js"></script>
     <script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
     <script type="text/javascript" src="../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
@@ -91,6 +91,7 @@ This documentation is for <strong>development version 0.17.dev0</strong>.
                 <li><a href="../getting_started.html">Install</a></li>
                 <li><a href="../documentation.html">Documentation</a></li>
                 <li><a href="../python_reference.html">API</a></li>
+                <li><a href="../glossary.html">Glossary</a></li>
                 <li><a href="../auto_examples/index.html">Examples</a></li>
                 <li><a href="../contributing.html">Contribute</a></li>
             
@@ -172,7 +173,7 @@ This documentation is for <strong>development version 0.17.dev0</strong>.
 <h1>mne.io.read_raw_brainvision<a class="headerlink" href="#mne-io-read-raw-brainvision" title="Permalink to this headline">¶</a></h1>
 <dl class="function">
 <dt id="mne.io.read_raw_brainvision">
-<code class="descclassname">mne.io.</code><code class="descname">read_raw_brainvision</code><span class="sig-paren">(</span><em>vhdr_fname</em>, <em>montage=None</em>, <em>eog=('HEOGL'</em>, <em>'HEOGR'</em>, <em>'VEOGb')</em>, <em>misc='auto'</em>, <em>scale=1.0</em>, <em>preload=False</em>, <em>response_trig_shift=0</em>, <em>event_id=None</em>, <em>verbose=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/io/brainvision/brainvision.py#L757-L815"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.io.read_raw_brainvision" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">mne.io.</code><code class="descname">read_raw_brainvision</code><span class="sig-paren">(</span><em>vhdr_fname</em>, <em>montage=None</em>, <em>eog=('HEOGL'</em>, <em>'HEOGR'</em>, <em>'VEOGb')</em>, <em>misc='auto'</em>, <em>scale=1.0</em>, <em>preload=False</em>, <em>response_trig_shift=0</em>, <em>event_id=None</em>, <em>trig_shift_by_type=None</em>, <em>stim_channel=None</em>, <em>verbose=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/io/brainvision/brainvision.py#L1003-L1086"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.io.read_raw_brainvision" title="Permalink to this definition">¶</a></dt>
 <dd><p>Reader for Brain Vision EEG file.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -208,17 +209,44 @@ If False, data are not read until save.</p>
 </dd>
 <dt><strong>response_trig_shift</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int | None</span></dt>
 <dd><p class="first last">An integer that will be added to all response triggers when reading
-events (stimulus triggers will be unaffected). If None, response
-triggers will be ignored. Default is 0 for backwards compatibility, but
-typically another value or None will be necessary.</p>
+events (stimulus triggers will be unaffected). Use
+<code class="docutils literal notranslate"><span class="pre">trig_shift_by_type={'response':</span> <span class="pre">...}</span></code> instead. If None, response
+triggers will be ignored. Default is 0 for backwards compatibility,
+but typically another value or None will be necessary.
+This was deprecated in 0.17 and will be removed in 0.18.</p>
 </dd>
 <dt><strong>event_id</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict | None</span></dt>
-<dd><p class="first last">The id of special events to consider in addition to those that
-follow the normal Brainvision trigger format (‘S###’).
-If dict, the keys will be mapped to trigger values on the stimulus
-channel. Example: {‘SyncStatus’: 1; ‘Pulse Artifact’: 3}. If None
-or an empty dict (default), only stimulus events are added to the
-stimulus channel. Keys are case sensitive.</p>
+<dd><p class="first last">Special events to consider in addition to those that follow the normal
+BrainVision trigger format (‘###’ with an optional single character
+prefix). If dict, the keys will be mapped to trigger values on the
+stimulus channel. Example: {‘SyncStatus’: 1, ‘Pulse Artifact’: 3}.
+If None or an empty dict (default), only BrainVision format events are
+added to the stimulus channel. Keys are case sensitive. “New Segment”
+markers are always dropped.
+This was deprecated in 0.17 and will be removed in 0.18.</p>
+</dd>
+<dt><strong>trig_shift_by_type</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict | None</span></dt>
+<dd><p class="first last">The names of marker types to which an offset should be added.
+If dict, the keys specify marker types (case is ignored), so that the
+corresponding value (an integer) will be added to the trigger value of
+all events of this type. If the value for a key is in the dict is None,
+all markers of this type will be ignored. If None (default), no offset
+is added, which may lead to different marker types being mapped to the
+same event id.
+This was deprecated in 0.17 and will be removed in 0.18.</p>
+</dd>
+<dt><strong>stim_channel</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool (default True)</span></dt>
+<dd><p class="first">Add a stim channel from the events.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">This defaults to True in 0.17 but will change to False in
+0.18 (when no stim channel synthesis will be allowed)
+and be removed in 0.19; migrate code to use
+<a class="reference internal" href="mne.events_from_annotations.html#mne.events_from_annotations" title="mne.events_from_annotations"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.events_from_annotations()</span></code></a> instead.</p>
+</div>
+<div class="last versionadded">
+<p><span class="versionmodified">New in version 0.17.</span></p>
+</div>
 </dd>
 <dt><strong>verbose</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, str, int, or None</span></dt>
 <dd><p class="first last">If not None, override default verbose level (see <a class="reference internal" href="mne.verbose.html#mne.verbose" title="mne.verbose"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.verbose()</span></code></a>
@@ -267,7 +295,7 @@ and <a class="reference internal" href="../auto_tutorials/plot_configuration.htm
       <li><a href="faq.html#cite">Cite MNE</a></li>
       <li class="pull-right"><a href="#">Back to top</a></li>
     </ul>
-    <p>&copy; Copyright 2012-2018, MNE Developers. Last updated on 2018-07-20.</p>
+    <p>&copy; Copyright 2012-2018, MNE Developers. Last updated on 2018-11-19.</p>
   </div>
 </footer>
   </body>

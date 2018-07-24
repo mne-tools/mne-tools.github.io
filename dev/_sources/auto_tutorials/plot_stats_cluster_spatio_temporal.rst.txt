@@ -12,11 +12,10 @@ Permutation t-test on source data with spatio-temporal clustering
 =================================================================
 
 Tests if the evoked response is significantly different between
-conditions across subjects (simulated here using one subject's data).
+two conditions across subjects. Here just for demonstration purposes
+we simulate data from multiple subjects using one subject's data.
 The multiple comparisons problem is addressed with a cluster-level
 permutation test across space and time.
-
-
 
 
 .. code-block:: python
@@ -49,7 +48,6 @@ permutation test across space and time.
 
 Set parameters
 --------------
-
 
 
 .. code-block:: python
@@ -90,7 +88,6 @@ Set parameters
 
 Read epochs for all channels, removing a bad one
 ------------------------------------------------
-
 
 
 .. code-block:: python
@@ -155,7 +152,6 @@ Read epochs for all channels, removing a bad one
 
 Transform to source space
 -------------------------
-
 
 
 .. code-block:: python
@@ -232,13 +228,15 @@ Transform to source space
         Scaled noise and source covariance from nave = 1 to nave = 63
         Created the regularized inverter
         Created an SSP operator (subspace dimension = 3)
-        Created the whitener using a full noise covariance matrix (3 small eigenvalues omitted)
+        Created the whitener using a noise covariance matrix with rank 302 (3 small eigenvalues omitted)
         Computing noise-normalization factors (dSPM)...
     [done]
     Applying inverse operator to "1"...
         Picked 305 channels from the data
         Computing inverse...
         Eigenleads need to be weighted ...
+        Computing residual...
+        Explained  69.4% variance
         Combining the current components...
         dSPM...
     [done]
@@ -246,13 +244,15 @@ Transform to source space
         Scaled noise and source covariance from nave = 1 to nave = 63
         Created the regularized inverter
         Created an SSP operator (subspace dimension = 3)
-        Created the whitener using a full noise covariance matrix (3 small eigenvalues omitted)
+        Created the whitener using a noise covariance matrix with rank 302 (3 small eigenvalues omitted)
         Computing noise-normalization factors (dSPM)...
     [done]
     Applying inverse operator to "3"...
         Picked 305 channels from the data
         Computing inverse...
         Eigenleads need to be weighted ...
+        Computing residual...
+        Explained  70.7% variance
         Combining the current components...
         dSPM...
     [done]
@@ -270,7 +270,6 @@ response (just noisy in source space) here.
     Note that for 7 subjects with a two-sided statistical test, the minimum
     significance under a permutation test is only p = 1/(2 ** 6) = 0.015,
     which is large.
-
 
 
 .. code-block:: python
@@ -306,15 +305,16 @@ instead), but here since all estimates are on 'sample' we can use one
 morph matrix for all the heavy lifting.
 
 
-
 .. code-block:: python
 
 
     # Read the source space we are morphing to
     src = mne.read_source_spaces(src_fname)
     fsave_vertices = [s['vertno'] for s in src]
-    morph_mat = mne.compute_morph_matrix('sample', 'fsaverage', sample_vertices,
-                                         fsave_vertices, 20, subjects_dir)
+    morph_mat = mne.compute_source_morph(
+        src=inverse_operator['src'], subject_to='fsaverage',
+        spacing=fsave_vertices, subjects_dir=subjects_dir).morph_mat
+
     n_vertices_fsave = morph_mat.shape[0]
 
     #    We have to change the shape for the dot() to work properly
@@ -338,11 +338,13 @@ morph matrix for all the heavy lifting.
         Reading a source space...
         [done]
         2 source spaces read
+    surface source space inferred...
     Computing morph matrix...
         Left-hemisphere map read.
         Right-hemisphere map read.
-        20 smooth iterations done.
-        20 smooth iterations done.
+        17 smooth iterations done.
+        14 smooth iterations done.
+    [done]
     [done]
     Morphing data.
 
@@ -350,7 +352,6 @@ morph matrix for all the heavy lifting.
 Finally, we want to compare the overall activity levels in each condition,
 the diff is taken along the last axis (condition). The negative sign makes
 it so condition1 > condition2 shows up as "red blobs" (instead of blue).
-
 
 
 .. code-block:: python
@@ -372,7 +373,6 @@ To use an algorithm optimized for spatio-temporal clustering, we
 just pass the spatial connectivity matrix (instead of spatio-temporal)
 
 
-
 .. code-block:: python
 
     print('Computing connectivity.')
@@ -389,7 +389,8 @@ just pass the spatial connectivity matrix (instead of spatio-temporal)
     print('Clustering.')
     T_obs, clusters, cluster_p_values, H0 = clu = \
         spatio_temporal_cluster_1samp_test(X, connectivity=connectivity, n_jobs=1,
-                                           threshold=t_threshold, buffer_size=None)
+                                           threshold=t_threshold, buffer_size=None,
+                                           verbose=True)
     #    Now select the clusters that are sig. at p < 0.05 (note that this value
     #    is multiple-comparisons corrected).
     good_cluster_inds = np.where(cluster_p_values < 0.05)[0]
@@ -407,17 +408,17 @@ just pass the spatial connectivity matrix (instead of spatio-temporal)
     Computing connectivity.
     -- number of connected vertices : 20484
     Clustering.
-    stat_fun(H1): min=-28.075916 max=40.083147
+    stat_fun(H1): min=-25.828905 max=32.550985
     Running initial clustering
-    Found 377 clusters
+    Found 345 clusters
     Permuting 63 times (exact test)...
+
     Computing cluster p-values
     Done.
 
 
 Visualize the clusters
 ----------------------
-
 
 
 .. code-block:: python
@@ -437,7 +438,7 @@ Visualize the clusters
     brain = stc_all_cluster_vis.plot(
         hemi='both', views='lateral', subjects_dir=subjects_dir,
         time_label='Duration significant (ms)', size=(800, 800),
-        smoothing_steps=5)
+        smoothing_steps=5, clim=dict(kind='value', pos_lims=[0, 1, 40]))
     # brain.save_image('clusters.png')
 
 
@@ -455,7 +456,12 @@ Visualize the clusters
     Visualizing clusters.
 
 
-**Total running time of the script:** ( 0 minutes  28.365 seconds)
+
+.. rst-class:: sphx-glr-timing
+
+   **Total running time of the script:** ( 0 minutes  22.874 seconds)
+
+**Estimated memory usage:**  10 MB
 
 
 .. _sphx_glr_download_auto_tutorials_plot_stats_cluster_spatio_temporal.py:

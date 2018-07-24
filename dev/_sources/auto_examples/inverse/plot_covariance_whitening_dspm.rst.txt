@@ -19,18 +19,17 @@ that improper regularization can lead to overestimation of source amplitudes.
 This example makes use of the previous, non-optimized code path that was used
 before implementing the suggestions presented in [1]_.
 
+This example does quite a bit of processing, so even on a
+fast machine it can take a couple of minutes to complete.
+
 .. warning:: Please do not copy the patterns presented here for your own
              analysis, this is example is purely illustrative.
-
-.. note:: This example does quite a bit of processing, so even on a
-          fast machine it can take a couple of minutes to complete.
 
 References
 ----------
 .. [1] Engemann D. and Gramfort A. (2015) Automated model selection in
        covariance estimation and spatial whitening of MEG and EEG signals,
        vol. 108, 328-342, NeuroImage.
-
 
 
 .. code-block:: python
@@ -59,7 +58,6 @@ References
 Get data
 
 
-
 .. code-block:: python
 
 
@@ -75,20 +73,18 @@ Get data
     raw = raw.crop(0, 150.).load_data()
 
     picks = mne.pick_types(raw.info, meg=True, exclude='bads')
-    raw.filter(1, 20., n_jobs=1, fir_design='firwin')
+    raw.filter(None, 20.)
 
     events = mne.find_events(raw, stim_channel='UPPT001')
 
     event_ids = {"faces": 1, "scrambled": 2}
     tmin, tmax = -0.2, 0.5
-    baseline = None  # no baseline as high-pass is applied
+    baseline = (None, 0)
     reject = dict(mag=3e-12)
 
-    # Make source space
-
+    # Make forward
     trans = data_path + '/MEG/spm/SPM_CTF_MEG_example_faces1_3D_raw-trans.fif'
-    src = mne.setup_source_space('spm', spacing='oct6', subjects_dir=subjects_dir,
-                                 add_dist=False)
+    src = data_path + '/subjects/spm/bem/spm-oct-6-src.fif'
     bem = data_path + '/subjects/spm/bem/spm-5120-5120-5120-bem-sol.fif'
     forward = mne.make_forward_solution(raw.info, trans, src, bem)
     del src
@@ -97,7 +93,6 @@ Get data
     conditions = 'faces', 'scrambled'
     snr = 3.0
     lambda2 = 1.0 / snr ** 2
-    method = 'dSPM'
     clim = dict(kind='value', lims=[0, 2.5, 5])
 
 
@@ -127,40 +122,12 @@ Get data
         1 x 324474 = 324474 samples from 340 chs
     Current compensation grade : 3
     Reading 0 ... 72000  =      0.000 ...   150.000 secs...
-    Setting up band-pass filter from 1 - 20 Hz
-    l_trans_bandwidth chosen to be 1.0 Hz
+    Setting up low-pass filter at 20 Hz
     h_trans_bandwidth chosen to be 5.0 Hz
-    Filter length of 1585 samples (3.302 sec) selected
+    Filter length of 317 samples (0.660 sec) selected
     41 events found
     Event IDs: [1 2 3]
-    Setting up the source space with the following parameters:
-
-    SUBJECTS_DIR = /home/circleci/mne_data/MNE-spm-face/subjects
-    Subject      = spm
-    Surface      = white
-    Octahedron subdivision grade 6
-
-    >>> 1. Creating the source space...
-
-    Doing the octahedral vertex picking...
-    Loading /home/circleci/mne_data/MNE-spm-face/subjects/spm/surf/lh.white...
-    Mapping lh spm -> oct (6) ...
-        Triangle neighbors and vertex normals...
-    Loading geometry from /home/circleci/mne_data/MNE-spm-face/subjects/spm/surf/lh.sphere...
-        Triangle neighbors and vertex normals...
-    Setting up the triangulation for the decimated surface...
-    loaded lh.white 4098/139164 selected to source space (oct = 6)
-
-    Loading /home/circleci/mne_data/MNE-spm-face/subjects/spm/surf/rh.white...
-    Mapping rh spm -> oct (6) ...
-        Triangle neighbors and vertex normals...
-    Loading geometry from /home/circleci/mne_data/MNE-spm-face/subjects/spm/surf/rh.sphere...
-        Triangle neighbors and vertex normals...
-    Setting up the triangulation for the decimated surface...
-    loaded rh.white 4098/137848 selected to source space (oct = 6)
-
-    You are now one step closer to computing the gain matrix
-    Source space          : <SourceSpaces: [<surface (lh), n_vertices=139164, n_used=4098, coordinate_frame=MRI (surface RAS)>, <surface (rh), n_vertices=137848, n_used=4098, coordinate_frame=MRI (surface RAS)>]>
+    Source space          : /home/circleci/mne_data/MNE-spm-face/subjects/spm/bem/spm-oct-6-src.fif
     MRI -> head transform : /home/circleci/mne_data/MNE-spm-face/MEG/spm/SPM_CTF_MEG_example_faces1_3D_raw-trans.fif
     Measurement data      : instance of Info
     Conductor model   : /home/circleci/mne_data/MNE-spm-face/subjects/spm/bem/spm-5120-5120-5120-bem-sol.fif
@@ -168,6 +135,7 @@ Get data
     Do computations in head coordinates
     Free source orientations
 
+    Reading /home/circleci/mne_data/MNE-spm-face/subjects/spm/bem/spm-oct-6-src.fif...
     Read 2 source spaces a total of 8196 active source locations
 
     Coordinate transformation: MRI (surface RAS) -> head
@@ -178,7 +146,7 @@ Get data
 
     Read 274 MEG channels from info
     Read  29 MEG compensation channels from info
-    81 coil definitions read
+    84 coil definitions read
     Coordinate transformation: MEG device -> head
          0.997940 -0.049681 -0.040594      -1.35 mm
          0.054745  0.989330  0.135013      -0.41 mm
@@ -186,6 +154,7 @@ Get data
          0.000000  0.000000  0.000000       1.00
     5 compensation data sets in info
     MEG coil definitions created in head coordinates.
+    Removing 5 compensators from info because not all compensation channels were picked.
     Source spaces are now in head coordinates.
 
     Setting up the BEM model using /home/circleci/mne_data/MNE-spm-face/subjects/spm/bem/spm-5120-5120-5120-bem-sol.fif...
@@ -221,7 +190,6 @@ Get data
 Estimate covariances
 
 
-
 .. code-block:: python
 
 
@@ -248,7 +216,7 @@ Estimate covariances
         # with verbose='error'
         noise_covs = compute_covariance(
             epochs_train, method=method, tmin=None, tmax=0,  # baseline only
-            return_estimators=True, verbose='error')  # returns list
+            return_estimators=True, rank=None, verbose='error')  # returns list
         # prepare contrast
         evokeds = [epochs_train[k].average() for k in conditions]
         del epochs_train, events_
@@ -286,68 +254,23 @@ Estimate covariances
  .. code-block:: none
 
     10 matching events found
-    No baseline correction applied
+    Applying baseline correction (mode: mean)
     Not setting metadata
     0 projection items activated
     Loading data for 10 events and 337 original time points ...
     0 bad epochs dropped
     Dropped 0 epochs
-        No patch info available. The standard source space normals will be employed in the rotation to the local surface coordinates....
+    Converting forward solution to surface orientation
+        Average patch normals will be employed in the rotation to the local surface coordinates....
         Converting to surface-based source orientations...
         [done]
     Computing inverse operator with 274 channels.
-    estimated rank (mag): 274
-    Setting small MAG eigenvalues to zero.
-    Not doing PCA for MAG.
-    Total rank is 274
-    Creating the depth weighting matrix...
-        274 magnetometer or axial gradiometer channels
-        limit = 8109/8196 = 10.042069
-        scale = 4.04483e-11 exp = 0.8
-    Computing inverse operator with 274 channels.
-    Creating the source covariance matrix
-    Applying loose dipole orientations. Loose value of 0.2.
-    Whitening the forward solution.
-    Adjusting source covariance matrix.
-    Computing SVD of whitened and weighted lead field matrix.
-        largest singular value = 5.02496
-        scaling factor to adjust the trace = 2.65339e+19
-    Preparing the inverse operator for use...
-        Scaled noise and source covariance from nave = 1 to nave = 5
-        Created the regularized inverter
-        The projection vectors do not apply to these channels.
-        Created the whitener using a full noise covariance matrix (0 small eigenvalues omitted)
-        Computing noise-normalization factors (dSPM)...
-    [done]
-    Applying inverse operator to "faces"...
-        Picked 274 channels from the data
-        Computing inverse...
-        Eigenleads need to be weighted ...
-        Combining the current components...
-        dSPM...
-    [done]
-    Preparing the inverse operator for use...
-        Scaled noise and source covariance from nave = 1 to nave = 5
-        Created the regularized inverter
-        The projection vectors do not apply to these channels.
-        Created the whitener using a full noise covariance matrix (0 small eigenvalues omitted)
-        Computing noise-normalization factors (dSPM)...
-    [done]
-    Applying inverse operator to "scrambled"...
-        Picked 274 channels from the data
-        Computing inverse...
-        Eigenleads need to be weighted ...
-        Combining the current components...
-        dSPM...
-    [done]
-        No patch info available. The standard source space normals will be employed in the rotation to the local surface coordinates....
-        Converting to surface-based source orientations...
-        [done]
-    Computing inverse operator with 274 channels.
+    Removing 5 compensators from info because not all compensation channels were picked.
     estimated rank (mag): 130
     Setting small MAG eigenvalues to zero.
     Not doing PCA for MAG.
-    Total rank is 130
+        Created the whitener using a noise covariance matrix with rank 130 (144 small eigenvalues omitted)
+    Removing 5 compensators from info because not all compensation channels were picked.
     Creating the depth weighting matrix...
         274 magnetometer or axial gradiometer channels
         limit = 8109/8196 = 10.042069
@@ -358,51 +281,117 @@ Estimate covariances
     Whitening the forward solution.
     Adjusting source covariance matrix.
     Computing SVD of whitened and weighted lead field matrix.
-        largest singular value = 5.48106
-        scaling factor to adjust the trace = 2.61756e+21
+        largest singular value = 3.92539
+        scaling factor to adjust the trace = 2.3235e+19
+    Removing 5 compensators from info because not all compensation channels were picked.
     Preparing the inverse operator for use...
         Scaled noise and source covariance from nave = 1 to nave = 5
         Created the regularized inverter
         The projection vectors do not apply to these channels.
-        Created the whitener using a full noise covariance matrix (144 small eigenvalues omitted)
+        Created the whitener using a noise covariance matrix with rank 130 (144 small eigenvalues omitted)
         Computing noise-normalization factors (dSPM)...
     [done]
     Applying inverse operator to "faces"...
         Picked 274 channels from the data
         Computing inverse...
         Eigenleads need to be weighted ...
+        Computing residual...
+        Explained  91.8% variance
         Combining the current components...
         dSPM...
     [done]
+    Removing 5 compensators from info because not all compensation channels were picked.
     Preparing the inverse operator for use...
         Scaled noise and source covariance from nave = 1 to nave = 5
         Created the regularized inverter
         The projection vectors do not apply to these channels.
-        Created the whitener using a full noise covariance matrix (144 small eigenvalues omitted)
+        Created the whitener using a noise covariance matrix with rank 130 (144 small eigenvalues omitted)
         Computing noise-normalization factors (dSPM)...
     [done]
     Applying inverse operator to "scrambled"...
         Picked 274 channels from the data
         Computing inverse...
         Eigenleads need to be weighted ...
+        Computing residual...
+        Explained  91.7% variance
+        Combining the current components...
+        dSPM...
+    [done]
+    Converting forward solution to surface orientation
+        Average patch normals will be employed in the rotation to the local surface coordinates....
+        Converting to surface-based source orientations...
+        [done]
+    Computing inverse operator with 274 channels.
+    Removing 5 compensators from info because not all compensation channels were picked.
+    estimated rank (mag): 130
+    Setting small MAG eigenvalues to zero.
+    Not doing PCA for MAG.
+        Created the whitener using a noise covariance matrix with rank 130 (144 small eigenvalues omitted)
+    Removing 5 compensators from info because not all compensation channels were picked.
+    Creating the depth weighting matrix...
+        274 magnetometer or axial gradiometer channels
+        limit = 8109/8196 = 10.042069
+        scale = 4.04483e-11 exp = 0.8
+    Computing inverse operator with 274 channels.
+    Creating the source covariance matrix
+    Applying loose dipole orientations. Loose value of 0.2.
+    Whitening the forward solution.
+    Adjusting source covariance matrix.
+    Computing SVD of whitened and weighted lead field matrix.
+        largest singular value = 5.07378
+        scaling factor to adjust the trace = 2.1613e+23
+    Removing 5 compensators from info because not all compensation channels were picked.
+    Preparing the inverse operator for use...
+        Scaled noise and source covariance from nave = 1 to nave = 5
+        Created the regularized inverter
+        The projection vectors do not apply to these channels.
+        Created the whitener using a noise covariance matrix with rank 130 (144 small eigenvalues omitted)
+        Computing noise-normalization factors (dSPM)...
+    [done]
+    Applying inverse operator to "faces"...
+        Picked 274 channels from the data
+        Computing inverse...
+        Eigenleads need to be weighted ...
+        Computing residual...
+        Explained  99.7% variance
+        Combining the current components...
+        dSPM...
+    [done]
+    Removing 5 compensators from info because not all compensation channels were picked.
+    Preparing the inverse operator for use...
+        Scaled noise and source covariance from nave = 1 to nave = 5
+        Created the regularized inverter
+        The projection vectors do not apply to these channels.
+        Created the whitener using a noise covariance matrix with rank 130 (144 small eigenvalues omitted)
+        Computing noise-normalization factors (dSPM)...
+    [done]
+    Applying inverse operator to "scrambled"...
+        Picked 274 channels from the data
+        Computing inverse...
+        Eigenleads need to be weighted ...
+        Computing residual...
+        Explained  99.6% variance
         Combining the current components...
         dSPM...
     [done]
     30 matching events found
-    No baseline correction applied
+    Applying baseline correction (mode: mean)
     Not setting metadata
     0 projection items activated
     Loading data for 30 events and 337 original time points ...
     0 bad epochs dropped
     Dropped 0 epochs
-        No patch info available. The standard source space normals will be employed in the rotation to the local surface coordinates....
+    Converting forward solution to surface orientation
+        Average patch normals will be employed in the rotation to the local surface coordinates....
         Converting to surface-based source orientations...
         [done]
     Computing inverse operator with 274 channels.
+    Removing 5 compensators from info because not all compensation channels were picked.
     estimated rank (mag): 274
     Setting small MAG eigenvalues to zero.
     Not doing PCA for MAG.
-    Total rank is 274
+        Created the whitener using a noise covariance matrix with rank 274 (0 small eigenvalues omitted)
+    Removing 5 compensators from info because not all compensation channels were picked.
     Creating the depth weighting matrix...
         274 magnetometer or axial gradiometer channels
         limit = 8109/8196 = 10.042069
@@ -413,44 +402,53 @@ Estimate covariances
     Whitening the forward solution.
     Adjusting source covariance matrix.
     Computing SVD of whitened and weighted lead field matrix.
-        largest singular value = 4.0354
-        scaling factor to adjust the trace = 1.7911e+19
+        largest singular value = 4.12203
+        scaling factor to adjust the trace = 2.35095e+19
+    Removing 5 compensators from info because not all compensation channels were picked.
     Preparing the inverse operator for use...
         Scaled noise and source covariance from nave = 1 to nave = 15
         Created the regularized inverter
         The projection vectors do not apply to these channels.
-        Created the whitener using a full noise covariance matrix (0 small eigenvalues omitted)
+        Created the whitener using a noise covariance matrix with rank 274 (0 small eigenvalues omitted)
         Computing noise-normalization factors (dSPM)...
     [done]
     Applying inverse operator to "faces"...
         Picked 274 channels from the data
         Computing inverse...
         Eigenleads need to be weighted ...
+        Computing residual...
+        Explained  86.6% variance
         Combining the current components...
         dSPM...
     [done]
+    Removing 5 compensators from info because not all compensation channels were picked.
     Preparing the inverse operator for use...
         Scaled noise and source covariance from nave = 1 to nave = 15
         Created the regularized inverter
         The projection vectors do not apply to these channels.
-        Created the whitener using a full noise covariance matrix (0 small eigenvalues omitted)
+        Created the whitener using a noise covariance matrix with rank 274 (0 small eigenvalues omitted)
         Computing noise-normalization factors (dSPM)...
     [done]
     Applying inverse operator to "scrambled"...
         Picked 274 channels from the data
         Computing inverse...
         Eigenleads need to be weighted ...
+        Computing residual...
+        Explained  86.9% variance
         Combining the current components...
         dSPM...
     [done]
-        No patch info available. The standard source space normals will be employed in the rotation to the local surface coordinates....
+    Converting forward solution to surface orientation
+        Average patch normals will be employed in the rotation to the local surface coordinates....
         Converting to surface-based source orientations...
         [done]
     Computing inverse operator with 274 channels.
+    Removing 5 compensators from info because not all compensation channels were picked.
     estimated rank (mag): 274
     Setting small MAG eigenvalues to zero.
     Not doing PCA for MAG.
-    Total rank is 274
+        Created the whitener using a noise covariance matrix with rank 274 (0 small eigenvalues omitted)
+    Removing 5 compensators from info because not all compensation channels were picked.
     Creating the depth weighting matrix...
         274 magnetometer or axial gradiometer channels
         limit = 8109/8196 = 10.042069
@@ -461,40 +459,45 @@ Estimate covariances
     Whitening the forward solution.
     Adjusting source covariance matrix.
     Computing SVD of whitened and weighted lead field matrix.
-        largest singular value = 4.97869
-        scaling factor to adjust the trace = 9.93767e+19
+        largest singular value = 5.41039
+        scaling factor to adjust the trace = 2.16434e+20
+    Removing 5 compensators from info because not all compensation channels were picked.
     Preparing the inverse operator for use...
         Scaled noise and source covariance from nave = 1 to nave = 15
         Created the regularized inverter
         The projection vectors do not apply to these channels.
-        Created the whitener using a full noise covariance matrix (0 small eigenvalues omitted)
+        Created the whitener using a noise covariance matrix with rank 274 (0 small eigenvalues omitted)
         Computing noise-normalization factors (dSPM)...
     [done]
     Applying inverse operator to "faces"...
         Picked 274 channels from the data
         Computing inverse...
         Eigenleads need to be weighted ...
+        Computing residual...
+        Explained  93.1% variance
         Combining the current components...
         dSPM...
     [done]
+    Removing 5 compensators from info because not all compensation channels were picked.
     Preparing the inverse operator for use...
         Scaled noise and source covariance from nave = 1 to nave = 15
         Created the regularized inverter
         The projection vectors do not apply to these channels.
-        Created the whitener using a full noise covariance matrix (0 small eigenvalues omitted)
+        Created the whitener using a noise covariance matrix with rank 274 (0 small eigenvalues omitted)
         Computing noise-normalization factors (dSPM)...
     [done]
     Applying inverse operator to "scrambled"...
         Picked 274 channels from the data
         Computing inverse...
         Eigenleads need to be weighted ...
+        Computing residual...
+        Explained  93.2% variance
         Combining the current components...
         dSPM...
     [done]
 
 
 Show the resulting source estimates
-
 
 
 .. code-block:: python
@@ -539,7 +542,6 @@ Show the resulting source estimates
         ax_dynamics.legend(loc='upper left', fontsize=10)
 
     fig.subplots_adjust(hspace=0.2, left=0.01, right=0.99, wspace=0.03)
-    mne.viz.utils.plt_show()
 
 
 
@@ -549,7 +551,12 @@ Show the resulting source estimates
 
 
 
-**Total running time of the script:** ( 3 minutes  37.685 seconds)
+
+.. rst-class:: sphx-glr-timing
+
+   **Total running time of the script:** ( 2 minutes  40.665 seconds)
+
+**Estimated memory usage:**  1232 MB
 
 
 .. _sphx_glr_download_auto_examples_inverse_plot_covariance_whitening_dspm.py:

@@ -12,7 +12,6 @@ Rejecting bad data (channels and segments)
 
 
 
-
 .. code-block:: python
 
     # sphinx_gallery_thumbnail_number = 3
@@ -29,6 +28,21 @@ Rejecting bad data (channels and segments)
 
 
 
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    Opening raw data file /home/circleci/mne_data/MNE-sample-data/MEG/sample/sample_audvis_filt-0-40_raw.fif...
+        Read a total of 4 projection items:
+            PCA-v1 (1 x 102)  idle
+            PCA-v2 (1 x 102)  idle
+            PCA-v3 (1 x 102)  idle
+            Average EEG reference (1 x 60)  idle
+        Range : 6450 ... 48149 =     42.956 ...   320.665 secs
+    Ready.
+    Current compensation grade : 0
 
 
 .. _marking_bad_channels:
@@ -42,7 +56,6 @@ analysis by marking them bad as. This is done by setting the 'bads'
 in the measurement info of a data container object (e.g. Raw, Epochs,
 Evoked). The info['bads'] value is a Python string. Here is
 example:
-
 
 
 .. code-block:: python
@@ -95,11 +108,9 @@ Recommended ways to identify bad channels are:
 The actual removal happens using :func:`pick_types <mne.pick_types>` with
 `exclude='bads'` option (see :ref:`picking_channels`).
 
-
 Instead of removing the bad channels, you can also try to repair them.
 This is done by **interpolation** of the data from other channels.
 To illustrate how to use channel interpolation let us load some data.
-
 
 
 .. code-block:: python
@@ -131,11 +142,22 @@ To illustrate how to use channel interpolation let us load some data.
 
  .. code-block:: none
 
+    Reading /home/circleci/mne_data/MNE-sample-data/MEG/sample/sample_audvis-ave.fif ...
+        Read a total of 4 projection items:
+            PCA-v1 (1 x 102) active
+            PCA-v2 (1 x 102) active
+            PCA-v3 (1 x 102) active
+            Average EEG reference (1 x 60) active
+        Found the data of interest:
+            t =    -199.80 ...     499.49 ms (Left Auditory)
+            0 CTF compensation matrices available
+            nave = 55 - aspect type = 100
+    Projections have already been applied. Setting proj attribute to True.
+    Applying baseline correction (mode: mean)
     ['MEG 2443', 'EEG 053']
 
 
 Let's now interpolate the bad channels (displayed in red above)
-
 
 
 .. code-block:: python
@@ -149,7 +171,6 @@ Let's now interpolate the bad channels (displayed in red above)
 
 
 Let's plot the cleaned data
-
 
 
 .. code-block:: python
@@ -171,7 +192,6 @@ Let's plot the cleaned data
 
 For more details on interpolation see the page :ref:`channel_interpolation`.
 
-
 .. _marking_bad_segments:
 
 Marking bad raw segments with annotations
@@ -192,7 +212,6 @@ the duration of the annotation. The instance of :class:`mne.Annotations`
 can be added as an attribute of :class:`mne.io.Raw`.
 
 
-
 .. code-block:: python
 
 
@@ -201,8 +220,9 @@ can be added as an attribute of :class:`mne.io.Raw`.
     # Center to cover the whole blink with full duration of 0.5s:
     onset = eog_events[:, 0] / raw.info['sfreq'] - 0.25
     duration = np.repeat(0.5, n_blinks)
-    raw.annotations = mne.Annotations(onset, duration, ['bad blink'] * n_blinks,
-                                      orig_time=raw.info['meas_date'])
+    annot = mne.Annotations(onset, duration, ['bad blink'] * n_blinks,
+                            orig_time=raw.info['meas_date'])
+    raw.set_annotations(annot)
     print(raw.annotations)  # to get information about what annotations we have
     raw.plot(events=eog_events)  # To see the annotated segments.
 
@@ -219,7 +239,15 @@ can be added as an attribute of :class:`mne.io.Raw`.
 
  .. code-block:: none
 
-    <Annotations  |  46 segments : bad (46) >
+    EOG channel index for this subject is: [375]
+    Filtering the data to remove DC offset to help distinguish blinks from saccades
+    Setting up band-pass filter from 2 - 45 Hz
+    Filter length of 2048 samples (13.639 sec) selected
+    Setting up band-pass filter from 1 - 10 Hz
+    Filter length of 2048 samples (13.639 sec) selected
+    Now detecting blinks and generating corresponding events
+    Number of EOG events detected : 46
+    <Annotations  |  46 segments : bad (46), orig_time : 2002-12-03 19:01:10.720100>
 
 
 It is also possible to draw bad segments interactively using
@@ -232,7 +260,6 @@ use keyword argument ``reject_by_annotation=False`` when constructing
 :class:`mne.Epochs`. When working with neuromag data, the ``first_samp``
 offset of raw acquisition is also taken into account the same way as with
 event lists. For more see :class:`mne.Epochs` and :class:`mne.Annotations`.
-
 
 .. _rejecting_bad_epochs:
 
@@ -249,7 +276,6 @@ channel type as a string and the corresponding values are peak-to-peak
 rejection parameters (amplitude ranges as floats). Below we define
 the peak-to-peak rejection values for gradiometers,
 magnetometers and EOG:
-
 
 
 .. code-block:: python
@@ -270,9 +296,7 @@ magnetometers and EOG:
    of marking a single channel as bad and you'll be able to save a lot
    of data.
 
-
 We then construct the epochs
-
 
 
 .. code-block:: python
@@ -292,10 +316,22 @@ We then construct the epochs
 
 
 
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    319 events found
+    Event IDs: [ 1  2  3  4  5 32]
+    72 matching events found
+    Applying baseline correction (mode: mean)
+    Not setting metadata
+    Created an SSP operator (subspace dimension = 3)
+    4 projection items activated
 
 
 We then drop/reject the bad epochs
-
 
 
 .. code-block:: python
@@ -306,11 +342,20 @@ We then drop/reject the bad epochs
 
 
 
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    Loading data for 72 events and 106 original time points ...
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on MAG : ['MEG 1711']
+    22 bad epochs dropped
 
 
 And plot the so-called *drop log* that details the reason for which some
 epochs have been dropped.
-
 
 
 .. code-block:: python
@@ -342,7 +387,11 @@ epoch was rejected because 'EOG 061' exceeded the peak-to-peak rejection
 limit.
 
 
-**Total running time of the script:** ( 0 minutes  15.484 seconds)
+.. rst-class:: sphx-glr-timing
+
+   **Total running time of the script:** ( 0 minutes  13.403 seconds)
+
+**Estimated memory usage:**  9 MB
 
 
 .. _sphx_glr_download_auto_tutorials_plot_artifacts_correction_rejection.py:

@@ -17,7 +17,6 @@ desired location(s) in a :class:`mne.SourceEstimate` and then corrupt the
 signal with point-spread by applying a forward and inverse solution.
 
 
-
 .. code-block:: python
 
 
@@ -39,7 +38,6 @@ signal with point-spread by applying a forward and inverse solution.
 
 
 First, we set some parameters.
-
 
 
 .. code-block:: python
@@ -80,7 +78,6 @@ Load the MEG data
 -----------------
 
 
-
 .. code-block:: python
 
 
@@ -106,11 +103,88 @@ Load the MEG data
 
 
 
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    Reading forward solution from /home/circleci/mne_data/MNE-sample-data/MEG/sample/sample_audvis-meg-oct-6-fwd.fif...
+        Reading a source space...
+        Computing patch statistics...
+        Patch information added...
+        Distance information added...
+        [done]
+        Reading a source space...
+        Computing patch statistics...
+        Patch information added...
+        Distance information added...
+        [done]
+        2 source spaces read
+        Desired named matrix (kind = 3523) not available
+        Read MEG forward solution (7498 sources, 306 channels, free orientations)
+        Source spaces transformed to the forward solution coordinate frame
+        Changing to fixed-orientation forward solution with surface-based source orientations...
+        [done]
+    Reading inverse operator decomposition from /home/circleci/mne_data/MNE-sample-data/MEG/sample/sample_audvis-meg-oct-6-meg-fixed-inv.fif...
+        Reading inverse operator info...
+        [done]
+        Reading inverse operator decomposition...
+        [done]
+        305 x 305 full covariance (kind = 1) found.
+        Read a total of 4 projection items:
+            PCA-v1 (1 x 102) active
+            PCA-v2 (1 x 102) active
+            PCA-v3 (1 x 102) active
+            Average EEG reference (1 x 60) active
+        Noise covariance matrix read.
+        7498 x 7498 diagonal covariance (kind = 2) found.
+        Source covariance matrix read.
+        Did not find the desired covariance matrix (kind = 6)
+        7498 x 7498 diagonal covariance (kind = 5) found.
+        Depth priors read.
+        Did not find the desired covariance matrix (kind = 3)
+        Reading a source space...
+        Computing patch statistics...
+        Patch information added...
+        Distance information added...
+        [done]
+        Reading a source space...
+        Computing patch statistics...
+        Patch information added...
+        Distance information added...
+        [done]
+        2 source spaces read
+        Read a total of 4 projection items:
+            PCA-v1 (1 x 102) active
+            PCA-v2 (1 x 102) active
+            PCA-v3 (1 x 102) active
+            Average EEG reference (1 x 60) active
+        Source spaces transformed to the inverse solution coordinate frame
+    Opening raw data file /home/circleci/mne_data/MNE-sample-data/MEG/sample/sample_audvis_raw.fif...
+        Read a total of 3 projection items:
+            PCA-v1 (1 x 102)  idle
+            PCA-v2 (1 x 102)  idle
+            PCA-v3 (1 x 102)  idle
+        Range : 25800 ... 192599 =     42.956 ...   320.670 secs
+    Ready.
+    Current compensation grade : 0
+    320 events found
+    Event IDs: [ 1  2  3  4  5 32]
+    145 matching events found
+    Applying baseline correction (mode: mean)
+    Not setting metadata
+    Created an SSP operator (subspace dimension = 3)
+    3 projection items activated
+    Loading data for 145 events and 421 original time points ...
+    0 bad epochs dropped
+    Reading labels from parcellation...
+       read 34 labels from /home/circleci/mne_data/MNE-sample-data/subjects/sample/label/lh.aparc.annot
+       read 34 labels from /home/circleci/mne_data/MNE-sample-data/subjects/sample/label/rh.aparc.annot
 
 
 Estimate the background noise covariance from the baseline period
 -----------------------------------------------------------------
-
 
 
 .. code-block:: python
@@ -122,11 +196,20 @@ Estimate the background noise covariance from the baseline period
 
 
 
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    Estimating covariance using EMPIRICAL
+    Done.
+    Number of samples used : 17545
+    [done]
 
 
 Generate sinusoids in two spatially distant labels
 --------------------------------------------------
-
 
 
 .. code-block:: python
@@ -152,7 +235,6 @@ We want the known signal in each label to only be active at the center. We
 create a mask for each label that is 1 at the center vertex and 0 at all
 other vertices in the label. This mask is then used when simulating
 source-space data.
-
 
 
 .. code-block:: python
@@ -193,7 +275,6 @@ Put known signals onto surface vertices using the array of signals and
 the label masks (stored in labels[i].values).
 
 
-
 .. code-block:: python
 
     stc_gen = simulate_stc(fwd['src'], labels, signal, times[0], dt,
@@ -209,7 +290,6 @@ Plot original signals
 ---------------------
 
 Note that the original signals are highly concentrated (point) sources.
-
 
 
 
@@ -260,7 +340,6 @@ controlled by `nave` (higher values imply less noise).
 
 
 
-
 .. code-block:: python
 
     evoked_gen = simulate_evoked(fwd, stc_gen, evoked.info, cov, nave,
@@ -274,6 +353,29 @@ controlled by `nave` (higher values imply less noise).
 
 
 
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    Projecting source estimate to sensor space...
+    [done]
+    Preparing the inverse operator for use...
+        Scaled noise and source covariance from nave = 1 to nave = 1
+        Created the regularized inverter
+        Created an SSP operator (subspace dimension = 3)
+        Created the whitener using a noise covariance matrix with rank 302 (3 small eigenvalues omitted)
+        Computing noise-normalization factors (sLORETA)...
+    [done]
+    Applying inverse operator to ""...
+        Picked 305 channels from the data
+        Computing inverse...
+        Eigenleads need to be weighted ...
+        Computing residual...
+        Explained  99.7% variance
+        sLORETA...
+    [done]
 
 
 Plot the point-spread of corrupted signal
@@ -284,7 +386,6 @@ point sources that the point sources have spread across the source-space.
 This spread is due to the minimum norm solution so that the signal leaks to
 nearby vertices with similar orientations so that signal ends up crossing the
 sulci and gyri.
-
 
 
 .. code-block:: python
@@ -319,6 +420,13 @@ sulci and gyri.
             :class: sphx-glr-multi-img
 
 
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    Using control points [0.459683 0.570213 1.693546]
 
 
 Exercises
@@ -329,7 +437,11 @@ Exercises
      effect of noise.
 
 
-**Total running time of the script:** ( 1 minutes  31.064 seconds)
+.. rst-class:: sphx-glr-timing
+
+   **Total running time of the script:** ( 0 minutes  53.696 seconds)
+
+**Estimated memory usage:**  273 MB
 
 
 .. _sphx_glr_download_auto_tutorials_plot_point_spread.py:

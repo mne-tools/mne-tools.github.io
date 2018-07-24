@@ -7,13 +7,13 @@
     <title>2 samples permutation test on source data with spatio-temporal clustering &#8212; MNE 0.17.dev0 documentation</title>
     <link rel="stylesheet" href="../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/gallery.css" type="text/css" />
-    <link rel="stylesheet" href="../_static/reset-syntax.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/gallery.css" />
+    <link rel="stylesheet" type="text/css" href="../_static/reset-syntax.css" />
     <script type="text/javascript" id="documentation_options" data-url_root="../" src="../_static/documentation_options.js"></script>
     <script type="text/javascript" src="../_static/jquery.js"></script>
     <script type="text/javascript" src="../_static/underscore.js"></script>
     <script type="text/javascript" src="../_static/doctools.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <script async="async" type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <script type="text/javascript" src="../_static/js/jquery-1.11.0.min.js"></script>
     <script type="text/javascript" src="../_static/js/jquery-fix.js"></script>
     <script type="text/javascript" src="../_static/bootstrap-3.3.7/js/bootstrap.min.js"></script>
@@ -91,6 +91,7 @@ This documentation is for <strong>development version 0.17.dev0</strong>.
                 <li><a href="../getting_started.html">Install</a></li>
                 <li><a href="../documentation.html">Documentation</a></li>
                 <li><a href="../python_reference.html">API</a></li>
+                <li><a href="../glossary.html">Glossary</a></li>
                 <li><a href="../auto_examples/index.html">Examples</a></li>
                 <li><a href="../contributing.html">Contribute</a></li>
             
@@ -214,8 +215,10 @@ permutation test across space and time.</p>
 <span class="c1"># Read the source space we are morphing to</span>
 <span class="n">src</span> <span class="o">=</span> <a href="../generated/mne.read_source_spaces.html#mne.read_source_spaces" title="View documentation for mne.read_source_spaces"><span class="n">mne</span><span class="o">.</span><span class="n">read_source_spaces</span></a><span class="p">(</span><span class="n">src_fname</span><span class="p">)</span>
 <span class="n">fsave_vertices</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="p">[</span><span class="s1">&#39;vertno&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">src</span><span class="p">]</span>
-<span class="n">stc</span> <span class="o">=</span> <a href="../generated/mne.morph_data.html#mne.morph_data" title="View documentation for mne.morph_data"><span class="n">mne</span><span class="o">.</span><span class="n">morph_data</span></a><span class="p">(</span><span class="s1">&#39;sample&#39;</span><span class="p">,</span> <span class="s1">&#39;fsaverage&#39;</span><span class="p">,</span> <span class="n">stc</span><span class="p">,</span> <span class="n">grade</span><span class="o">=</span><span class="n">fsave_vertices</span><span class="p">,</span>
-                     <span class="n">smooth</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">subjects_dir</span><span class="o">=</span><span class="n">subjects_dir</span><span class="p">)</span>
+<span class="n">morph</span> <span class="o">=</span> <a href="../generated/mne.compute_source_morph.html#mne.compute_source_morph" title="View documentation for mne.compute_source_morph"><span class="n">mne</span><span class="o">.</span><span class="n">compute_source_morph</span></a><span class="p">(</span><span class="n">stc</span><span class="p">,</span> <span class="s1">&#39;sample&#39;</span><span class="p">,</span> <span class="s1">&#39;fsaverage&#39;</span><span class="p">,</span>
+                                 <span class="n">spacing</span><span class="o">=</span><span class="n">fsave_vertices</span><span class="p">,</span> <span class="n">smooth</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+                                 <span class="n">subjects_dir</span><span class="o">=</span><span class="n">subjects_dir</span><span class="p">)</span>
+<span class="n">stc</span> <span class="o">=</span> <span class="n">morph</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">stc</span><span class="p">)</span>
 <span class="n">n_vertices_fsave</span><span class="p">,</span> <span class="n">n_times</span> <span class="o">=</span> <span class="n">stc</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span>
 <span class="n">tstep</span> <span class="o">=</span> <span class="n">stc</span><span class="o">.</span><span class="n">tstep</span>
 
@@ -223,12 +226,12 @@ permutation test across space and time.</p>
 <span class="k">print</span><span class="p">(</span><span class="s1">&#39;Simulating data for </span><span class="si">%d</span><span class="s1"> and </span><span class="si">%d</span><span class="s1"> subjects.&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">n_subjects1</span><span class="p">,</span> <span class="n">n_subjects2</span><span class="p">))</span>
 
 <span class="c1">#    Let&#39;s make sure our results replicate, so set the seed.</span>
-<a href="http://www.numpy.org/devdocs/reference/generated/numpy.random.seed.html#numpy.random.seed" title="View documentation for numpy.random.seed"><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span></a><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
-<span class="n">X1</span> <span class="o">=</span> <a href="http://www.numpy.org/devdocs/reference/generated/numpy.random.randn.html#numpy.random.randn" title="View documentation for numpy.random.randn"><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span></a><span class="p">(</span><span class="n">n_vertices_fsave</span><span class="p">,</span> <span class="n">n_times</span><span class="p">,</span> <span class="n">n_subjects1</span><span class="p">)</span> <span class="o">*</span> <span class="mi">10</span>
-<span class="n">X2</span> <span class="o">=</span> <a href="http://www.numpy.org/devdocs/reference/generated/numpy.random.randn.html#numpy.random.randn" title="View documentation for numpy.random.randn"><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span></a><span class="p">(</span><span class="n">n_vertices_fsave</span><span class="p">,</span> <span class="n">n_times</span><span class="p">,</span> <span class="n">n_subjects2</span><span class="p">)</span> <span class="o">*</span> <span class="mi">10</span>
-<span class="n">X1</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">:]</span> <span class="o">+=</span> <span class="n">stc</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="p">:,</span> <a href="http://www.numpy.org/devdocs/reference/constants.html#numpy.newaxis" title="View documentation for numpy.newaxis"><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span></a><span class="p">]</span>
+<a href="https://www.numpy.org/devdocs/reference/generated/numpy.random.seed.html#numpy.random.seed" title="View documentation for numpy.random.seed"><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span></a><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">X1</span> <span class="o">=</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.random.randn.html#numpy.random.randn" title="View documentation for numpy.random.randn"><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span></a><span class="p">(</span><span class="n">n_vertices_fsave</span><span class="p">,</span> <span class="n">n_times</span><span class="p">,</span> <span class="n">n_subjects1</span><span class="p">)</span> <span class="o">*</span> <span class="mi">10</span>
+<span class="n">X2</span> <span class="o">=</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.random.randn.html#numpy.random.randn" title="View documentation for numpy.random.randn"><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">randn</span></a><span class="p">(</span><span class="n">n_vertices_fsave</span><span class="p">,</span> <span class="n">n_times</span><span class="p">,</span> <span class="n">n_subjects2</span><span class="p">)</span> <span class="o">*</span> <span class="mi">10</span>
+<span class="n">X1</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">:]</span> <span class="o">+=</span> <span class="n">stc</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="p">:,</span> <a href="https://www.numpy.org/devdocs/reference/constants.html#numpy.newaxis" title="View documentation for numpy.newaxis"><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span></a><span class="p">]</span>
 <span class="c1"># make the activity bigger for the second set of subjects</span>
-<span class="n">X2</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">:]</span> <span class="o">+=</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">stc</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="p">:,</span> <a href="http://www.numpy.org/devdocs/reference/constants.html#numpy.newaxis" title="View documentation for numpy.newaxis"><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span></a><span class="p">]</span>
+<span class="n">X2</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">:]</span> <span class="o">+=</span> <span class="mi">3</span> <span class="o">*</span> <span class="n">stc</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="p">:,</span> <a href="https://www.numpy.org/devdocs/reference/constants.html#numpy.newaxis" title="View documentation for numpy.newaxis"><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span></a><span class="p">]</span>
 
 <span class="c1">#    We want to compare the overall activity levels for each subject</span>
 <span class="n">X1</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">X1</span><span class="p">)</span>  <span class="c1"># only magnitude</span>
@@ -236,7 +239,20 @@ permutation test across space and time.</p>
 </pre></div>
 </div>
 <p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Simulating data for 7 and 9 subjects.
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Reading a source space...
+    [done]
+    Reading a source space...
+    [done]
+    2 source spaces read
+surface source space inferred...
+Computing morph matrix...
+    Left-hemisphere map read.
+    Right-hemisphere map read.
+    20 smooth iterations done.
+    20 smooth iterations done.
+[done]
+[done]
+Simulating data for 7 and 9 subjects.
 </pre></div>
 </div>
 </div>
@@ -249,8 +265,8 @@ just pass the spatial connectivity matrix (instead of spatio-temporal)</p>
 
 <span class="c1">#    Note that X needs to be a list of multi-dimensional array of shape</span>
 <span class="c1">#    samples (subjects_k) x time x space, so we permute dimensions</span>
-<span class="n">X1</span> <span class="o">=</span> <a href="http://www.numpy.org/devdocs/reference/generated/numpy.transpose.html#numpy.transpose" title="View documentation for numpy.transpose"><span class="n">np</span><span class="o">.</span><span class="n">transpose</span></a><span class="p">(</span><span class="n">X1</span><span class="p">,</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
-<span class="n">X2</span> <span class="o">=</span> <a href="http://www.numpy.org/devdocs/reference/generated/numpy.transpose.html#numpy.transpose" title="View documentation for numpy.transpose"><span class="n">np</span><span class="o">.</span><span class="n">transpose</span></a><span class="p">(</span><span class="n">X2</span><span class="p">,</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+<span class="n">X1</span> <span class="o">=</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.transpose.html#numpy.transpose" title="View documentation for numpy.transpose"><span class="n">np</span><span class="o">.</span><span class="n">transpose</span></a><span class="p">(</span><span class="n">X1</span><span class="p">,</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+<span class="n">X2</span> <span class="o">=</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.transpose.html#numpy.transpose" title="View documentation for numpy.transpose"><span class="n">np</span><span class="o">.</span><span class="n">transpose</span></a><span class="p">(</span><span class="n">X2</span><span class="p">,</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
 <span class="n">X</span> <span class="o">=</span> <span class="p">[</span><span class="n">X1</span><span class="p">,</span> <span class="n">X2</span><span class="p">]</span>
 
 <span class="c1">#    Now let&#39;s actually do the clustering. This can take a long time...</span>
@@ -261,15 +277,23 @@ just pass the spatial connectivity matrix (instead of spatio-temporal)</p>
 <span class="k">print</span><span class="p">(</span><span class="s1">&#39;Clustering.&#39;</span><span class="p">)</span>
 <span class="n">T_obs</span><span class="p">,</span> <span class="n">clusters</span><span class="p">,</span> <span class="n">cluster_p_values</span><span class="p">,</span> <span class="n">H0</span> <span class="o">=</span> <span class="n">clu</span> <span class="o">=</span>\
     <a href="../generated/mne.stats.spatio_temporal_cluster_test.html#mne.stats.spatio_temporal_cluster_test" title="View documentation for mne.stats.spatio_temporal_cluster_test"><span class="n">spatio_temporal_cluster_test</span></a><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">connectivity</span><span class="o">=</span><span class="n">connectivity</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-                                 <span class="n">threshold</span><span class="o">=</span><span class="n">f_threshold</span><span class="p">)</span>
+                                 <span class="n">threshold</span><span class="o">=</span><span class="n">f_threshold</span><span class="p">,</span> <span class="n">buffer_size</span><span class="o">=</span><span class="bp">None</span><span class="p">)</span>
 <span class="c1">#    Now select the clusters that are sig. at p &lt; 0.05 (note that this value</span>
 <span class="c1">#    is multiple-comparisons corrected).</span>
-<span class="n">good_cluster_inds</span> <span class="o">=</span> <a href="http://www.numpy.org/devdocs/reference/generated/numpy.where.html#numpy.where" title="View documentation for numpy.where"><span class="n">np</span><span class="o">.</span><span class="n">where</span></a><span class="p">(</span><span class="n">cluster_p_values</span> <span class="o">&lt;</span> <span class="mf">0.05</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">good_cluster_inds</span> <span class="o">=</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.where.html#numpy.where" title="View documentation for numpy.where"><span class="n">np</span><span class="o">.</span><span class="n">where</span></a><span class="p">(</span><span class="n">cluster_p_values</span> <span class="o">&lt;</span> <span class="mf">0.05</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
 </pre></div>
 </div>
 <p class="sphx-glr-script-out">Out:</p>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Computing connectivity.
+-- number of connected vertices : 20484
 Clustering.
+stat_fun(H1): min=0.000000 max=293.441881
+Running initial clustering
+Found 234 clusters
+Permuting 1023 times...
+
+Computing cluster p-values
+Done.
 </pre></div>
 </div>
 </div>
@@ -279,7 +303,7 @@ Clustering.
 
 <span class="c1">#    Now let&#39;s build a convenient representation of each cluster, where each</span>
 <span class="c1">#    cluster becomes a &quot;time point&quot; in the SourceEstimate</span>
-<span class="n">fsave_vertices</span> <span class="o">=</span> <span class="p">[</span><a href="http://www.numpy.org/devdocs/reference/generated/numpy.arange.html#numpy.arange" title="View documentation for numpy.arange"><span class="n">np</span><span class="o">.</span><span class="n">arange</span></a><span class="p">(</span><span class="mi">10242</span><span class="p">),</span> <a href="http://www.numpy.org/devdocs/reference/generated/numpy.arange.html#numpy.arange" title="View documentation for numpy.arange"><span class="n">np</span><span class="o">.</span><span class="n">arange</span></a><span class="p">(</span><span class="mi">10242</span><span class="p">)]</span>
+<span class="n">fsave_vertices</span> <span class="o">=</span> <span class="p">[</span><a href="https://www.numpy.org/devdocs/reference/generated/numpy.arange.html#numpy.arange" title="View documentation for numpy.arange"><span class="n">np</span><span class="o">.</span><span class="n">arange</span></a><span class="p">(</span><span class="mi">10242</span><span class="p">),</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.arange.html#numpy.arange" title="View documentation for numpy.arange"><span class="n">np</span><span class="o">.</span><span class="n">arange</span></a><span class="p">(</span><span class="mi">10242</span><span class="p">)]</span>
 <span class="n">stc_all_cluster_vis</span> <span class="o">=</span> <a href="../generated/mne.stats.summarize_clusters_stc.html#mne.stats.summarize_clusters_stc" title="View documentation for mne.stats.summarize_clusters_stc"><span class="n">summarize_clusters_stc</span></a><span class="p">(</span><span class="n">clu</span><span class="p">,</span> <span class="n">tstep</span><span class="o">=</span><span class="n">tstep</span><span class="p">,</span>
                                              <span class="n">vertices</span><span class="o">=</span><span class="n">fsave_vertices</span><span class="p">,</span>
                                              <span class="n">subject</span><span class="o">=</span><span class="s1">&#39;fsaverage&#39;</span><span class="p">)</span>
@@ -288,9 +312,10 @@ Clustering.
 <span class="c1">#    shows all the clusters, weighted by duration</span>
 <span class="n">subjects_dir</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_path</span><span class="p">,</span> <span class="s1">&#39;subjects&#39;</span><span class="p">)</span>
 <span class="c1"># blue blobs are for condition A != condition B</span>
-<span class="n">brain</span> <span class="o">=</span> <span class="n">stc_all_cluster_vis</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="s1">&#39;fsaverage&#39;</span><span class="p">,</span> <span class="n">hemi</span><span class="o">=</span><span class="s1">&#39;both&#39;</span><span class="p">,</span> <span class="n">colormap</span><span class="o">=</span><span class="s1">&#39;mne&#39;</span><span class="p">,</span>
+<span class="n">brain</span> <span class="o">=</span> <span class="n">stc_all_cluster_vis</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="s1">&#39;fsaverage&#39;</span><span class="p">,</span> <span class="n">hemi</span><span class="o">=</span><span class="s1">&#39;both&#39;</span><span class="p">,</span>
                                  <span class="n">views</span><span class="o">=</span><span class="s1">&#39;lateral&#39;</span><span class="p">,</span> <span class="n">subjects_dir</span><span class="o">=</span><span class="n">subjects_dir</span><span class="p">,</span>
-                                 <span class="n">time_label</span><span class="o">=</span><span class="s1">&#39;Duration significant (ms)&#39;</span><span class="p">)</span>
+                                 <span class="n">time_label</span><span class="o">=</span><span class="s1">&#39;Duration significant (ms)&#39;</span><span class="p">,</span>
+                                 <span class="n">clim</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="s1">&#39;value&#39;</span><span class="p">,</span> <span class="n">lims</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">40</span><span class="p">]))</span>
 <span class="n">brain</span><span class="o">.</span><span class="n">save_image</span><span class="p">(</span><span class="s1">&#39;clusters.png&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -299,12 +324,13 @@ Clustering.
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Visualizing clusters.
 </pre></div>
 </div>
-<p><strong>Total running time of the script:</strong> ( 1 minutes  46.531 seconds)</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  53.491 seconds)</p>
+<p><strong>Estimated memory usage:</strong>  10 MB</p>
 <div class="sphx-glr-footer class sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-tutorials-plot-stats-cluster-spatio-temporal-2samp-py">
 <div class="sphx-glr-download docutils container">
-<a class="reference download internal" href="../_downloads/plot_stats_cluster_spatio_temporal_2samp.py" download=""><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">plot_stats_cluster_spatio_temporal_2samp.py</span></code></a></div>
+<a class="reference download internal" download="" href="../_downloads/392a58befc7aa25854cca93f91231c5d/plot_stats_cluster_spatio_temporal_2samp.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">plot_stats_cluster_spatio_temporal_2samp.py</span></code></a></div>
 <div class="sphx-glr-download docutils container">
-<a class="reference download internal" href="../_downloads/plot_stats_cluster_spatio_temporal_2samp.ipynb" download=""><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">plot_stats_cluster_spatio_temporal_2samp.ipynb</span></code></a></div>
+<a class="reference download internal" download="" href="../_downloads/956c2e52efc7e768d096c7da98299333/plot_stats_cluster_spatio_temporal_2samp.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">plot_stats_cluster_spatio_temporal_2samp.ipynb</span></code></a></div>
 </div>
 <p class="sphx-glr-signature"><a class="reference external" href="https://sphinx-gallery.readthedocs.io">Gallery generated by Sphinx-Gallery</a></p>
 </div>
@@ -330,7 +356,7 @@ Clustering.
       <li><a href="faq.html#cite">Cite MNE</a></li>
       <li class="pull-right"><a href="#">Back to top</a></li>
     </ul>
-    <p>&copy; Copyright 2012-2018, MNE Developers. Last updated on 2018-07-20.</p>
+    <p>&copy; Copyright 2012-2018, MNE Developers. Last updated on 2018-11-19.</p>
   </div>
 </footer>
   </body>
