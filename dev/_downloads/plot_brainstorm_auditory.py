@@ -127,7 +127,7 @@ durations = annotations_df['duration'].values / raw.info['sfreq']
 descriptions = annotations_df['label'].values
 
 annotations = mne.Annotations(onsets, durations, descriptions)
-raw.set_annotations(annotations)
+raw.annotations = annotations
 del onsets, durations, descriptions
 
 ###############################################################################
