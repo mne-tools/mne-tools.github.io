@@ -213,7 +213,7 @@ Computational Intelligence and Neuroscience, vol. 2011, Article ID
 <p>The data were collected with an Elekta Neuromag VectorView system at 1000 Hz
 and low-pass filtered at 330 Hz. Here the medium-amplitude (200 nAm) data
 are read to construct instances of <a class="reference internal" href="../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-class docutils literal notranslate"><span class="pre">mne.io.Raw</span></code></a>.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">data_path</span> <span class="o">=</span> <span class="n">bst_phantom_elekta</span><span class="o">.</span><span class="n">data_path</span><span class="p">()</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">data_path</span> <span class="o">=</span> <span class="n">bst_phantom_elekta</span><span class="o">.</span><span class="n">data_path</span><span class="p">(</span><span class="n">verbose</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 
 <span class="n">raw_fname</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_path</span><span class="p">,</span> <span class="s1">&#39;kojak_all_200nAm_pp_no_chpi_no_ms_raw.fif&#39;</span><span class="p">)</span>
 <span class="n">raw</span> <span class="o">=</span> <a href="../generated/mne.io.read_raw_fif.html#mne.io.read_raw_fif" title="View documentation for mne.io.read_raw_fif"><span class="n">read_raw_fif</span></a><span class="p">(</span><span class="n">raw_fname</span><span class="p">)</span>
@@ -283,9 +283,22 @@ the global field power.</p>
     <span class="n">data</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">evoked</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">])</span>
 <span class="n">evoked</span> <span class="o">=</span> <a href="../generated/mne.EvokedArray.html#mne.EvokedArray" title="View documentation for mne.EvokedArray"><span class="n">mne</span><span class="o">.</span><span class="n">EvokedArray</span></a><span class="p">(</span><a href="http://www.numpy.org/devdocs/reference/generated/numpy.array.html#numpy.array" title="View documentation for numpy.array"><span class="n">np</span><span class="o">.</span><span class="n">array</span></a><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">evoked</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">tmin</span><span class="o">=</span><span class="mf">0.</span><span class="p">)</span>
 <span class="k">del</span> <span class="n">epochs</span><span class="p">,</span> <span class="n">raw</span>
-<span class="n">dip</span> <span class="o">=</span> <a href="../generated/mne.fit_dipole.html#mne.fit_dipole" title="View documentation for mne.fit_dipole"><span class="n">fit_dipole</span></a><span class="p">(</span><span class="n">evoked</span><span class="p">,</span> <span class="n">cov</span><span class="p">,</span> <span class="n">sphere</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=</span><span class="mi">1</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">dip</span><span class="p">,</span> <span class="n">residual</span> <span class="o">=</span> <a href="../generated/mne.fit_dipole.html#mne.fit_dipole" title="View documentation for mne.fit_dipole"><span class="n">fit_dipole</span></a><span class="p">(</span><span class="n">evoked</span><span class="p">,</span> <span class="n">cov</span><span class="p">,</span> <span class="n">sphere</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 </pre></div>
 </div>
+<p>Do a quick visualization of how much variance we explained, putting the
+data and residuals on the same scale (here the “time points” are the
+32 dipole peak values that we fit):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">axes</span> <span class="o">=</span> <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.subplots.html#matplotlib.pyplot.subplots" title="View documentation for matplotlib.pyplot.subplots"><span class="n">plt</span><span class="o">.</span><span class="n">subplots</span></a><span class="p">(</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">)</span>
+<span class="n">evoked</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">axes</span><span class="o">=</span><span class="n">axes</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">ax</span> <span class="ow">in</span> <span class="n">axes</span><span class="p">:</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">texts</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">line</span> <span class="ow">in</span> <span class="n">ax</span><span class="o">.</span><span class="n">lines</span><span class="p">:</span>
+        <span class="n">line</span><span class="o">.</span><span class="n">set_color</span><span class="p">(</span><span class="s1">&#39;#98df81&#39;</span><span class="p">)</span>
+<span class="n">residual</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">axes</span><span class="o">=</span><span class="n">axes</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="../_images/sphx_glr_plot_brainstorm_phantom_elekta_006.png" class="sphx-glr-single-img" src="../_images/sphx_glr_plot_brainstorm_phantom_elekta_006.png" />
 <p>Now we can compare to the actual locations, taking the difference in mm:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">actual_pos</span><span class="p">,</span> <span class="n">actual_ori</span> <span class="o">=</span> <a href="../generated/mne.dipole.get_phantom_dipoles.html#mne.dipole.get_phantom_dipoles" title="View documentation for mne.dipole.get_phantom_dipoles"><span class="n">mne</span><span class="o">.</span><span class="n">dipole</span><span class="o">.</span><span class="n">get_phantom_dipoles</span></a><span class="p">()</span>
 <span class="n">actual_amp</span> <span class="o">=</span> <span class="mf">100.</span>  <span class="c1"># nAm</span>
@@ -314,7 +327,7 @@ the global field power.</p>
 <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.show.html#matplotlib.pyplot.show" title="View documentation for matplotlib.pyplot.show"><span class="n">plt</span><span class="o">.</span><span class="n">show</span></a><span class="p">()</span>
 </pre></div>
 </div>
-<img alt="../_images/sphx_glr_plot_brainstorm_phantom_elekta_006.png" class="sphx-glr-single-img" src="../_images/sphx_glr_plot_brainstorm_phantom_elekta_006.png" />
+<img alt="../_images/sphx_glr_plot_brainstorm_phantom_elekta_007.png" class="sphx-glr-single-img" src="../_images/sphx_glr_plot_brainstorm_phantom_elekta_007.png" />
 <p class="sphx-glr-script-out">Out:</p>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>mean(position error) = 2.1745346576971585
 mean(angle error) = 0.02684219616563936
@@ -331,6 +344,7 @@ dipoles</p>
                   <span class="n">scale_factor</span><span class="o">=</span><span class="mf">0.03</span><span class="p">,</span>
                   <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">)</span>
 
+
 <a href="../generated/mne.viz.plot_alignment.html#mne.viz.plot_alignment" title="View documentation for mne.viz.plot_alignment"><span class="n">mne</span><span class="o">.</span><span class="n">viz</span><span class="o">.</span><span class="n">plot_alignment</span></a><span class="p">(</span><span class="n">evoked</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">bem</span><span class="o">=</span><span class="n">sphere</span><span class="p">,</span> <span class="n">surfaces</span><span class="o">=</span><span class="p">[])</span>
 
 <span class="c1"># Plot the position and the orientation of the actual dipole</span>
@@ -339,8 +353,8 @@ dipoles</p>
 <span class="n">plot_pos_ori</span><span class="p">(</span><span class="n">dip</span><span class="o">.</span><span class="n">pos</span><span class="p">,</span> <span class="n">dip</span><span class="o">.</span><span class="n">ori</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">0.</span><span class="p">,</span> <span class="mf">1.</span><span class="p">))</span>
 </pre></div>
 </div>
-<img alt="../_images/sphx_glr_plot_brainstorm_phantom_elekta_007.png" class="sphx-glr-single-img" src="../_images/sphx_glr_plot_brainstorm_phantom_elekta_007.png" />
-<p><strong>Total running time of the script:</strong> ( 0 minutes  41.064 seconds)</p>
+<img alt="../_images/sphx_glr_plot_brainstorm_phantom_elekta_008.png" class="sphx-glr-single-img" src="../_images/sphx_glr_plot_brainstorm_phantom_elekta_008.png" />
+<p><strong>Total running time of the script:</strong> ( 0 minutes  47.250 seconds)</p>
 <div class="sphx-glr-footer class sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-tutorials-plot-brainstorm-phantom-elekta-py">
 <div class="sphx-glr-download docutils container">
 <a class="reference download internal" href="../_downloads/plot_brainstorm_phantom_elekta.py" download=""><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">plot_brainstorm_phantom_elekta.py</span></code></a></div>
