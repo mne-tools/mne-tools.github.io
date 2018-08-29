@@ -220,52 +220,30 @@ the latest version of the <code class="docutils literal notranslate"><span class
 </div>
 <div class="section" id="cuda-nvidia-gpu-acceleration">
 <span id="cuda"></span><h2><a class="toc-backref" href="#id2">CUDA (NVIDIA GPU acceleration)</a><a class="headerlink" href="#cuda-nvidia-gpu-acceleration" title="Permalink to this headline">¶</a></h2>
-<p>We have developed specialized routines to make use of
-<a class="reference external" href="http://www.nvidia.com/object/cuda_home_new.html">NVIDIA CUDA GPU processing</a>
-to speed up some operations (e.g. FIR filtering) by up to 10x.
-If you want to use NVIDIA CUDA, you should install:</p>
-<ol class="arabic simple">
-<li><a class="reference external" href="https://developer.nvidia.com/cuda-downloads">the NVIDIA toolkit on your system</a></li>
-<li><a class="reference external" href="http://wiki.tiker.net/PyCuda/Installation/">PyCUDA</a></li>
-<li><a class="reference external" href="https://github.com/lebedov/scikits.cuda">skcuda</a></li>
-</ol>
-<p>For example, on Ubuntu 15.10, a combination of system packages and <code class="docutils literal notranslate"><span class="pre">git</span></code>
-packages can be used to install the CUDA stack:</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">#</span> install system packages <span class="k">for</span> CUDA
-<span class="gp">$</span> sudo apt-get install nvidia-cuda-dev nvidia-modprobe
-<span class="gp">#</span> install PyCUDA
-<span class="gp">$</span> git clone http://git.tiker.net/trees/pycuda.git
-<span class="gp">$</span> <span class="nb">cd</span> pycuda
-<span class="gp">$</span> ./configure.py --cuda-enable-gl
-<span class="gp">$</span> git submodule update --init
-<span class="gp">$</span> make -j <span class="m">4</span>
-<span class="gp">$</span> python setup.py install
-<span class="gp">#</span> install skcuda
-<span class="gp">$</span> <span class="nb">cd</span> ..
-<span class="gp">$</span> git clone https://github.com/lebedov/scikit-cuda.git
-<span class="gp">$</span> <span class="nb">cd</span> scikit-cuda
-<span class="gp">$</span> python setup.py install
-</pre></div>
-</div>
-<p>To initialize mne-python cuda support, after installing these dependencies
-and running their associated unit tests (to ensure your installation is correct)
-you can run:</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> <span class="nv">MNE_USE_CUDA</span><span class="o">=</span><span class="nb">true</span> <span class="nv">MNE_LOGGING_LEVEL</span><span class="o">=</span>info python -c <span class="s2">&quot;import mne; mne.cuda.init_cuda()&quot;</span>
+<p>Some routines can utilize
+<a class="reference external" href="https://developer.nvidia.com/cuda-zone">NVIDIA CUDA GPU processing</a>
+to speed up some operations (e.g. FIR filtering) by roughly an order of magnitude.
+To use CUDA, first  ensure that you are running the NVIDIA proprietary drivers
+on your operating system, and then do:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> conda install cupy
+<span class="gp">$</span> <span class="nv">MNE_USE_CUDA</span><span class="o">=</span><span class="nb">true</span> python -c <span class="s2">&quot;import mne; mne.cuda.init_cuda(verbose=True)&quot;</span>
 <span class="go">Enabling CUDA with 1.55 GB available memory</span>
 </pre></div>
 </div>
-<p>If you have everything installed correctly, you should see an INFO-level log
-message telling you your CUDA hardware’s available memory. To have CUDA
-initialized on startup, you can do:</p>
+<p>If you receive a message reporting the GPU’s available memory, <a class="reference external" href="https://cupy.chainer.org/">CuPy</a>
+is woriking properly. To permanently enable CUDA in MNE, you can do:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">mne</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">set_config</span><span class="p">(</span><span class="s1">&#39;MNE_USE_CUDA&#39;</span><span class="p">,</span> <span class="s1">&#39;true&#39;</span><span class="p">)</span> 
 </pre></div>
 </div>
-<p>You can test if MNE CUDA support is working by running the associated test:</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> pytest mne/tests/test_filter.py
+<p>You can then test MNE CUDA support by running the associated test:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> pytest mne/tests/test_filter.py -k cuda
 </pre></div>
 </div>
-<p>If <code class="docutils literal notranslate"><span class="pre">MNE_USE_CUDA=true</span></code> and all tests pass with none skipped, then
-MNE-Python CUDA support works.</p>
+<p>If the tests pass, then CUDA should work in MNE. You can use CUDA in methods
+that state that they allow passing <code class="docutils literal notranslate"><span class="pre">n_jobs='cuda'</span></code>, such as
+<a class="reference internal" href="generated/mne.io.Raw.html#mne.io.Raw.filter" title="mne.io.Raw.filter"><code class="xref py py-meth docutils literal notranslate"><span class="pre">mne.io.Raw.filter()</span></code></a> and <a class="reference internal" href="generated/mne.io.Raw.html#mne.io.Raw.resample" title="mne.io.Raw.resample"><code class="xref py py-meth docutils literal notranslate"><span class="pre">mne.io.Raw.resample()</span></code></a>,
+and they should run faster than the CPU-based multithreading such as
+<code class="docutils literal notranslate"><span class="pre">n_jobs=8</span></code>.</p>
 </div>
 <div class="section" id="ipython-jupyter-notebooks">
 <h2><a class="toc-backref" href="#id3">IPython / Jupyter notebooks</a><a class="headerlink" href="#ipython-jupyter-notebooks" title="Permalink to this headline">¶</a></h2>
