@@ -23,7 +23,7 @@ inverse method such as MNE/dSPM/sLORETA/eLORETA on evoked/raw/epochs data.
     from mne.datasets import sample
     from mne.minimum_norm import make_inverse_operator, apply_inverse
 
-    # sphinx_gallery_thumbnail_number = 9
+    # sphinx_gallery_thumbnail_number = 10
 
 
 
@@ -59,6 +59,28 @@ Process MEG data
 
 
 
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    Opening raw data file /home/circleci/mne_data/MNE-sample-data/MEG/sample/sample_audvis_filt-0-40_raw.fif...
+        Read a total of 4 projection items:
+            PCA-v1 (1 x 102)  idle
+            PCA-v2 (1 x 102)  idle
+            PCA-v3 (1 x 102)  idle
+            Average EEG reference (1 x 60)  idle
+        Range : 6450 ... 48149 =     42.956 ...   320.665 secs
+    Ready.
+    Current compensation grade : 0
+    319 events found
+    Event IDs: [ 1  2  3  4  5 32]
+    72 matching events found
+    Applying baseline correction (mode: mean)
+    Not setting metadata
+    Created an SSP operator (subspace dimension = 3)
+    4 projection items activated
 
 
 Compute regularized noise covariance
@@ -170,6 +192,21 @@ Let's just use MEG channels for simplicity.
             :class: sphx-glr-multi-img
 
 
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    8 projection items activated
+    estimated rank (grad): 203
+    Created an SSP operator (subspace dimension = 3)
+    8 projection items activated
+    estimated rank (mag): 99
+        Created an SSP operator (subspace dimension = 3)
+    Setting small MEG eigenvalues to zero.
+    Not doing PCA for MEG.
+        Created the whitener using a noise covariance matrix with rank 302 (3 small eigenvalues omitted)
 
 
 Inverse modeling: MNE/dSPM on evoked and raw data
@@ -199,6 +236,48 @@ Inverse modeling: MNE/dSPM on evoked and raw data
 
 
 
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    Reading forward solution from /home/circleci/mne_data/MNE-sample-data/MEG/sample/sample_audvis-meg-oct-6-fwd.fif...
+        Reading a source space...
+        Computing patch statistics...
+        Patch information added...
+        Distance information added...
+        [done]
+        Reading a source space...
+        Computing patch statistics...
+        Patch information added...
+        Distance information added...
+        [done]
+        2 source spaces read
+        Desired named matrix (kind = 3523) not available
+        Read MEG forward solution (7498 sources, 306 channels, free orientations)
+        Source spaces transformed to the forward solution coordinate frame
+        Average patch normals will be employed in the rotation to the local surface coordinates....
+        Converting to surface-based source orientations...
+        [done]
+    Computing inverse operator with 305 channels.
+        Created an SSP operator (subspace dimension = 3)
+    estimated rank (mag + grad): 302
+    Setting small MEG eigenvalues to zero.
+    Not doing PCA for MEG.
+        Created the whitener using a noise covariance matrix with rank 302 (3 small eigenvalues omitted)
+    Creating the depth weighting matrix...
+        203 planar channels
+        limit = 7265/7498 = 10.037795
+        scale = 2.52065e-08 exp = 0.8
+    Computing inverse operator with 305 channels.
+    Creating the source covariance matrix
+    Applying loose dipole orientations. Loose value of 0.2.
+    Whitening the forward solution.
+    Adjusting source covariance matrix.
+    Computing SVD of whitened and weighted lead field matrix.
+        largest singular value = 4.65276
+        scaling factor to adjust the trace = 1.03619e+19
 
 
 Compute inverse solution
@@ -211,13 +290,36 @@ Compute inverse solution
     method = "dSPM"
     snr = 3.
     lambda2 = 1. / snr ** 2
-    stc = apply_inverse(evoked, inverse_operator, lambda2,
-                        method=method, pick_ori=None)
+    stc, residual = apply_inverse(evoked, inverse_operator, lambda2,
+                                  method=method, pick_ori=None,
+                                  return_residual=True, verbose=True)
 
 
 
 
 
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    Preparing the inverse operator for use...
+        Scaled noise and source covariance from nave = 1 to nave = 55
+        Created the regularized inverter
+        Created an SSP operator (subspace dimension = 3)
+        Created the whitener using a noise covariance matrix with rank 302 (3 small eigenvalues omitted)
+        Computing noise-normalization factors (dSPM)...
+    [done]
+    Applying inverse operator to "aud_r"...
+        Picked 305 channels from the data
+        Computing inverse...
+        Eigenleads need to be weighted ...
+        Computing residual...
+        Explained  66.5% variance
+        Combining the current components...
+        dSPM...
+    [done]
 
 
 Visualization
@@ -238,6 +340,29 @@ View activation time-series
 
 
 .. image:: /auto_tutorials/images/sphx_glr_plot_mne_dspm_source_localization_006.png
+    :class: sphx-glr-single-img
+
+
+
+
+Examine the original data and the residual after fitting:
+
+
+.. code-block:: python
+
+
+    fig, axes = plt.subplots(2, 1)
+    evoked.plot(axes=axes)
+    for ax in axes:
+        ax.texts = []
+        for line in ax.lines:
+            line.set_color('#98df81')
+    residual.plot(axes=axes)
+
+
+
+
+.. image:: /auto_tutorials/images/sphx_glr_plot_mne_dspm_source_localization_007.png
     :class: sphx-glr-single-img
 
 
@@ -266,7 +391,7 @@ and draw a marker at the maximum peak vertex.
 
 
 
-.. image:: /auto_tutorials/images/sphx_glr_plot_mne_dspm_source_localization_007.png
+.. image:: /auto_tutorials/images/sphx_glr_plot_mne_dspm_source_localization_008.png
     :class: sphx-glr-single-img
 
 
@@ -291,10 +416,22 @@ Morph data to average brain
 
 
 
-.. image:: /auto_tutorials/images/sphx_glr_plot_mne_dspm_source_localization_008.png
+.. image:: /auto_tutorials/images/sphx_glr_plot_mne_dspm_source_localization_009.png
     :class: sphx-glr-single-img
 
 
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    Computing morph matrix...
+        Left-hemisphere map read.
+        Right-hemisphere map read.
+        17 smooth iterations done.
+        14 smooth iterations done.
+    [done]
 
 
 Dipole orientations
@@ -318,10 +455,31 @@ each dipole, but also the orientation of the dipoles.
 
 
 
-.. image:: /auto_tutorials/images/sphx_glr_plot_mne_dspm_source_localization_009.png
+.. image:: /auto_tutorials/images/sphx_glr_plot_mne_dspm_source_localization_010.png
     :class: sphx-glr-single-img
 
 
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    Preparing the inverse operator for use...
+        Scaled noise and source covariance from nave = 1 to nave = 55
+        Created the regularized inverter
+        Created an SSP operator (subspace dimension = 3)
+        Created the whitener using a noise covariance matrix with rank 302 (3 small eigenvalues omitted)
+        Computing noise-normalization factors (dSPM)...
+    [done]
+    Applying inverse operator to "aud_r"...
+        Picked 305 channels from the data
+        Computing inverse...
+        Eigenleads need to be weighted ...
+        Computing residual...
+        Explained  66.5% variance
+        dSPM...
+    [done]
 
 
 Note that there is a relationship between the orientation of the dipoles and
@@ -355,11 +513,6 @@ Now let's look at each solver:
 
     *
 
-      .. image:: /auto_tutorials/images/sphx_glr_plot_mne_dspm_source_localization_010.png
-            :class: sphx-glr-multi-img
-
-    *
-
       .. image:: /auto_tutorials/images/sphx_glr_plot_mne_dspm_source_localization_011.png
             :class: sphx-glr-multi-img
 
@@ -368,10 +521,72 @@ Now let's look at each solver:
       .. image:: /auto_tutorials/images/sphx_glr_plot_mne_dspm_source_localization_012.png
             :class: sphx-glr-multi-img
 
+    *
+
+      .. image:: /auto_tutorials/images/sphx_glr_plot_mne_dspm_source_localization_013.png
+            :class: sphx-glr-multi-img
 
 
+.. rst-class:: sphx-glr-script-out
 
-**Total running time of the script:** ( 3 minutes  27.061 seconds)
+ Out:
+
+ .. code-block:: none
+
+    Preparing the inverse operator for use...
+        Scaled noise and source covariance from nave = 1 to nave = 55
+        Created the regularized inverter
+        Created an SSP operator (subspace dimension = 3)
+        Created the whitener using a noise covariance matrix with rank 302 (3 small eigenvalues omitted)
+        Computing noise-normalization factors (dSPM)...
+    [done]
+    Applying inverse operator to "aud_r"...
+        Picked 305 channels from the data
+        Computing inverse...
+        Eigenleads need to be weighted ...
+        Computing residual...
+        Explained  66.5% variance
+        Combining the current components...
+        dSPM...
+    [done]
+    Preparing the inverse operator for use...
+        Scaled noise and source covariance from nave = 1 to nave = 55
+        Created the regularized inverter
+        Created an SSP operator (subspace dimension = 3)
+        Created the whitener using a noise covariance matrix with rank 302 (3 small eigenvalues omitted)
+        Computing noise-normalization factors (sLORETA)...
+    [done]
+    Applying inverse operator to "aud_r"...
+        Picked 305 channels from the data
+        Computing inverse...
+        Eigenleads need to be weighted ...
+        Computing residual...
+        Explained  66.5% variance
+        Combining the current components...
+        sLORETA...
+    [done]
+    Preparing the inverse operator for use...
+        Scaled noise and source covariance from nave = 1 to nave = 55
+        Created the regularized inverter
+        Created an SSP operator (subspace dimension = 3)
+        Created the whitener using a noise covariance matrix with rank 302 (3 small eigenvalues omitted)
+        Computing noise-normalization factors (eLORETA)...
+            Using uniform orientation weights
+            Fitting up to 20 iterations (this make take a while)...
+            Converged on iteration 10 (4.3e-07 < 1e-06)
+            Assembling eLORETA kernel and modifying inverse
+    [done]
+    Applying inverse operator to "aud_r"...
+        Picked 305 channels from the data
+        Computing inverse...
+        Eigenleads need to be weighted ...
+        Computing residual...
+        Explained -5619414178281660874752.0% variance
+        Combining the current components...
+    [done]
+
+
+**Total running time of the script:** ( 2 minutes  27.533 seconds)
 
 
 .. _sphx_glr_download_auto_tutorials_plot_mne_dspm_source_localization.py:
