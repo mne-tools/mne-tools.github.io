@@ -185,6 +185,7 @@ This documentation is for <strong>development version 0.17.dev0</strong>.
 <li><a class="reference internal" href="#setting-eeg-references">Setting EEG references</a></li>
 <li><a class="reference internal" href="#reading-electrode-locations-and-headshapes-for-eeg-recordings">Reading Electrode locations and Headshapes for EEG recordings</a></li>
 <li><a class="reference internal" href="#creating-mne-data-structures-from-arbitrary-data-from-memory">Creating MNE data structures from arbitrary data (from memory)</a></li>
+<li><a class="reference internal" href="#importing-meg-eeg-data-from-fieldtrip">Importing MEG/EEG data from FieldTrip</a></li>
 </ul>
 </li>
 </ul>
@@ -209,6 +210,7 @@ This documentation is for <strong>development version 0.17.dev0</strong>.
 <li><a class="reference internal" href="#setting-eeg-references" id="id4">Setting EEG references</a></li>
 <li><a class="reference internal" href="#reading-electrode-locations-and-headshapes-for-eeg-recordings" id="id5">Reading Electrode locations and Headshapes for EEG recordings</a></li>
 <li><a class="reference internal" href="#creating-mne-data-structures-from-arbitrary-data-from-memory" id="id6">Creating MNE data structures from arbitrary data (from memory)</a></li>
+<li><a class="reference internal" href="#importing-meg-eeg-data-from-fieldtrip" id="id7">Importing MEG/EEG data from FieldTrip</a></li>
 </ul>
 </li>
 </ul>
@@ -225,10 +227,10 @@ with the MNE software. The cheatsheet below summarizes the different
 file formats supported by MNE software.</p>
 <table border="1" class="docutils">
 <colgroup>
-<col width="16%" />
-<col width="21%" />
-<col width="8%" />
-<col width="56%" />
+<col width="12%" />
+<col width="15%" />
+<col width="6%" />
+<col width="67%" />
 </colgroup>
 <thead valign="bottom">
 <tr class="row-odd"><th class="head">Datatype</th>
@@ -312,6 +314,11 @@ file formats supported by MNE software.</p>
 <td>EEGLAB loc, locs, eloc</td>
 <td>Misc</td>
 <td><a class="reference internal" href="../generated/mne.channels.read_montage.html#mne.channels.read_montage" title="mne.channels.read_montage"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.channels.read_montage()</span></code></a></td>
+</tr>
+<tr class="row-odd"><td>MEG and EEG</td>
+<td>FieldTrip raw/epochs/avg</td>
+<td>.mat</td>
+<td><a class="reference internal" href="../generated/mne.io.read_raw_fieldtrip.html#mne.io.read_raw_fieldtrip" title="mne.io.read_raw_fieldtrip"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.io.read_raw_fieldtrip()</span></code></a>, <a class="reference internal" href="../generated/mne.read_epochs_fieldtrip.html#mne.read_epochs_fieldtrip" title="mne.read_epochs_fieldtrip"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.read_epochs_fieldtrip()</span></code></a> and <a class="reference internal" href="../generated/mne.read_evoked_fieldtrip.html#mne.read_evoked_fieldtrip" title="mne.read_evoked_fieldtrip"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.read_evoked_fieldtrip()</span></code></a></td>
 </tr>
 </tbody>
 </table>
@@ -692,6 +699,73 @@ Using 3rd party libraries such as NEO (<a class="reference external" href="https
 with these functions abundant electrophysiological file formats can be easily loaded
 into MNE.</p>
 </div>
+<div class="section" id="importing-meg-eeg-data-from-fieldtrip">
+<h2><a class="toc-backref" href="#id7">Importing MEG/EEG data from FieldTrip</a><a class="headerlink" href="#importing-meg-eeg-data-from-fieldtrip" title="Permalink to this headline">¶</a></h2>
+<p>MNE-Python includes <a class="reference internal" href="../generated/mne.io.read_raw_fieldtrip.html#mne.io.read_raw_fieldtrip" title="mne.io.read_raw_fieldtrip"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.io.read_raw_fieldtrip()</span></code></a>, <a class="reference internal" href="../generated/mne.read_epochs_fieldtrip.html#mne.read_epochs_fieldtrip" title="mne.read_epochs_fieldtrip"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.read_epochs_fieldtrip()</span></code></a> and <a class="reference internal" href="../generated/mne.read_evoked_fieldtrip.html#mne.read_evoked_fieldtrip" title="mne.read_evoked_fieldtrip"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.read_evoked_fieldtrip()</span></code></a> to read data coming from FieldTrip.</p>
+<p>The data is imported directly from a <code class="docutils literal notranslate"><span class="pre">.mat</span></code> file.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">info</span></code> parameter can be explicitly set to <code class="docutils literal notranslate"><span class="pre">None</span></code>. The import functions will still work but:</p>
+<ol class="arabic simple">
+<li>All channel locations will be in head coordinates.</li>
+<li>Channel orientations cannot be guaranteed to be accurate.</li>
+<li>All channel types will be set to generic types.</li>
+</ol>
+<p>This is probably fine for anything that does not need that information, but if you intent to do things like interpolation of missing channels, source analysis or look at the RMS pairs of planar gradiometers, you most likely run into problems.</p>
+<p>It is <strong>highly recommended</strong> to provide the <code class="docutils literal notranslate"><span class="pre">info</span></code> parameter as well. The <code class="docutils literal notranslate"><span class="pre">info</span></code> dictionary can be extracted by loading the original raw data file with the corresponding MNE-Python functions:</p>
+<p>The imported data can have less channels than the original data. Only the information for the present ones is extracted from the <code class="docutils literal notranslate"><span class="pre">info</span></code> dictionary.</p>
+<p>As of version 0.17, importing FieldTrip data has been tested on a variety of systems with the following results:</p>
+<table border="1" class="docutils">
+<colgroup>
+<col width="4%" />
+<col width="32%" />
+<col width="32%" />
+<col width="32%" />
+</colgroup>
+<thead valign="bottom">
+<tr class="row-odd"><th class="head">System</th>
+<th class="head">Read Raw Data</th>
+<th class="head">Read Epoched Data</th>
+<th class="head">Read Evoked Data</th>
+</tr>
+</thead>
+<tbody valign="top">
+<tr class="row-even"><td>BTI</td>
+<td>Works</td>
+<td>Untested</td>
+<td>Untested</td>
+</tr>
+<tr class="row-odd"><td>CNT</td>
+<td>Data imported as microvolts. Otherwise fine.</td>
+<td>Data imported as microvolts. Otherwise fine.</td>
+<td>Data imported as microvolts. Otherwise fine.</td>
+</tr>
+<tr class="row-even"><td>CTF</td>
+<td>Works</td>
+<td>Works</td>
+<td>Works</td>
+</tr>
+<tr class="row-odd"><td>EGI</td>
+<td>Mostly Ok.Data imported as microvolts. FieldTrip does not apply calibration.</td>
+<td>Mostly Ok.Data imported as microvolts. FieldTrip does not apply calibration.</td>
+<td>Mostly Ok.Data imported as microvolts. FieldTrip does not apply calibration.</td>
+</tr>
+<tr class="row-even"><td>KIT</td>
+<td>Does not work. Channel names are different in MNE-Python and FieldTrip</td>
+<td>Does not work. Channel names are different in MNE-Python and FieldTrip</td>
+<td>Does not work. Channel names are different in MNE-Python and FieldTrip</td>
+</tr>
+<tr class="row-odd"><td>Neuromag</td>
+<td>Works</td>
+<td>Works</td>
+<td>Works</td>
+</tr>
+<tr class="row-even"><td>eximia</td>
+<td>Work</td>
+<td>Untested</td>
+<td>Untested</td>
+</tr>
+</tbody>
+</table>
+</div>
 </div>
 
 
@@ -714,7 +788,7 @@ into MNE.</p>
       <li><a href="faq.html#cite">Cite MNE</a></li>
       <li class="pull-right"><a href="#">Back to top</a></li>
     </ul>
-    <p>&copy; Copyright 2012-2018, MNE Developers. Last updated on 2018-10-17.</p>
+    <p>&copy; Copyright 2012-2018, MNE Developers. Last updated on 2018-10-18.</p>
   </div>
 </footer>
   </body>
