@@ -176,7 +176,7 @@ This documentation is for <strong>development version 0.17.dev0</strong>.
 <h1>mne.beamformer.make_dics<a class="headerlink" href="#mne-beamformer-make-dics" title="Permalink to this headline">¶</a></h1>
 <dl class="function">
 <dt id="mne.beamformer.make_dics">
-<code class="descclassname">mne.beamformer.</code><code class="descname">make_dics</code><span class="sig-paren">(</span><em>info</em>, <em>forward</em>, <em>csd</em>, <em>reg=0.05</em>, <em>label=None</em>, <em>pick_ori=None</em>, <em>inversion='single'</em>, <em>weight_norm=None</em>, <em>normalize_fwd=True</em>, <em>real_filter=False</em>, <em>reduce_rank=False</em>, <em>verbose=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/beamformer/_dics.py#L24-L248"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.beamformer.make_dics" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">mne.beamformer.</code><code class="descname">make_dics</code><span class="sig-paren">(</span><em>info</em>, <em>forward</em>, <em>csd</em>, <em>reg=0.05</em>, <em>label=None</em>, <em>pick_ori=None</em>, <em>rank=None</em>, <em>inversion='single'</em>, <em>weight_norm=None</em>, <em>normalize_fwd=True</em>, <em>real_filter=False</em>, <em>reduce_rank=False</em>, <em>verbose=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/beamformer/_dics.py#L24-L264"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.beamformer.make_dics" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute a Dynamic Imaging of Coherent Sources (DICS) spatial filter.</p>
 <p>This is a beamformer filter that can be used to estimate the source power
 at a specific frequency range <a class="reference internal" href="#r0d5e943dea5a-1" id="id1">[1]</a>. It does this by constructing a spatial
@@ -226,6 +226,19 @@ spectral power.</p>
 </dl>
 </div></blockquote>
 </dd>
+<dt><strong>rank</strong> <span class="classifier-delimiter">:</span> <span class="classifier">None | int | ‘full’</span></dt>
+<dd><p class="first">This controls the effective rank of the covariance matrix when
+computing the inverse. The rank can be set explicitly by specifying an
+integer value. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, the rank will be automatically estimated.
+Since applying regularization will always make the covariance matrix
+full rank, the rank is estimated before regularization in this case. If
+‘full’, the rank will be estimated after regularization and hence
+will mean using the full rank, unless <code class="docutils literal notranslate"><span class="pre">reg=0</span></code> is used.
+The default is None.</p>
+<div class="last versionadded">
+<p><span class="versionmodified">New in version 0.17.</span></p>
+</div>
+</dd>
 <dt><strong>inversion</strong> <span class="classifier-delimiter">:</span> <span class="classifier">‘single’ | ‘matrix’</span></dt>
 <dd><p class="first last">This determines how the beamformer deals with source spaces in “free”
 orientation. Such source spaces define three orthogonal dipoles at each
@@ -235,13 +248,13 @@ computed for each dipole separately. When <code class="docutils literal notransl
 three dipoles at a source vertex are considered as a group and the
 spatial filters are computed jointly using a matrix inversion. While
 <code class="docutils literal notranslate"><span class="pre">inversion='single'</span></code> is more stable, <code class="docutils literal notranslate"><span class="pre">inversion='matrix'</span></code> is more
-precise. See section 5 of <a class="reference internal" href="#r0d5e943dea5a-4" id="id2">[4]</a>.  Defaults to ‘single’.</p>
+precise. See section 5 of <a class="reference internal" href="#r0d5e943dea5a-5" id="id2">[5]</a>.  Defaults to ‘single’.</p>
 </dd>
-<dt><strong>weight_norm</strong> <span class="classifier-delimiter">:</span> <span class="classifier">None | ‘unit-noise-gain’</span></dt>
-<dd><p class="first last">How to normalize the beamformer weights. None means no normalization is
-performed. If ‘unit-noise-gain’, the unit-noise gain minimum variance
-beamformer will be computed (Borgiotti-Kaplan beamformer) <a class="reference internal" href="#r0d5e943dea5a-2" id="id3">[2]</a>.
-Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
+<dt><strong>weight_norm</strong> <span class="classifier-delimiter">:</span> <span class="classifier">‘unit-noise-gain’ | ‘nai’ | None</span></dt>
+<dd><p class="first last">If ‘unit-noise-gain’, the unit-noise gain minimum variance beamformer
+will be computed (Borgiotti-Kaplan beamformer) <a class="reference internal" href="#r0d5e943dea5a-2" id="id3">[2]</a>,
+If ‘nai’, the Neural Activity Index <a class="reference internal" href="#r0d5e943dea5a-4" id="id4">[4]</a> will be computed.
+Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>, in which case no normalization is performed.</p>
 </dd>
 <dt><strong>normalize_fwd</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
 <dd><p class="first last">Whether to normalize the forward solution. Defaults to <code class="docutils literal notranslate"><span class="pre">True</span></code>. Note
@@ -320,7 +333,7 @@ matrix inversion.</p>
 <p class="last"><a class="reference internal" href="mne.beamformer.apply_dics_csd.html#mne.beamformer.apply_dics_csd" title="mne.beamformer.apply_dics_csd"><code class="xref py py-obj docutils literal notranslate"><span class="pre">apply_dics_csd</span></code></a>, <a class="reference internal" href="mne.beamformer.tf_dics.html#mne.beamformer.tf_dics" title="mne.beamformer.tf_dics"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tf_dics</span></code></a></p>
 </div>
 <p class="rubric">Notes</p>
-<p>The original reference is <a class="reference internal" href="#r0d5e943dea5a-1" id="id4">[1]</a>. See <a class="reference internal" href="#r0d5e943dea5a-4" id="id5">[4]</a> for a tutorial style paper on the
+<p>The original reference is <a class="reference internal" href="#r0d5e943dea5a-1" id="id5">[1]</a>. See <a class="reference internal" href="#r0d5e943dea5a-5" id="id6">[5]</a> for a tutorial style paper on the
 topic.</p>
 <p>The DICS beamformer is very similar to the LCMV (<a class="reference internal" href="mne.beamformer.make_lcmv.html#mne.beamformer.make_lcmv" title="mne.beamformer.make_lcmv"><code class="xref py py-func docutils literal notranslate"><span class="pre">make_lcmv()</span></code></a>)
 beamformer and many of the parameters are shared. However,
@@ -329,7 +342,7 @@ for these parameters, which were settled on separately through extensive
 practical use case testing (but not necessarily exhaustive parameter space
 searching), and it remains to be seen how functionally interchangeable they
 could be.</p>
-<p>The default setting reproduce the DICS beamformer as described in <a class="reference internal" href="#r0d5e943dea5a-4" id="id6">[4]</a>:</p>
+<p>The default setting reproduce the DICS beamformer as described in <a class="reference internal" href="#r0d5e943dea5a-5" id="id7">[5]</a>:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">inversion</span><span class="o">=</span><span class="s1">&#39;single&#39;</span><span class="p">,</span> <span class="n">weight_norm</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">normalize_fwd</span><span class="o">=</span><span class="kc">True</span>
 </pre></div>
 </div>
@@ -339,12 +352,12 @@ could be.</p>
 </div>
 <p>For more information about <code class="docutils literal notranslate"><span class="pre">real_filter</span></code>, see the
 <a class="reference external" href="http://www.cell.com/cms/attachment/616681/4982593/mmc1.pdf">supplemental information</a>
-from <a class="reference internal" href="#r0d5e943dea5a-3" id="id7">[3]</a>.</p>
+from <a class="reference internal" href="#r0d5e943dea5a-3" id="id8">[3]</a>.</p>
 <p class="rubric">References</p>
 <table class="docutils citation" frame="void" id="r0d5e943dea5a-1" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
-<tr><td class="label">[1]</td><td><em>(<a class="fn-backref" href="#id1">1</a>, <a class="fn-backref" href="#id4">2</a>, <a class="fn-backref" href="#id8">3</a>)</em> Gross et al. (2001) Dynamic imaging of coherent sources: Studying
+<tr><td class="label">[1]</td><td><em>(<a class="fn-backref" href="#id1">1</a>, <a class="fn-backref" href="#id5">2</a>, <a class="fn-backref" href="#id9">3</a>)</em> Gross et al. (2001) Dynamic imaging of coherent sources: Studying
 neural interactions in the human brain. PNAS vol. 98 (2)
 pp. 694-699. <a class="reference external" href="https://doi.org/10.1073/pnas.98.2.694">https://doi.org/10.1073/pnas.98.2.694</a></td></tr>
 </tbody>
@@ -352,14 +365,14 @@ pp. 694-699. <a class="reference external" href="https://doi.org/10.1073/pnas.98
 <table class="docutils citation" frame="void" id="r0d5e943dea5a-2" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
-<tr><td class="label">[2]</td><td><em>(<a class="fn-backref" href="#id3">1</a>, <a class="fn-backref" href="#id9">2</a>)</em> Sekihara &amp; Nagarajan. Adaptive spatial filters for electromagnetic
+<tr><td class="label">[2]</td><td><em>(<a class="fn-backref" href="#id3">1</a>, <a class="fn-backref" href="#id10">2</a>)</em> Sekihara &amp; Nagarajan. Adaptive spatial filters for electromagnetic
 brain imaging (2008) Springer Science &amp; Business Media</td></tr>
 </tbody>
 </table>
 <table class="docutils citation" frame="void" id="r0d5e943dea5a-3" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
-<tr><td class="label">[3]</td><td><em>(<a class="fn-backref" href="#id7">1</a>, <a class="fn-backref" href="#id10">2</a>)</em> Hipp JF, Engel AK, Siegel M (2011) Oscillatory Synchronization
+<tr><td class="label">[3]</td><td><em>(<a class="fn-backref" href="#id8">1</a>, <a class="fn-backref" href="#id11">2</a>)</em> Hipp JF, Engel AK, Siegel M (2011) Oscillatory Synchronization
 in Large-Scale Cortical Networks Predicts Perception.
 Neuron (2011) vol 69 pp. 387-396.
 <a class="reference external" href="https://doi.org/10.1016/j.neuron.2010.12.027">https://doi.org/10.1016/j.neuron.2010.12.027</a></td></tr>
@@ -368,7 +381,15 @@ Neuron (2011) vol 69 pp. 387-396.
 <table class="docutils citation" frame="void" id="r0d5e943dea5a-4" rules="none">
 <colgroup><col class="label" /><col /></colgroup>
 <tbody valign="top">
-<tr><td class="label">[4]</td><td><em>(<a class="fn-backref" href="#id2">1</a>, <a class="fn-backref" href="#id5">2</a>, <a class="fn-backref" href="#id6">3</a>, <a class="fn-backref" href="#id11">4</a>)</em> van Vliet, et al. (2018) Analysis of functional connectivity and
+<tr><td class="label">[4]</td><td><em>(<a class="fn-backref" href="#id4">1</a>, <a class="fn-backref" href="#id12">2</a>)</em> Van Veen et al. Localization of brain electrical activity via
+linearly constrained minimum variance spatial filtering.
+Biomedical Engineering (1997) vol. 44 (9) pp. 867–880</td></tr>
+</tbody>
+</table>
+<table class="docutils citation" frame="void" id="r0d5e943dea5a-5" rules="none">
+<colgroup><col class="label" /><col /></colgroup>
+<tbody valign="top">
+<tr><td class="label">[5]</td><td><em>(<a class="fn-backref" href="#id2">1</a>, <a class="fn-backref" href="#id6">2</a>, <a class="fn-backref" href="#id7">3</a>, <a class="fn-backref" href="#id13">4</a>)</em> van Vliet, et al. (2018) Analysis of functional connectivity and
 oscillatory power using DICS: from raw MEG data to group-level
 statistics in Python. bioRxiv, 245530.
 <a class="reference external" href="https://doi.org/10.1101/245530">https://doi.org/10.1101/245530</a></td></tr>
@@ -378,11 +399,11 @@ statistics in Python. bioRxiv, 245530.
 
 <div class="section" id="examples-using-mne-beamformer-make-dics">
 <h2>Examples using <code class="docutils literal notranslate"><span class="pre">mne.beamformer.make_dics</span></code><a class="headerlink" href="#examples-using-mne-beamformer-make-dics" title="Permalink to this headline">¶</a></h2>
-<div class="sphx-glr-thumbcontainer" tooltip="Compute a Dynamic Imaging of Coherent Sources (DICS) [1]_ filter from single-trial activity to ..."><div class="figure" id="id12">
+<div class="sphx-glr-thumbcontainer" tooltip="Compute a Dynamic Imaging of Coherent Sources (DICS) [1]_ filter from single-trial activity to ..."><div class="figure" id="id14">
 <img alt="../_images/sphx_glr_plot_dics_source_power_thumb.png" src="../_images/sphx_glr_plot_dics_source_power_thumb.png" />
 <p class="caption"><span class="caption-text"><a class="reference internal" href="../auto_examples/inverse/plot_dics_source_power.html#sphx-glr-auto-examples-inverse-plot-dics-source-power-py"><span class="std std-ref">Compute source power using DICS beamfomer</span></a></span></p>
 </div>
-</div><div class="sphx-glr-thumbcontainer" tooltip="In this tutorial, we&#x27;re going to simulate two signals originating from two locations on the cor..."><div class="figure" id="id13">
+</div><div class="sphx-glr-thumbcontainer" tooltip="In this tutorial, we&#x27;ll simulate two signals originating from two locations on the cortex. Thes..."><div class="figure" id="id15">
 <img alt="../_images/sphx_glr_plot_dics_thumb.png" src="../_images/sphx_glr_plot_dics_thumb.png" />
 <p class="caption"><span class="caption-text"><a class="reference internal" href="../auto_tutorials/plot_dics.html#sphx-glr-auto-tutorials-plot-dics-py"><span class="std std-ref">DICS for power mapping</span></a></span></p>
 </div>
@@ -409,7 +430,7 @@ statistics in Python. bioRxiv, 245530.
       <li><a href="faq.html#cite">Cite MNE</a></li>
       <li class="pull-right"><a href="#">Back to top</a></li>
     </ul>
-    <p>&copy; Copyright 2012-2018, MNE Developers. Last updated on 2018-10-26.</p>
+    <p>&copy; Copyright 2012-2018, MNE Developers. Last updated on 2018-11-06.</p>
   </div>
 </footer>
   </body>

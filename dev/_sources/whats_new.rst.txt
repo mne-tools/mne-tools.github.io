@@ -24,15 +24,17 @@ Changelog
 
 - Add :func:`mne.io.read_raw_fieldtrip`, :func:`mne.read_epochs_fieldtrip` and :func:`mne.read_evoked_fieldtrip` to import FieldTrip data. By `Thomas Hartmann`_ and `Dirk Gütlin`_.
 
-- Default parameters in :func:`mne.io.eeglab.read_annotations_eeglab` no longer filter out annotations by `Joan Massich`_ and `Alex Gramfort`_
+- Default parameters in ``mne.io.read_annotations_eeglab`` no longer filter out annotations by `Joan Massich`_ and `Alex Gramfort`_
 
-- :func:`mne.io.eeglab.read_raw_eeglab` no longer warns when the stim channel is populated with an array of zeros by `Joan Massich`_
+- :func:`mne.io.read_raw_eeglab` no longer warns when the stim channel is populated with an array of zeros by `Joan Massich`_
 
 - Add capability to read and save Epochs containing complex data (e.g. after Hilbert-transform) using :meth:`mne.Epochs.save` and :func:`mne.read_epochs`, by `Stefan Repplinger`_, `Eric Larson`_ and `Alex Gramfort`_
 
 - Add optically pumped magnetometer dataset and example by `Rasmus Zetter`_ and `Eric Larson`_
 
 - Add ``orgin`` parameter to :meth:`mne.io.Raw.time_as_index` to allow ``times`` to be relative to this ``origin`` by `Joan Massich`_
+
+- Add ``title`` argument to :meth:`mne.SourceEstimate.plot` by `Eric Larson`_
 
 - :func:`mne.io.Raw.set_annotations` now changes ``orig_time`` to match ``meas_date`` and shift ``self.annotations.onset`` accordingly. Previous behavior is deprecated and would be removed in 0.18. Work by `Joan Massich`_
 
@@ -74,21 +76,40 @@ Changelog
 
 - Add ``origin`` parameter to :meth:`mne.Evoked.interpolate_bads` and related methods by `Eric Larson`_
 
+- Add automated MEG helmet shape approximation to :func:`mne.viz.plot_alignment` by `Eric Larson`_
+
 - Add capability to save a :class:`mne.Report` to an HDF5 file to :meth:`mne.Report.save` by `Marijn van Vliet`_
 
 - Add :func:`mne.open_report` to read back a :class:`mne.Report` object that was saved to an HDF5 file by `Marijn van Vliet`_
+
+- Add multi-taper estimation to :func:`mne.minimum_norm.compute_source_psd` by `Eric Larson`_
 
 - :meth:`mne.Epochs.average` now supports custom, e.g. robust, averaging methods, by `Jona Sassenhagen`_
 
 - Add support for Neuromag 122 system by `Alex Gramfort`_
 
-- Add function :func:`mne.io.read_annotations_brainvision` for reading directly Brainvision marker files by `Alex Gramfort`_
+- Add function ``mne.io.read_annotations_brainvision`` for reading directly Brainvision marker files by `Alex Gramfort`_
 
 - Add :meth:`mne.Report.remove` method to remove existing figures from a report, by `Marijn van Vliet`_
+
+- Add sign to output of max-power orientation for :func:`mne.beamformer.make_dics` by `Eric Larson`_
+
+- Add support for ``pick_ori='max-power'`` when ``weight_norm=None`` in :func:`mne.beamformer.make_lcmv` by `Marijn van Vliet`_
+
+- Add support for ``weight_norm='nai'`` for all ``pick_ori`` options in :func:`mne.beamformer.make_lcmv` by `Marijn van Vliet`_
+
+- Add support for ``weight_norm='nai'`` to :func:`mne.beamformer.make_dics` by `Marijn van Vliet`_
+
+- Add parameter ``rank=None`` to :func:`mne.beamformer.make_dics` by `Marijn van Vliet`_
+
+- Add parameter ``rank='full'`` to :func:`mne.beamformer.make_lcmv``, which can be set to ``None`` to auto-compute the rank of the covariance matrix before regularization by `Marijn van Vliet`_
 
 
 Bug
 ~~~
+- Fix :func:`mne.io.Raw.plot_projs_topomap` by `Joan Massich`_
+
+- Fix bug in :func:`mne.minimum_norm.compute_source_psd` where the ``stc.times`` output was scaled by 1000, by `Eric Larson`_
 
 - Fix reading edf file annotations by `Joan Massich`_
 
@@ -109,6 +130,10 @@ Bug
 - Fix bug with :func:`mne.stats.permutation_cluster_test` and :func:`mne.stats.spatio_temporal_cluster_test` where ``threshold=None`` was not calculated properly for a f-oneway test by `Daniel McCloy`_ and `Eric Larson`_
 
 - Fix bug with channel names in ``mgh70`` montage in :func:`mne.channels.read_montage` by `Eric Larson`_
+
+- Fix bug in :func:`mne.io.read_raw_edf` when reading large files on Windows by `Marcin Koculak`_
+
+- Fix check in :func:`mne.viz.plot_sensors` for invalid channel locations by `Eric Larson`_
 
 - Fix bug in :func:`mne.io.read_raw_edf` where GDF files had ``info['highpass']`` and ``info['lowpass']`` set to NaN and ``info['meas_date']`` set incorrectly, by `Eric Larson`_
 
@@ -172,9 +197,16 @@ Bug
 
 - Fix error in mne coreg when saving with scaled MRI if fiducials haven't been saved by `Ezequiel Mikulan`_
 
+- Fix normalization error in :func:`mne.beamformer.make_lcmv` when ``pick_ori='normal', weight_norm='unit_noise_gain'`` by `Marijn van Vliet`_
+
+- Fix computation of max-power orientation in :func:`mne.beamformer.make_dics` when ``pick_ori='max-power', weight_norm='unit_noise_gain'`` by `Marijn van Vliet`_
 
 API
 ~~~
+
+- Remove ``mne.io.read_annotations_brainvision``, ``mne.io.read_annotations_eeglab``, ``mne.io.edf.edf.read_annotations_edf`` and ``mne.annotations.read_brainstorm_annotations`` to unify their behavior under :func:`mne.read_annotations` by `Joan Massich`_
+
+- Deprecate ``mne.io.read_annotations_eeglab`` by `Joan Massich`_
 
 - Calling :meth:``mne.io.pick.pick_info`` removing channels that are needed by compensation matrices (``info['comps']``) no longer raises ``RuntimeException`` but instead logs an info level message. By `Luke Bloy`_
 
@@ -198,8 +230,7 @@ API
 
 - Warning messages are now only emitted as :func:`warnings.warn_explicit` rather than also being emitted as ``logging`` messages (unless a logging file is being used) to avoid duplicate warning messages, by `Eric Larson`_
 
-- Deprecated save_stc_as_volume function in favor of :meth:`mne.VolSourceEstimate.as_volume` and
-   :meth:`mne.VolSourceEstimate.save_as_volume` by `Alex Gramfort`_
+- Deprecated save_stc_as_volume function in favor of :meth:`mne.VolSourceEstimate.as_volume` and :meth:`mne.VolSourceEstimate.save_as_volume` by `Alex Gramfort`_
 
 - `src.kind` now equals to `'mixed'` (and not `'combined'`) for a mixed source space (made of surfaces and volume grids) by `Alex Gramfort`_
 
@@ -269,7 +300,7 @@ Changelog
 
 - Add support for any data type like sEEG or ECoG in covariance related functions (estimation, whitening and plotting) by `Alex Gramfort`_ and `Eric Larson`_
 
-- Add function :func:`mne.io.read_annotations_eeglab` to allow loading annotations from EEGLAB files, by `Alex Gramfort`_
+- Add function ``mne.io.read_annotations_eeglab`` to allow loading annotations from EEGLAB files, by `Alex Gramfort`_
 
 - :meth:`mne.io.Raw.set_montage` now accepts a string as its ``montage`` argument; this will set a builtin montage, by `Clemens Brunner`_
 
@@ -2947,3 +2978,5 @@ of commits):
 .. _Ezequiel Mikulan: https://github.com/ezemikulan
 
 .. _Rasmus Zetter: https://people.aalto.fi/rasmus.zetter
+
+.. _Marcin Koculak: https://github.com/mkoculak
