@@ -176,7 +176,7 @@ This documentation is for <strong>development version 0.17.dev0</strong>.
 <h1>mne.compute_covariance<a class="headerlink" href="#mne-compute-covariance" title="Permalink to this headline">¶</a></h1>
 <dl class="function">
 <dt id="mne.compute_covariance">
-<code class="descclassname">mne.</code><code class="descname">compute_covariance</code><span class="sig-paren">(</span><em>epochs</em>, <em>keep_sample_mean=True</em>, <em>tmin=None</em>, <em>tmax=None</em>, <em>projs=None</em>, <em>method='empirical'</em>, <em>method_params=None</em>, <em>cv=3</em>, <em>scalings=None</em>, <em>n_jobs=1</em>, <em>return_estimators=False</em>, <em>on_mismatch='raise'</em>, <em>verbose=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/cov.py#L551-L862"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.compute_covariance" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">mne.</code><code class="descname">compute_covariance</code><span class="sig-paren">(</span><em>epochs</em>, <em>keep_sample_mean=True</em>, <em>tmin=None</em>, <em>tmax=None</em>, <em>projs=None</em>, <em>method='empirical'</em>, <em>method_params=None</em>, <em>cv=3</em>, <em>scalings=None</em>, <em>n_jobs=1</em>, <em>return_estimators=False</em>, <em>on_mismatch='raise'</em>, <em>rank=''</em>, <em>verbose=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/cov.py#L592-L924"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.compute_covariance" title="Permalink to this definition">¶</a></dt>
 <dd><p>Estimate noise covariance matrix from epochs.</p>
 <p>The noise covariance is typically estimated on pre-stimulus periods
 when the stimulus onset is defined from events.</p>
@@ -222,40 +222,14 @@ the sample covariance will be computed. A list can be passed to
 perform estimates using multiple methods.
 If ‘auto’ or a list of methods, the best estimator will be determined
 based on log-likelihood and cross-validation on unseen data as
-described in <a class="reference internal" href="#radcaa98e96a2-1" id="id1">[1]</a>. Valid methods are:</p>
-<ul>
-<li><p class="first"><code class="docutils literal notranslate"><span class="pre">'empirical'</span></code>: the empirical or sample covariance (default)</p>
-</li>
-<li><p class="first"><code class="docutils literal notranslate"><span class="pre">'diagonal_fixed'</span></code>: a diagonal regularization based on
-channel types as in <a class="reference internal" href="mne.cov.regularize.html#mne.cov.regularize" title="mne.cov.regularize"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.cov.regularize()</span></code></a>.</p>
-</li>
-<li><p class="first"><code class="docutils literal notranslate"><span class="pre">'shrinkage'</span></code> : covariance estimator with fixed shrinkage.</p>
-<div class="versionadded">
-<p><span class="versionmodified">New in version 0.16.</span></p>
-</div>
-</li>
-<li><p class="first"><code class="docutils literal notranslate"><span class="pre">'ledoit_wolf'</span></code>: the Ledoit-Wolf estimator, which uses an
-empirical formula for the optimal shrinkage value <a class="reference internal" href="#radcaa98e96a2-2" id="id2">[2]</a>.</p>
-</li>
-<li><p class="first"><code class="docutils literal notranslate"><span class="pre">'oas'</span></code>: the OAS estimator <a class="reference internal" href="#radcaa98e96a2-5" id="id3">[5]</a>, which uses a different
-empricial formula for the optimal shrinkage value.</p>
-<div class="versionadded">
-<p><span class="versionmodified">New in version 0.16.</span></p>
-</div>
-</li>
-<li><p class="first"><code class="docutils literal notranslate"><span class="pre">'shrunk'</span></code>: like ‘ledoit_wolf’, but with cross-validation
-for optimal alpha.</p>
-</li>
-<li><p class="first"><code class="docutils literal notranslate"><span class="pre">'pca'</span></code>: probabilistic PCA with low rank <a class="reference internal" href="#radcaa98e96a2-3" id="id4">[3]</a>.</p>
-</li>
-<li><p class="first"><code class="docutils literal notranslate"><span class="pre">'factor_analysis'</span></code>: factor analysis with low rank <a class="reference internal" href="#radcaa98e96a2-4" id="id5">[4]</a>.</p>
-</li>
-</ul>
-<p>If <code class="docutils literal notranslate"><span class="pre">'auto'</span></code>, this expands to:</p>
+described in <a class="reference internal" href="#radcaa98e96a2-1" id="id1">[1]</a>. Valid methods are ‘empirical’, ‘diagonal_fixed’,
+‘shrunk’, ‘oas’, ‘ledoit_wolf’, ‘factor_analysis’, ‘shrinkage’,
+and ‘pca’ (see Notes). If <code class="docutils literal notranslate"><span class="pre">'auto'</span></code>, it expands to:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">[</span><span class="s1">&#39;shrunk&#39;</span><span class="p">,</span> <span class="s1">&#39;diagonal_fixed&#39;</span><span class="p">,</span> <span class="s1">&#39;empirical&#39;</span><span class="p">,</span> <span class="s1">&#39;factor_analysis&#39;</span><span class="p">]</span>
 </pre></div>
 </div>
-<p>The <code class="docutils literal notranslate"><span class="pre">'auto'</span></code> mode is not recommended if there are many
+<p><code class="docutils literal notranslate"><span class="pre">'factor_analysis'</span></code> is removed when <cite>rank</cite> is not ‘full’.
+The <code class="docutils literal notranslate"><span class="pre">'auto'</span></code> mode is not recommended if there are many
 segments of data, since computation can take a long time.</p>
 <div class="last versionadded">
 <p><span class="versionmodified">New in version 0.9.0.</span></p>
@@ -267,7 +241,7 @@ method is not None. Keys must correspond to the value(s) of <code class="docutil
 If None (default), expands to the following (with the addition of
 <code class="docutils literal notranslate"><span class="pre">{'store_precision':</span> <span class="pre">False,</span> <span class="pre">'assume_centered':</span> <span class="pre">True}</span> <span class="pre">for</span> <span class="pre">all</span> <span class="pre">methods</span>
 <span class="pre">except</span> <span class="pre">``'factor_analysis'</span></code> and <code class="docutils literal notranslate"><span class="pre">'pca'</span></code>):</p>
-<div class="last highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="s1">&#39;diagonal_fixed&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;grad&#39;</span><span class="p">:</span> <span class="mf">0.01</span><span class="p">,</span> <span class="s1">&#39;mag&#39;</span><span class="p">:</span> <span class="mf">0.01</span><span class="p">,</span> <span class="s1">&#39;eeg&#39;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">},</span>
+<div class="last highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span><span class="s1">&#39;diagonal_fixed&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;grad&#39;</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">,</span> <span class="s1">&#39;mag&#39;</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">,</span> <span class="s1">&#39;eeg&#39;</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">,</span> <span class="o">...</span><span class="p">},</span>
  <span class="s1">&#39;shrinkage&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;shrikage&#39;</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">},</span>
  <span class="s1">&#39;shrunk&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;shrinkage&#39;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">logspace</span><span class="p">(</span><span class="o">-</span><span class="mi">4</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">30</span><span class="p">)},</span>
  <span class="s1">&#39;pca&#39;</span><span class="p">:</span> <span class="p">{</span><span class="s1">&#39;iter_n_components&#39;</span><span class="p">:</span> <span class="kc">None</span><span class="p">},</span>
@@ -301,6 +275,18 @@ unstable results in covariance calculation, e.g. when data
 have been processed with Maxwell filtering but not transformed
 to the same head position.</p>
 </dd>
+<dt><strong>rank</strong> <span class="classifier-delimiter">:</span> <span class="classifier">None | int | dict | ‘full’</span></dt>
+<dd><p class="first">Specified rank of the noise covariance matrix. If None, the rank is
+detected automatically. If int, the rank is specified for the MEG
+channels. A dictionary with entries ‘eeg’, ‘meg’ or any other
+data channel type such as ‘seeg’ or ‘ecog’ can be used
+to specify the rank for each modality. If ‘full’ (default in 0.17),
+the covariance is assumed to be full-rank when regularizing.
+The default in 0.18 will be None.</p>
+<div class="last versionadded">
+<p><span class="versionmodified">New in version 0.17.</span></p>
+</div>
+</dd>
 <dt><strong>verbose</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool | str | int | or None (default None)</span></dt>
 <dd><p class="first last">If not None, override default verbose level (see <a class="reference internal" href="mne.verbose.html#mne.verbose" title="mne.verbose"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.verbose()</span></code></a>
 and <a class="reference internal" href="../auto_tutorials/plot_configuration.html#tut-logging"><span class="std std-ref">Logging documentation</span></a> for more).</p>
@@ -331,6 +317,72 @@ to worst).</p>
 <p>Baseline correction or sufficient high-passing should be used
 when creating the <a class="reference internal" href="mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal notranslate"><span class="pre">Epochs</span></code></a> to ensure that the data are zero mean,
 otherwise the computed covariance matrix will be inaccurate.</p>
+<p>Valid <code class="docutils literal notranslate"><span class="pre">method</span></code> strings are:</p>
+<ul>
+<li><dl class="first docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">'empirical'</span></code></dt>
+<dd><p class="first last">The empirical or sample covariance (default)</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">'diagonal_fixed'</span></code></dt>
+<dd><p class="first last">A diagonal regularization based on channel types as in
+<a class="reference internal" href="mne.cov.regularize.html#mne.cov.regularize" title="mne.cov.regularize"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.cov.regularize()</span></code></a>.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">'shrinkage'</span></code></dt>
+<dd><p class="first last">Fixed shrinkage.</p>
+</dd>
+</dl>
+<div class="versionadded">
+<p><span class="versionmodified">New in version 0.16.</span></p>
+</div>
+</li>
+<li><dl class="first docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">'ledoit_wolf'</span></code></dt>
+<dd><p class="first last">The Ledoit-Wolf estimator, which uses an
+empirical formula for the optimal shrinkage value <a class="reference internal" href="#radcaa98e96a2-2" id="id2">[2]</a>.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">'oas'</span></code></dt>
+<dd><p class="first last">The OAS estimator <a class="reference internal" href="#radcaa98e96a2-5" id="id3">[5]</a>, which uses a different
+empricial formula for the optimal shrinkage value.</p>
+</dd>
+</dl>
+<div class="versionadded">
+<p><span class="versionmodified">New in version 0.16.</span></p>
+</div>
+</li>
+<li><dl class="first docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">'shrunk'</span></code></dt>
+<dd><p class="first last">Like ‘ledoit_wolf’, but with cross-validation
+for optimal alpha.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">'pca'</span></code></dt>
+<dd><p class="first last">Probabilistic PCA with low rank <a class="reference internal" href="#radcaa98e96a2-3" id="id4">[3]</a>.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="first docutils">
+<dt><code class="docutils literal notranslate"><span class="pre">'factor_analysis'</span></code></dt>
+<dd><p class="first last">Factor analysis with low rank <a class="reference internal" href="#radcaa98e96a2-4" id="id5">[4]</a>.</p>
+</dd>
+</dl>
+</li>
+</ul>
+<p><code class="docutils literal notranslate"><span class="pre">'ledoit_wolf'</span></code> and <code class="docutils literal notranslate"><span class="pre">'pca'</span></code> are similar to <code class="docutils literal notranslate"><span class="pre">'shrunk'</span></code> and
+<code class="docutils literal notranslate"><span class="pre">'factor_analysis'</span></code>, respectively, except that they use
+cross validation (which is useful when samples are correlated, which
+is often the case for M/EEG data). The former two are not included in
+the <code class="docutils literal notranslate"><span class="pre">'auto'</span></code> mode to avoid redundancy.</p>
 <p>For multiple event types, it is also possible to create a
 single <a class="reference internal" href="mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal notranslate"><span class="pre">Epochs</span></code></a> object with events obtained using
 <a class="reference internal" href="mne.merge_events.html#mne.merge_events" title="mne.merge_events"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.merge_events()</span></code></a>. However, the resulting covariance matrix
@@ -341,11 +393,6 @@ The <code class="docutils literal notranslate"><span class="pre">method</span></
 automated way. It also allows to select between different alternative
 estimation algorithms which themselves achieve regularization.
 Details are described in <a class="reference internal" href="#radcaa98e96a2-1" id="id6">[1]</a>.</p>
-<p><code class="docutils literal notranslate"><span class="pre">'ledoit_wolf'</span></code> and <code class="docutils literal notranslate"><span class="pre">'pca'</span></code> are similar to <code class="docutils literal notranslate"><span class="pre">'shrunk'</span></code> and
-<code class="docutils literal notranslate"><span class="pre">'factor_analysis'</span></code>, respectively, except that they use
-cross validation (which is useful when samples are correlated, which
-is often the case for M/EEG data). The former two are not included in
-the <code class="docutils literal notranslate"><span class="pre">'auto'</span></code> mode to avoid redundancy.</p>
 <p>For more information on the advanced estimation methods, see
 <a class="reference external" href="https://scikit-learn.org/stable/modules/covariance.html#covariance" title="(in scikit-learn v0.20.0)"><span class="xref std std-ref">the sklearn manual</span></a>.</p>
 <p class="rubric">References</p>
@@ -432,13 +479,13 @@ October 2010.</td></tr>
 <img alt="../_images/sphx_glr_plot_whitened_thumb.png" src="../_images/sphx_glr_plot_whitened_thumb.png" />
 <p class="caption"><span class="caption-text"><a class="reference internal" href="../auto_tutorials/plot_whitened.html#sphx-glr-auto-tutorials-plot-whitened-py"><span class="std std-ref">Plotting whitened data</span></a></span></p>
 </div>
-</div><div class="sphx-glr-thumbcontainer" tooltip="Many methods in MNE, including source estimation and some classification algorithms, require co..."><div class="figure" id="id22">
-<img alt="../_images/sphx_glr_plot_compute_covariance_thumb.png" src="../_images/sphx_glr_plot_compute_covariance_thumb.png" />
-<p class="caption"><span class="caption-text"><a class="reference internal" href="../auto_tutorials/plot_compute_covariance.html#sphx-glr-auto-tutorials-plot-compute-covariance-py"><span class="std std-ref">Computing a covariance matrix</span></a></span></p>
-</div>
-</div><div class="sphx-glr-thumbcontainer" tooltip="Here we read 4DBTi epochs data obtained with a spherical phantom using four different dipole lo..."><div class="figure" id="id23">
+</div><div class="sphx-glr-thumbcontainer" tooltip="Here we read 4DBTi epochs data obtained with a spherical phantom using four different dipole lo..."><div class="figure" id="id22">
 <img alt="../_images/sphx_glr_plot_phantom_4DBTi_thumb.png" src="../_images/sphx_glr_plot_phantom_4DBTi_thumb.png" />
 <p class="caption"><span class="caption-text"><a class="reference internal" href="../auto_tutorials/plot_phantom_4DBTi.html#sphx-glr-auto-tutorials-plot-phantom-4dbti-py"><span class="std std-ref">4D Neuroimaging/BTi phantom dataset tutorial</span></a></span></p>
+</div>
+</div><div class="sphx-glr-thumbcontainer" tooltip="Many methods in MNE, including source estimation and some classification algorithms, require co..."><div class="figure" id="id23">
+<img alt="../_images/sphx_glr_plot_compute_covariance_thumb.png" src="../_images/sphx_glr_plot_compute_covariance_thumb.png" />
+<p class="caption"><span class="caption-text"><a class="reference internal" href="../auto_tutorials/plot_compute_covariance.html#sphx-glr-auto-tutorials-plot-compute-covariance-py"><span class="std std-ref">Computing a covariance matrix</span></a></span></p>
 </div>
 </div><div class="sphx-glr-thumbcontainer" tooltip="Here we compute the evoked from raw for the Brainstorm Elekta phantom tutorial dataset. For com..."><div class="figure" id="id24">
 <img alt="../_images/sphx_glr_plot_brainstorm_phantom_elekta_thumb.png" src="../_images/sphx_glr_plot_brainstorm_phantom_elekta_thumb.png" />
