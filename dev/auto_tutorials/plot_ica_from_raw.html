@@ -181,35 +181,57 @@ This documentation is for <strong>development version 0.17.dev0</strong>.
 <p>ICA is fit to MEG raw data.
 The sources matching the ECG and EOG are automatically found and displayed.
 Subsequently, artifact detection and rejection quality are assessed.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Authors: Denis Engemann &lt;denis.engemann@gmail.com&gt;</span>
-<span class="c1">#          Alexandre Gramfort &lt;alexandre.gramfort@telecom-paristech.fr&gt;</span>
-<span class="c1">#</span>
-<span class="c1"># License: BSD (3-clause)</span>
+<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21</pre></div></td><td class="code"><div class="highlight"><pre><span></span> <span class="c1"># Authors: Denis Engemann &lt;denis.engemann@gmail.com&gt;</span>
+ <span class="c1">#          Alexandre Gramfort &lt;alexandre.gramfort@telecom-paristech.fr&gt;</span>
+ <span class="c1">#</span>
+ <span class="c1"># License: BSD (3-clause)</span>
 
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+ <span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
 
-<span class="kn">import</span> <span class="nn">mne</span>
-<span class="kn">from</span> <span class="nn">mne.preprocessing</span> <span class="kn">import</span> <a href="../generated/mne.preprocessing.ICA.html#mne.preprocessing.ICA" title="View documentation for mne.preprocessing.ICA"><span class="n">ICA</span></a>
-<span class="kn">from</span> <span class="nn">mne.preprocessing</span> <span class="kn">import</span> <a href="../generated/mne.preprocessing.create_ecg_epochs.html#mne.preprocessing.create_ecg_epochs" title="View documentation for mne.preprocessing.create_ecg_epochs"><span class="n">create_ecg_epochs</span></a><span class="p">,</span> <a href="../generated/mne.preprocessing.create_eog_epochs.html#mne.preprocessing.create_eog_epochs" title="View documentation for mne.preprocessing.create_eog_epochs"><span class="n">create_eog_epochs</span></a>
-<span class="kn">from</span> <span class="nn">mne.datasets</span> <span class="kn">import</span> <span class="n">sample</span>
+ <span class="kn">import</span> <span class="nn">mne</span>
+ <span class="kn">from</span> <span class="nn">mne.preprocessing</span> <span class="kn">import</span> <a href="../generated/mne.preprocessing.ICA.html#mne.preprocessing.ICA" title="View documentation for mne.preprocessing.ICA"><span class="n">ICA</span></a>
+ <span class="kn">from</span> <span class="nn">mne.preprocessing</span> <span class="kn">import</span> <a href="../generated/mne.preprocessing.create_ecg_epochs.html#mne.preprocessing.create_ecg_epochs" title="View documentation for mne.preprocessing.create_ecg_epochs"><span class="n">create_ecg_epochs</span></a><span class="p">,</span> <a href="../generated/mne.preprocessing.create_eog_epochs.html#mne.preprocessing.create_eog_epochs" title="View documentation for mne.preprocessing.create_eog_epochs"><span class="n">create_eog_epochs</span></a>
+ <span class="kn">from</span> <span class="nn">mne.datasets</span> <span class="kn">import</span> <span class="n">sample</span>
 </pre></div>
-</div>
+</td></tr></table></div>
 <p>Setup paths and prepare raw data.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">data_path</span> <span class="o">=</span> <a href="../generated/mne.datasets.sample.data_path.html#mne.datasets.sample.data_path" title="View documentation for mne.datasets.sample.data_path"><span class="n">sample</span><span class="o">.</span><span class="n">data_path</span></a><span class="p">()</span>
-<span class="n">raw_fname</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis_filt-0-40_raw.fif&#39;</span>
+<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38</pre></div></td><td class="code"><div class="highlight"><pre><span></span> <span class="n">data_path</span> <span class="o">=</span> <a href="../generated/mne.datasets.sample.data_path.html#mne.datasets.sample.data_path" title="View documentation for mne.datasets.sample.data_path"><span class="n">sample</span><span class="o">.</span><span class="n">data_path</span></a><span class="p">()</span>
+ <span class="n">raw_fname</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis_filt-0-40_raw.fif&#39;</span>
 
-<span class="n">raw</span> <span class="o">=</span> <a href="../generated/mne.io.read_raw_fif.html#mne.io.read_raw_fif" title="View documentation for mne.io.read_raw_fif"><span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read_raw_fif</span></a><span class="p">(</span><span class="n">raw_fname</span><span class="p">,</span> <span class="n">preload</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-<span class="n">raw</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="n">fir_design</span><span class="o">=</span><span class="s1">&#39;firwin&#39;</span><span class="p">)</span>  <span class="c1"># already lowpassed @ 40</span>
-<span class="n">raw</span><span class="o">.</span><span class="n">set_annotations</span><span class="p">(</span><a href="../generated/mne.Annotations.html#mne.Annotations" title="View documentation for mne.Annotations"><span class="n">mne</span><span class="o">.</span><span class="n">Annotations</span></a><span class="p">([</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">10</span><span class="p">],</span> <span class="s1">&#39;BAD&#39;</span><span class="p">))</span>
-<span class="n">raw</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">block</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+ <span class="n">raw</span> <span class="o">=</span> <a href="../generated/mne.io.read_raw_fif.html#mne.io.read_raw_fif" title="View documentation for mne.io.read_raw_fif"><span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read_raw_fif</span></a><span class="p">(</span><span class="n">raw_fname</span><span class="p">,</span> <span class="n">preload</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+ <span class="n">raw</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="bp">None</span><span class="p">,</span> <span class="n">fir_design</span><span class="o">=</span><span class="s1">&#39;firwin&#39;</span><span class="p">)</span>  <span class="c1"># already lowpassed @ 40</span>
+ <span class="n">raw</span><span class="o">.</span><span class="n">set_annotations</span><span class="p">(</span><a href="../generated/mne.Annotations.html#mne.Annotations" title="View documentation for mne.Annotations"><span class="n">mne</span><span class="o">.</span><span class="n">Annotations</span></a><span class="p">([</span><span class="mi">1</span><span class="p">],</span> <span class="p">[</span><span class="mi">10</span><span class="p">],</span> <span class="s1">&#39;BAD&#39;</span><span class="p">))</span>
+ <span class="n">raw</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">block</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 
-<span class="c1"># For the sake of example we annotate first 10 seconds of the recording as</span>
-<span class="c1"># &#39;BAD&#39;. This part of data is excluded from the ICA decomposition by default.</span>
-<span class="c1"># To turn this behavior off, pass ``reject_by_annotation=False`` to</span>
-<span class="c1"># :meth:`mne.preprocessing.ICA.fit`.</span>
-<span class="n">raw</span><span class="o">.</span><span class="n">set_annotations</span><span class="p">(</span><a href="../generated/mne.Annotations.html#mne.Annotations" title="View documentation for mne.Annotations"><span class="n">mne</span><span class="o">.</span><span class="n">Annotations</span></a><span class="p">([</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">10</span><span class="p">],</span> <span class="s1">&#39;BAD&#39;</span><span class="p">))</span>
+ <span class="c1"># For the sake of example we annotate first 10 seconds of the recording as</span>
+ <span class="c1"># &#39;BAD&#39;. This part of data is excluded from the ICA decomposition by default.</span>
+ <span class="c1"># To turn this behavior off, pass ``reject_by_annotation=False`` to</span>
+ <span class="c1"># :meth:`mne.preprocessing.ICA.fit`.</span>
+ <span class="n">raw</span><span class="o">.</span><span class="n">set_annotations</span><span class="p">(</span><a href="../generated/mne.Annotations.html#mne.Annotations" title="View documentation for mne.Annotations"><span class="n">mne</span><span class="o">.</span><span class="n">Annotations</span></a><span class="p">([</span><span class="mi">0</span><span class="p">],</span> <span class="p">[</span><span class="mi">10</span><span class="p">],</span> <span class="s1">&#39;BAD&#39;</span><span class="p">))</span>
 </pre></div>
-</div>
+</td></tr></table></div>
 <img alt="../_images/sphx_glr_plot_ica_from_raw_001.png" class="sphx-glr-single-img" src="../_images/sphx_glr_plot_ica_from_raw_001.png" />
 <p>1) Fit ICA model using the FastICA algorithm.
 Other available choices are <code class="docutils literal notranslate"><span class="pre">picard</span></code>, <code class="docutils literal notranslate"><span class="pre">infomax</span></code> or <code class="docutils literal notranslate"><span class="pre">extended-infomax</span></code>.</p>
@@ -223,52 +245,89 @@ a low tolerance parameter, see <a class="footnote-reference" href="#id2" id="id1
 </div>
 <p>We pass a float value between 0 and 1 to select n_components based on the
 percentage of variance explained by the PCA components.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ica</span> <span class="o">=</span> <a href="../generated/mne.preprocessing.ICA.html#mne.preprocessing.ICA" title="View documentation for mne.preprocessing.ICA"><span class="n">ICA</span></a><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="mf">0.95</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;fastica&#39;</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>53
+54
+55
+56
+57
+58
+59
+60
+61
+62</pre></div></td><td class="code"><div class="highlight"><pre><span></span> <span class="n">ica</span> <span class="o">=</span> <a href="../generated/mne.preprocessing.ICA.html#mne.preprocessing.ICA" title="View documentation for mne.preprocessing.ICA"><span class="n">ICA</span></a><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="mf">0.95</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;fastica&#39;</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
 
-<span class="n">picks</span> <span class="o">=</span> <a href="../generated/mne.pick_types.html#mne.pick_types" title="View documentation for mne.pick_types"><span class="n">mne</span><span class="o">.</span><span class="n">pick_types</span></a><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">meg</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">eeg</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">eog</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
-                       <span class="n">stim</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="s1">&#39;bads&#39;</span><span class="p">)</span>
+ <span class="n">picks</span> <span class="o">=</span> <a href="../generated/mne.pick_types.html#mne.pick_types" title="View documentation for mne.pick_types"><span class="n">mne</span><span class="o">.</span><span class="n">pick_types</span></a><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">meg</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">eeg</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">eog</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+                        <span class="n">stim</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="s1">&#39;bads&#39;</span><span class="p">)</span>
 
-<span class="n">ica</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">picks</span><span class="o">=</span><span class="n">picks</span><span class="p">,</span> <span class="n">decim</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">reject</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">mag</span><span class="o">=</span><span class="mf">4e-12</span><span class="p">,</span> <span class="n">grad</span><span class="o">=</span><span class="mf">4000e-13</span><span class="p">),</span>
-        <span class="n">verbose</span><span class="o">=</span><span class="s1">&#39;warning&#39;</span><span class="p">)</span>  <span class="c1"># low iterations -&gt; does not fully converge</span>
+ <span class="c1"># low iterations -&gt; does not fully converge</span>
+ <span class="n">ica</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">picks</span><span class="o">=</span><span class="n">picks</span><span class="p">,</span> <span class="n">decim</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">reject</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">mag</span><span class="o">=</span><span class="mf">4e-12</span><span class="p">,</span> <span class="n">grad</span><span class="o">=</span><span class="mf">4000e-13</span><span class="p">))</span>
 
-<span class="c1"># maximum number of components to reject</span>
-<span class="n">n_max_ecg</span><span class="p">,</span> <span class="n">n_max_eog</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span>  <span class="c1"># here we don&#39;t expect horizontal EOG components</span>
+ <span class="c1"># maximum number of components to reject</span>
+ <span class="n">n_max_ecg</span><span class="p">,</span> <span class="n">n_max_eog</span> <span class="o">=</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">1</span>  <span class="c1"># here we don&#39;t expect horizontal EOG components</span>
 </pre></div>
-</div>
+</td></tr></table></div>
 <ol class="arabic simple" start="2">
 <li>identify bad components by analyzing latent sources.</li>
 </ol>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">title</span> <span class="o">=</span> <span class="s1">&#39;Sources related to </span><span class="si">%s</span><span class="s1"> artifacts (red)&#39;</span>
+<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88
+89
+90
+91
+92
+93
+94
+95</pre></div></td><td class="code"><div class="highlight"><pre><span></span> <span class="n">title</span> <span class="o">=</span> <span class="s1">&#39;Sources related to </span><span class="si">%s</span><span class="s1"> artifacts (red)&#39;</span>
 
-<span class="c1"># generate ECG epochs use detection via phase statistics</span>
+ <span class="c1"># generate ECG epochs use detection via phase statistics</span>
 
-<span class="n">ecg_epochs</span> <span class="o">=</span> <a href="../generated/mne.preprocessing.create_ecg_epochs.html#mne.preprocessing.create_ecg_epochs" title="View documentation for mne.preprocessing.create_ecg_epochs"><span class="n">create_ecg_epochs</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">tmin</span><span class="o">=-.</span><span class="mi">5</span><span class="p">,</span> <span class="n">tmax</span><span class="o">=.</span><span class="mi">5</span><span class="p">,</span> <span class="n">picks</span><span class="o">=</span><span class="n">picks</span><span class="p">)</span>
+ <span class="n">ecg_epochs</span> <span class="o">=</span> <a href="../generated/mne.preprocessing.create_ecg_epochs.html#mne.preprocessing.create_ecg_epochs" title="View documentation for mne.preprocessing.create_ecg_epochs"><span class="n">create_ecg_epochs</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">tmin</span><span class="o">=-.</span><span class="mi">5</span><span class="p">,</span> <span class="n">tmax</span><span class="o">=.</span><span class="mi">5</span><span class="p">,</span> <span class="n">picks</span><span class="o">=</span><span class="n">picks</span><span class="p">)</span>
 
-<span class="n">ecg_inds</span><span class="p">,</span> <span class="n">scores</span> <span class="o">=</span> <span class="n">ica</span><span class="o">.</span><span class="n">find_bads_ecg</span><span class="p">(</span><span class="n">ecg_epochs</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;ctps&#39;</span><span class="p">)</span>
-<span class="n">ica</span><span class="o">.</span><span class="n">plot_scores</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="n">ecg_inds</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">title</span> <span class="o">%</span> <span class="s1">&#39;ecg&#39;</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="s1">&#39;ecg&#39;</span><span class="p">)</span>
+ <span class="n">ecg_inds</span><span class="p">,</span> <span class="n">scores</span> <span class="o">=</span> <span class="n">ica</span><span class="o">.</span><span class="n">find_bads_ecg</span><span class="p">(</span><span class="n">ecg_epochs</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;ctps&#39;</span><span class="p">)</span>
+ <span class="n">ica</span><span class="o">.</span><span class="n">plot_scores</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="n">ecg_inds</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">title</span> <span class="o">%</span> <span class="s1">&#39;ecg&#39;</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="s1">&#39;ecg&#39;</span><span class="p">)</span>
 
-<span class="n">show_picks</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span><span class="o">.</span><span class="n">argsort</span><span class="p">()[::</span><span class="o">-</span><span class="mi">1</span><span class="p">][:</span><span class="mi">5</span><span class="p">]</span>
+ <span class="n">show_picks</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span><span class="o">.</span><span class="n">argsort</span><span class="p">()[::</span><span class="o">-</span><span class="mi">1</span><span class="p">][:</span><span class="mi">5</span><span class="p">]</span>
 
-<span class="n">ica</span><span class="o">.</span><span class="n">plot_sources</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">show_picks</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="n">ecg_inds</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">title</span> <span class="o">%</span> <span class="s1">&#39;ecg&#39;</span><span class="p">)</span>
-<span class="n">ica</span><span class="o">.</span><span class="n">plot_components</span><span class="p">(</span><span class="n">ecg_inds</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">title</span> <span class="o">%</span> <span class="s1">&#39;ecg&#39;</span><span class="p">,</span> <span class="n">colorbar</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+ <span class="n">ica</span><span class="o">.</span><span class="n">plot_sources</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">show_picks</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="n">ecg_inds</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">title</span> <span class="o">%</span> <span class="s1">&#39;ecg&#39;</span><span class="p">)</span>
+ <span class="n">ica</span><span class="o">.</span><span class="n">plot_components</span><span class="p">(</span><span class="n">ecg_inds</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">title</span> <span class="o">%</span> <span class="s1">&#39;ecg&#39;</span><span class="p">,</span> <span class="n">colorbar</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 
-<span class="n">ecg_inds</span> <span class="o">=</span> <span class="n">ecg_inds</span><span class="p">[:</span><span class="n">n_max_ecg</span><span class="p">]</span>
-<span class="n">ica</span><span class="o">.</span><span class="n">exclude</span> <span class="o">+=</span> <span class="n">ecg_inds</span>
+ <span class="n">ecg_inds</span> <span class="o">=</span> <span class="n">ecg_inds</span><span class="p">[:</span><span class="n">n_max_ecg</span><span class="p">]</span>
+ <span class="n">ica</span><span class="o">.</span><span class="n">exclude</span> <span class="o">+=</span> <span class="n">ecg_inds</span>
 
-<span class="c1"># detect EOG by correlation</span>
+ <span class="c1"># detect EOG by correlation</span>
 
-<span class="n">eog_inds</span><span class="p">,</span> <span class="n">scores</span> <span class="o">=</span> <span class="n">ica</span><span class="o">.</span><span class="n">find_bads_eog</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
-<span class="n">ica</span><span class="o">.</span><span class="n">plot_scores</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="n">eog_inds</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">title</span> <span class="o">%</span> <span class="s1">&#39;eog&#39;</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="s1">&#39;eog&#39;</span><span class="p">)</span>
+ <span class="n">eog_inds</span><span class="p">,</span> <span class="n">scores</span> <span class="o">=</span> <span class="n">ica</span><span class="o">.</span><span class="n">find_bads_eog</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
+ <span class="n">ica</span><span class="o">.</span><span class="n">plot_scores</span><span class="p">(</span><span class="n">scores</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="n">eog_inds</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">title</span> <span class="o">%</span> <span class="s1">&#39;eog&#39;</span><span class="p">,</span> <span class="n">labels</span><span class="o">=</span><span class="s1">&#39;eog&#39;</span><span class="p">)</span>
 
-<span class="n">show_picks</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span><span class="o">.</span><span class="n">argsort</span><span class="p">()[::</span><span class="o">-</span><span class="mi">1</span><span class="p">][:</span><span class="mi">5</span><span class="p">]</span>
+ <span class="n">show_picks</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">scores</span><span class="p">)</span><span class="o">.</span><span class="n">argsort</span><span class="p">()[::</span><span class="o">-</span><span class="mi">1</span><span class="p">][:</span><span class="mi">5</span><span class="p">]</span>
 
-<span class="n">ica</span><span class="o">.</span><span class="n">plot_sources</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">show_picks</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="n">eog_inds</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">title</span> <span class="o">%</span> <span class="s1">&#39;eog&#39;</span><span class="p">)</span>
-<span class="n">ica</span><span class="o">.</span><span class="n">plot_components</span><span class="p">(</span><span class="n">eog_inds</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">title</span> <span class="o">%</span> <span class="s1">&#39;eog&#39;</span><span class="p">,</span> <span class="n">colorbar</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+ <span class="n">ica</span><span class="o">.</span><span class="n">plot_sources</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">show_picks</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="n">eog_inds</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">title</span> <span class="o">%</span> <span class="s1">&#39;eog&#39;</span><span class="p">)</span>
+ <span class="n">ica</span><span class="o">.</span><span class="n">plot_components</span><span class="p">(</span><span class="n">eog_inds</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="n">title</span> <span class="o">%</span> <span class="s1">&#39;eog&#39;</span><span class="p">,</span> <span class="n">colorbar</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 
-<span class="n">eog_inds</span> <span class="o">=</span> <span class="n">eog_inds</span><span class="p">[:</span><span class="n">n_max_eog</span><span class="p">]</span>
-<span class="n">ica</span><span class="o">.</span><span class="n">exclude</span> <span class="o">+=</span> <span class="n">eog_inds</span>
+ <span class="n">eog_inds</span> <span class="o">=</span> <span class="n">eog_inds</span><span class="p">[:</span><span class="n">n_max_eog</span><span class="p">]</span>
+ <span class="n">ica</span><span class="o">.</span><span class="n">exclude</span> <span class="o">+=</span> <span class="n">eog_inds</span>
 </pre></div>
-</div>
+</td></tr></table></div>
 <ul class="sphx-glr-horizontal">
 <li><img alt="../_images/sphx_glr_plot_ica_from_raw_002.png" class="sphx-glr-multi-img first" src="../_images/sphx_glr_plot_ica_from_raw_002.png" />
 </li>
@@ -286,19 +345,29 @@ percentage of variance explained by the PCA components.</p>
 <ol class="arabic simple" start="3">
 <li>Assess component selection and unmixing quality.</li>
 </ol>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># estimate average artifact</span>
-<span class="n">ecg_evoked</span> <span class="o">=</span> <span class="n">ecg_epochs</span><span class="o">.</span><span class="n">average</span><span class="p">()</span>
-<span class="n">ica</span><span class="o">.</span><span class="n">plot_sources</span><span class="p">(</span><span class="n">ecg_evoked</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="n">ecg_inds</span><span class="p">)</span>  <span class="c1"># plot ECG sources + selection</span>
-<span class="n">ica</span><span class="o">.</span><span class="n">plot_overlay</span><span class="p">(</span><span class="n">ecg_evoked</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="n">ecg_inds</span><span class="p">)</span>  <span class="c1"># plot ECG cleaning</span>
+<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>100
+101
+102
+103
+104
+105
+106
+107
+108
+109
+110</pre></div></td><td class="code"><div class="highlight"><pre><span></span> <span class="c1"># estimate average artifact</span>
+ <span class="n">ecg_evoked</span> <span class="o">=</span> <span class="n">ecg_epochs</span><span class="o">.</span><span class="n">average</span><span class="p">()</span>
+ <span class="n">ica</span><span class="o">.</span><span class="n">plot_sources</span><span class="p">(</span><span class="n">ecg_evoked</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="n">ecg_inds</span><span class="p">)</span>  <span class="c1"># plot ECG sources + selection</span>
+ <span class="n">ica</span><span class="o">.</span><span class="n">plot_overlay</span><span class="p">(</span><span class="n">ecg_evoked</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="n">ecg_inds</span><span class="p">)</span>  <span class="c1"># plot ECG cleaning</span>
 
-<span class="n">eog_evoked</span> <span class="o">=</span> <a href="../generated/mne.preprocessing.create_eog_epochs.html#mne.preprocessing.create_eog_epochs" title="View documentation for mne.preprocessing.create_eog_epochs"><span class="n">create_eog_epochs</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">tmin</span><span class="o">=-.</span><span class="mi">5</span><span class="p">,</span> <span class="n">tmax</span><span class="o">=.</span><span class="mi">5</span><span class="p">,</span> <span class="n">picks</span><span class="o">=</span><span class="n">picks</span><span class="p">)</span><span class="o">.</span><span class="n">average</span><span class="p">()</span>
-<span class="n">ica</span><span class="o">.</span><span class="n">plot_sources</span><span class="p">(</span><span class="n">eog_evoked</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="n">eog_inds</span><span class="p">)</span>  <span class="c1"># plot EOG sources + selection</span>
-<span class="n">ica</span><span class="o">.</span><span class="n">plot_overlay</span><span class="p">(</span><span class="n">eog_evoked</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="n">eog_inds</span><span class="p">)</span>  <span class="c1"># plot EOG cleaning</span>
+ <span class="n">eog_evoked</span> <span class="o">=</span> <a href="../generated/mne.preprocessing.create_eog_epochs.html#mne.preprocessing.create_eog_epochs" title="View documentation for mne.preprocessing.create_eog_epochs"><span class="n">create_eog_epochs</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">tmin</span><span class="o">=-.</span><span class="mi">5</span><span class="p">,</span> <span class="n">tmax</span><span class="o">=.</span><span class="mi">5</span><span class="p">,</span> <span class="n">picks</span><span class="o">=</span><span class="n">picks</span><span class="p">)</span><span class="o">.</span><span class="n">average</span><span class="p">()</span>
+ <span class="n">ica</span><span class="o">.</span><span class="n">plot_sources</span><span class="p">(</span><span class="n">eog_evoked</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="n">eog_inds</span><span class="p">)</span>  <span class="c1"># plot EOG sources + selection</span>
+ <span class="n">ica</span><span class="o">.</span><span class="n">plot_overlay</span><span class="p">(</span><span class="n">eog_evoked</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="n">eog_inds</span><span class="p">)</span>  <span class="c1"># plot EOG cleaning</span>
 
-<span class="c1"># check the amplitudes do not change</span>
-<span class="n">ica</span><span class="o">.</span><span class="n">plot_overlay</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>  <span class="c1"># EOG artifacts remain</span>
+ <span class="c1"># check the amplitudes do not change</span>
+ <span class="n">ica</span><span class="o">.</span><span class="n">plot_overlay</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>  <span class="c1"># EOG artifacts remain</span>
 </pre></div>
-</div>
+</td></tr></table></div>
 <ul class="sphx-glr-horizontal">
 <li><img alt="../_images/sphx_glr_plot_ica_from_raw_008.png" class="sphx-glr-multi-img first" src="../_images/sphx_glr_plot_ica_from_raw_008.png" />
 </li>
@@ -311,17 +380,25 @@ percentage of variance explained by the PCA components.</p>
 <li><img alt="../_images/sphx_glr_plot_ica_from_raw_012.png" class="sphx-glr-multi-img first" src="../_images/sphx_glr_plot_ica_from_raw_012.png" />
 </li>
 </ul>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># To save an ICA solution you can say:</span>
-<span class="c1"># ica.save(&#39;my_ica.fif&#39;)</span>
+<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>114
+115
+116
+117
+118
+119
+120
+121
+122</pre></div></td><td class="code"><div class="highlight"><pre><span></span> <span class="c1"># To save an ICA solution you can say:</span>
+ <span class="c1"># ica.save(&#39;my_ica.fif&#39;)</span>
 
-<span class="c1"># You can later load the solution by saying:</span>
-<span class="c1"># from mne.preprocessing import read_ica</span>
-<span class="c1"># read_ica(&#39;my_ica.fif&#39;)</span>
+ <span class="c1"># You can later load the solution by saying:</span>
+ <span class="c1"># from mne.preprocessing import read_ica</span>
+ <span class="c1"># read_ica(&#39;my_ica.fif&#39;)</span>
 
-<span class="c1"># Apply the solution to Raw, Epochs or Evoked like this:</span>
-<span class="c1"># ica.apply(epochs)</span>
+ <span class="c1"># Apply the solution to Raw, Epochs or Evoked like this:</span>
+ <span class="c1"># ica.apply(epochs)</span>
 </pre></div>
-</div>
+</td></tr></table></div>
 <div class="section" id="references">
 <h2>References<a class="headerlink" href="#references" title="Permalink to this headline">¶</a></h2>
 <table class="docutils footnote" frame="void" id="id2" rules="none">
@@ -332,7 +409,8 @@ Component Analysis by preconditioning with Hessian approximations.
 arXiv:1706.08171</td></tr>
 </tbody>
 </table>
-<p><strong>Total running time of the script:</strong> ( 0 minutes  19.673 seconds)</p>
+<p><strong>Total running time of the script:</strong> ( 0 minutes  23.842 seconds)</p>
+<p><strong>Estimated memory usage:</strong>  174 MB</p>
 <div class="sphx-glr-footer class sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-tutorials-plot-ica-from-raw-py">
 <div class="sphx-glr-download docutils container">
 <a class="reference download internal" download="" href="../_downloads/5f2a50666ff45a65c3987be7e21476f8/plot_ica_from_raw.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">plot_ica_from_raw.py</span></code></a></div>
@@ -363,7 +441,7 @@ arXiv:1706.08171</td></tr>
       <li><a href="faq.html#cite">Cite MNE</a></li>
       <li class="pull-right"><a href="#">Back to top</a></li>
     </ul>
-    <p>&copy; Copyright 2012-2018, MNE Developers. Last updated on 2018-11-13.</p>
+    <p>&copy; Copyright 2012-2018, MNE Developers. Last updated on 2018-11-14.</p>
   </div>
 </footer>
   </body>

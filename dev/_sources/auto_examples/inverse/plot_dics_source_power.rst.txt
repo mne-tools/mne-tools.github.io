@@ -21,6 +21,7 @@ References
 
 
 .. code-block:: python
+   :lineno-start: 14
 
     # Author: Marijn van Vliet <w.m.vanvliet@gmail.com>
     #         Roman Goj <roman.goj@gmail.com>
@@ -51,6 +52,7 @@ Reading the raw data:
 
 
 .. code-block:: python
+   :lineno-start: 35
 
     raw = mne.io.read_raw_fif(raw_fname)
     raw.info['bads'] = ['MEG 2443']  # 1 bad MEG channel
@@ -120,14 +122,20 @@ Computing the cross-spectral density matrix at 4 evenly spaced frequencies
 from 6 to 10 Hz. We use a decim value of 20 to speed up the computation in
 this example at the loss of accuracy.
 
+.. warning:: The use of several sensor types with the DICS beamformer is
+             not heavily tested yet. Here we use verbose='error' to
+             suppress a warning along these lines.
+
 
 .. code-block:: python
+   :lineno-start: 61
 
     csd = csd_morlet(epochs, tmin=0, tmax=0.5, decim=20,
-                     frequencies=np.linspace(6, 10, 4))
+                     frequencies=np.linspace(6, 10, 4),
+                     n_cycles=2.5)  # short signals, must live with few cycles
 
     # Compute DICS spatial filter and estimate source power.
-    filters = make_dics(epochs.info, forward, csd, reg=0.5)
+    filters = make_dics(epochs.info, forward, csd, reg=0.5, verbose='error')
     print(filters)
     stc, freqs = apply_dics_csd(csd, filters)
 
@@ -220,12 +228,6 @@ this example at the loss of accuracy.
         Computing CSD matrix for epoch 70
         Computing CSD matrix for epoch 71
     [done]
-        305 out of 366 channels remain after picking
-    Computing DICS spatial filters...
-        computing DICS spatial filter at 6.0Hz (1/4)
-        computing DICS spatial filter at 7.333333333333333Hz (2/4)
-        computing DICS spatial filter at 8.666666666666666Hz (3/4)
-        computing DICS spatial filter at 10.0Hz (4/4)
     <Beamformer  |  DICS, subject "sample", 7498 vert, 305 ch, single inversion>
     Computing DICS source power...
         applying DICS spatial filter at 6.0Hz (1/4)
@@ -233,10 +235,12 @@ this example at the loss of accuracy.
         applying DICS spatial filter at 8.666666666666666Hz (3/4)
         applying DICS spatial filter at 10.0Hz (4/4)
     [done]
-    Using control points [1.50525374e-23 1.59446331e-23 2.20079157e-23]
+    Using control points [2.10083554e-23 2.19788812e-23 2.83918550e-23]
 
 
-**Total running time of the script:** ( 0 minutes  23.009 seconds)
+**Total running time of the script:** ( 0 minutes  23.537 seconds)
+
+**Estimated memory usage:**  430 MB
 
 
 .. _sphx_glr_download_auto_examples_inverse_plot_dics_source_power.py:

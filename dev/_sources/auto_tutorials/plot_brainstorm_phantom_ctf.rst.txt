@@ -25,6 +25,7 @@ References
 
 
 .. code-block:: python
+   :lineno-start: 20
 
 
     # Authors: Eric Larson <larson.eric.d@gmail.com>
@@ -52,6 +53,7 @@ The data were collected with a CTF system at 2400 Hz.
 
 
 .. code-block:: python
+   :lineno-start: 37
 
     data_path = bst_phantom_ctf.data_path(verbose=True)
 
@@ -67,6 +69,29 @@ The data were collected with a CTF system at 2400 Hz.
 
 
 
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    ds directory : /home/circleci/mne_data/MNE-brainstorm-data/bst_phantom_ctf/phantom_20uA_20150603_03.ds
+        res4 data read.
+        hc data read.
+        Separate EEG position data file read.
+        Quaternion matching (desired vs. transformed):
+          -0.39   74.35    0.00 mm <->   -0.39   74.35    0.00 mm (orig :  -39.23   63.82 -204.07 mm) diff =    0.000 mm
+           0.39  -74.35    0.00 mm <->    0.39  -74.35    0.00 mm (orig :   65.69  -41.53 -205.68 mm) diff =    0.000 mm
+          75.00    0.00    0.00 mm <->   75.00   -0.00    0.00 mm (orig :   64.32   61.80 -226.08 mm) diff =    0.000 mm
+        Coordinate transformations established.
+        Polhemus data for 3 HPI coils added
+        Device coordinate locations for 3 HPI coils added
+        Measurement info composed.
+    Finding samples for /home/circleci/mne_data/MNE-brainstorm-data/bst_phantom_ctf/phantom_20uA_20150603_03.ds/phantom_20uA_20150603_03.meg4: 
+        System clock channel is available, checking which samples are valid.
+        10 x 2400 = 24000 samples from 304 chs
+    Current compensation grade : 3
+    Reading 0 ... 23999  =      0.000 ...    10.000 secs...
 
 
 The sinusoidal signal is generated on channel HDAC006, so we can use
@@ -74,6 +99,7 @@ that to obtain precise timing.
 
 
 .. code-block:: python
+   :lineno-start: 51
 
 
     sinusoid, times = raw[raw.ch_names.index('HDAC006-4408')]
@@ -93,6 +119,7 @@ Let's create some events using this signal by thresholding the sinusoid.
 
 
 .. code-block:: python
+   :lineno-start: 58
 
 
     events = np.where(np.diff(sinusoid > 0.5) > 0)[1] + raw.first_samp
@@ -108,6 +135,7 @@ The CTF software compensation works reasonably well:
 
 
 .. code-block:: python
+   :lineno-start: 64
 
 
     raw.plot()
@@ -127,6 +155,7 @@ Maxwell filtering:
 
 
 .. code-block:: python
+   :lineno-start: 71
 
 
     raw.apply_gradient_compensation(0)  # must un-do software compensation first
@@ -141,6 +170,24 @@ Maxwell filtering:
     :class: sphx-glr-single-img
 
 
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    Compensator constructed to change 3 -> 0
+    Applying compensator to loaded data
+    Maxwell filtering raw data
+        Using loaded raw data
+        No bad MEG channels
+        Processing 0 gradiometers and 299 magnetometers (of which 290 are actually KIT gradiometers)
+        Using origin 0.0, 0.0, 0.0 mm in the head frame
+        Processing data using tSSS with st_duration=10.0
+            Using 86/95 harmonic components for    0.000  (71/80 in, 15/15 out)
+        Processing 1 data chunk
+            Projecting  8 intersecting tSSS components for    0.000 -   10.000 sec (#1/1)
+    [done]
 
 
 Our choice of tmin and tmax should capture exactly one cycle, so
@@ -150,6 +197,7 @@ when creating our evoked data. We also then crop to a single time point
 
 
 .. code-block:: python
+   :lineno-start: 82
 
 
     tmin = -0.5 / dip_freq
@@ -167,6 +215,16 @@ when creating our evoked data. We also then crop to a single time point
     :class: sphx-glr-single-img
 
 
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    460 matching events found
+    Applying baseline correction (mode: mean)
+    Not setting metadata
+    0 projection items activated
 
 
 Let's use a sphere head geometry model and let's see the coordinate
@@ -174,6 +232,7 @@ alignment and the sphere location.
 
 
 .. code-block:: python
+   :lineno-start: 93
 
     sphere = mne.make_sphere_model(r0=(0., 0., 0.), head_radius=None)
 
@@ -189,6 +248,13 @@ alignment and the sphere location.
     :class: sphx-glr-single-img
 
 
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    Getting helmet for system CTF_275
 
 
 To do a dipole fit, let's use the covariance provided by the empty room
@@ -196,6 +262,7 @@ recording.
 
 
 .. code-block:: python
+   :lineno-start: 104
 
 
     raw_erm = read_raw_ctf(erm_path).apply_gradient_compensation(0)
@@ -216,6 +283,45 @@ recording.
 
  .. code-block:: none
 
+    ds directory : /home/circleci/mne_data/MNE-brainstorm-data/bst_phantom_ctf/emptyroom_20150709_01.ds
+        res4 data read.
+        hc data read.
+        Separate EEG position data file read.
+        Quaternion matching (desired vs. transformed):
+          -0.00   74.50    0.00 mm <->   -0.00   74.50   -0.00 mm (orig :  -50.17   57.61 -188.51 mm) diff =    0.000 mm
+           0.00  -74.50    0.00 mm <->    0.00  -74.50    0.00 mm (orig :   60.49  -42.15 -190.81 mm) diff =    0.000 mm
+          74.66    0.00    0.00 mm <->   74.66   -0.00    0.00 mm (orig :   53.03   61.29 -209.99 mm) diff =    0.000 mm
+        Coordinate transformations established.
+        Polhemus data for 3 HPI coils added
+        Device coordinate locations for 3 HPI coils added
+        Measurement info composed.
+    Finding samples for /home/circleci/mne_data/MNE-brainstorm-data/bst_phantom_ctf/emptyroom_20150709_01.ds/emptyroom_20150709_01.meg4: 
+        System clock channel is available, checking which samples are valid.
+        100 x 600 = 60000 samples from 304 chs
+    Current compensation grade : 3
+    Compensator constructed to change 3 -> 0
+    Maxwell filtering raw data
+        Loading raw data from disk
+        No bad MEG channels
+        Processing 0 gradiometers and 299 magnetometers (of which 290 are actually KIT gradiometers)
+        Using origin 0.0, 0.0, 0.0 mm in the meg frame (1.3, -8.8, -2.8 mm in the head frame)
+        Processing data using tSSS with st_duration=10.0
+            Using 90/95 harmonic components for    0.000  (75/80 in, 15/15 out)
+        Processing 10 data chunks
+            Projecting  8 intersecting tSSS components for    0.000 -    9.998 sec  (#1/10)
+            Projecting  8 intersecting tSSS components for   10.000 -   19.998 sec  (#2/10)
+            Projecting  8 intersecting tSSS components for   20.000 -   29.998 sec  (#3/10)
+            Projecting  8 intersecting tSSS components for   30.000 -   39.998 sec  (#4/10)
+            Projecting  9 intersecting tSSS components for   40.000 -   49.998 sec  (#5/10)
+            Projecting  8 intersecting tSSS components for   50.000 -   59.998 sec  (#6/10)
+            Projecting  7 intersecting tSSS components for   60.000 -   69.998 sec  (#7/10)
+            Projecting  9 intersecting tSSS components for   70.000 -   79.998 sec  (#8/10)
+            Projecting  9 intersecting tSSS components for   80.000 -   89.998 sec  (#9/10)
+            Projecting  8 intersecting tSSS components for   90.000 -   99.998 sec (#10/10)
+    [done]
+    Using up to 499 segments
+    Number of samples used : 59880
+    [done]
     BEM               : <ConductorModel  |  Sphere (no layers): r0=[0.0, 0.0, 0.0] mm>
     MRI transform     : identity
     Sphere model      : origin at (   0.00    0.00    0.00) mm, max_rad =    0.1 mm
@@ -279,6 +385,7 @@ Compare the actual position with the estimated one.
 
 
 .. code-block:: python
+   :lineno-start: 115
 
 
     expected_pos = np.array([18., 0., 49.])
@@ -305,7 +412,9 @@ Compare the actual position with the estimated one.
     GOF:            96.5 %
 
 
-**Total running time of the script:** ( 0 minutes  15.459 seconds)
+**Total running time of the script:** ( 0 minutes  25.301 seconds)
+
+**Estimated memory usage:**  229 MB
 
 
 .. _sphx_glr_download_auto_tutorials_plot_brainstorm_phantom_ctf.py:

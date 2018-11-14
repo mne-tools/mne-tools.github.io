@@ -188,10 +188,11 @@ localization and some decoding algorithms. Viewing whitened data thus gives
 a different perspective on the data that these algorithms operate on.</p>
 <p>Let’s start by loading some data and computing a signal (spatial) covariance
 that we’ll consider to be noise.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">mne</span>
-<span class="kn">from</span> <span class="nn">mne.datasets</span> <span class="kn">import</span> <span class="n">sample</span>
+<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>15
+16</pre></div></td><td class="code"><div class="highlight"><pre><span></span> <span class="kn">import</span> <span class="nn">mne</span>
+ <span class="kn">from</span> <span class="nn">mne.datasets</span> <span class="kn">import</span> <span class="n">sample</span>
 </pre></div>
-</div>
+</td></tr></table></div>
 <div class="section" id="raw-data-with-whitening">
 <h2>Raw data with whitening<a class="headerlink" href="#raw-data-with-whitening" title="Permalink to this headline">¶</a></h2>
 <div class="admonition note">
@@ -199,83 +200,238 @@ that we’ll consider to be noise.</p>
 <p class="last">In the <a class="reference internal" href="../generated/mne.io.Raw.html#mne.io.Raw.plot" title="mne.io.Raw.plot"><code class="xref py py-meth docutils literal notranslate"><span class="pre">mne.io.Raw.plot()</span></code></a> with <code class="docutils literal notranslate"><span class="pre">noise_cov</span></code> supplied,
 you can press they “w” key to turn whitening on and off.</p>
 </div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">data_path</span> <span class="o">=</span> <a href="../generated/mne.datasets.sample.data_path.html#mne.datasets.sample.data_path" title="View documentation for mne.datasets.sample.data_path"><span class="n">sample</span><span class="o">.</span><span class="n">data_path</span></a><span class="p">()</span>
-<span class="n">raw_fname</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis_filt-0-40_raw.fif&#39;</span>
-<span class="n">raw</span> <span class="o">=</span> <a href="../generated/mne.io.read_raw_fif.html#mne.io.read_raw_fif" title="View documentation for mne.io.read_raw_fif"><span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read_raw_fif</span></a><span class="p">(</span><span class="n">raw_fname</span><span class="p">,</span> <span class="n">preload</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40</pre></div></td><td class="code"><div class="highlight"><pre><span></span> <span class="n">data_path</span> <span class="o">=</span> <a href="../generated/mne.datasets.sample.data_path.html#mne.datasets.sample.data_path" title="View documentation for mne.datasets.sample.data_path"><span class="n">sample</span><span class="o">.</span><span class="n">data_path</span></a><span class="p">()</span>
+ <span class="n">raw_fname</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis_filt-0-40_raw.fif&#39;</span>
+ <span class="n">raw</span> <span class="o">=</span> <a href="../generated/mne.io.read_raw_fif.html#mne.io.read_raw_fif" title="View documentation for mne.io.read_raw_fif"><span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read_raw_fif</span></a><span class="p">(</span><span class="n">raw_fname</span><span class="p">,</span> <span class="n">preload</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 
-<span class="n">events</span> <span class="o">=</span> <a href="../generated/mne.find_events.html#mne.find_events" title="View documentation for mne.find_events"><span class="n">mne</span><span class="o">.</span><span class="n">find_events</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">stim_channel</span><span class="o">=</span><span class="s1">&#39;STI 014&#39;</span><span class="p">)</span>
-<span class="n">event_id</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;auditory/left&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;auditory/right&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;visual/left&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
-            <span class="s1">&#39;visual/right&#39;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span> <span class="s1">&#39;smiley&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span> <span class="s1">&#39;button&#39;</span><span class="p">:</span> <span class="mi">32</span><span class="p">}</span>
-<span class="n">reject</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">grad</span><span class="o">=</span><span class="mf">4000e-13</span><span class="p">,</span> <span class="n">mag</span><span class="o">=</span><span class="mf">4e-12</span><span class="p">,</span> <span class="n">eog</span><span class="o">=</span><span class="mf">150e-6</span><span class="p">)</span>
-<span class="n">epochs</span> <span class="o">=</span> <a href="../generated/mne.Epochs.html#mne.Epochs" title="View documentation for mne.Epochs"><span class="n">mne</span><span class="o">.</span><span class="n">Epochs</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">event_id</span><span class="o">=</span><span class="n">event_id</span><span class="p">,</span> <span class="n">reject</span><span class="o">=</span><span class="n">reject</span><span class="p">)</span>
+ <span class="n">events</span> <span class="o">=</span> <a href="../generated/mne.find_events.html#mne.find_events" title="View documentation for mne.find_events"><span class="n">mne</span><span class="o">.</span><span class="n">find_events</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">stim_channel</span><span class="o">=</span><span class="s1">&#39;STI 014&#39;</span><span class="p">)</span>
+ <span class="n">event_id</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;auditory/left&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;auditory/right&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;visual/left&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+             <span class="s1">&#39;visual/right&#39;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span> <span class="s1">&#39;smiley&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span> <span class="s1">&#39;button&#39;</span><span class="p">:</span> <span class="mi">32</span><span class="p">}</span>
+ <span class="n">reject</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">grad</span><span class="o">=</span><span class="mf">4000e-13</span><span class="p">,</span> <span class="n">mag</span><span class="o">=</span><span class="mf">4e-12</span><span class="p">,</span> <span class="n">eog</span><span class="o">=</span><span class="mf">150e-6</span><span class="p">)</span>
+ <span class="n">epochs</span> <span class="o">=</span> <a href="../generated/mne.Epochs.html#mne.Epochs" title="View documentation for mne.Epochs"><span class="n">mne</span><span class="o">.</span><span class="n">Epochs</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">event_id</span><span class="o">=</span><span class="n">event_id</span><span class="p">,</span> <span class="n">reject</span><span class="o">=</span><span class="n">reject</span><span class="p">)</span>
 
-<span class="c1"># baseline noise cov, not a lot of samples</span>
-<span class="n">noise_cov</span> <span class="o">=</span> <a href="../generated/mne.compute_covariance.html#mne.compute_covariance" title="View documentation for mne.compute_covariance"><span class="n">mne</span><span class="o">.</span><span class="n">compute_covariance</span></a><span class="p">(</span><span class="n">epochs</span><span class="p">,</span> <span class="n">tmax</span><span class="o">=</span><span class="mf">0.</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;shrunk&#39;</span><span class="p">,</span> <span class="n">rank</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-                                   <span class="n">verbose</span><span class="o">=</span><span class="s1">&#39;error&#39;</span><span class="p">)</span>
+ <span class="c1"># baseline noise cov, not a lot of samples</span>
+ <span class="n">noise_cov</span> <span class="o">=</span> <a href="../generated/mne.compute_covariance.html#mne.compute_covariance" title="View documentation for mne.compute_covariance"><span class="n">mne</span><span class="o">.</span><span class="n">compute_covariance</span></a><span class="p">(</span><span class="n">epochs</span><span class="p">,</span> <span class="n">tmax</span><span class="o">=</span><span class="mf">0.</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;shrunk&#39;</span><span class="p">,</span> <span class="n">rank</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                                    <span class="n">verbose</span><span class="o">=</span><span class="s1">&#39;error&#39;</span><span class="p">)</span>
 
-<span class="c1"># butterfly mode shows the differences most clearly</span>
-<span class="n">raw</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">events</span><span class="o">=</span><span class="n">events</span><span class="p">,</span> <span class="n">butterfly</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-<span class="n">raw</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">noise_cov</span><span class="o">=</span><span class="n">noise_cov</span><span class="p">,</span> <span class="n">events</span><span class="o">=</span><span class="n">events</span><span class="p">,</span> <span class="n">butterfly</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+ <span class="c1"># butterfly mode shows the differences most clearly</span>
+ <span class="n">raw</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">events</span><span class="o">=</span><span class="n">events</span><span class="p">,</span> <span class="n">butterfly</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+ <span class="n">raw</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">noise_cov</span><span class="o">=</span><span class="n">noise_cov</span><span class="p">,</span> <span class="n">events</span><span class="o">=</span><span class="n">events</span><span class="p">,</span> <span class="n">butterfly</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 </pre></div>
-</div>
+</td></tr></table></div>
 <ul class="sphx-glr-horizontal">
 <li><img alt="../_images/sphx_glr_plot_whitened_001.png" class="sphx-glr-multi-img first" src="../_images/sphx_glr_plot_whitened_001.png" />
 </li>
 <li><img alt="../_images/sphx_glr_plot_whitened_002.png" class="sphx-glr-multi-img first" src="../_images/sphx_glr_plot_whitened_002.png" />
 </li>
 </ul>
+<p class="sphx-glr-script-out">Out:</p>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Opening raw data file /home/circleci/mne_data/MNE-sample-data/MEG/sample/sample_audvis_filt-0-40_raw.fif...
+    Read a total of 4 projection items:
+        PCA-v1 (1 x 102)  idle
+        PCA-v2 (1 x 102)  idle
+        PCA-v3 (1 x 102)  idle
+        Average EEG reference (1 x 60)  idle
+    Range : 6450 ... 48149 =     42.956 ...   320.665 secs
+Ready.
+Current compensation grade : 0
+Reading 0 ... 41699  =      0.000 ...   277.709 secs...
+319 events found
+Event IDs: [ 1  2  3  4  5 32]
+319 matching events found
+Applying baseline correction (mode: mean)
+Not setting metadata
+Created an SSP operator (subspace dimension = 4)
+4 projection items activated
+Created an SSP operator (subspace dimension = 1)
+8 projection items activated
+estimated rank (eeg): 58
+8 projection items activated
+estimated rank (grad): 203
+Created an SSP operator (subspace dimension = 3)
+8 projection items activated
+estimated rank (mag): 99
+</pre></div>
+</div>
 </div>
 <div class="section" id="epochs-with-whitening">
 <h2>Epochs with whitening<a class="headerlink" href="#epochs-with-whitening" title="Permalink to this headline">¶</a></h2>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">epochs</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
-<span class="n">epochs</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">noise_cov</span><span class="o">=</span><span class="n">noise_cov</span><span class="p">)</span>
+<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>45
+46</pre></div></td><td class="code"><div class="highlight"><pre><span></span> <span class="n">epochs</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
+ <span class="n">epochs</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">noise_cov</span><span class="o">=</span><span class="n">noise_cov</span><span class="p">)</span>
 </pre></div>
-</div>
+</td></tr></table></div>
 <ul class="sphx-glr-horizontal">
 <li><img alt="../_images/sphx_glr_plot_whitened_003.png" class="sphx-glr-multi-img first" src="../_images/sphx_glr_plot_whitened_003.png" />
 </li>
 <li><img alt="../_images/sphx_glr_plot_whitened_004.png" class="sphx-glr-multi-img first" src="../_images/sphx_glr_plot_whitened_004.png" />
 </li>
 </ul>
+<p class="sphx-glr-script-out">Out:</p>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Loading data for 319 events and 106 original time points ...
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on MAG : [&#39;MEG 1711&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on MAG : [&#39;MEG 1711&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+51 bad epochs dropped
+Loading data for 20 events and 106 original time points ...
+Created an SSP operator (subspace dimension = 1)
+8 projection items activated
+estimated rank (eeg): 58
+8 projection items activated
+estimated rank (grad): 203
+Created an SSP operator (subspace dimension = 3)
+8 projection items activated
+estimated rank (mag): 99
+Loading data for 20 events and 106 original time points ...
+</pre></div>
+</div>
 </div>
 <div class="section" id="evoked-data-with-whitening">
 <h2>Evoked data with whitening<a class="headerlink" href="#evoked-data-with-whitening" title="Permalink to this headline">¶</a></h2>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">evoked</span> <span class="o">=</span> <span class="n">epochs</span><span class="o">.</span><span class="n">average</span><span class="p">()</span>
-<span class="n">evoked</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">time_unit</span><span class="o">=</span><span class="s1">&#39;s&#39;</span><span class="p">)</span>
-<span class="n">evoked</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">noise_cov</span><span class="o">=</span><span class="n">noise_cov</span><span class="p">,</span> <span class="n">time_unit</span><span class="o">=</span><span class="s1">&#39;s&#39;</span><span class="p">)</span>
+<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>52
+53
+54</pre></div></td><td class="code"><div class="highlight"><pre><span></span> <span class="n">evoked</span> <span class="o">=</span> <span class="n">epochs</span><span class="o">.</span><span class="n">average</span><span class="p">()</span>
+ <span class="n">evoked</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">time_unit</span><span class="o">=</span><span class="s1">&#39;s&#39;</span><span class="p">)</span>
+ <span class="n">evoked</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">noise_cov</span><span class="o">=</span><span class="n">noise_cov</span><span class="p">,</span> <span class="n">time_unit</span><span class="o">=</span><span class="s1">&#39;s&#39;</span><span class="p">)</span>
 </pre></div>
-</div>
+</td></tr></table></div>
 <ul class="sphx-glr-horizontal">
 <li><img alt="../_images/sphx_glr_plot_whitened_005.png" class="sphx-glr-multi-img first" src="../_images/sphx_glr_plot_whitened_005.png" />
 </li>
 <li><img alt="../_images/sphx_glr_plot_whitened_006.png" class="sphx-glr-multi-img first" src="../_images/sphx_glr_plot_whitened_006.png" />
 </li>
 </ul>
+<p class="sphx-glr-script-out">Out:</p>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Created an SSP operator (subspace dimension = 1)
+8 projection items activated
+estimated rank (eeg): 58
+8 projection items activated
+estimated rank (grad): 203
+Created an SSP operator (subspace dimension = 3)
+8 projection items activated
+estimated rank (mag): 99
+</pre></div>
+</div>
 </div>
 <div class="section" id="evoked-data-with-scaled-whitening">
 <h2>Evoked data with scaled whitening<a class="headerlink" href="#evoked-data-with-scaled-whitening" title="Permalink to this headline">¶</a></h2>
 <p>The <a class="reference internal" href="../generated/mne.Evoked.html#mne.Evoked.plot_white" title="mne.Evoked.plot_white"><code class="xref py py-meth docutils literal notranslate"><span class="pre">mne.Evoked.plot_white()</span></code></a> function takes an additional step of
 scaling the whitened plots to show how well the assumption of Gaussian
 noise is satisfied by the data:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">evoked</span><span class="o">.</span><span class="n">plot_white</span><span class="p">(</span><span class="n">noise_cov</span><span class="o">=</span><span class="n">noise_cov</span><span class="p">,</span> <span class="n">time_unit</span><span class="o">=</span><span class="s1">&#39;s&#39;</span><span class="p">)</span>
+<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>63</pre></div></td><td class="code"><div class="highlight"><pre><span></span> <span class="n">evoked</span><span class="o">.</span><span class="n">plot_white</span><span class="p">(</span><span class="n">noise_cov</span><span class="o">=</span><span class="n">noise_cov</span><span class="p">,</span> <span class="n">time_unit</span><span class="o">=</span><span class="s1">&#39;s&#39;</span><span class="p">)</span>
+</pre></div>
+</td></tr></table></div>
+<img alt="../_images/sphx_glr_plot_whitened_007.png" class="sphx-glr-single-img" src="../_images/sphx_glr_plot_whitened_007.png" />
+<p class="sphx-glr-script-out">Out:</p>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Created an SSP operator (subspace dimension = 1)
+8 projection items activated
+estimated rank (eeg): 58
+8 projection items activated
+estimated rank (grad): 203
+Created an SSP operator (subspace dimension = 3)
+8 projection items activated
+estimated rank (mag): 99
+    Created an SSP operator (subspace dimension = 4)
+Setting small MEG eigenvalues to zero.
+Not doing PCA for MEG.
+Setting small EEG eigenvalues to zero.
+Not doing PCA for EEG.
+    Created the whitener using a noise covariance matrix with rank 360 (4 small eigenvalues omitted)
 </pre></div>
 </div>
-<img alt="../_images/sphx_glr_plot_whitened_007.png" class="sphx-glr-single-img" src="../_images/sphx_glr_plot_whitened_007.png" />
 </div>
 <div class="section" id="topographic-plot-with-whitening">
 <h2>Topographic plot with whitening<a class="headerlink" href="#topographic-plot-with-whitening" title="Permalink to this headline">¶</a></h2>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">evoked</span><span class="o">.</span><span class="n">comment</span> <span class="o">=</span> <span class="s1">&#39;All trials&#39;</span>
-<span class="n">evoked</span><span class="o">.</span><span class="n">plot_topo</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s1">&#39;Evoked data&#39;</span><span class="p">)</span>
-<span class="n">evoked</span><span class="o">.</span><span class="n">plot_topo</span><span class="p">(</span><span class="n">noise_cov</span><span class="o">=</span><span class="n">noise_cov</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s1">&#39;Whitened evoked data&#39;</span><span class="p">)</span>
+<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>69
+70
+71</pre></div></td><td class="code"><div class="highlight"><pre><span></span> <span class="n">evoked</span><span class="o">.</span><span class="n">comment</span> <span class="o">=</span> <span class="s1">&#39;All trials&#39;</span>
+ <span class="n">evoked</span><span class="o">.</span><span class="n">plot_topo</span><span class="p">(</span><span class="n">title</span><span class="o">=</span><span class="s1">&#39;Evoked data&#39;</span><span class="p">)</span>
+ <span class="n">evoked</span><span class="o">.</span><span class="n">plot_topo</span><span class="p">(</span><span class="n">noise_cov</span><span class="o">=</span><span class="n">noise_cov</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s1">&#39;Whitened evoked data&#39;</span><span class="p">)</span>
 </pre></div>
-</div>
+</td></tr></table></div>
 <ul class="sphx-glr-horizontal">
 <li><img alt="../_images/sphx_glr_plot_whitened_008.png" class="sphx-glr-multi-img first" src="../_images/sphx_glr_plot_whitened_008.png" />
 </li>
 <li><img alt="../_images/sphx_glr_plot_whitened_009.png" class="sphx-glr-multi-img first" src="../_images/sphx_glr_plot_whitened_009.png" />
 </li>
 </ul>
-<p><strong>Total running time of the script:</strong> ( 0 minutes  29.313 seconds)</p>
+<p class="sphx-glr-script-out">Out:</p>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Created an SSP operator (subspace dimension = 4)
+estimated rank (mag + grad): 302
+Setting small MEG eigenvalues to zero.
+Not doing PCA for MEG.
+estimated rank (eeg): 58
+Setting small EEG eigenvalues to zero.
+Not doing PCA for EEG.
+    Created the whitener using a noise covariance matrix with rank 360 (4 small eigenvalues omitted)
+</pre></div>
+</div>
+<p><strong>Total running time of the script:</strong> ( 0 minutes  34.752 seconds)</p>
+<p><strong>Estimated memory usage:</strong>  18 MB</p>
 <div class="sphx-glr-footer class sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-tutorials-plot-whitened-py">
 <div class="sphx-glr-download docutils container">
 <a class="reference download internal" download="" href="../_downloads/485bfa117d2a288ccd247c6e8c0e3bba/plot_whitened.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">plot_whitened.py</span></code></a></div>
@@ -306,7 +462,7 @@ noise is satisfied by the data:</p>
       <li><a href="faq.html#cite">Cite MNE</a></li>
       <li class="pull-right"><a href="#">Back to top</a></li>
     </ul>
-    <p>&copy; Copyright 2012-2018, MNE Developers. Last updated on 2018-11-13.</p>
+    <p>&copy; Copyright 2012-2018, MNE Developers. Last updated on 2018-11-14.</p>
   </div>
 </footer>
   </body>

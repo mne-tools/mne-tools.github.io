@@ -177,89 +177,169 @@ This documentation is for <strong>development version 0.17.dev0</strong>.
 <span id="sphx-glr-auto-examples-inverse-plot-compute-mne-inverse-epochs-in-label-py"></span><h1>Compute MNE-dSPM inverse solution on single epochs<a class="headerlink" href="#compute-mne-dspm-inverse-solution-on-single-epochs" title="Permalink to this headline">¶</a></h1>
 <p>Compute dSPM inverse solution on single trial epochs restricted
 to a brain label.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Author: Alexandre Gramfort &lt;alexandre.gramfort@telecom-paristech.fr&gt;</span>
-<span class="c1">#</span>
-<span class="c1"># License: BSD (3-clause)</span>
+<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 9
+10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47
+48
+49
+50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61
+62
+63
+64
+65
+66
+67
+68
+69
+70
+71
+72
+73
+74
+75
+76
+77
+78
+79
+80
+81
+82
+83
+84
+85
+86
+87
+88
+89</pre></div></td><td class="code"><div class="highlight"><pre><span></span> <span class="c1"># Author: Alexandre Gramfort &lt;alexandre.gramfort@telecom-paristech.fr&gt;</span>
+ <span class="c1">#</span>
+ <span class="c1"># License: BSD (3-clause)</span>
 
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
-<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+ <span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+ <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
 
-<span class="kn">import</span> <span class="nn">mne</span>
-<span class="kn">from</span> <span class="nn">mne.datasets</span> <span class="kn">import</span> <span class="n">sample</span>
-<span class="kn">from</span> <span class="nn">mne.minimum_norm</span> <span class="kn">import</span> <a href="../../generated/mne.minimum_norm.apply_inverse_epochs.html#mne.minimum_norm.apply_inverse_epochs" title="View documentation for mne.minimum_norm.apply_inverse_epochs"><span class="n">apply_inverse_epochs</span></a><span class="p">,</span> <a href="../../generated/mne.minimum_norm.read_inverse_operator.html#mne.minimum_norm.read_inverse_operator" title="View documentation for mne.minimum_norm.read_inverse_operator"><span class="n">read_inverse_operator</span></a>
-<span class="kn">from</span> <span class="nn">mne.minimum_norm</span> <span class="kn">import</span> <a href="../../generated/mne.minimum_norm.apply_inverse.html#mne.minimum_norm.apply_inverse" title="View documentation for mne.minimum_norm.apply_inverse"><span class="n">apply_inverse</span></a>
+ <span class="kn">import</span> <span class="nn">mne</span>
+ <span class="kn">from</span> <span class="nn">mne.datasets</span> <span class="kn">import</span> <span class="n">sample</span>
+ <span class="kn">from</span> <span class="nn">mne.minimum_norm</span> <span class="kn">import</span> <a href="../../generated/mne.minimum_norm.apply_inverse_epochs.html#mne.minimum_norm.apply_inverse_epochs" title="View documentation for mne.minimum_norm.apply_inverse_epochs"><span class="n">apply_inverse_epochs</span></a><span class="p">,</span> <a href="../../generated/mne.minimum_norm.read_inverse_operator.html#mne.minimum_norm.read_inverse_operator" title="View documentation for mne.minimum_norm.read_inverse_operator"><span class="n">read_inverse_operator</span></a>
+ <span class="kn">from</span> <span class="nn">mne.minimum_norm</span> <span class="kn">import</span> <a href="../../generated/mne.minimum_norm.apply_inverse.html#mne.minimum_norm.apply_inverse" title="View documentation for mne.minimum_norm.apply_inverse"><span class="n">apply_inverse</span></a>
 
-<span class="k">print</span><span class="p">(</span><span class="vm">__doc__</span><span class="p">)</span>
+ <span class="k">print</span><span class="p">(</span><span class="vm">__doc__</span><span class="p">)</span>
 
-<span class="n">data_path</span> <span class="o">=</span> <a href="../../generated/mne.datasets.sample.data_path.html#mne.datasets.sample.data_path" title="View documentation for mne.datasets.sample.data_path"><span class="n">sample</span><span class="o">.</span><span class="n">data_path</span></a><span class="p">()</span>
-<span class="n">fname_inv</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis-meg-oct-6-meg-inv.fif&#39;</span>
-<span class="n">fname_raw</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis_filt-0-40_raw.fif&#39;</span>
-<span class="n">fname_event</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis_filt-0-40_raw-eve.fif&#39;</span>
-<span class="n">label_name</span> <span class="o">=</span> <span class="s1">&#39;Aud-lh&#39;</span>
-<span class="n">fname_label</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/labels/</span><span class="si">%s</span><span class="s1">.label&#39;</span> <span class="o">%</span> <span class="n">label_name</span>
+ <span class="n">data_path</span> <span class="o">=</span> <a href="../../generated/mne.datasets.sample.data_path.html#mne.datasets.sample.data_path" title="View documentation for mne.datasets.sample.data_path"><span class="n">sample</span><span class="o">.</span><span class="n">data_path</span></a><span class="p">()</span>
+ <span class="n">fname_inv</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis-meg-oct-6-meg-inv.fif&#39;</span>
+ <span class="n">fname_raw</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis_filt-0-40_raw.fif&#39;</span>
+ <span class="n">fname_event</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis_filt-0-40_raw-eve.fif&#39;</span>
+ <span class="n">label_name</span> <span class="o">=</span> <span class="s1">&#39;Aud-lh&#39;</span>
+ <span class="n">fname_label</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/labels/</span><span class="si">%s</span><span class="s1">.label&#39;</span> <span class="o">%</span> <span class="n">label_name</span>
 
-<span class="n">event_id</span><span class="p">,</span> <span class="n">tmin</span><span class="p">,</span> <span class="n">tmax</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.5</span>
+ <span class="n">event_id</span><span class="p">,</span> <span class="n">tmin</span><span class="p">,</span> <span class="n">tmax</span> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.5</span>
 
-<span class="c1"># Using the same inverse operator when inspecting single trials Vs. evoked</span>
-<span class="n">snr</span> <span class="o">=</span> <span class="mf">3.0</span>  <span class="c1"># Standard assumption for average data but using it for single trial</span>
-<span class="n">lambda2</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">snr</span> <span class="o">**</span> <span class="mi">2</span>
+ <span class="c1"># Using the same inverse operator when inspecting single trials Vs. evoked</span>
+ <span class="n">snr</span> <span class="o">=</span> <span class="mf">3.0</span>  <span class="c1"># Standard assumption for average data but using it for single trial</span>
+ <span class="n">lambda2</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">snr</span> <span class="o">**</span> <span class="mi">2</span>
 
-<span class="n">method</span> <span class="o">=</span> <span class="s2">&quot;dSPM&quot;</span>  <span class="c1"># use dSPM method (could also be MNE or sLORETA)</span>
+ <span class="n">method</span> <span class="o">=</span> <span class="s2">&quot;dSPM&quot;</span>  <span class="c1"># use dSPM method (could also be MNE or sLORETA)</span>
 
-<span class="c1"># Load data</span>
-<span class="n">inverse_operator</span> <span class="o">=</span> <a href="../../generated/mne.minimum_norm.read_inverse_operator.html#mne.minimum_norm.read_inverse_operator" title="View documentation for mne.minimum_norm.read_inverse_operator"><span class="n">read_inverse_operator</span></a><span class="p">(</span><span class="n">fname_inv</span><span class="p">)</span>
-<span class="n">label</span> <span class="o">=</span> <a href="../../generated/mne.read_label.html#mne.read_label" title="View documentation for mne.read_label"><span class="n">mne</span><span class="o">.</span><span class="n">read_label</span></a><span class="p">(</span><span class="n">fname_label</span><span class="p">)</span>
-<span class="n">raw</span> <span class="o">=</span> <a href="../../generated/mne.io.read_raw_fif.html#mne.io.read_raw_fif" title="View documentation for mne.io.read_raw_fif"><span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read_raw_fif</span></a><span class="p">(</span><span class="n">fname_raw</span><span class="p">)</span>
-<span class="n">events</span> <span class="o">=</span> <a href="../../generated/mne.read_events.html#mne.read_events" title="View documentation for mne.read_events"><span class="n">mne</span><span class="o">.</span><span class="n">read_events</span></a><span class="p">(</span><span class="n">fname_event</span><span class="p">)</span>
+ <span class="c1"># Load data</span>
+ <span class="n">inverse_operator</span> <span class="o">=</span> <a href="../../generated/mne.minimum_norm.read_inverse_operator.html#mne.minimum_norm.read_inverse_operator" title="View documentation for mne.minimum_norm.read_inverse_operator"><span class="n">read_inverse_operator</span></a><span class="p">(</span><span class="n">fname_inv</span><span class="p">)</span>
+ <span class="n">label</span> <span class="o">=</span> <a href="../../generated/mne.read_label.html#mne.read_label" title="View documentation for mne.read_label"><span class="n">mne</span><span class="o">.</span><span class="n">read_label</span></a><span class="p">(</span><span class="n">fname_label</span><span class="p">)</span>
+ <span class="n">raw</span> <span class="o">=</span> <a href="../../generated/mne.io.read_raw_fif.html#mne.io.read_raw_fif" title="View documentation for mne.io.read_raw_fif"><span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read_raw_fif</span></a><span class="p">(</span><span class="n">fname_raw</span><span class="p">)</span>
+ <span class="n">events</span> <span class="o">=</span> <a href="../../generated/mne.read_events.html#mne.read_events" title="View documentation for mne.read_events"><span class="n">mne</span><span class="o">.</span><span class="n">read_events</span></a><span class="p">(</span><span class="n">fname_event</span><span class="p">)</span>
 
-<span class="c1"># Set up pick list</span>
-<span class="n">include</span> <span class="o">=</span> <span class="p">[]</span>
+ <span class="c1"># Set up pick list</span>
+ <span class="n">include</span> <span class="o">=</span> <span class="p">[]</span>
 
-<span class="c1"># Add a bad channel</span>
-<span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;bads&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;EEG 053&#39;</span><span class="p">]</span>  <span class="c1"># bads + 1 more</span>
+ <span class="c1"># Add a bad channel</span>
+ <span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;bads&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;EEG 053&#39;</span><span class="p">]</span>  <span class="c1"># bads + 1 more</span>
 
-<span class="c1"># pick MEG channels</span>
-<span class="n">picks</span> <span class="o">=</span> <a href="../../generated/mne.pick_types.html#mne.pick_types" title="View documentation for mne.pick_types"><span class="n">mne</span><span class="o">.</span><span class="n">pick_types</span></a><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">meg</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">eeg</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">stim</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">eog</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
-                       <span class="n">include</span><span class="o">=</span><span class="n">include</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="s1">&#39;bads&#39;</span><span class="p">)</span>
-<span class="c1"># Read epochs</span>
-<span class="n">epochs</span> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs" title="View documentation for mne.Epochs"><span class="n">mne</span><span class="o">.</span><span class="n">Epochs</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">event_id</span><span class="p">,</span> <span class="n">tmin</span><span class="p">,</span> <span class="n">tmax</span><span class="p">,</span> <span class="n">picks</span><span class="o">=</span><span class="n">picks</span><span class="p">,</span>
-                    <span class="n">baseline</span><span class="o">=</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">reject</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">mag</span><span class="o">=</span><span class="mf">4e-12</span><span class="p">,</span> <span class="n">grad</span><span class="o">=</span><span class="mf">4000e-13</span><span class="p">,</span>
-                                                    <span class="n">eog</span><span class="o">=</span><span class="mf">150e-6</span><span class="p">))</span>
+ <span class="c1"># pick MEG channels</span>
+ <span class="n">picks</span> <span class="o">=</span> <a href="../../generated/mne.pick_types.html#mne.pick_types" title="View documentation for mne.pick_types"><span class="n">mne</span><span class="o">.</span><span class="n">pick_types</span></a><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">meg</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">eeg</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">stim</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">eog</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+                        <span class="n">include</span><span class="o">=</span><span class="n">include</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="s1">&#39;bads&#39;</span><span class="p">)</span>
+ <span class="c1"># Read epochs</span>
+ <span class="n">epochs</span> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs" title="View documentation for mne.Epochs"><span class="n">mne</span><span class="o">.</span><span class="n">Epochs</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">event_id</span><span class="p">,</span> <span class="n">tmin</span><span class="p">,</span> <span class="n">tmax</span><span class="p">,</span> <span class="n">picks</span><span class="o">=</span><span class="n">picks</span><span class="p">,</span>
+                     <span class="n">baseline</span><span class="o">=</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">reject</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">mag</span><span class="o">=</span><span class="mf">4e-12</span><span class="p">,</span> <span class="n">grad</span><span class="o">=</span><span class="mf">4000e-13</span><span class="p">,</span>
+                                                     <span class="n">eog</span><span class="o">=</span><span class="mf">150e-6</span><span class="p">))</span>
 
-<span class="c1"># Get evoked data (averaging across trials in sensor space)</span>
-<span class="n">evoked</span> <span class="o">=</span> <span class="n">epochs</span><span class="o">.</span><span class="n">average</span><span class="p">()</span>
+ <span class="c1"># Get evoked data (averaging across trials in sensor space)</span>
+ <span class="n">evoked</span> <span class="o">=</span> <span class="n">epochs</span><span class="o">.</span><span class="n">average</span><span class="p">()</span>
 
-<span class="c1"># Compute inverse solution and stcs for each epoch</span>
-<span class="c1"># Use the same inverse operator as with evoked data (i.e., set nave)</span>
-<span class="c1"># If you use a different nave, dSPM just scales by a factor sqrt(nave)</span>
-<span class="n">stcs</span> <span class="o">=</span> <a href="../../generated/mne.minimum_norm.apply_inverse_epochs.html#mne.minimum_norm.apply_inverse_epochs" title="View documentation for mne.minimum_norm.apply_inverse_epochs"><span class="n">apply_inverse_epochs</span></a><span class="p">(</span><span class="n">epochs</span><span class="p">,</span> <span class="n">inverse_operator</span><span class="p">,</span> <span class="n">lambda2</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span>
-                            <span class="n">pick_ori</span><span class="o">=</span><span class="s2">&quot;normal&quot;</span><span class="p">,</span> <span class="n">nave</span><span class="o">=</span><span class="n">evoked</span><span class="o">.</span><span class="n">nave</span><span class="p">)</span>
+ <span class="c1"># Compute inverse solution and stcs for each epoch</span>
+ <span class="c1"># Use the same inverse operator as with evoked data (i.e., set nave)</span>
+ <span class="c1"># If you use a different nave, dSPM just scales by a factor sqrt(nave)</span>
+ <span class="n">stcs</span> <span class="o">=</span> <a href="../../generated/mne.minimum_norm.apply_inverse_epochs.html#mne.minimum_norm.apply_inverse_epochs" title="View documentation for mne.minimum_norm.apply_inverse_epochs"><span class="n">apply_inverse_epochs</span></a><span class="p">(</span><span class="n">epochs</span><span class="p">,</span> <span class="n">inverse_operator</span><span class="p">,</span> <span class="n">lambda2</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span>
+                             <span class="n">pick_ori</span><span class="o">=</span><span class="s2">&quot;normal&quot;</span><span class="p">,</span> <span class="n">nave</span><span class="o">=</span><span class="n">evoked</span><span class="o">.</span><span class="n">nave</span><span class="p">)</span>
 
-<span class="n">stc_evoked</span> <span class="o">=</span> <a href="../../generated/mne.minimum_norm.apply_inverse.html#mne.minimum_norm.apply_inverse" title="View documentation for mne.minimum_norm.apply_inverse"><span class="n">apply_inverse</span></a><span class="p">(</span><span class="n">evoked</span><span class="p">,</span> <span class="n">inverse_operator</span><span class="p">,</span> <span class="n">lambda2</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span>
-                           <span class="n">pick_ori</span><span class="o">=</span><span class="s2">&quot;normal&quot;</span><span class="p">)</span>
+ <span class="n">stc_evoked</span> <span class="o">=</span> <a href="../../generated/mne.minimum_norm.apply_inverse.html#mne.minimum_norm.apply_inverse" title="View documentation for mne.minimum_norm.apply_inverse"><span class="n">apply_inverse</span></a><span class="p">(</span><span class="n">evoked</span><span class="p">,</span> <span class="n">inverse_operator</span><span class="p">,</span> <span class="n">lambda2</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span>
+                            <span class="n">pick_ori</span><span class="o">=</span><span class="s2">&quot;normal&quot;</span><span class="p">)</span>
 
-<span class="n">stc_evoked_label</span> <span class="o">=</span> <span class="n">stc_evoked</span><span class="o">.</span><span class="n">in_label</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
+ <span class="n">stc_evoked_label</span> <span class="o">=</span> <span class="n">stc_evoked</span><span class="o">.</span><span class="n">in_label</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
 
-<span class="c1"># Mean across trials but not across vertices in label</span>
-<span class="n">mean_stc</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">stcs</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">stcs</span><span class="p">)</span>
+ <span class="c1"># Mean across trials but not across vertices in label</span>
+ <span class="n">mean_stc</span> <span class="o">=</span> <span class="nb">sum</span><span class="p">(</span><span class="n">stcs</span><span class="p">)</span> <span class="o">/</span> <span class="nb">len</span><span class="p">(</span><span class="n">stcs</span><span class="p">)</span>
 
-<span class="c1"># compute sign flip to avoid signal cancellation when averaging signed values</span>
-<span class="n">flip</span> <span class="o">=</span> <a href="../../generated/mne.label_sign_flip.html#mne.label_sign_flip" title="View documentation for mne.label_sign_flip"><span class="n">mne</span><span class="o">.</span><span class="n">label_sign_flip</span></a><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">inverse_operator</span><span class="p">[</span><span class="s1">&#39;src&#39;</span><span class="p">])</span>
+ <span class="c1"># compute sign flip to avoid signal cancellation when averaging signed values</span>
+ <span class="n">flip</span> <span class="o">=</span> <a href="../../generated/mne.label_sign_flip.html#mne.label_sign_flip" title="View documentation for mne.label_sign_flip"><span class="n">mne</span><span class="o">.</span><span class="n">label_sign_flip</span></a><span class="p">(</span><span class="n">label</span><span class="p">,</span> <span class="n">inverse_operator</span><span class="p">[</span><span class="s1">&#39;src&#39;</span><span class="p">])</span>
 
-<span class="n">label_mean</span> <span class="o">=</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.mean.html#numpy.mean" title="View documentation for numpy.mean"><span class="n">np</span><span class="o">.</span><span class="n">mean</span></a><span class="p">(</span><span class="n">mean_stc</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-<span class="n">label_mean_flip</span> <span class="o">=</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.mean.html#numpy.mean" title="View documentation for numpy.mean"><span class="n">np</span><span class="o">.</span><span class="n">mean</span></a><span class="p">(</span><span class="n">flip</span><span class="p">[:,</span> <a href="https://www.numpy.org/devdocs/reference/constants.html#numpy.newaxis" title="View documentation for numpy.newaxis"><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span></a><span class="p">]</span> <span class="o">*</span> <span class="n">mean_stc</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+ <span class="n">label_mean</span> <span class="o">=</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.mean.html#numpy.mean" title="View documentation for numpy.mean"><span class="n">np</span><span class="o">.</span><span class="n">mean</span></a><span class="p">(</span><span class="n">mean_stc</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+ <span class="n">label_mean_flip</span> <span class="o">=</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.mean.html#numpy.mean" title="View documentation for numpy.mean"><span class="n">np</span><span class="o">.</span><span class="n">mean</span></a><span class="p">(</span><span class="n">flip</span><span class="p">[:,</span> <a href="https://www.numpy.org/devdocs/reference/constants.html#numpy.newaxis" title="View documentation for numpy.newaxis"><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span></a><span class="p">]</span> <span class="o">*</span> <span class="n">mean_stc</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
-<span class="c1"># Get inverse solution by inverting evoked data</span>
-<span class="n">stc_evoked</span> <span class="o">=</span> <a href="../../generated/mne.minimum_norm.apply_inverse.html#mne.minimum_norm.apply_inverse" title="View documentation for mne.minimum_norm.apply_inverse"><span class="n">apply_inverse</span></a><span class="p">(</span><span class="n">evoked</span><span class="p">,</span> <span class="n">inverse_operator</span><span class="p">,</span> <span class="n">lambda2</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span>
-                           <span class="n">pick_ori</span><span class="o">=</span><span class="s2">&quot;normal&quot;</span><span class="p">)</span>
+ <span class="c1"># Get inverse solution by inverting evoked data</span>
+ <span class="n">stc_evoked</span> <span class="o">=</span> <a href="../../generated/mne.minimum_norm.apply_inverse.html#mne.minimum_norm.apply_inverse" title="View documentation for mne.minimum_norm.apply_inverse"><span class="n">apply_inverse</span></a><span class="p">(</span><span class="n">evoked</span><span class="p">,</span> <span class="n">inverse_operator</span><span class="p">,</span> <span class="n">lambda2</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span>
+                            <span class="n">pick_ori</span><span class="o">=</span><span class="s2">&quot;normal&quot;</span><span class="p">)</span>
 
-<span class="c1"># apply_inverse() does whole brain, so sub-select label of interest</span>
-<span class="n">stc_evoked_label</span> <span class="o">=</span> <span class="n">stc_evoked</span><span class="o">.</span><span class="n">in_label</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
+ <span class="c1"># apply_inverse() does whole brain, so sub-select label of interest</span>
+ <span class="n">stc_evoked_label</span> <span class="o">=</span> <span class="n">stc_evoked</span><span class="o">.</span><span class="n">in_label</span><span class="p">(</span><span class="n">label</span><span class="p">)</span>
 
-<span class="c1"># Average over label (not caring to align polarities here)</span>
-<span class="n">label_mean_evoked</span> <span class="o">=</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.mean.html#numpy.mean" title="View documentation for numpy.mean"><span class="n">np</span><span class="o">.</span><span class="n">mean</span></a><span class="p">(</span><span class="n">stc_evoked_label</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+ <span class="c1"># Average over label (not caring to align polarities here)</span>
+ <span class="n">label_mean_evoked</span> <span class="o">=</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.mean.html#numpy.mean" title="View documentation for numpy.mean"><span class="n">np</span><span class="o">.</span><span class="n">mean</span></a><span class="p">(</span><span class="n">stc_evoked_label</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 </pre></div>
-</div>
+</td></tr></table></div>
 <p class="sphx-glr-script-out">Out:</p>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Reading inverse operator decomposition from /home/circleci/mne_data/MNE-sample-data/MEG/sample/sample_audvis-meg-oct-6-meg-inv.fif...
     Reading inverse operator info...
@@ -444,45 +524,74 @@ Applying inverse operator to &quot;1&quot;...
 </pre></div>
 </div>
 <p>View activation time-series to illustrate the benefit of aligning/flipping</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">times</span> <span class="o">=</span> <span class="mf">1e3</span> <span class="o">*</span> <span class="n">stcs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">times</span>  <span class="c1"># times in ms</span>
+<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 94
+ 95
+ 96
+ 97
+ 98
+ 99
+100
+101
+102
+103
+104</pre></div></td><td class="code"><div class="highlight"><pre><span></span> <span class="n">times</span> <span class="o">=</span> <span class="mf">1e3</span> <span class="o">*</span> <span class="n">stcs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">times</span>  <span class="c1"># times in ms</span>
 
-<a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.figure.html#matplotlib.pyplot.figure" title="View documentation for matplotlib.pyplot.figure"><span class="n">plt</span><span class="o">.</span><span class="n">figure</span></a><span class="p">()</span>
-<span class="n">h0</span> <span class="o">=</span> <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.plot.html#matplotlib.pyplot.plot" title="View documentation for matplotlib.pyplot.plot"><span class="n">plt</span><span class="o">.</span><span class="n">plot</span></a><span class="p">(</span><span class="n">times</span><span class="p">,</span> <span class="n">mean_stc</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="s1">&#39;k&#39;</span><span class="p">)</span>
-<span class="n">h1</span><span class="p">,</span> <span class="o">=</span> <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.plot.html#matplotlib.pyplot.plot" title="View documentation for matplotlib.pyplot.plot"><span class="n">plt</span><span class="o">.</span><span class="n">plot</span></a><span class="p">(</span><span class="n">times</span><span class="p">,</span> <span class="n">label_mean</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
-<span class="n">h2</span><span class="p">,</span> <span class="o">=</span> <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.plot.html#matplotlib.pyplot.plot" title="View documentation for matplotlib.pyplot.plot"><span class="n">plt</span><span class="o">.</span><span class="n">plot</span></a><span class="p">(</span><span class="n">times</span><span class="p">,</span> <span class="n">label_mean_flip</span><span class="p">,</span> <span class="s1">&#39;g&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
-<a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.legend.html#matplotlib.pyplot.legend" title="View documentation for matplotlib.pyplot.legend"><span class="n">plt</span><span class="o">.</span><span class="n">legend</span></a><span class="p">((</span><span class="n">h0</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">h1</span><span class="p">,</span> <span class="n">h2</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;all dipoles in label&#39;</span><span class="p">,</span> <span class="s1">&#39;mean&#39;</span><span class="p">,</span>
-                             <span class="s1">&#39;mean with sign flip&#39;</span><span class="p">))</span>
-<a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.xlabel.html#matplotlib.pyplot.xlabel" title="View documentation for matplotlib.pyplot.xlabel"><span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span></a><span class="p">(</span><span class="s1">&#39;time (ms)&#39;</span><span class="p">)</span>
-<a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.ylabel.html#matplotlib.pyplot.ylabel" title="View documentation for matplotlib.pyplot.ylabel"><span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span></a><span class="p">(</span><span class="s1">&#39;dSPM value&#39;</span><span class="p">)</span>
-<a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.show.html#matplotlib.pyplot.show" title="View documentation for matplotlib.pyplot.show"><span class="n">plt</span><span class="o">.</span><span class="n">show</span></a><span class="p">()</span>
+ <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.figure.html#matplotlib.pyplot.figure" title="View documentation for matplotlib.pyplot.figure"><span class="n">plt</span><span class="o">.</span><span class="n">figure</span></a><span class="p">()</span>
+ <span class="n">h0</span> <span class="o">=</span> <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.plot.html#matplotlib.pyplot.plot" title="View documentation for matplotlib.pyplot.plot"><span class="n">plt</span><span class="o">.</span><span class="n">plot</span></a><span class="p">(</span><span class="n">times</span><span class="p">,</span> <span class="n">mean_stc</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="s1">&#39;k&#39;</span><span class="p">)</span>
+ <span class="n">h1</span><span class="p">,</span> <span class="o">=</span> <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.plot.html#matplotlib.pyplot.plot" title="View documentation for matplotlib.pyplot.plot"><span class="n">plt</span><span class="o">.</span><span class="n">plot</span></a><span class="p">(</span><span class="n">times</span><span class="p">,</span> <span class="n">label_mean</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+ <span class="n">h2</span><span class="p">,</span> <span class="o">=</span> <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.plot.html#matplotlib.pyplot.plot" title="View documentation for matplotlib.pyplot.plot"><span class="n">plt</span><span class="o">.</span><span class="n">plot</span></a><span class="p">(</span><span class="n">times</span><span class="p">,</span> <span class="n">label_mean_flip</span><span class="p">,</span> <span class="s1">&#39;g&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+ <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.legend.html#matplotlib.pyplot.legend" title="View documentation for matplotlib.pyplot.legend"><span class="n">plt</span><span class="o">.</span><span class="n">legend</span></a><span class="p">((</span><span class="n">h0</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">h1</span><span class="p">,</span> <span class="n">h2</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;all dipoles in label&#39;</span><span class="p">,</span> <span class="s1">&#39;mean&#39;</span><span class="p">,</span>
+                              <span class="s1">&#39;mean with sign flip&#39;</span><span class="p">))</span>
+ <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.xlabel.html#matplotlib.pyplot.xlabel" title="View documentation for matplotlib.pyplot.xlabel"><span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span></a><span class="p">(</span><span class="s1">&#39;time (ms)&#39;</span><span class="p">)</span>
+ <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.ylabel.html#matplotlib.pyplot.ylabel" title="View documentation for matplotlib.pyplot.ylabel"><span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span></a><span class="p">(</span><span class="s1">&#39;dSPM value&#39;</span><span class="p">)</span>
+ <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.show.html#matplotlib.pyplot.show" title="View documentation for matplotlib.pyplot.show"><span class="n">plt</span><span class="o">.</span><span class="n">show</span></a><span class="p">()</span>
 </pre></div>
-</div>
+</td></tr></table></div>
 <img alt="../../_images/sphx_glr_plot_compute_mne_inverse_epochs_in_label_001.png" class="sphx-glr-single-img" src="../../_images/sphx_glr_plot_compute_mne_inverse_epochs_in_label_001.png" />
 <p>Viewing single trial dSPM and average dSPM for unflipped pooling over label
 Compare to (1) Inverse (dSPM) then average, (2) Evoked then dSPM</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Single trial</span>
-<a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.figure.html#matplotlib.pyplot.figure" title="View documentation for matplotlib.pyplot.figure"><span class="n">plt</span><span class="o">.</span><span class="n">figure</span></a><span class="p">()</span>
-<span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">stc_trial</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">stcs</span><span class="p">):</span>
-    <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.plot.html#matplotlib.pyplot.plot" title="View documentation for matplotlib.pyplot.plot"><span class="n">plt</span><span class="o">.</span><span class="n">plot</span></a><span class="p">(</span><span class="n">times</span><span class="p">,</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.mean.html#numpy.mean" title="View documentation for numpy.mean"><span class="n">np</span><span class="o">.</span><span class="n">mean</span></a><span class="p">(</span><span class="n">stc_trial</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="s1">&#39;k--&#39;</span><span class="p">,</span>
-             <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Single Trials&#39;</span> <span class="k">if</span> <span class="n">k</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="s1">&#39;_nolegend_&#39;</span><span class="p">,</span>
-             <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
+<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>110
+111
+112
+113
+114
+115
+116
+117
+118
+119
+120
+121
+122
+123
+124
+125
+126
+127
+128</pre></div></td><td class="code"><div class="highlight"><pre><span></span> <span class="c1"># Single trial</span>
+ <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.figure.html#matplotlib.pyplot.figure" title="View documentation for matplotlib.pyplot.figure"><span class="n">plt</span><span class="o">.</span><span class="n">figure</span></a><span class="p">()</span>
+ <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">stc_trial</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">stcs</span><span class="p">):</span>
+     <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.plot.html#matplotlib.pyplot.plot" title="View documentation for matplotlib.pyplot.plot"><span class="n">plt</span><span class="o">.</span><span class="n">plot</span></a><span class="p">(</span><span class="n">times</span><span class="p">,</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.mean.html#numpy.mean" title="View documentation for numpy.mean"><span class="n">np</span><span class="o">.</span><span class="n">mean</span></a><span class="p">(</span><span class="n">stc_trial</span><span class="o">.</span><span class="n">data</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="s1">&#39;k--&#39;</span><span class="p">,</span>
+              <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Single Trials&#39;</span> <span class="k">if</span> <span class="n">k</span> <span class="o">==</span> <span class="mi">0</span> <span class="k">else</span> <span class="s1">&#39;_nolegend_&#39;</span><span class="p">,</span>
+              <span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">)</span>
 
-<span class="c1"># Single trial inverse then average.. making linewidth large to not be masked</span>
-<a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.plot.html#matplotlib.pyplot.plot" title="View documentation for matplotlib.pyplot.plot"><span class="n">plt</span><span class="o">.</span><span class="n">plot</span></a><span class="p">(</span><span class="n">times</span><span class="p">,</span> <span class="n">label_mean</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span>
-         <span class="n">label</span><span class="o">=</span><span class="s1">&#39;dSPM first, then average&#39;</span><span class="p">)</span>
+ <span class="c1"># Single trial inverse then average.. making linewidth large to not be masked</span>
+ <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.plot.html#matplotlib.pyplot.plot" title="View documentation for matplotlib.pyplot.plot"><span class="n">plt</span><span class="o">.</span><span class="n">plot</span></a><span class="p">(</span><span class="n">times</span><span class="p">,</span> <span class="n">label_mean</span><span class="p">,</span> <span class="s1">&#39;b&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">6</span><span class="p">,</span>
+          <span class="n">label</span><span class="o">=</span><span class="s1">&#39;dSPM first, then average&#39;</span><span class="p">)</span>
 
-<span class="c1"># Evoked and then inverse</span>
-<a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.plot.html#matplotlib.pyplot.plot" title="View documentation for matplotlib.pyplot.plot"><span class="n">plt</span><span class="o">.</span><span class="n">plot</span></a><span class="p">(</span><span class="n">times</span><span class="p">,</span> <span class="n">label_mean_evoked</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
-         <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Average first, then dSPM&#39;</span><span class="p">)</span>
+ <span class="c1"># Evoked and then inverse</span>
+ <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.plot.html#matplotlib.pyplot.plot" title="View documentation for matplotlib.pyplot.plot"><span class="n">plt</span><span class="o">.</span><span class="n">plot</span></a><span class="p">(</span><span class="n">times</span><span class="p">,</span> <span class="n">label_mean_evoked</span><span class="p">,</span> <span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">linewidth</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span>
+          <span class="n">label</span><span class="o">=</span><span class="s1">&#39;Average first, then dSPM&#39;</span><span class="p">)</span>
 
-<a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.xlabel.html#matplotlib.pyplot.xlabel" title="View documentation for matplotlib.pyplot.xlabel"><span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span></a><span class="p">(</span><span class="s1">&#39;time (ms)&#39;</span><span class="p">)</span>
-<a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.ylabel.html#matplotlib.pyplot.ylabel" title="View documentation for matplotlib.pyplot.ylabel"><span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span></a><span class="p">(</span><span class="s1">&#39;dSPM value&#39;</span><span class="p">)</span>
-<a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.legend.html#matplotlib.pyplot.legend" title="View documentation for matplotlib.pyplot.legend"><span class="n">plt</span><span class="o">.</span><span class="n">legend</span></a><span class="p">()</span>
-<a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.show.html#matplotlib.pyplot.show" title="View documentation for matplotlib.pyplot.show"><span class="n">plt</span><span class="o">.</span><span class="n">show</span></a><span class="p">()</span>
+ <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.xlabel.html#matplotlib.pyplot.xlabel" title="View documentation for matplotlib.pyplot.xlabel"><span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span></a><span class="p">(</span><span class="s1">&#39;time (ms)&#39;</span><span class="p">)</span>
+ <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.ylabel.html#matplotlib.pyplot.ylabel" title="View documentation for matplotlib.pyplot.ylabel"><span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span></a><span class="p">(</span><span class="s1">&#39;dSPM value&#39;</span><span class="p">)</span>
+ <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.legend.html#matplotlib.pyplot.legend" title="View documentation for matplotlib.pyplot.legend"><span class="n">plt</span><span class="o">.</span><span class="n">legend</span></a><span class="p">()</span>
+ <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.show.html#matplotlib.pyplot.show" title="View documentation for matplotlib.pyplot.show"><span class="n">plt</span><span class="o">.</span><span class="n">show</span></a><span class="p">()</span>
 </pre></div>
-</div>
+</td></tr></table></div>
 <img alt="../../_images/sphx_glr_plot_compute_mne_inverse_epochs_in_label_002.png" class="sphx-glr-single-img" src="../../_images/sphx_glr_plot_compute_mne_inverse_epochs_in_label_002.png" />
-<p><strong>Total running time of the script:</strong> ( 0 minutes  2.470 seconds)</p>
+<p><strong>Total running time of the script:</strong> ( 0 minutes  4.832 seconds)</p>
+<p><strong>Estimated memory usage:</strong>  12 MB</p>
 <div class="sphx-glr-footer class sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-inverse-plot-compute-mne-inverse-epochs-in-label-py">
 <div class="sphx-glr-download docutils container">
 <a class="reference download internal" download="" href="../../_downloads/47e9eca71737eedc751288f01edef2fe/plot_compute_mne_inverse_epochs_in_label.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">plot_compute_mne_inverse_epochs_in_label.py</span></code></a></div>
@@ -512,7 +621,7 @@ Compare to (1) Inverse (dSPM) then average, (2) Evoked then dSPM</p>
       <li><a href="faq.html#cite">Cite MNE</a></li>
       <li class="pull-right"><a href="#">Back to top</a></li>
     </ul>
-    <p>&copy; Copyright 2012-2018, MNE Developers. Last updated on 2018-11-13.</p>
+    <p>&copy; Copyright 2012-2018, MNE Developers. Last updated on 2018-11-14.</p>
   </div>
 </footer>
   </body>

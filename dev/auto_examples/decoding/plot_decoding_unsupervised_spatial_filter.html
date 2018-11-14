@@ -179,45 +179,81 @@ This documentation is for <strong>development version 0.17.dev0</strong>.
 PCA / ICA components, a.k.a. spatial filters, are used to transform
 the channel data to new sources / virtual channels. The output is
 visualized on the average of all the epochs.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Authors: Jean-Remi King &lt;jeanremi.king@gmail.com&gt;</span>
-<span class="c1">#          Asish Panda &lt;asishrocks95@gmail.com&gt;</span>
-<span class="c1">#</span>
-<span class="c1"># License: BSD (3-clause)</span>
+<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46
+47</pre></div></td><td class="code"><div class="highlight"><pre><span></span> <span class="c1"># Authors: Jean-Remi King &lt;jeanremi.king@gmail.com&gt;</span>
+ <span class="c1">#          Asish Panda &lt;asishrocks95@gmail.com&gt;</span>
+ <span class="c1">#</span>
+ <span class="c1"># License: BSD (3-clause)</span>
 
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
-<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+ <span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+ <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
 
-<span class="kn">import</span> <span class="nn">mne</span>
-<span class="kn">from</span> <span class="nn">mne.datasets</span> <span class="kn">import</span> <span class="n">sample</span>
-<span class="kn">from</span> <span class="nn">mne.decoding</span> <span class="kn">import</span> <a href="../../generated/mne.decoding.UnsupervisedSpatialFilter.html#mne.decoding.UnsupervisedSpatialFilter" title="View documentation for mne.decoding.UnsupervisedSpatialFilter"><span class="n">UnsupervisedSpatialFilter</span></a>
+ <span class="kn">import</span> <span class="nn">mne</span>
+ <span class="kn">from</span> <span class="nn">mne.datasets</span> <span class="kn">import</span> <span class="n">sample</span>
+ <span class="kn">from</span> <span class="nn">mne.decoding</span> <span class="kn">import</span> <a href="../../generated/mne.decoding.UnsupervisedSpatialFilter.html#mne.decoding.UnsupervisedSpatialFilter" title="View documentation for mne.decoding.UnsupervisedSpatialFilter"><span class="n">UnsupervisedSpatialFilter</span></a>
 
-<span class="kn">from</span> <span class="nn">sklearn.decomposition</span> <span class="kn">import</span> <a href="https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html#sklearn.decomposition.PCA" title="View documentation for sklearn.decomposition.PCA"><span class="n">PCA</span></a><span class="p">,</span> <a href="https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.FastICA.html#sklearn.decomposition.FastICA" title="View documentation for sklearn.decomposition.FastICA"><span class="n">FastICA</span></a>
+ <span class="kn">from</span> <span class="nn">sklearn.decomposition</span> <span class="kn">import</span> <a href="https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html#sklearn.decomposition.PCA" title="View documentation for sklearn.decomposition.PCA"><span class="n">PCA</span></a><span class="p">,</span> <a href="https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.FastICA.html#sklearn.decomposition.FastICA" title="View documentation for sklearn.decomposition.FastICA"><span class="n">FastICA</span></a>
 
-<span class="k">print</span><span class="p">(</span><span class="vm">__doc__</span><span class="p">)</span>
+ <span class="k">print</span><span class="p">(</span><span class="vm">__doc__</span><span class="p">)</span>
 
-<span class="c1"># Preprocess data</span>
-<span class="n">data_path</span> <span class="o">=</span> <a href="../../generated/mne.datasets.sample.data_path.html#mne.datasets.sample.data_path" title="View documentation for mne.datasets.sample.data_path"><span class="n">sample</span><span class="o">.</span><span class="n">data_path</span></a><span class="p">()</span>
+ <span class="c1"># Preprocess data</span>
+ <span class="n">data_path</span> <span class="o">=</span> <a href="../../generated/mne.datasets.sample.data_path.html#mne.datasets.sample.data_path" title="View documentation for mne.datasets.sample.data_path"><span class="n">sample</span><span class="o">.</span><span class="n">data_path</span></a><span class="p">()</span>
 
-<span class="c1"># Load and filter data, set up epochs</span>
-<span class="n">raw_fname</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis_filt-0-40_raw.fif&#39;</span>
-<span class="n">event_fname</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis_filt-0-40_raw-eve.fif&#39;</span>
-<span class="n">tmin</span><span class="p">,</span> <span class="n">tmax</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.3</span>
-<span class="n">event_id</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">aud_l</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">aud_r</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">vis_l</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">vis_r</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+ <span class="c1"># Load and filter data, set up epochs</span>
+ <span class="n">raw_fname</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis_filt-0-40_raw.fif&#39;</span>
+ <span class="n">event_fname</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis_filt-0-40_raw-eve.fif&#39;</span>
+ <span class="n">tmin</span><span class="p">,</span> <span class="n">tmax</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.3</span>
+ <span class="n">event_id</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">aud_l</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">aud_r</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">vis_l</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">vis_r</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
 
-<span class="n">raw</span> <span class="o">=</span> <a href="../../generated/mne.io.read_raw_fif.html#mne.io.read_raw_fif" title="View documentation for mne.io.read_raw_fif"><span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read_raw_fif</span></a><span class="p">(</span><span class="n">raw_fname</span><span class="p">,</span> <span class="n">preload</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
-<span class="n">raw</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="n">fir_design</span><span class="o">=</span><span class="s1">&#39;firwin&#39;</span><span class="p">)</span>
-<span class="n">events</span> <span class="o">=</span> <a href="../../generated/mne.read_events.html#mne.read_events" title="View documentation for mne.read_events"><span class="n">mne</span><span class="o">.</span><span class="n">read_events</span></a><span class="p">(</span><span class="n">event_fname</span><span class="p">)</span>
+ <span class="n">raw</span> <span class="o">=</span> <a href="../../generated/mne.io.read_raw_fif.html#mne.io.read_raw_fif" title="View documentation for mne.io.read_raw_fif"><span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read_raw_fif</span></a><span class="p">(</span><span class="n">raw_fname</span><span class="p">,</span> <span class="n">preload</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+ <span class="n">raw</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="n">fir_design</span><span class="o">=</span><span class="s1">&#39;firwin&#39;</span><span class="p">)</span>
+ <span class="n">events</span> <span class="o">=</span> <a href="../../generated/mne.read_events.html#mne.read_events" title="View documentation for mne.read_events"><span class="n">mne</span><span class="o">.</span><span class="n">read_events</span></a><span class="p">(</span><span class="n">event_fname</span><span class="p">)</span>
 
-<span class="n">picks</span> <span class="o">=</span> <a href="../../generated/mne.pick_types.html#mne.pick_types" title="View documentation for mne.pick_types"><span class="n">mne</span><span class="o">.</span><span class="n">pick_types</span></a><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">meg</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">eeg</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">stim</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">eog</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
-                       <span class="n">exclude</span><span class="o">=</span><span class="s1">&#39;bads&#39;</span><span class="p">)</span>
+ <span class="n">picks</span> <span class="o">=</span> <a href="../../generated/mne.pick_types.html#mne.pick_types" title="View documentation for mne.pick_types"><span class="n">mne</span><span class="o">.</span><span class="n">pick_types</span></a><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">meg</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">eeg</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">stim</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">eog</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+                        <span class="n">exclude</span><span class="o">=</span><span class="s1">&#39;bads&#39;</span><span class="p">)</span>
 
-<span class="n">epochs</span> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs" title="View documentation for mne.Epochs"><span class="n">mne</span><span class="o">.</span><span class="n">Epochs</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">event_id</span><span class="p">,</span> <span class="n">tmin</span><span class="p">,</span> <span class="n">tmax</span><span class="p">,</span> <span class="n">proj</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
-                    <span class="n">picks</span><span class="o">=</span><span class="n">picks</span><span class="p">,</span> <span class="n">baseline</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">preload</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
-                    <span class="n">verbose</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+ <span class="n">epochs</span> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs" title="View documentation for mne.Epochs"><span class="n">mne</span><span class="o">.</span><span class="n">Epochs</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">event_id</span><span class="p">,</span> <span class="n">tmin</span><span class="p">,</span> <span class="n">tmax</span><span class="p">,</span> <span class="n">proj</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+                     <span class="n">picks</span><span class="o">=</span><span class="n">picks</span><span class="p">,</span> <span class="n">baseline</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">preload</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+                     <span class="n">verbose</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
 
-<span class="n">X</span> <span class="o">=</span> <span class="n">epochs</span><span class="o">.</span><span class="n">get_data</span><span class="p">()</span>
+ <span class="n">X</span> <span class="o">=</span> <span class="n">epochs</span><span class="o">.</span><span class="n">get_data</span><span class="p">()</span>
 </pre></div>
-</div>
+</td></tr></table></div>
 <p class="sphx-glr-script-out">Out:</p>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Opening raw data file /home/circleci/mne_data/MNE-sample-data/MEG/sample/sample_audvis_filt-0-40_raw.fif...
     Read a total of 4 projection items:
@@ -236,28 +272,41 @@ Filter length of 497 samples (3.310 sec) selected
 </pre></div>
 </div>
 <p>Transform data with PCA computed on the average ie evoked response</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">pca</span> <span class="o">=</span> <a href="../../generated/mne.decoding.UnsupervisedSpatialFilter.html#mne.decoding.UnsupervisedSpatialFilter" title="View documentation for mne.decoding.UnsupervisedSpatialFilter"><span class="n">UnsupervisedSpatialFilter</span></a><span class="p">(</span><a href="https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html#sklearn.decomposition.PCA" title="View documentation for sklearn.decomposition.PCA"><span class="n">PCA</span></a><span class="p">(</span><span class="mi">30</span><span class="p">),</span> <span class="n">average</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
-<span class="n">pca_data</span> <span class="o">=</span> <span class="n">pca</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-<span class="n">ev</span> <span class="o">=</span> <a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="View documentation for mne.EvokedArray"><span class="n">mne</span><span class="o">.</span><span class="n">EvokedArray</span></a><span class="p">(</span><a href="https://www.numpy.org/devdocs/reference/generated/numpy.mean.html#numpy.mean" title="View documentation for numpy.mean"><span class="n">np</span><span class="o">.</span><span class="n">mean</span></a><span class="p">(</span><span class="n">pca_data</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
-                     <a href="../../generated/mne.create_info.html#mne.create_info" title="View documentation for mne.create_info"><span class="n">mne</span><span class="o">.</span><span class="n">create_info</span></a><span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="n">epochs</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;sfreq&#39;</span><span class="p">],</span>
-                                     <span class="n">ch_types</span><span class="o">=</span><span class="s1">&#39;eeg&#39;</span><span class="p">),</span> <span class="n">tmin</span><span class="o">=</span><span class="n">tmin</span><span class="p">)</span>
-<span class="n">ev</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">show</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">window_title</span><span class="o">=</span><span class="s2">&quot;PCA&quot;</span><span class="p">,</span> <span class="n">time_unit</span><span class="o">=</span><span class="s1">&#39;s&#39;</span><span class="p">)</span>
-</pre></div>
-</div>
-<img alt="../../_images/sphx_glr_plot_decoding_unsupervised_spatial_filter_001.png" class="sphx-glr-single-img" src="../../_images/sphx_glr_plot_decoding_unsupervised_spatial_filter_001.png" />
-<p>Transform data with ICA computed on the raw epochs (no averaging)</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">ica</span> <span class="o">=</span> <a href="../../generated/mne.decoding.UnsupervisedSpatialFilter.html#mne.decoding.UnsupervisedSpatialFilter" title="View documentation for mne.decoding.UnsupervisedSpatialFilter"><span class="n">UnsupervisedSpatialFilter</span></a><span class="p">(</span><a href="https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.FastICA.html#sklearn.decomposition.FastICA" title="View documentation for sklearn.decomposition.FastICA"><span class="n">FastICA</span></a><span class="p">(</span><span class="mi">30</span><span class="p">),</span> <span class="n">average</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
-<span class="n">ica_data</span> <span class="o">=</span> <span class="n">ica</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
-<span class="n">ev1</span> <span class="o">=</span> <a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="View documentation for mne.EvokedArray"><span class="n">mne</span><span class="o">.</span><span class="n">EvokedArray</span></a><span class="p">(</span><a href="https://www.numpy.org/devdocs/reference/generated/numpy.mean.html#numpy.mean" title="View documentation for numpy.mean"><span class="n">np</span><span class="o">.</span><span class="n">mean</span></a><span class="p">(</span><span class="n">ica_data</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
+<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>51
+52
+53
+54
+55
+56</pre></div></td><td class="code"><div class="highlight"><pre><span></span> <span class="n">pca</span> <span class="o">=</span> <a href="../../generated/mne.decoding.UnsupervisedSpatialFilter.html#mne.decoding.UnsupervisedSpatialFilter" title="View documentation for mne.decoding.UnsupervisedSpatialFilter"><span class="n">UnsupervisedSpatialFilter</span></a><span class="p">(</span><a href="https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.PCA.html#sklearn.decomposition.PCA" title="View documentation for sklearn.decomposition.PCA"><span class="n">PCA</span></a><span class="p">(</span><span class="mi">30</span><span class="p">),</span> <span class="n">average</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+ <span class="n">pca_data</span> <span class="o">=</span> <span class="n">pca</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+ <span class="n">ev</span> <span class="o">=</span> <a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="View documentation for mne.EvokedArray"><span class="n">mne</span><span class="o">.</span><span class="n">EvokedArray</span></a><span class="p">(</span><a href="https://www.numpy.org/devdocs/reference/generated/numpy.mean.html#numpy.mean" title="View documentation for numpy.mean"><span class="n">np</span><span class="o">.</span><span class="n">mean</span></a><span class="p">(</span><span class="n">pca_data</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
                       <a href="../../generated/mne.create_info.html#mne.create_info" title="View documentation for mne.create_info"><span class="n">mne</span><span class="o">.</span><span class="n">create_info</span></a><span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="n">epochs</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;sfreq&#39;</span><span class="p">],</span>
                                       <span class="n">ch_types</span><span class="o">=</span><span class="s1">&#39;eeg&#39;</span><span class="p">),</span> <span class="n">tmin</span><span class="o">=</span><span class="n">tmin</span><span class="p">)</span>
-<span class="n">ev1</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">show</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">window_title</span><span class="o">=</span><span class="s1">&#39;ICA&#39;</span><span class="p">,</span> <span class="n">time_unit</span><span class="o">=</span><span class="s1">&#39;s&#39;</span><span class="p">)</span>
-
-<a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.show.html#matplotlib.pyplot.show" title="View documentation for matplotlib.pyplot.show"><span class="n">plt</span><span class="o">.</span><span class="n">show</span></a><span class="p">()</span>
+ <span class="n">ev</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">show</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">window_title</span><span class="o">=</span><span class="s2">&quot;PCA&quot;</span><span class="p">,</span> <span class="n">time_unit</span><span class="o">=</span><span class="s1">&#39;s&#39;</span><span class="p">)</span>
 </pre></div>
-</div>
+</td></tr></table></div>
+<img alt="../../_images/sphx_glr_plot_decoding_unsupervised_spatial_filter_001.png" class="sphx-glr-single-img" src="../../_images/sphx_glr_plot_decoding_unsupervised_spatial_filter_001.png" />
+<p>Transform data with ICA computed on the raw epochs (no averaging)</p>
+<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>60
+61
+62
+63
+64
+65
+66
+67</pre></div></td><td class="code"><div class="highlight"><pre><span></span> <span class="n">ica</span> <span class="o">=</span> <a href="../../generated/mne.decoding.UnsupervisedSpatialFilter.html#mne.decoding.UnsupervisedSpatialFilter" title="View documentation for mne.decoding.UnsupervisedSpatialFilter"><span class="n">UnsupervisedSpatialFilter</span></a><span class="p">(</span><a href="https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.FastICA.html#sklearn.decomposition.FastICA" title="View documentation for sklearn.decomposition.FastICA"><span class="n">FastICA</span></a><span class="p">(</span><span class="mi">30</span><span class="p">),</span> <span class="n">average</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+ <span class="n">ica_data</span> <span class="o">=</span> <span class="n">ica</span><span class="o">.</span><span class="n">fit_transform</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>
+ <span class="n">ev1</span> <span class="o">=</span> <a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="View documentation for mne.EvokedArray"><span class="n">mne</span><span class="o">.</span><span class="n">EvokedArray</span></a><span class="p">(</span><a href="https://www.numpy.org/devdocs/reference/generated/numpy.mean.html#numpy.mean" title="View documentation for numpy.mean"><span class="n">np</span><span class="o">.</span><span class="n">mean</span></a><span class="p">(</span><span class="n">ica_data</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">),</span>
+                       <a href="../../generated/mne.create_info.html#mne.create_info" title="View documentation for mne.create_info"><span class="n">mne</span><span class="o">.</span><span class="n">create_info</span></a><span class="p">(</span><span class="mi">30</span><span class="p">,</span> <span class="n">epochs</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;sfreq&#39;</span><span class="p">],</span>
+                                       <span class="n">ch_types</span><span class="o">=</span><span class="s1">&#39;eeg&#39;</span><span class="p">),</span> <span class="n">tmin</span><span class="o">=</span><span class="n">tmin</span><span class="p">)</span>
+ <span class="n">ev1</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">show</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">window_title</span><span class="o">=</span><span class="s1">&#39;ICA&#39;</span><span class="p">,</span> <span class="n">time_unit</span><span class="o">=</span><span class="s1">&#39;s&#39;</span><span class="p">)</span>
+
+ <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.show.html#matplotlib.pyplot.show" title="View documentation for matplotlib.pyplot.show"><span class="n">plt</span><span class="o">.</span><span class="n">show</span></a><span class="p">()</span>
+</pre></div>
+</td></tr></table></div>
 <img alt="../../_images/sphx_glr_plot_decoding_unsupervised_spatial_filter_002.png" class="sphx-glr-single-img" src="../../_images/sphx_glr_plot_decoding_unsupervised_spatial_filter_002.png" />
-<p><strong>Total running time of the script:</strong> ( 0 minutes  1.757 seconds)</p>
+<p><strong>Total running time of the script:</strong> ( 0 minutes  4.613 seconds)</p>
+<p><strong>Estimated memory usage:</strong>  11 MB</p>
 <div class="sphx-glr-footer class sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-decoding-plot-decoding-unsupervised-spatial-filter-py">
 <div class="sphx-glr-download docutils container">
 <a class="reference download internal" download="" href="../../_downloads/073cd329c76032781ae018af6b775d9b/plot_decoding_unsupervised_spatial_filter.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">plot_decoding_unsupervised_spatial_filter.py</span></code></a></div>
@@ -287,7 +336,7 @@ Filter length of 497 samples (3.310 sec) selected
       <li><a href="faq.html#cite">Cite MNE</a></li>
       <li class="pull-right"><a href="#">Back to top</a></li>
     </ul>
-    <p>&copy; Copyright 2012-2018, MNE Developers. Last updated on 2018-11-13.</p>
+    <p>&copy; Copyright 2012-2018, MNE Developers. Last updated on 2018-11-14.</p>
   </div>
 </footer>
   </body>

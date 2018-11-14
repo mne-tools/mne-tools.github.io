@@ -177,45 +177,81 @@ This documentation is for <strong>development version 0.17.dev0</strong>.
 <span id="sphx-glr-auto-examples-time-frequency-plot-temporal-whitening-py"></span><h1>Temporal whitening with AR model<a class="headerlink" href="#temporal-whitening-with-ar-model" title="Permalink to this headline">¶</a></h1>
 <p>Here we fit an AR model to the data and use it
 to temporally whiten the signals.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Authors: Alexandre Gramfort &lt;alexandre.gramfort@telecom-paristech.fr&gt;</span>
-<span class="c1">#</span>
-<span class="c1"># License: BSD (3-clause)</span>
+<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>10
+11
+12
+13
+14
+15
+16
+17
+18
+19
+20
+21
+22
+23
+24
+25
+26
+27
+28
+29
+30
+31
+32
+33
+34
+35
+36
+37
+38
+39
+40
+41
+42
+43
+44
+45
+46</pre></div></td><td class="code"><div class="highlight"><pre><span></span> <span class="c1"># Authors: Alexandre Gramfort &lt;alexandre.gramfort@telecom-paristech.fr&gt;</span>
+ <span class="c1">#</span>
+ <span class="c1"># License: BSD (3-clause)</span>
 
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">signal</span>
-<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+ <span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+ <span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">signal</span>
+ <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
 
-<span class="kn">import</span> <span class="nn">mne</span>
-<span class="kn">from</span> <span class="nn">mne.time_frequency</span> <span class="kn">import</span> <a href="../../generated/mne.time_frequency.fit_iir_model_raw.html#mne.time_frequency.fit_iir_model_raw" title="View documentation for mne.time_frequency.fit_iir_model_raw"><span class="n">fit_iir_model_raw</span></a>
-<span class="kn">from</span> <span class="nn">mne.datasets</span> <span class="kn">import</span> <span class="n">sample</span>
+ <span class="kn">import</span> <span class="nn">mne</span>
+ <span class="kn">from</span> <span class="nn">mne.time_frequency</span> <span class="kn">import</span> <a href="../../generated/mne.time_frequency.fit_iir_model_raw.html#mne.time_frequency.fit_iir_model_raw" title="View documentation for mne.time_frequency.fit_iir_model_raw"><span class="n">fit_iir_model_raw</span></a>
+ <span class="kn">from</span> <span class="nn">mne.datasets</span> <span class="kn">import</span> <span class="n">sample</span>
 
-<span class="k">print</span><span class="p">(</span><span class="vm">__doc__</span><span class="p">)</span>
+ <span class="k">print</span><span class="p">(</span><span class="vm">__doc__</span><span class="p">)</span>
 
-<span class="n">data_path</span> <span class="o">=</span> <a href="../../generated/mne.datasets.sample.data_path.html#mne.datasets.sample.data_path" title="View documentation for mne.datasets.sample.data_path"><span class="n">sample</span><span class="o">.</span><span class="n">data_path</span></a><span class="p">()</span>
+ <span class="n">data_path</span> <span class="o">=</span> <a href="../../generated/mne.datasets.sample.data_path.html#mne.datasets.sample.data_path" title="View documentation for mne.datasets.sample.data_path"><span class="n">sample</span><span class="o">.</span><span class="n">data_path</span></a><span class="p">()</span>
 
-<span class="n">raw_fname</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis_raw.fif&#39;</span>
-<span class="n">proj_fname</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis_ecg-proj.fif&#39;</span>
+ <span class="n">raw_fname</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis_raw.fif&#39;</span>
+ <span class="n">proj_fname</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis_ecg-proj.fif&#39;</span>
 
-<span class="n">raw</span> <span class="o">=</span> <a href="../../generated/mne.io.read_raw_fif.html#mne.io.read_raw_fif" title="View documentation for mne.io.read_raw_fif"><span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read_raw_fif</span></a><span class="p">(</span><span class="n">raw_fname</span><span class="p">)</span>
-<span class="n">proj</span> <span class="o">=</span> <a href="../../generated/mne.read_proj.html#mne.read_proj" title="View documentation for mne.read_proj"><span class="n">mne</span><span class="o">.</span><span class="n">read_proj</span></a><span class="p">(</span><span class="n">proj_fname</span><span class="p">)</span>
-<span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;projs&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">proj</span>
-<span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;bads&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;MEG 2443&#39;</span><span class="p">,</span> <span class="s1">&#39;EEG 053&#39;</span><span class="p">]</span>  <span class="c1"># mark bad channels</span>
+ <span class="n">raw</span> <span class="o">=</span> <a href="../../generated/mne.io.read_raw_fif.html#mne.io.read_raw_fif" title="View documentation for mne.io.read_raw_fif"><span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read_raw_fif</span></a><span class="p">(</span><span class="n">raw_fname</span><span class="p">)</span>
+ <span class="n">proj</span> <span class="o">=</span> <a href="../../generated/mne.read_proj.html#mne.read_proj" title="View documentation for mne.read_proj"><span class="n">mne</span><span class="o">.</span><span class="n">read_proj</span></a><span class="p">(</span><span class="n">proj_fname</span><span class="p">)</span>
+ <span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;projs&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="n">proj</span>
+ <span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;bads&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;MEG 2443&#39;</span><span class="p">,</span> <span class="s1">&#39;EEG 053&#39;</span><span class="p">]</span>  <span class="c1"># mark bad channels</span>
 
-<span class="c1"># Set up pick list: Gradiometers - bad channels</span>
-<span class="n">picks</span> <span class="o">=</span> <a href="../../generated/mne.pick_types.html#mne.pick_types" title="View documentation for mne.pick_types"><span class="n">mne</span><span class="o">.</span><span class="n">pick_types</span></a><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">meg</span><span class="o">=</span><span class="s1">&#39;grad&#39;</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="s1">&#39;bads&#39;</span><span class="p">)</span>
+ <span class="c1"># Set up pick list: Gradiometers - bad channels</span>
+ <span class="n">picks</span> <span class="o">=</span> <a href="../../generated/mne.pick_types.html#mne.pick_types" title="View documentation for mne.pick_types"><span class="n">mne</span><span class="o">.</span><span class="n">pick_types</span></a><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">meg</span><span class="o">=</span><span class="s1">&#39;grad&#39;</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="s1">&#39;bads&#39;</span><span class="p">)</span>
 
-<span class="n">order</span> <span class="o">=</span> <span class="mi">5</span>  <span class="c1"># define model order</span>
-<span class="n">picks</span> <span class="o">=</span> <span class="n">picks</span><span class="p">[:</span><span class="mi">1</span><span class="p">]</span>
+ <span class="n">order</span> <span class="o">=</span> <span class="mi">5</span>  <span class="c1"># define model order</span>
+ <span class="n">picks</span> <span class="o">=</span> <span class="n">picks</span><span class="p">[:</span><span class="mi">1</span><span class="p">]</span>
 
-<span class="c1"># Estimate AR models on raw data</span>
-<span class="n">b</span><span class="p">,</span> <span class="n">a</span> <span class="o">=</span> <a href="../../generated/mne.time_frequency.fit_iir_model_raw.html#mne.time_frequency.fit_iir_model_raw" title="View documentation for mne.time_frequency.fit_iir_model_raw"><span class="n">fit_iir_model_raw</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="n">order</span><span class="p">,</span> <span class="n">picks</span><span class="o">=</span><span class="n">picks</span><span class="p">,</span> <span class="n">tmin</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span> <span class="n">tmax</span><span class="o">=</span><span class="mi">180</span><span class="p">)</span>
-<span class="n">d</span><span class="p">,</span> <span class="n">times</span> <span class="o">=</span> <span class="n">raw</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10000</span><span class="p">:</span><span class="mi">20000</span><span class="p">]</span>  <span class="c1"># look at one channel from now on</span>
-<span class="n">d</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>  <span class="c1"># make flat vector</span>
-<span class="n">innovation</span> <span class="o">=</span> <a href="https://scipy.github.io/devdocs/generated/scipy.signal.convolve.html#scipy.signal.convolve" title="View documentation for scipy.signal.convolve"><span class="n">signal</span><span class="o">.</span><span class="n">convolve</span></a><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="s1">&#39;valid&#39;</span><span class="p">)</span>
-<span class="n">d_</span> <span class="o">=</span> <a href="https://scipy.github.io/devdocs/generated/scipy.signal.lfilter.html#scipy.signal.lfilter" title="View documentation for scipy.signal.lfilter"><span class="n">signal</span><span class="o">.</span><span class="n">lfilter</span></a><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">innovation</span><span class="p">)</span>  <span class="c1"># regenerate the signal</span>
-<span class="n">d_</span> <span class="o">=</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.r_.html#numpy.r_" title="View documentation for numpy.r_"><span class="n">np</span><span class="o">.</span><span class="n">r_</span></a><span class="p">[</span><span class="n">d_</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.ones.html#numpy.ones" title="View documentation for numpy.ones"><span class="n">np</span><span class="o">.</span><span class="n">ones</span></a><span class="p">(</span><span class="n">order</span><span class="p">),</span> <span class="n">d_</span><span class="p">]</span>  <span class="c1"># dummy samples to keep signal length</span>
+ <span class="c1"># Estimate AR models on raw data</span>
+ <span class="n">b</span><span class="p">,</span> <span class="n">a</span> <span class="o">=</span> <a href="../../generated/mne.time_frequency.fit_iir_model_raw.html#mne.time_frequency.fit_iir_model_raw" title="View documentation for mne.time_frequency.fit_iir_model_raw"><span class="n">fit_iir_model_raw</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="n">order</span><span class="p">,</span> <span class="n">picks</span><span class="o">=</span><span class="n">picks</span><span class="p">,</span> <span class="n">tmin</span><span class="o">=</span><span class="mi">60</span><span class="p">,</span> <span class="n">tmax</span><span class="o">=</span><span class="mi">180</span><span class="p">)</span>
+ <span class="n">d</span><span class="p">,</span> <span class="n">times</span> <span class="o">=</span> <span class="n">raw</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10000</span><span class="p">:</span><span class="mi">20000</span><span class="p">]</span>  <span class="c1"># look at one channel from now on</span>
+ <span class="n">d</span> <span class="o">=</span> <span class="n">d</span><span class="o">.</span><span class="n">ravel</span><span class="p">()</span>  <span class="c1"># make flat vector</span>
+ <span class="n">innovation</span> <span class="o">=</span> <a href="https://scipy.github.io/devdocs/generated/scipy.signal.convolve.html#scipy.signal.convolve" title="View documentation for scipy.signal.convolve"><span class="n">signal</span><span class="o">.</span><span class="n">convolve</span></a><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="s1">&#39;valid&#39;</span><span class="p">)</span>
+ <span class="n">d_</span> <span class="o">=</span> <a href="https://scipy.github.io/devdocs/generated/scipy.signal.lfilter.html#scipy.signal.lfilter" title="View documentation for scipy.signal.lfilter"><span class="n">signal</span><span class="o">.</span><span class="n">lfilter</span></a><span class="p">(</span><span class="n">b</span><span class="p">,</span> <span class="n">a</span><span class="p">,</span> <span class="n">innovation</span><span class="p">)</span>  <span class="c1"># regenerate the signal</span>
+ <span class="n">d_</span> <span class="o">=</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.r_.html#numpy.r_" title="View documentation for numpy.r_"><span class="n">np</span><span class="o">.</span><span class="n">r_</span></a><span class="p">[</span><span class="n">d_</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.ones.html#numpy.ones" title="View documentation for numpy.ones"><span class="n">np</span><span class="o">.</span><span class="n">ones</span></a><span class="p">(</span><span class="n">order</span><span class="p">),</span> <span class="n">d_</span><span class="p">]</span>  <span class="c1"># dummy samples to keep signal length</span>
 </pre></div>
-</div>
+</td></tr></table></div>
 <p class="sphx-glr-script-out">Out:</p>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Opening raw data file /home/circleci/mne_data/MNE-sample-data/MEG/sample/sample_audvis_raw.fif...
     Read a total of 3 projection items:
@@ -235,26 +271,39 @@ Current compensation grade : 0
 </pre></div>
 </div>
 <p>Plot the different time series and PSDs</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.close.html#matplotlib.pyplot.close" title="View documentation for matplotlib.pyplot.close"><span class="n">plt</span><span class="o">.</span><span class="n">close</span></a><span class="p">(</span><span class="s1">&#39;all&#39;</span><span class="p">)</span>
-<a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.figure.html#matplotlib.pyplot.figure" title="View documentation for matplotlib.pyplot.figure"><span class="n">plt</span><span class="o">.</span><span class="n">figure</span></a><span class="p">()</span>
-<a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.plot.html#matplotlib.pyplot.plot" title="View documentation for matplotlib.pyplot.plot"><span class="n">plt</span><span class="o">.</span><span class="n">plot</span></a><span class="p">(</span><span class="n">d</span><span class="p">[:</span><span class="mi">100</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;signal&#39;</span><span class="p">)</span>
-<a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.plot.html#matplotlib.pyplot.plot" title="View documentation for matplotlib.pyplot.plot"><span class="n">plt</span><span class="o">.</span><span class="n">plot</span></a><span class="p">(</span><span class="n">d_</span><span class="p">[:</span><span class="mi">100</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;regenerated signal&#39;</span><span class="p">)</span>
-<a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.legend.html#matplotlib.pyplot.legend" title="View documentation for matplotlib.pyplot.legend"><span class="n">plt</span><span class="o">.</span><span class="n">legend</span></a><span class="p">()</span>
+<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>50
+51
+52
+53
+54
+55
+56
+57
+58
+59
+60
+61</pre></div></td><td class="code"><div class="highlight"><pre><span></span> <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.close.html#matplotlib.pyplot.close" title="View documentation for matplotlib.pyplot.close"><span class="n">plt</span><span class="o">.</span><span class="n">close</span></a><span class="p">(</span><span class="s1">&#39;all&#39;</span><span class="p">)</span>
+ <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.figure.html#matplotlib.pyplot.figure" title="View documentation for matplotlib.pyplot.figure"><span class="n">plt</span><span class="o">.</span><span class="n">figure</span></a><span class="p">()</span>
+ <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.plot.html#matplotlib.pyplot.plot" title="View documentation for matplotlib.pyplot.plot"><span class="n">plt</span><span class="o">.</span><span class="n">plot</span></a><span class="p">(</span><span class="n">d</span><span class="p">[:</span><span class="mi">100</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;signal&#39;</span><span class="p">)</span>
+ <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.plot.html#matplotlib.pyplot.plot" title="View documentation for matplotlib.pyplot.plot"><span class="n">plt</span><span class="o">.</span><span class="n">plot</span></a><span class="p">(</span><span class="n">d_</span><span class="p">[:</span><span class="mi">100</span><span class="p">],</span> <span class="n">label</span><span class="o">=</span><span class="s1">&#39;regenerated signal&#39;</span><span class="p">)</span>
+ <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.legend.html#matplotlib.pyplot.legend" title="View documentation for matplotlib.pyplot.legend"><span class="n">plt</span><span class="o">.</span><span class="n">legend</span></a><span class="p">()</span>
 
-<a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.figure.html#matplotlib.pyplot.figure" title="View documentation for matplotlib.pyplot.figure"><span class="n">plt</span><span class="o">.</span><span class="n">figure</span></a><span class="p">()</span>
-<a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.psd.html#matplotlib.pyplot.psd" title="View documentation for matplotlib.pyplot.psd"><span class="n">plt</span><span class="o">.</span><span class="n">psd</span></a><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">Fs</span><span class="o">=</span><span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;sfreq&#39;</span><span class="p">],</span> <span class="n">NFFT</span><span class="o">=</span><span class="mi">2048</span><span class="p">)</span>
-<a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.psd.html#matplotlib.pyplot.psd" title="View documentation for matplotlib.pyplot.psd"><span class="n">plt</span><span class="o">.</span><span class="n">psd</span></a><span class="p">(</span><span class="n">innovation</span><span class="p">,</span> <span class="n">Fs</span><span class="o">=</span><span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;sfreq&#39;</span><span class="p">],</span> <span class="n">NFFT</span><span class="o">=</span><span class="mi">2048</span><span class="p">)</span>
-<a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.psd.html#matplotlib.pyplot.psd" title="View documentation for matplotlib.pyplot.psd"><span class="n">plt</span><span class="o">.</span><span class="n">psd</span></a><span class="p">(</span><span class="n">d_</span><span class="p">,</span> <span class="n">Fs</span><span class="o">=</span><span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;sfreq&#39;</span><span class="p">],</span> <span class="n">NFFT</span><span class="o">=</span><span class="mi">2048</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">)</span>
-<a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.legend.html#matplotlib.pyplot.legend" title="View documentation for matplotlib.pyplot.legend"><span class="n">plt</span><span class="o">.</span><span class="n">legend</span></a><span class="p">((</span><span class="s1">&#39;Signal&#39;</span><span class="p">,</span> <span class="s1">&#39;Innovation&#39;</span><span class="p">,</span> <span class="s1">&#39;Regenerated signal&#39;</span><span class="p">))</span>
-<a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.show.html#matplotlib.pyplot.show" title="View documentation for matplotlib.pyplot.show"><span class="n">plt</span><span class="o">.</span><span class="n">show</span></a><span class="p">()</span>
+ <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.figure.html#matplotlib.pyplot.figure" title="View documentation for matplotlib.pyplot.figure"><span class="n">plt</span><span class="o">.</span><span class="n">figure</span></a><span class="p">()</span>
+ <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.psd.html#matplotlib.pyplot.psd" title="View documentation for matplotlib.pyplot.psd"><span class="n">plt</span><span class="o">.</span><span class="n">psd</span></a><span class="p">(</span><span class="n">d</span><span class="p">,</span> <span class="n">Fs</span><span class="o">=</span><span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;sfreq&#39;</span><span class="p">],</span> <span class="n">NFFT</span><span class="o">=</span><span class="mi">2048</span><span class="p">)</span>
+ <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.psd.html#matplotlib.pyplot.psd" title="View documentation for matplotlib.pyplot.psd"><span class="n">plt</span><span class="o">.</span><span class="n">psd</span></a><span class="p">(</span><span class="n">innovation</span><span class="p">,</span> <span class="n">Fs</span><span class="o">=</span><span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;sfreq&#39;</span><span class="p">],</span> <span class="n">NFFT</span><span class="o">=</span><span class="mi">2048</span><span class="p">)</span>
+ <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.psd.html#matplotlib.pyplot.psd" title="View documentation for matplotlib.pyplot.psd"><span class="n">plt</span><span class="o">.</span><span class="n">psd</span></a><span class="p">(</span><span class="n">d_</span><span class="p">,</span> <span class="n">Fs</span><span class="o">=</span><span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;sfreq&#39;</span><span class="p">],</span> <span class="n">NFFT</span><span class="o">=</span><span class="mi">2048</span><span class="p">,</span> <span class="n">linestyle</span><span class="o">=</span><span class="s1">&#39;--&#39;</span><span class="p">)</span>
+ <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.legend.html#matplotlib.pyplot.legend" title="View documentation for matplotlib.pyplot.legend"><span class="n">plt</span><span class="o">.</span><span class="n">legend</span></a><span class="p">((</span><span class="s1">&#39;Signal&#39;</span><span class="p">,</span> <span class="s1">&#39;Innovation&#39;</span><span class="p">,</span> <span class="s1">&#39;Regenerated signal&#39;</span><span class="p">))</span>
+ <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.show.html#matplotlib.pyplot.show" title="View documentation for matplotlib.pyplot.show"><span class="n">plt</span><span class="o">.</span><span class="n">show</span></a><span class="p">()</span>
 </pre></div>
-</div>
+</td></tr></table></div>
 <ul class="sphx-glr-horizontal">
 <li><img alt="../../_images/sphx_glr_plot_temporal_whitening_001.png" class="sphx-glr-multi-img first" src="../../_images/sphx_glr_plot_temporal_whitening_001.png" />
 </li>
 <li><img alt="../../_images/sphx_glr_plot_temporal_whitening_002.png" class="sphx-glr-multi-img first" src="../../_images/sphx_glr_plot_temporal_whitening_002.png" />
 </li>
 </ul>
+<p><strong>Total running time of the script:</strong> ( 0 minutes  1.781 seconds)</p>
+<p><strong>Estimated memory usage:</strong>  10 MB</p>
 <div class="sphx-glr-footer class sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-time-frequency-plot-temporal-whitening-py">
 <div class="sphx-glr-download docutils container">
 <a class="reference download internal" download="" href="../../_downloads/02105ee74aef45a8882996e7ea2860fe/plot_temporal_whitening.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">plot_temporal_whitening.py</span></code></a></div>
@@ -284,7 +333,7 @@ Current compensation grade : 0
       <li><a href="faq.html#cite">Cite MNE</a></li>
       <li class="pull-right"><a href="#">Back to top</a></li>
     </ul>
-    <p>&copy; Copyright 2012-2018, MNE Developers. Last updated on 2018-11-13.</p>
+    <p>&copy; Copyright 2012-2018, MNE Developers. Last updated on 2018-11-14.</p>
   </div>
 </footer>
   </body>
