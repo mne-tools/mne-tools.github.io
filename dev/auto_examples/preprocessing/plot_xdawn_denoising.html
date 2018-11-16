@@ -200,105 +200,59 @@ interface. Biomedical Engineering, IEEE Transactions on, 56(8), 2035-2043.</p>
 August). Theoretical analysis of xDAWN algorithm: application to an
 efficient sensor selection in a P300 BCI. In Signal Processing Conference,
 2011 19th European (pp. 1382-1386). IEEE.</p>
-<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>30
-31
-32
-33
-34
-35
-36
-37
-38
-39
-40
-41
-42</pre></div></td><td class="code"><div class="highlight"><pre><span></span> <span class="c1"># Authors: Alexandre Barachant &lt;alexandre.barachant@gmail.com&gt;</span>
- <span class="c1">#</span>
- <span class="c1"># License: BSD (3-clause)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Authors: Alexandre Barachant &lt;alexandre.barachant@gmail.com&gt;</span>
+<span class="c1">#</span>
+<span class="c1"># License: BSD (3-clause)</span>
 
 
- <span class="kn">from</span> <span class="nn">mne</span> <span class="kn">import</span> <span class="p">(</span><span class="n">io</span><span class="p">,</span> <a href="../../generated/mne.compute_raw_covariance.html#mne.compute_raw_covariance" title="View documentation for mne.compute_raw_covariance"><span class="n">compute_raw_covariance</span></a><span class="p">,</span> <a href="../../generated/mne.read_events.html#mne.read_events" title="View documentation for mne.read_events"><span class="n">read_events</span></a><span class="p">,</span> <a href="../../generated/mne.pick_types.html#mne.pick_types" title="View documentation for mne.pick_types"><span class="n">pick_types</span></a><span class="p">,</span> <a href="../../generated/mne.Epochs.html#mne.Epochs" title="View documentation for mne.Epochs"><span class="n">Epochs</span></a><span class="p">)</span>
- <span class="kn">from</span> <span class="nn">mne.datasets</span> <span class="kn">import</span> <span class="n">sample</span>
- <span class="kn">from</span> <span class="nn">mne.preprocessing</span> <span class="kn">import</span> <a href="../../generated/mne.preprocessing.Xdawn.html#mne.preprocessing.Xdawn" title="View documentation for mne.preprocessing.Xdawn"><span class="n">Xdawn</span></a>
- <span class="kn">from</span> <span class="nn">mne.viz</span> <span class="kn">import</span> <a href="../../generated/mne.viz.plot_epochs_image.html#mne.viz.plot_epochs_image" title="View documentation for mne.viz.plot_epochs_image"><span class="n">plot_epochs_image</span></a>
+<span class="kn">from</span> <span class="nn">mne</span> <span class="kn">import</span> <span class="p">(</span><span class="n">io</span><span class="p">,</span> <a href="../../generated/mne.compute_raw_covariance.html#mne.compute_raw_covariance" title="View documentation for mne.compute_raw_covariance"><span class="n">compute_raw_covariance</span></a><span class="p">,</span> <a href="../../generated/mne.read_events.html#mne.read_events" title="View documentation for mne.read_events"><span class="n">read_events</span></a><span class="p">,</span> <a href="../../generated/mne.pick_types.html#mne.pick_types" title="View documentation for mne.pick_types"><span class="n">pick_types</span></a><span class="p">,</span> <a href="../../generated/mne.Epochs.html#mne.Epochs" title="View documentation for mne.Epochs"><span class="n">Epochs</span></a><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">mne.datasets</span> <span class="kn">import</span> <span class="n">sample</span>
+<span class="kn">from</span> <span class="nn">mne.preprocessing</span> <span class="kn">import</span> <a href="../../generated/mne.preprocessing.Xdawn.html#mne.preprocessing.Xdawn" title="View documentation for mne.preprocessing.Xdawn"><span class="n">Xdawn</span></a>
+<span class="kn">from</span> <span class="nn">mne.viz</span> <span class="kn">import</span> <a href="../../generated/mne.viz.plot_epochs_image.html#mne.viz.plot_epochs_image" title="View documentation for mne.viz.plot_epochs_image"><span class="n">plot_epochs_image</span></a>
 
- <span class="k">print</span><span class="p">(</span><span class="vm">__doc__</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="vm">__doc__</span><span class="p">)</span>
 
- <span class="n">data_path</span> <span class="o">=</span> <a href="../../generated/mne.datasets.sample.data_path.html#mne.datasets.sample.data_path" title="View documentation for mne.datasets.sample.data_path"><span class="n">sample</span><span class="o">.</span><span class="n">data_path</span></a><span class="p">()</span>
+<span class="n">data_path</span> <span class="o">=</span> <a href="../../generated/mne.datasets.sample.data_path.html#mne.datasets.sample.data_path" title="View documentation for mne.datasets.sample.data_path"><span class="n">sample</span><span class="o">.</span><span class="n">data_path</span></a><span class="p">()</span>
 </pre></div>
-</td></tr></table></div>
+</div>
 <p>Set parameters and read data</p>
-<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>46
-47
-48
-49
-50
-51
-52
-53
-54
-55
-56
-57
-58
-59
-60
-61
-62
-63
-64
-65
-66
-67
-68
-69
-70
-71
-72
-73
-74
-75
-76
-77
-78
-79
-80</pre></div></td><td class="code"><div class="highlight"><pre><span></span> <span class="n">raw_fname</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis_filt-0-40_raw.fif&#39;</span>
- <span class="n">event_fname</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis_filt-0-40_raw-eve.fif&#39;</span>
- <span class="n">tmin</span><span class="p">,</span> <span class="n">tmax</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.3</span>
- <span class="n">event_id</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">vis_r</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">raw_fname</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis_filt-0-40_raw.fif&#39;</span>
+<span class="n">event_fname</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis_filt-0-40_raw-eve.fif&#39;</span>
+<span class="n">tmin</span><span class="p">,</span> <span class="n">tmax</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.3</span>
+<span class="n">event_id</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">vis_r</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
 
- <span class="c1"># Setup for reading the raw data</span>
- <span class="n">raw</span> <span class="o">=</span> <a href="../../generated/mne.io.read_raw_fif.html#mne.io.read_raw_fif" title="View documentation for mne.io.read_raw_fif"><span class="n">io</span><span class="o">.</span><span class="n">read_raw_fif</span></a><span class="p">(</span><span class="n">raw_fname</span><span class="p">,</span> <span class="n">preload</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
- <span class="n">raw</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="n">fir_design</span><span class="o">=</span><span class="s1">&#39;firwin&#39;</span><span class="p">)</span>  <span class="c1"># replace baselining with high-pass</span>
- <span class="n">events</span> <span class="o">=</span> <a href="../../generated/mne.read_events.html#mne.read_events" title="View documentation for mne.read_events"><span class="n">read_events</span></a><span class="p">(</span><span class="n">event_fname</span><span class="p">)</span>
+<span class="c1"># Setup for reading the raw data</span>
+<span class="n">raw</span> <span class="o">=</span> <a href="../../generated/mne.io.read_raw_fif.html#mne.io.read_raw_fif" title="View documentation for mne.io.read_raw_fif"><span class="n">io</span><span class="o">.</span><span class="n">read_raw_fif</span></a><span class="p">(</span><span class="n">raw_fname</span><span class="p">,</span> <span class="n">preload</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">raw</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">20</span><span class="p">,</span> <span class="n">fir_design</span><span class="o">=</span><span class="s1">&#39;firwin&#39;</span><span class="p">)</span>  <span class="c1"># replace baselining with high-pass</span>
+<span class="n">events</span> <span class="o">=</span> <a href="../../generated/mne.read_events.html#mne.read_events" title="View documentation for mne.read_events"><span class="n">read_events</span></a><span class="p">(</span><span class="n">event_fname</span><span class="p">)</span>
 
- <span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;bads&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;MEG 2443&#39;</span><span class="p">]</span>  <span class="c1"># set bad channels</span>
- <span class="n">picks</span> <span class="o">=</span> <a href="../../generated/mne.pick_types.html#mne.pick_types" title="View documentation for mne.pick_types"><span class="n">pick_types</span></a><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">meg</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">eeg</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">stim</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">eog</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
-                    <span class="n">exclude</span><span class="o">=</span><span class="s1">&#39;bads&#39;</span><span class="p">)</span>
- <span class="c1"># Epoching</span>
- <span class="n">epochs</span> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs" title="View documentation for mne.Epochs"><span class="n">Epochs</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">event_id</span><span class="p">,</span> <span class="n">tmin</span><span class="p">,</span> <span class="n">tmax</span><span class="p">,</span> <span class="n">proj</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
-                 <span class="n">picks</span><span class="o">=</span><span class="n">picks</span><span class="p">,</span> <span class="n">baseline</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">preload</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
-                 <span class="n">verbose</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;bads&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;MEG 2443&#39;</span><span class="p">]</span>  <span class="c1"># set bad channels</span>
+<span class="n">picks</span> <span class="o">=</span> <a href="../../generated/mne.pick_types.html#mne.pick_types" title="View documentation for mne.pick_types"><span class="n">pick_types</span></a><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">meg</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">eeg</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">stim</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">eog</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+                   <span class="n">exclude</span><span class="o">=</span><span class="s1">&#39;bads&#39;</span><span class="p">)</span>
+<span class="c1"># Epoching</span>
+<span class="n">epochs</span> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs" title="View documentation for mne.Epochs"><span class="n">Epochs</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">event_id</span><span class="p">,</span> <span class="n">tmin</span><span class="p">,</span> <span class="n">tmax</span><span class="p">,</span> <span class="n">proj</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+                <span class="n">picks</span><span class="o">=</span><span class="n">picks</span><span class="p">,</span> <span class="n">baseline</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">preload</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+                <span class="n">verbose</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
 
- <span class="c1"># Plot image epoch before xdawn</span>
- <a href="../../generated/mne.viz.plot_epochs_image.html#mne.viz.plot_epochs_image" title="View documentation for mne.viz.plot_epochs_image"><span class="n">plot_epochs_image</span></a><span class="p">(</span><span class="n">epochs</span><span class="p">[</span><span class="s1">&#39;vis_r&#39;</span><span class="p">],</span> <span class="n">picks</span><span class="o">=</span><span class="p">[</span><span class="mi">230</span><span class="p">],</span> <span class="n">vmin</span><span class="o">=-</span><span class="mi">500</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
+<span class="c1"># Plot image epoch before xdawn</span>
+<a href="../../generated/mne.viz.plot_epochs_image.html#mne.viz.plot_epochs_image" title="View documentation for mne.viz.plot_epochs_image"><span class="n">plot_epochs_image</span></a><span class="p">(</span><span class="n">epochs</span><span class="p">[</span><span class="s1">&#39;vis_r&#39;</span><span class="p">],</span> <span class="n">picks</span><span class="o">=</span><span class="p">[</span><span class="mi">230</span><span class="p">],</span> <span class="n">vmin</span><span class="o">=-</span><span class="mi">500</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
 
- <span class="c1"># Estimates signal covariance</span>
- <span class="n">signal_cov</span> <span class="o">=</span> <a href="../../generated/mne.compute_raw_covariance.html#mne.compute_raw_covariance" title="View documentation for mne.compute_raw_covariance"><span class="n">compute_raw_covariance</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">picks</span><span class="o">=</span><span class="n">picks</span><span class="p">)</span>
+<span class="c1"># Estimates signal covariance</span>
+<span class="n">signal_cov</span> <span class="o">=</span> <a href="../../generated/mne.compute_raw_covariance.html#mne.compute_raw_covariance" title="View documentation for mne.compute_raw_covariance"><span class="n">compute_raw_covariance</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">picks</span><span class="o">=</span><span class="n">picks</span><span class="p">)</span>
 
- <span class="c1"># Xdawn instance</span>
- <span class="n">xd</span> <span class="o">=</span> <a href="../../generated/mne.preprocessing.Xdawn.html#mne.preprocessing.Xdawn" title="View documentation for mne.preprocessing.Xdawn"><span class="n">Xdawn</span></a><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">signal_cov</span><span class="o">=</span><span class="n">signal_cov</span><span class="p">)</span>
+<span class="c1"># Xdawn instance</span>
+<span class="n">xd</span> <span class="o">=</span> <a href="../../generated/mne.preprocessing.Xdawn.html#mne.preprocessing.Xdawn" title="View documentation for mne.preprocessing.Xdawn"><span class="n">Xdawn</span></a><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">signal_cov</span><span class="o">=</span><span class="n">signal_cov</span><span class="p">)</span>
 
- <span class="c1"># Fit xdawn</span>
- <span class="n">xd</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">epochs</span><span class="p">)</span>
+<span class="c1"># Fit xdawn</span>
+<span class="n">xd</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">epochs</span><span class="p">)</span>
 
- <span class="c1"># Denoise epochs</span>
- <span class="n">epochs_denoised</span> <span class="o">=</span> <span class="n">xd</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">epochs</span><span class="p">)</span>
+<span class="c1"># Denoise epochs</span>
+<span class="n">epochs_denoised</span> <span class="o">=</span> <span class="n">xd</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">epochs</span><span class="p">)</span>
 
- <span class="c1"># Plot image epoch after Xdawn</span>
- <a href="../../generated/mne.viz.plot_epochs_image.html#mne.viz.plot_epochs_image" title="View documentation for mne.viz.plot_epochs_image"><span class="n">plot_epochs_image</span></a><span class="p">(</span><span class="n">epochs_denoised</span><span class="p">[</span><span class="s1">&#39;vis_r&#39;</span><span class="p">],</span> <span class="n">picks</span><span class="o">=</span><span class="p">[</span><span class="mi">230</span><span class="p">],</span> <span class="n">vmin</span><span class="o">=-</span><span class="mi">500</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
+<span class="c1"># Plot image epoch after Xdawn</span>
+<a href="../../generated/mne.viz.plot_epochs_image.html#mne.viz.plot_epochs_image" title="View documentation for mne.viz.plot_epochs_image"><span class="n">plot_epochs_image</span></a><span class="p">(</span><span class="n">epochs_denoised</span><span class="p">[</span><span class="s1">&#39;vis_r&#39;</span><span class="p">],</span> <span class="n">picks</span><span class="o">=</span><span class="p">[</span><span class="mi">230</span><span class="p">],</span> <span class="n">vmin</span><span class="o">=-</span><span class="mi">500</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mi">500</span><span class="p">)</span>
 </pre></div>
-</td></tr></table></div>
+</div>
 <ul class="sphx-glr-horizontal">
 <li><img alt="../../_images/sphx_glr_plot_xdawn_denoising_001.png" class="sphx-glr-multi-img first" src="../../_images/sphx_glr_plot_xdawn_denoising_001.png" />
 </li>
@@ -330,8 +284,8 @@ Zeroing out 303 Xdawn components
 Inverse transforming to sensor space
 </pre></div>
 </div>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  7.661 seconds)</p>
-<p><strong>Estimated memory usage:</strong>  130 MB</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  7.239 seconds)</p>
+<p><strong>Estimated memory usage:</strong>  10 MB</p>
 <div class="sphx-glr-footer class sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-preprocessing-plot-xdawn-denoising-py">
 <div class="sphx-glr-download docutils container">
 <a class="reference download internal" download="" href="../../_downloads/bd657c82bc37219d9a670cf5f93779be/plot_xdawn_denoising.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">plot_xdawn_denoising.py</span></code></a></div>
@@ -362,7 +316,7 @@ Inverse transforming to sensor space
       <li><a href="faq.html#cite">Cite MNE</a></li>
       <li class="pull-right"><a href="#">Back to top</a></li>
     </ul>
-    <p>&copy; Copyright 2012-2018, MNE Developers. Last updated on 2018-11-14.</p>
+    <p>&copy; Copyright 2012-2018, MNE Developers. Last updated on 2018-11-16.</p>
   </div>
 </footer>
   </body>

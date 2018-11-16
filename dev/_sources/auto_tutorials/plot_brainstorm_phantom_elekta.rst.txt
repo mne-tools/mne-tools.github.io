@@ -25,8 +25,8 @@ References
 
 
 .. code-block:: python
-   :lineno-start: 20
 
+    # sphinx_gallery_thumbnail_number = 9
 
     # Authors: Eric Larson <larson.eric.d@gmail.com>
     #
@@ -56,7 +56,6 @@ are read to construct instances of :class:`mne.io.Raw`.
 
 
 .. code-block:: python
-   :lineno-start: 40
 
     data_path = bst_phantom_elekta.data_path(verbose=True)
 
@@ -99,7 +98,6 @@ for the phantom, where each dipole (1-32) gets its own event:
 
 
 .. code-block:: python
-   :lineno-start: 50
 
 
     events = find_events(raw, 'STI201')
@@ -131,7 +129,6 @@ to save memory:
 
 
 .. code-block:: python
-   :lineno-start: 59
 
 
     raw.plot_psd(tmax=60., average=False)
@@ -159,7 +156,6 @@ for the site of interest, but we don't, so we just do:
 
 
 .. code-block:: python
-   :lineno-start: 66
 
 
     raw.fix_mag_coil_types()
@@ -190,7 +186,6 @@ We know our phantom produces sinusoidal bursts below 25 Hz, so let's filter.
 
 
 .. code-block:: python
-   :lineno-start: 72
 
 
     raw.filter(None, 40., fir_design='firwin')
@@ -220,7 +215,6 @@ we can also decimate our data to save memory.
 
 
 .. code-block:: python
-   :lineno-start: 80
 
 
     tmin, tmax = -0.1, 0.1
@@ -256,13 +250,11 @@ a single-shell sphere with origin (0., 0., 0.).
 
 
 .. code-block:: python
-   :lineno-start: 90
 
-    sphere = mne.make_sphere_model(r0=(0., 0., 0.), head_radius=None)
+    sphere = mne.make_sphere_model(r0=(0., 0., 0.), head_radius=0.08)
 
-    mne.viz.plot_alignment(raw.info, subject='sample',
-                           meg='helmet', bem=sphere, dig=True,
-                           surfaces=['brain'])
+    mne.viz.plot_alignment(raw.info, subject='sample', show_axes=True,
+                           bem=sphere, dig=True, surfaces='inner_skull')
 
 
 
@@ -277,6 +269,13 @@ a single-shell sphere with origin (0., 0., 0.).
 
  .. code-block:: none
 
+    Equiv. model fitting -> RV = 0.00347649 %
+    mu1 = 0.94483    lambda1 = 0.136877
+    mu2 = 0.667752    lambda2 = 0.683647
+    mu3 = -0.295407    lambda3 = -0.0101536
+    Set up EEG sphere model with scalp radius    80.0 mm
+
+        Triangle neighbors and vertex normals...
     Getting helmet for system 306m
 
 
@@ -286,18 +285,18 @@ the global field power.
 
 
 .. code-block:: python
-   :lineno-start: 101
 
 
-    cov = mne.compute_covariance(epochs, tmax=0, method='shrunk', rank=None)
+    # here we can get away with using method='oas' for speed (faster than "shrunk")
+    # but in general "shrunk" is usually better
+    cov = mne.compute_covariance(
+        epochs, tmax=0, method='oas', rank=None)
     mne.viz.plot_evoked_white(epochs['1'].average(), cov)
 
     data = []
+    t_peak = 0.036  # true for Elekta phantom
     for ii in event_id:
-        evoked = epochs[str(ii)].average()
-        idx_peak = np.argmax(evoked.copy().pick_types(meg='grad').data.std(axis=0))
-        t_peak = evoked.times[idx_peak]
-        evoked.crop(t_peak, t_peak)
+        evoked = epochs[str(ii)].average().crop(t_peak, t_peak)
         data.append(evoked.data[:, 0])
     evoked = mne.EvokedArray(np.array(data).T, evoked.info, tmin=0.)
     del epochs, raw
@@ -320,7 +319,7 @@ the global field power.
     Setting small MEG eigenvalues to zero.
     Not doing PCA for MEG.
     Reducing data rank from 306 -> 72
-    Estimating covariance using SHRUNK
+    Estimating covariance using OAS
     Done.
     Number of samples used : 21760
     [done]
@@ -332,9 +331,9 @@ the global field power.
     Setting small MEG eigenvalues to zero.
     Not doing PCA for MEG.
         Created the whitener using a noise covariance matrix with rank 72 (234 small eigenvalues omitted)
-    BEM               : <ConductorModel  |  Sphere (no layers): r0=[0.0, 0.0, 0.0] mm>
+    BEM               : <ConductorModel  |  Sphere (3 layers): r0=[0.0, 0.0, 0.0] R=80 mm>
     MRI transform     : identity
-    Sphere model      : origin at (   0.00    0.00    0.00) mm, max_rad =    0.1 mm
+    Sphere model      : origin at (   0.00    0.00    0.00) mm, rad =    0.1 mm
     Guess grid        :   20.0 mm
     Guess mindist     :    5.0 mm
     Guess exclude     :   20.0 mm
@@ -366,23 +365,23 @@ the global field power.
         Created the whitener using a noise covariance matrix with rank 72 (234 small eigenvalues omitted)
 
     ---- Computing the forward solution for the guesses...
-    Making a spherical guess space with radius   107.7 mm...
+    Making a spherical guess space with radius    72.0 mm...
     Filtering (grid =     20 mm)...
     Surface CM = (   0.0    0.0    0.0) mm
-    Surface fits inside a sphere with radius  107.7 mm
+    Surface fits inside a sphere with radius   72.0 mm
     Surface extent:
-        x = -107.7 ...  107.7 mm
-        y = -107.7 ...  107.7 mm
-        z = -107.7 ...  107.7 mm
+        x =  -72.0 ...   72.0 mm
+        y =  -72.0 ...   72.0 mm
+        z =  -72.0 ...   72.0 mm
     Grid extent:
-        x = -120.0 ...  120.0 mm
-        y = -120.0 ...  120.0 mm
-        z = -120.0 ...  120.0 mm
-    2197 sources before omitting any.
-    690 sources after omitting infeasible sources.
-    586 sources remaining after excluding the sources outside the surface and less than    5.0 mm inside.
+        x =  -80.0 ...   80.0 mm
+        y =  -80.0 ...   80.0 mm
+        z =  -80.0 ...   80.0 mm
+    729 sources before omitting any.
+    178 sources after omitting infeasible sources.
+    170 sources remaining after excluding the sources outside the surface and less than    5.0 mm inside.
     Go through all guess source locations...
-    [done 586 sources]
+    [done 170 sources]
     ---- Fitted :     0.0 ms
     ---- Fitted :     3.0 ms
     ---- Fitted :     6.0 ms
@@ -425,7 +424,6 @@ data and residuals on the same scale (here the "time points" are the
 
 
 .. code-block:: python
-   :lineno-start: 120
 
 
     fig, axes = plt.subplots(2, 1)
@@ -449,7 +447,6 @@ Now we can compare to the actual locations, taking the difference in mm:
 
 
 .. code-block:: python
-   :lineno-start: 131
 
 
     actual_pos, actual_ori = mne.dipole.get_phantom_dipoles()
@@ -493,8 +490,8 @@ Now we can compare to the actual locations, taking the difference in mm:
  .. code-block:: none
 
     mean(position error) = 2.2 mm
-    mean(angle error) = 1.5°
-    mean(abs amplitude error) = 14.1 nAm
+    mean(angle error) = 1.7°
+    mean(abs amplitude error) = 13.9 nAm
 
 
 Let's plot the positions and the orientations of the actual and the estimated
@@ -502,23 +499,27 @@ dipoles
 
 
 .. code-block:: python
-   :lineno-start: 161
 
-    def plot_pos_ori(pos, ori, color=(0., 0., 0.)):
-        mlab.points3d(pos[:, 0], pos[:, 1], pos[:, 2], scale_factor=0.005,
-                      color=color)
-        mlab.quiver3d(pos[:, 0], pos[:, 1], pos[:, 2],
-                      ori[:, 0], ori[:, 1], ori[:, 2],
-                      scale_factor=0.03,
-                      color=color)
+    def plot_pos_ori(pos, ori, color=(0., 0., 0.), opacity=1.):
+        x, y, z = pos.T
+        u, v, w = ori.T
+        mlab.points3d(x, y, z, scale_factor=0.005, opacity=opacity, color=color)
+        q = mlab.quiver3d(x, y, z, u, v, w,
+                          scale_factor=0.03, opacity=opacity,
+                          color=color, mode='arrow')
+        q.glyph.glyph_source.glyph_source.shaft_radius = 0.02
+        q.glyph.glyph_source.glyph_source.tip_length = 0.1
+        q.glyph.glyph_source.glyph_source.tip_radius = 0.05
 
 
-    mne.viz.plot_alignment(evoked.info, bem=sphere, surfaces=[])
+    mne.viz.plot_alignment(evoked.info, bem=sphere, surfaces='inner_skull',
+                           coord_frame='head', meg='helmet', show_axes=True)
 
     # Plot the position and the orientation of the actual dipole
-    plot_pos_ori(actual_pos, actual_ori, color=(1., 0., 0.))
+    plot_pos_ori(actual_pos, actual_ori, color=(0., 0., 0.), opacity=0.5)
     # Plot the position and the orientation of the estimated dipole
-    plot_pos_ori(dip.pos, dip.ori, color=(0., 0., 1.))
+    plot_pos_ori(dip.pos, dip.ori, color=(0.2, 1., 0.5))
+    mlab.view(70, 80, distance=0.5)
 
 
 
@@ -532,13 +533,14 @@ dipoles
 
  .. code-block:: none
 
+    Triangle neighbors and vertex normals...
     Getting helmet for system 306m
 
 
 
 .. rst-class:: sphx-glr-timing
 
-   **Total running time of the script:** ( 1 minutes  16.038 seconds)
+   **Total running time of the script:** ( 0 minutes  39.101 seconds)
 
 **Estimated memory usage:**  931 MB
 

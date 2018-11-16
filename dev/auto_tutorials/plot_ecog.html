@@ -178,119 +178,81 @@ This documentation is for <strong>development version 0.17.dev0</strong>.
 <p>MNE supports working with more than just MEG and EEG data. Here we show some
 of the functions that can be used to facilitate working with
 electrocorticography (ECoG) data.</p>
-<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>10
-11
-12
-13
-14
-15
-16
-17
-18
-19
-20
-21
-22
-23</pre></div></td><td class="code"><div class="highlight"><pre><span></span> <span class="c1"># Authors: Eric Larson &lt;larson.eric.d@gmail.com&gt;</span>
- <span class="c1">#          Chris Holdgraf &lt;choldgraf@gmail.com&gt;</span>
- <span class="c1">#</span>
- <span class="c1"># License: BSD (3-clause)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Authors: Eric Larson &lt;larson.eric.d@gmail.com&gt;</span>
+<span class="c1">#          Chris Holdgraf &lt;choldgraf@gmail.com&gt;</span>
+<span class="c1">#</span>
+<span class="c1"># License: BSD (3-clause)</span>
 
- <span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
- <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
- <span class="kn">from</span> <span class="nn">scipy.io</span> <span class="kn">import</span> <a href="https://scipy.github.io/devdocs/generated/scipy.io.loadmat.html#scipy.io.loadmat" title="View documentation for scipy.io.loadmat"><span class="n">loadmat</span></a>
- <span class="kn">from</span> <span class="nn">mayavi</span> <span class="kn">import</span> <span class="n">mlab</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+<span class="kn">from</span> <span class="nn">scipy.io</span> <span class="kn">import</span> <a href="https://scipy.github.io/devdocs/generated/scipy.io.loadmat.html#scipy.io.loadmat" title="View documentation for scipy.io.loadmat"><span class="n">loadmat</span></a>
+<span class="kn">from</span> <span class="nn">mayavi</span> <span class="kn">import</span> <span class="n">mlab</span>
 
- <span class="kn">import</span> <span class="nn">mne</span>
- <span class="kn">from</span> <span class="nn">mne.viz</span> <span class="kn">import</span> <a href="../generated/mne.viz.plot_alignment.html#mne.viz.plot_alignment" title="View documentation for mne.viz.plot_alignment"><span class="n">plot_alignment</span></a><span class="p">,</span> <a href="../generated/mne.viz.snapshot_brain_montage.html#mne.viz.snapshot_brain_montage" title="View documentation for mne.viz.snapshot_brain_montage"><span class="n">snapshot_brain_montage</span></a>
+<span class="kn">import</span> <span class="nn">mne</span>
+<span class="kn">from</span> <span class="nn">mne.viz</span> <span class="kn">import</span> <a href="../generated/mne.viz.plot_alignment.html#mne.viz.plot_alignment" title="View documentation for mne.viz.plot_alignment"><span class="n">plot_alignment</span></a><span class="p">,</span> <a href="../generated/mne.viz.snapshot_brain_montage.html#mne.viz.snapshot_brain_montage" title="View documentation for mne.viz.snapshot_brain_montage"><span class="n">snapshot_brain_montage</span></a>
 
- <span class="k">print</span><span class="p">(</span><span class="vm">__doc__</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="vm">__doc__</span><span class="p">)</span>
 </pre></div>
-</td></tr></table></div>
+</div>
 <p>Let’s load some ECoG electrode locations and names, and turn them into
 a <a class="reference internal" href="../generated/mne.channels.DigMontage.html#mne.channels.DigMontage" title="mne.channels.DigMontage"><code class="xref py py-class docutils literal notranslate"><span class="pre">mne.channels.DigMontage</span></code></a> class.</p>
-<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>29
-30
-31
-32
-33
-34</pre></div></td><td class="code"><div class="highlight"><pre><span></span> <span class="n">mat</span> <span class="o">=</span> <a href="https://scipy.github.io/devdocs/generated/scipy.io.loadmat.html#scipy.io.loadmat" title="View documentation for scipy.io.loadmat"><span class="n">loadmat</span></a><span class="p">(</span><a href="../generated/mne.datasets.misc.data_path.html#mne.datasets.misc.data_path" title="View documentation for mne.datasets.misc.data_path"><span class="n">mne</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">misc</span><span class="o">.</span><span class="n">data_path</span></a><span class="p">()</span> <span class="o">+</span> <span class="s1">&#39;/ecog/sample_ecog.mat&#39;</span><span class="p">)</span>
- <span class="n">ch_names</span> <span class="o">=</span> <span class="n">mat</span><span class="p">[</span><span class="s1">&#39;ch_names&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
- <span class="n">elec</span> <span class="o">=</span> <span class="n">mat</span><span class="p">[</span><span class="s1">&#39;elec&#39;</span><span class="p">]</span>  <span class="c1"># electrode positions given in meters</span>
- <span class="n">dig_ch_pos</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">ch_names</span><span class="p">,</span> <span class="n">elec</span><span class="p">))</span>
- <span class="n">mon</span> <span class="o">=</span> <a href="../generated/mne.channels.DigMontage.html#mne.channels.DigMontage" title="View documentation for mne.channels.DigMontage"><span class="n">mne</span><span class="o">.</span><span class="n">channels</span><span class="o">.</span><span class="n">DigMontage</span></a><span class="p">(</span><span class="n">dig_ch_pos</span><span class="o">=</span><span class="n">dig_ch_pos</span><span class="p">)</span>
- <span class="k">print</span><span class="p">(</span><span class="s1">&#39;Created </span><span class="si">%s</span><span class="s1"> channel positions&#39;</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">ch_names</span><span class="p">))</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">mat</span> <span class="o">=</span> <a href="https://scipy.github.io/devdocs/generated/scipy.io.loadmat.html#scipy.io.loadmat" title="View documentation for scipy.io.loadmat"><span class="n">loadmat</span></a><span class="p">(</span><a href="../generated/mne.datasets.misc.data_path.html#mne.datasets.misc.data_path" title="View documentation for mne.datasets.misc.data_path"><span class="n">mne</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">misc</span><span class="o">.</span><span class="n">data_path</span></a><span class="p">()</span> <span class="o">+</span> <span class="s1">&#39;/ecog/sample_ecog.mat&#39;</span><span class="p">)</span>
+<span class="n">ch_names</span> <span class="o">=</span> <span class="n">mat</span><span class="p">[</span><span class="s1">&#39;ch_names&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+<span class="n">elec</span> <span class="o">=</span> <span class="n">mat</span><span class="p">[</span><span class="s1">&#39;elec&#39;</span><span class="p">]</span>  <span class="c1"># electrode positions given in meters</span>
+<span class="n">dig_ch_pos</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">ch_names</span><span class="p">,</span> <span class="n">elec</span><span class="p">))</span>
+<span class="n">mon</span> <span class="o">=</span> <a href="../generated/mne.channels.DigMontage.html#mne.channels.DigMontage" title="View documentation for mne.channels.DigMontage"><span class="n">mne</span><span class="o">.</span><span class="n">channels</span><span class="o">.</span><span class="n">DigMontage</span></a><span class="p">(</span><span class="n">dig_ch_pos</span><span class="o">=</span><span class="n">dig_ch_pos</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="s1">&#39;Created </span><span class="si">%s</span><span class="s1"> channel positions&#39;</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">ch_names</span><span class="p">))</span>
 </pre></div>
-</td></tr></table></div>
+</div>
 <p class="sphx-glr-script-out">Out:</p>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Created 64 channel positions
 </pre></div>
 </div>
 <p>Now that we have our electrode positions in MRI coordinates, we can create
 our measurement info structure.</p>
-<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>40</pre></div></td><td class="code"><div class="highlight"><pre><span></span> <span class="n">info</span> <span class="o">=</span> <a href="../generated/mne.create_info.html#mne.create_info" title="View documentation for mne.create_info"><span class="n">mne</span><span class="o">.</span><span class="n">create_info</span></a><span class="p">(</span><span class="n">ch_names</span><span class="p">,</span> <span class="mf">1000.</span><span class="p">,</span> <span class="s1">&#39;ecog&#39;</span><span class="p">,</span> <span class="n">montage</span><span class="o">=</span><span class="n">mon</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">info</span> <span class="o">=</span> <a href="../generated/mne.create_info.html#mne.create_info" title="View documentation for mne.create_info"><span class="n">mne</span><span class="o">.</span><span class="n">create_info</span></a><span class="p">(</span><span class="n">ch_names</span><span class="p">,</span> <span class="mf">1000.</span><span class="p">,</span> <span class="s1">&#39;ecog&#39;</span><span class="p">,</span> <span class="n">montage</span><span class="o">=</span><span class="n">mon</span><span class="p">)</span>
 </pre></div>
-</td></tr></table></div>
+</div>
 <p>We can then plot the locations of our electrodes on our subject’s brain.</p>
 <div class="admonition note">
 <p class="first admonition-title">Note</p>
 <p class="last">These are not real electrodes for this subject, so they
 do not align to the cortical surface perfectly.</p>
 </div>
-<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>48
-49
-50
-51</pre></div></td><td class="code"><div class="highlight"><pre><span></span> <span class="n">subjects_dir</span> <span class="o">=</span> <a href="../generated/mne.datasets.sample.data_path.html#mne.datasets.sample.data_path" title="View documentation for mne.datasets.sample.data_path"><span class="n">mne</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">sample</span><span class="o">.</span><span class="n">data_path</span></a><span class="p">()</span> <span class="o">+</span> <span class="s1">&#39;/subjects&#39;</span>
- <span class="n">fig</span> <span class="o">=</span> <a href="../generated/mne.viz.plot_alignment.html#mne.viz.plot_alignment" title="View documentation for mne.viz.plot_alignment"><span class="n">plot_alignment</span></a><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="n">subject</span><span class="o">=</span><span class="s1">&#39;sample&#39;</span><span class="p">,</span> <span class="n">subjects_dir</span><span class="o">=</span><span class="n">subjects_dir</span><span class="p">,</span>
-                      <span class="n">surfaces</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;pial&#39;</span><span class="p">])</span>
- <a href="http://docs.enthought.com/mayavi/mayavi/auto/mlab_camera.html#mayavi.mlab.view" title="View documentation for mayavi.mlab.view"><span class="n">mlab</span><span class="o">.</span><span class="n">view</span></a><span class="p">(</span><span class="mi">200</span><span class="p">,</span> <span class="mi">70</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">subjects_dir</span> <span class="o">=</span> <a href="../generated/mne.datasets.sample.data_path.html#mne.datasets.sample.data_path" title="View documentation for mne.datasets.sample.data_path"><span class="n">mne</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">sample</span><span class="o">.</span><span class="n">data_path</span></a><span class="p">()</span> <span class="o">+</span> <span class="s1">&#39;/subjects&#39;</span>
+<span class="n">fig</span> <span class="o">=</span> <a href="../generated/mne.viz.plot_alignment.html#mne.viz.plot_alignment" title="View documentation for mne.viz.plot_alignment"><span class="n">plot_alignment</span></a><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="n">subject</span><span class="o">=</span><span class="s1">&#39;sample&#39;</span><span class="p">,</span> <span class="n">subjects_dir</span><span class="o">=</span><span class="n">subjects_dir</span><span class="p">,</span>
+                     <span class="n">surfaces</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;pial&#39;</span><span class="p">])</span>
+<a href="http://docs.enthought.com/mayavi/mayavi/auto/mlab_camera.html#mayavi.mlab.view" title="View documentation for mayavi.mlab.view"><span class="n">mlab</span><span class="o">.</span><span class="n">view</span></a><span class="p">(</span><span class="mi">200</span><span class="p">,</span> <span class="mi">70</span><span class="p">)</span>
 </pre></div>
-</td></tr></table></div>
+</div>
 <img alt="../_images/sphx_glr_plot_ecog_001.png" class="sphx-glr-single-img" src="../_images/sphx_glr_plot_ecog_001.png" />
 <p>Sometimes it is useful to make a scatterplot for the current figure view.
 This is best accomplished with matplotlib. We can capture an image of the
 current mayavi view, along with the xy position of each electrode, with the
 <cite>snapshot_brain_montage</cite> function.</p>
-<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>59
-60
-61
-62
-63
-64
-65
-66
-67
-68
-69
-70
-71
-72
-73
-74
-75
-76</pre></div></td><td class="code"><div class="highlight"><pre><span></span> <span class="c1"># We&#39;ll once again plot the surface, then take a snapshot.</span>
- <span class="n">fig</span> <span class="o">=</span> <a href="../generated/mne.viz.plot_alignment.html#mne.viz.plot_alignment" title="View documentation for mne.viz.plot_alignment"><span class="n">plot_alignment</span></a><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="n">subject</span><span class="o">=</span><span class="s1">&#39;sample&#39;</span><span class="p">,</span> <span class="n">subjects_dir</span><span class="o">=</span><span class="n">subjects_dir</span><span class="p">,</span>
-                      <span class="n">surfaces</span><span class="o">=</span><span class="s1">&#39;pial&#39;</span><span class="p">)</span>
- <a href="http://docs.enthought.com/mayavi/mayavi/auto/mlab_camera.html#mayavi.mlab.view" title="View documentation for mayavi.mlab.view"><span class="n">mlab</span><span class="o">.</span><span class="n">view</span></a><span class="p">(</span><span class="mi">200</span><span class="p">,</span> <span class="mi">70</span><span class="p">)</span>
- <span class="n">xy</span><span class="p">,</span> <span class="n">im</span> <span class="o">=</span> <a href="../generated/mne.viz.snapshot_brain_montage.html#mne.viz.snapshot_brain_montage" title="View documentation for mne.viz.snapshot_brain_montage"><span class="n">snapshot_brain_montage</span></a><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">mon</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># We&#39;ll once again plot the surface, then take a snapshot.</span>
+<span class="n">fig</span> <span class="o">=</span> <a href="../generated/mne.viz.plot_alignment.html#mne.viz.plot_alignment" title="View documentation for mne.viz.plot_alignment"><span class="n">plot_alignment</span></a><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="n">subject</span><span class="o">=</span><span class="s1">&#39;sample&#39;</span><span class="p">,</span> <span class="n">subjects_dir</span><span class="o">=</span><span class="n">subjects_dir</span><span class="p">,</span>
+                     <span class="n">surfaces</span><span class="o">=</span><span class="s1">&#39;pial&#39;</span><span class="p">)</span>
+<a href="http://docs.enthought.com/mayavi/mayavi/auto/mlab_camera.html#mayavi.mlab.view" title="View documentation for mayavi.mlab.view"><span class="n">mlab</span><span class="o">.</span><span class="n">view</span></a><span class="p">(</span><span class="mi">200</span><span class="p">,</span> <span class="mi">70</span><span class="p">)</span>
+<span class="n">xy</span><span class="p">,</span> <span class="n">im</span> <span class="o">=</span> <a href="../generated/mne.viz.snapshot_brain_montage.html#mne.viz.snapshot_brain_montage" title="View documentation for mne.viz.snapshot_brain_montage"><span class="n">snapshot_brain_montage</span></a><span class="p">(</span><span class="n">fig</span><span class="p">,</span> <span class="n">mon</span><span class="p">)</span>
 
- <span class="c1"># Convert from a dictionary to array to plot</span>
- <span class="n">xy_pts</span> <span class="o">=</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.vstack.html#numpy.vstack" title="View documentation for numpy.vstack"><span class="n">np</span><span class="o">.</span><span class="n">vstack</span></a><span class="p">(</span><span class="n">xy</span><span class="p">[</span><span class="n">ch</span><span class="p">]</span> <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;ch_names&#39;</span><span class="p">])</span>
+<span class="c1"># Convert from a dictionary to array to plot</span>
+<span class="n">xy_pts</span> <span class="o">=</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.vstack.html#numpy.vstack" title="View documentation for numpy.vstack"><span class="n">np</span><span class="o">.</span><span class="n">vstack</span></a><span class="p">(</span><span class="n">xy</span><span class="p">[</span><span class="n">ch</span><span class="p">]</span> <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;ch_names&#39;</span><span class="p">])</span>
 
- <span class="c1"># Define an arbitrary &quot;activity&quot; pattern for viz</span>
- <span class="n">activity</span> <span class="o">=</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.linspace.html#numpy.linspace" title="View documentation for numpy.linspace"><span class="n">np</span><span class="o">.</span><span class="n">linspace</span></a><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="n">xy_pts</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+<span class="c1"># Define an arbitrary &quot;activity&quot; pattern for viz</span>
+<span class="n">activity</span> <span class="o">=</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.linspace.html#numpy.linspace" title="View documentation for numpy.linspace"><span class="n">np</span><span class="o">.</span><span class="n">linspace</span></a><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">200</span><span class="p">,</span> <span class="n">xy_pts</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
 
- <span class="c1"># This allows us to use matplotlib to create arbitrary 2d scatterplots</span>
- <span class="n">_</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.subplots.html#matplotlib.pyplot.subplots" title="View documentation for matplotlib.pyplot.subplots"><span class="n">plt</span><span class="o">.</span><span class="n">subplots</span></a><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
- <span class="n">ax</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">im</span><span class="p">)</span>
- <span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="o">*</span><span class="n">xy_pts</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">activity</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;coolwarm&#39;</span><span class="p">)</span>
- <span class="n">ax</span><span class="o">.</span><span class="n">set_axis_off</span><span class="p">()</span>
- <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.show.html#matplotlib.pyplot.show" title="View documentation for matplotlib.pyplot.show"><span class="n">plt</span><span class="o">.</span><span class="n">show</span></a><span class="p">()</span>
+<span class="c1"># This allows us to use matplotlib to create arbitrary 2d scatterplots</span>
+<span class="n">_</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.subplots.html#matplotlib.pyplot.subplots" title="View documentation for matplotlib.pyplot.subplots"><span class="n">plt</span><span class="o">.</span><span class="n">subplots</span></a><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">))</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><span class="n">im</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">scatter</span><span class="p">(</span><span class="o">*</span><span class="n">xy_pts</span><span class="o">.</span><span class="n">T</span><span class="p">,</span> <span class="n">c</span><span class="o">=</span><span class="n">activity</span><span class="p">,</span> <span class="n">s</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;coolwarm&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_axis_off</span><span class="p">()</span>
+<a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.show.html#matplotlib.pyplot.show" title="View documentation for matplotlib.pyplot.show"><span class="n">plt</span><span class="o">.</span><span class="n">show</span></a><span class="p">()</span>
 </pre></div>
-</td></tr></table></div>
+</div>
 <img alt="../_images/sphx_glr_plot_ecog_002.png" class="sphx-glr-single-img" src="../_images/sphx_glr_plot_ecog_002.png" />
 <img alt="../_images/sphx_glr_plot_ecog_003.png" class="sphx-glr-single-img" src="../_images/sphx_glr_plot_ecog_003.png" />
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  14.597 seconds)</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  11.923 seconds)</p>
 <p><strong>Estimated memory usage:</strong>  10 MB</p>
 <div class="sphx-glr-footer class sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-tutorials-plot-ecog-py">
 <div class="sphx-glr-download docutils container">
@@ -321,7 +283,7 @@ current mayavi view, along with the xy position of each electrode, with the
       <li><a href="faq.html#cite">Cite MNE</a></li>
       <li class="pull-right"><a href="#">Back to top</a></li>
     </ul>
-    <p>&copy; Copyright 2012-2018, MNE Developers. Last updated on 2018-11-14.</p>
+    <p>&copy; Copyright 2012-2018, MNE Developers. Last updated on 2018-11-16.</p>
   </div>
 </footer>
   </body>

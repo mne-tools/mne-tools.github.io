@@ -191,101 +191,58 @@ on simulated data. It shows the time-frequency resolution trade-off
 and the problem of estimation variance. In addition it highlights
 alternative functions for generating TFRs without averaging across
 trials, or by operating on numpy arrays.</p>
-<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>12
-13
-14
-15
-16
-17
-18
-19
-20
-21
-22
-23
-24
-25
-26</pre></div></td><td class="code"><div class="highlight"><pre><span></span> <span class="c1"># Authors: Hari Bharadwaj &lt;hari@nmr.mgh.harvard.edu&gt;</span>
- <span class="c1">#          Denis Engemann &lt;denis.engemann@gmail.com&gt;</span>
- <span class="c1">#          Chris Holdgraf &lt;choldgraf@berkeley.edu&gt;</span>
- <span class="c1">#</span>
- <span class="c1"># License: BSD (3-clause)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Authors: Hari Bharadwaj &lt;hari@nmr.mgh.harvard.edu&gt;</span>
+<span class="c1">#          Denis Engemann &lt;denis.engemann@gmail.com&gt;</span>
+<span class="c1">#          Chris Holdgraf &lt;choldgraf@berkeley.edu&gt;</span>
+<span class="c1">#</span>
+<span class="c1"># License: BSD (3-clause)</span>
 
- <span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
- <span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">matplotlib</span> <span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
 
- <span class="kn">from</span> <span class="nn">mne</span> <span class="kn">import</span> <a href="../../generated/mne.create_info.html#mne.create_info" title="View documentation for mne.create_info"><span class="n">create_info</span></a><span class="p">,</span> <a href="../../generated/mne.EpochsArray.html#mne.EpochsArray" title="View documentation for mne.EpochsArray"><span class="n">EpochsArray</span></a>
- <span class="kn">from</span> <span class="nn">mne.baseline</span> <span class="kn">import</span> <span class="n">rescale</span>
- <span class="kn">from</span> <span class="nn">mne.time_frequency</span> <span class="kn">import</span> <span class="p">(</span><a href="../../generated/mne.time_frequency.tfr_multitaper.html#mne.time_frequency.tfr_multitaper" title="View documentation for mne.time_frequency.tfr_multitaper"><span class="n">tfr_multitaper</span></a><span class="p">,</span> <a href="../../generated/mne.time_frequency.tfr_stockwell.html#mne.time_frequency.tfr_stockwell" title="View documentation for mne.time_frequency.tfr_stockwell"><span class="n">tfr_stockwell</span></a><span class="p">,</span> <a href="../../generated/mne.time_frequency.tfr_morlet.html#mne.time_frequency.tfr_morlet" title="View documentation for mne.time_frequency.tfr_morlet"><span class="n">tfr_morlet</span></a><span class="p">,</span>
-                                 <a href="../../generated/mne.time_frequency.tfr_array_morlet.html#mne.time_frequency.tfr_array_morlet" title="View documentation for mne.time_frequency.tfr_array_morlet"><span class="n">tfr_array_morlet</span></a><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">mne</span> <span class="kn">import</span> <a href="../../generated/mne.create_info.html#mne.create_info" title="View documentation for mne.create_info"><span class="n">create_info</span></a><span class="p">,</span> <a href="../../generated/mne.EpochsArray.html#mne.EpochsArray" title="View documentation for mne.EpochsArray"><span class="n">EpochsArray</span></a>
+<span class="kn">from</span> <span class="nn">mne.baseline</span> <span class="kn">import</span> <span class="n">rescale</span>
+<span class="kn">from</span> <span class="nn">mne.time_frequency</span> <span class="kn">import</span> <span class="p">(</span><a href="../../generated/mne.time_frequency.tfr_multitaper.html#mne.time_frequency.tfr_multitaper" title="View documentation for mne.time_frequency.tfr_multitaper"><span class="n">tfr_multitaper</span></a><span class="p">,</span> <a href="../../generated/mne.time_frequency.tfr_stockwell.html#mne.time_frequency.tfr_stockwell" title="View documentation for mne.time_frequency.tfr_stockwell"><span class="n">tfr_stockwell</span></a><span class="p">,</span> <a href="../../generated/mne.time_frequency.tfr_morlet.html#mne.time_frequency.tfr_morlet" title="View documentation for mne.time_frequency.tfr_morlet"><span class="n">tfr_morlet</span></a><span class="p">,</span>
+                                <a href="../../generated/mne.time_frequency.tfr_array_morlet.html#mne.time_frequency.tfr_array_morlet" title="View documentation for mne.time_frequency.tfr_array_morlet"><span class="n">tfr_array_morlet</span></a><span class="p">)</span>
 
- <span class="k">print</span><span class="p">(</span><span class="vm">__doc__</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="vm">__doc__</span><span class="p">)</span>
 </pre></div>
-</td></tr></table></div>
+</div>
 <div class="section" id="simulate-data">
 <h2>Simulate data<a class="headerlink" href="#simulate-data" title="Permalink to this headline">¶</a></h2>
 <p>We’ll simulate data with a known spectro-temporal structure.</p>
-<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>34
-35
-36
-37
-38
-39
-40
-41
-42
-43
-44
-45
-46
-47
-48
-49
-50
-51
-52
-53
-54
-55
-56
-57
-58
-59
-60
-61
-62
-63</pre></div></td><td class="code"><div class="highlight"><pre><span></span> <span class="n">sfreq</span> <span class="o">=</span> <span class="mf">1000.0</span>
- <span class="n">ch_names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;SIM0001&#39;</span><span class="p">,</span> <span class="s1">&#39;SIM0002&#39;</span><span class="p">]</span>
- <span class="n">ch_types</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;grad&#39;</span><span class="p">,</span> <span class="s1">&#39;grad&#39;</span><span class="p">]</span>
- <span class="n">info</span> <span class="o">=</span> <a href="../../generated/mne.create_info.html#mne.create_info" title="View documentation for mne.create_info"><span class="n">create_info</span></a><span class="p">(</span><span class="n">ch_names</span><span class="o">=</span><span class="n">ch_names</span><span class="p">,</span> <span class="n">sfreq</span><span class="o">=</span><span class="n">sfreq</span><span class="p">,</span> <span class="n">ch_types</span><span class="o">=</span><span class="n">ch_types</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">sfreq</span> <span class="o">=</span> <span class="mf">1000.0</span>
+<span class="n">ch_names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;SIM0001&#39;</span><span class="p">,</span> <span class="s1">&#39;SIM0002&#39;</span><span class="p">]</span>
+<span class="n">ch_types</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;grad&#39;</span><span class="p">,</span> <span class="s1">&#39;grad&#39;</span><span class="p">]</span>
+<span class="n">info</span> <span class="o">=</span> <a href="../../generated/mne.create_info.html#mne.create_info" title="View documentation for mne.create_info"><span class="n">create_info</span></a><span class="p">(</span><span class="n">ch_names</span><span class="o">=</span><span class="n">ch_names</span><span class="p">,</span> <span class="n">sfreq</span><span class="o">=</span><span class="n">sfreq</span><span class="p">,</span> <span class="n">ch_types</span><span class="o">=</span><span class="n">ch_types</span><span class="p">)</span>
 
- <span class="n">n_times</span> <span class="o">=</span> <span class="mi">1024</span>  <span class="c1"># Just over 1 second epochs</span>
- <span class="n">n_epochs</span> <span class="o">=</span> <span class="mi">40</span>
- <span class="n">seed</span> <span class="o">=</span> <span class="mi">42</span>
- <span class="n">rng</span> <span class="o">=</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.random.RandomState.html#numpy.random.RandomState" title="View documentation for numpy.random.RandomState"><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">RandomState</span></a><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
- <span class="n">noise</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">n_epochs</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">ch_names</span><span class="p">),</span> <span class="n">n_times</span><span class="p">)</span>
+<span class="n">n_times</span> <span class="o">=</span> <span class="mi">1024</span>  <span class="c1"># Just over 1 second epochs</span>
+<span class="n">n_epochs</span> <span class="o">=</span> <span class="mi">40</span>
+<span class="n">seed</span> <span class="o">=</span> <span class="mi">42</span>
+<span class="n">rng</span> <span class="o">=</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.random.RandomState.html#numpy.random.RandomState" title="View documentation for numpy.random.RandomState"><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">RandomState</span></a><span class="p">(</span><span class="n">seed</span><span class="p">)</span>
+<span class="n">noise</span> <span class="o">=</span> <span class="n">rng</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="n">n_epochs</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">ch_names</span><span class="p">),</span> <span class="n">n_times</span><span class="p">)</span>
 
- <span class="c1"># Add a 50 Hz sinusoidal burst to the noise and ramp it.</span>
- <span class="n">t</span> <span class="o">=</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.arange.html#numpy.arange" title="View documentation for numpy.arange"><span class="n">np</span><span class="o">.</span><span class="n">arange</span></a><span class="p">(</span><span class="n">n_times</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">)</span> <span class="o">/</span> <span class="n">sfreq</span>
- <span class="n">signal</span> <span class="o">=</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.sin.html#numpy.sin" title="View documentation for numpy.sin"><span class="n">np</span><span class="o">.</span><span class="n">sin</span></a><span class="p">(</span><a href="https://www.numpy.org/devdocs/reference/constants.html#numpy.pi" title="View documentation for numpy.pi"><span class="n">np</span><span class="o">.</span><span class="n">pi</span></a> <span class="o">*</span> <span class="mf">2.</span> <span class="o">*</span> <span class="mf">50.</span> <span class="o">*</span> <span class="n">t</span><span class="p">)</span>  <span class="c1"># 50 Hz sinusoid signal</span>
- <span class="n">signal</span><span class="p">[</span><a href="https://www.numpy.org/devdocs/reference/generated/numpy.logical_or.html#numpy.logical_or" title="View documentation for numpy.logical_or"><span class="n">np</span><span class="o">.</span><span class="n">logical_or</span></a><span class="p">(</span><span class="n">t</span> <span class="o">&lt;</span> <span class="mf">0.45</span><span class="p">,</span> <span class="n">t</span> <span class="o">&gt;</span> <span class="mf">0.55</span><span class="p">)]</span> <span class="o">=</span> <span class="mf">0.</span>  <span class="c1"># Hard windowing</span>
- <span class="n">on_time</span> <span class="o">=</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.logical_and.html#numpy.logical_and" title="View documentation for numpy.logical_and"><span class="n">np</span><span class="o">.</span><span class="n">logical_and</span></a><span class="p">(</span><span class="n">t</span> <span class="o">&gt;=</span> <span class="mf">0.45</span><span class="p">,</span> <span class="n">t</span> <span class="o">&lt;=</span> <span class="mf">0.55</span><span class="p">)</span>
- <span class="n">signal</span><span class="p">[</span><span class="n">on_time</span><span class="p">]</span> <span class="o">*=</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.hanning.html#numpy.hanning" title="View documentation for numpy.hanning"><span class="n">np</span><span class="o">.</span><span class="n">hanning</span></a><span class="p">(</span><span class="n">on_time</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>  <span class="c1"># Ramping</span>
- <span class="n">data</span> <span class="o">=</span> <span class="n">noise</span> <span class="o">+</span> <span class="n">signal</span>
+<span class="c1"># Add a 50 Hz sinusoidal burst to the noise and ramp it.</span>
+<span class="n">t</span> <span class="o">=</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.arange.html#numpy.arange" title="View documentation for numpy.arange"><span class="n">np</span><span class="o">.</span><span class="n">arange</span></a><span class="p">(</span><span class="n">n_times</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">)</span> <span class="o">/</span> <span class="n">sfreq</span>
+<span class="n">signal</span> <span class="o">=</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.sin.html#numpy.sin" title="View documentation for numpy.sin"><span class="n">np</span><span class="o">.</span><span class="n">sin</span></a><span class="p">(</span><a href="https://www.numpy.org/devdocs/reference/constants.html#numpy.pi" title="View documentation for numpy.pi"><span class="n">np</span><span class="o">.</span><span class="n">pi</span></a> <span class="o">*</span> <span class="mf">2.</span> <span class="o">*</span> <span class="mf">50.</span> <span class="o">*</span> <span class="n">t</span><span class="p">)</span>  <span class="c1"># 50 Hz sinusoid signal</span>
+<span class="n">signal</span><span class="p">[</span><a href="https://www.numpy.org/devdocs/reference/generated/numpy.logical_or.html#numpy.logical_or" title="View documentation for numpy.logical_or"><span class="n">np</span><span class="o">.</span><span class="n">logical_or</span></a><span class="p">(</span><span class="n">t</span> <span class="o">&lt;</span> <span class="mf">0.45</span><span class="p">,</span> <span class="n">t</span> <span class="o">&gt;</span> <span class="mf">0.55</span><span class="p">)]</span> <span class="o">=</span> <span class="mf">0.</span>  <span class="c1"># Hard windowing</span>
+<span class="n">on_time</span> <span class="o">=</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.logical_and.html#numpy.logical_and" title="View documentation for numpy.logical_and"><span class="n">np</span><span class="o">.</span><span class="n">logical_and</span></a><span class="p">(</span><span class="n">t</span> <span class="o">&gt;=</span> <span class="mf">0.45</span><span class="p">,</span> <span class="n">t</span> <span class="o">&lt;=</span> <span class="mf">0.55</span><span class="p">)</span>
+<span class="n">signal</span><span class="p">[</span><span class="n">on_time</span><span class="p">]</span> <span class="o">*=</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.hanning.html#numpy.hanning" title="View documentation for numpy.hanning"><span class="n">np</span><span class="o">.</span><span class="n">hanning</span></a><span class="p">(</span><span class="n">on_time</span><span class="o">.</span><span class="n">sum</span><span class="p">())</span>  <span class="c1"># Ramping</span>
+<span class="n">data</span> <span class="o">=</span> <span class="n">noise</span> <span class="o">+</span> <span class="n">signal</span>
 
- <span class="n">reject</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">grad</span><span class="o">=</span><span class="mi">4000</span><span class="p">)</span>
- <span class="n">events</span> <span class="o">=</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.empty.html#numpy.empty" title="View documentation for numpy.empty"><span class="n">np</span><span class="o">.</span><span class="n">empty</span></a><span class="p">((</span><span class="n">n_epochs</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
- <span class="n">first_event_sample</span> <span class="o">=</span> <span class="mi">100</span>
- <span class="n">event_id</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">sin50hz</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
- <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_epochs</span><span class="p">):</span>
-     <span class="n">events</span><span class="p">[</span><span class="n">k</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">first_event_sample</span> <span class="o">+</span> <span class="n">k</span> <span class="o">*</span> <span class="n">n_times</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">event_id</span><span class="p">[</span><span class="s1">&#39;sin50hz&#39;</span><span class="p">]</span>
+<span class="n">reject</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">grad</span><span class="o">=</span><span class="mi">4000</span><span class="p">)</span>
+<span class="n">events</span> <span class="o">=</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.empty.html#numpy.empty" title="View documentation for numpy.empty"><span class="n">np</span><span class="o">.</span><span class="n">empty</span></a><span class="p">((</span><span class="n">n_epochs</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+<span class="n">first_event_sample</span> <span class="o">=</span> <span class="mi">100</span>
+<span class="n">event_id</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">sin50hz</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="n">n_epochs</span><span class="p">):</span>
+    <span class="n">events</span><span class="p">[</span><span class="n">k</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">first_event_sample</span> <span class="o">+</span> <span class="n">k</span> <span class="o">*</span> <span class="n">n_times</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">event_id</span><span class="p">[</span><span class="s1">&#39;sin50hz&#39;</span><span class="p">]</span>
 
- <span class="n">epochs</span> <span class="o">=</span> <a href="../../generated/mne.EpochsArray.html#mne.EpochsArray" title="View documentation for mne.EpochsArray"><span class="n">EpochsArray</span></a><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">info</span><span class="o">=</span><span class="n">info</span><span class="p">,</span> <span class="n">events</span><span class="o">=</span><span class="n">events</span><span class="p">,</span> <span class="n">event_id</span><span class="o">=</span><span class="n">event_id</span><span class="p">,</span>
-                      <span class="n">reject</span><span class="o">=</span><span class="n">reject</span><span class="p">)</span>
+<span class="n">epochs</span> <span class="o">=</span> <a href="../../generated/mne.EpochsArray.html#mne.EpochsArray" title="View documentation for mne.EpochsArray"><span class="n">EpochsArray</span></a><span class="p">(</span><span class="n">data</span><span class="o">=</span><span class="n">data</span><span class="p">,</span> <span class="n">info</span><span class="o">=</span><span class="n">info</span><span class="p">,</span> <span class="n">events</span><span class="o">=</span><span class="n">events</span><span class="p">,</span> <span class="n">event_id</span><span class="o">=</span><span class="n">event_id</span><span class="p">,</span>
+                     <span class="n">reject</span><span class="o">=</span><span class="n">reject</span><span class="p">)</span>
 
- <span class="n">epochs</span><span class="o">.</span><span class="n">average</span><span class="p">()</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
+<span class="n">epochs</span><span class="o">.</span><span class="n">average</span><span class="p">()</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
 </pre></div>
-</td></tr></table></div>
+</div>
 <img alt="../../_images/sphx_glr_plot_time_frequency_simulated_001.png" class="sphx-glr-single-img" src="../../_images/sphx_glr_plot_time_frequency_simulated_001.png" />
 <p class="sphx-glr-script-out">Out:</p>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>40 matching events found
@@ -313,69 +270,50 @@ which reduces variance. We’ll also show some of the parameters that can be
 tweaked (e.g., <code class="docutils literal notranslate"><span class="pre">time_bandwidth</span></code>) that will result in different multitaper
 properties, and thus a different TFR. You can trade time resolution or
 frequency resolution or both in order to get a reduction in variance.</p>
-<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>84
-85</pre></div></td><td class="code"><div class="highlight"><pre><span></span> <span class="n">freqs</span> <span class="o">=</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.arange.html#numpy.arange" title="View documentation for numpy.arange"><span class="n">np</span><span class="o">.</span><span class="n">arange</span></a><span class="p">(</span><span class="mf">5.</span><span class="p">,</span> <span class="mf">100.</span><span class="p">,</span> <span class="mf">3.</span><span class="p">)</span>
- <span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span> <span class="o">=</span> <span class="o">-</span><span class="mf">3.</span><span class="p">,</span> <span class="mf">3.</span>  <span class="c1"># Define our color limits.</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">freqs</span> <span class="o">=</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.arange.html#numpy.arange" title="View documentation for numpy.arange"><span class="n">np</span><span class="o">.</span><span class="n">arange</span></a><span class="p">(</span><span class="mf">5.</span><span class="p">,</span> <span class="mf">100.</span><span class="p">,</span> <span class="mf">3.</span><span class="p">)</span>
+<span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span> <span class="o">=</span> <span class="o">-</span><span class="mf">3.</span><span class="p">,</span> <span class="mf">3.</span>  <span class="c1"># Define our color limits.</span>
 </pre></div>
-</td></tr></table></div>
+</div>
 <p><strong>(1) Least smoothing (most variance/background fluctuations).</strong></p>
-<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>90
-91
-92
-93
-94
-95
-96</pre></div></td><td class="code"><div class="highlight"><pre><span></span> <span class="n">n_cycles</span> <span class="o">=</span> <span class="n">freqs</span> <span class="o">/</span> <span class="mf">2.</span>
- <span class="n">time_bandwidth</span> <span class="o">=</span> <span class="mf">2.0</span>  <span class="c1"># Least possible frequency-smoothing (1 taper)</span>
- <span class="n">power</span> <span class="o">=</span> <a href="../../generated/mne.time_frequency.tfr_multitaper.html#mne.time_frequency.tfr_multitaper" title="View documentation for mne.time_frequency.tfr_multitaper"><span class="n">tfr_multitaper</span></a><span class="p">(</span><span class="n">epochs</span><span class="p">,</span> <span class="n">freqs</span><span class="o">=</span><span class="n">freqs</span><span class="p">,</span> <span class="n">n_cycles</span><span class="o">=</span><span class="n">n_cycles</span><span class="p">,</span>
-                        <span class="n">time_bandwidth</span><span class="o">=</span><span class="n">time_bandwidth</span><span class="p">,</span> <span class="n">return_itc</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
- <span class="c1"># Plot results. Baseline correct based on first 100 ms.</span>
- <span class="n">power</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="mi">0</span><span class="p">],</span> <span class="n">baseline</span><span class="o">=</span><span class="p">(</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">),</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;mean&#39;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">vmax</span><span class="p">,</span>
-            <span class="n">title</span><span class="o">=</span><span class="s1">&#39;Sim: Least smoothing, most variance&#39;</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">n_cycles</span> <span class="o">=</span> <span class="n">freqs</span> <span class="o">/</span> <span class="mf">2.</span>
+<span class="n">time_bandwidth</span> <span class="o">=</span> <span class="mf">2.0</span>  <span class="c1"># Least possible frequency-smoothing (1 taper)</span>
+<span class="n">power</span> <span class="o">=</span> <a href="../../generated/mne.time_frequency.tfr_multitaper.html#mne.time_frequency.tfr_multitaper" title="View documentation for mne.time_frequency.tfr_multitaper"><span class="n">tfr_multitaper</span></a><span class="p">(</span><span class="n">epochs</span><span class="p">,</span> <span class="n">freqs</span><span class="o">=</span><span class="n">freqs</span><span class="p">,</span> <span class="n">n_cycles</span><span class="o">=</span><span class="n">n_cycles</span><span class="p">,</span>
+                       <span class="n">time_bandwidth</span><span class="o">=</span><span class="n">time_bandwidth</span><span class="p">,</span> <span class="n">return_itc</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="c1"># Plot results. Baseline correct based on first 100 ms.</span>
+<span class="n">power</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="mi">0</span><span class="p">],</span> <span class="n">baseline</span><span class="o">=</span><span class="p">(</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">),</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;mean&#39;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">vmax</span><span class="p">,</span>
+           <span class="n">title</span><span class="o">=</span><span class="s1">&#39;Sim: Least smoothing, most variance&#39;</span><span class="p">)</span>
 </pre></div>
-</td></tr></table></div>
+</div>
 <img alt="../../_images/sphx_glr_plot_time_frequency_simulated_002.png" class="sphx-glr-single-img" src="../../_images/sphx_glr_plot_time_frequency_simulated_002.png" />
 <p class="sphx-glr-script-out">Out:</p>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Applying baseline correction (mode: mean)
 </pre></div>
 </div>
 <p><strong>(2) Less frequency smoothing, more time smoothing.</strong></p>
-<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>101
-102
-103
-104
-105
-106
-107</pre></div></td><td class="code"><div class="highlight"><pre><span></span> <span class="n">n_cycles</span> <span class="o">=</span> <span class="n">freqs</span>  <span class="c1"># Increase time-window length to 1 second.</span>
- <span class="n">time_bandwidth</span> <span class="o">=</span> <span class="mf">4.0</span>  <span class="c1"># Same frequency-smoothing as (1) 3 tapers.</span>
- <span class="n">power</span> <span class="o">=</span> <a href="../../generated/mne.time_frequency.tfr_multitaper.html#mne.time_frequency.tfr_multitaper" title="View documentation for mne.time_frequency.tfr_multitaper"><span class="n">tfr_multitaper</span></a><span class="p">(</span><span class="n">epochs</span><span class="p">,</span> <span class="n">freqs</span><span class="o">=</span><span class="n">freqs</span><span class="p">,</span> <span class="n">n_cycles</span><span class="o">=</span><span class="n">n_cycles</span><span class="p">,</span>
-                        <span class="n">time_bandwidth</span><span class="o">=</span><span class="n">time_bandwidth</span><span class="p">,</span> <span class="n">return_itc</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
- <span class="c1"># Plot results. Baseline correct based on first 100 ms.</span>
- <span class="n">power</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="mi">0</span><span class="p">],</span> <span class="n">baseline</span><span class="o">=</span><span class="p">(</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">),</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;mean&#39;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">vmax</span><span class="p">,</span>
-            <span class="n">title</span><span class="o">=</span><span class="s1">&#39;Sim: Less frequency smoothing, more time smoothing&#39;</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">n_cycles</span> <span class="o">=</span> <span class="n">freqs</span>  <span class="c1"># Increase time-window length to 1 second.</span>
+<span class="n">time_bandwidth</span> <span class="o">=</span> <span class="mf">4.0</span>  <span class="c1"># Same frequency-smoothing as (1) 3 tapers.</span>
+<span class="n">power</span> <span class="o">=</span> <a href="../../generated/mne.time_frequency.tfr_multitaper.html#mne.time_frequency.tfr_multitaper" title="View documentation for mne.time_frequency.tfr_multitaper"><span class="n">tfr_multitaper</span></a><span class="p">(</span><span class="n">epochs</span><span class="p">,</span> <span class="n">freqs</span><span class="o">=</span><span class="n">freqs</span><span class="p">,</span> <span class="n">n_cycles</span><span class="o">=</span><span class="n">n_cycles</span><span class="p">,</span>
+                       <span class="n">time_bandwidth</span><span class="o">=</span><span class="n">time_bandwidth</span><span class="p">,</span> <span class="n">return_itc</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="c1"># Plot results. Baseline correct based on first 100 ms.</span>
+<span class="n">power</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="mi">0</span><span class="p">],</span> <span class="n">baseline</span><span class="o">=</span><span class="p">(</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">),</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;mean&#39;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">vmax</span><span class="p">,</span>
+           <span class="n">title</span><span class="o">=</span><span class="s1">&#39;Sim: Less frequency smoothing, more time smoothing&#39;</span><span class="p">)</span>
 </pre></div>
-</td></tr></table></div>
+</div>
 <img alt="../../_images/sphx_glr_plot_time_frequency_simulated_003.png" class="sphx-glr-single-img" src="../../_images/sphx_glr_plot_time_frequency_simulated_003.png" />
 <p class="sphx-glr-script-out">Out:</p>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Applying baseline correction (mode: mean)
 </pre></div>
 </div>
 <p><strong>(3) Less time smoothing, more frequency smoothing.</strong></p>
-<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>112
-113
-114
-115
-116
-117
-118</pre></div></td><td class="code"><div class="highlight"><pre><span></span> <span class="n">n_cycles</span> <span class="o">=</span> <span class="n">freqs</span> <span class="o">/</span> <span class="mf">2.</span>
- <span class="n">time_bandwidth</span> <span class="o">=</span> <span class="mf">8.0</span>  <span class="c1"># Same time-smoothing as (1), 7 tapers.</span>
- <span class="n">power</span> <span class="o">=</span> <a href="../../generated/mne.time_frequency.tfr_multitaper.html#mne.time_frequency.tfr_multitaper" title="View documentation for mne.time_frequency.tfr_multitaper"><span class="n">tfr_multitaper</span></a><span class="p">(</span><span class="n">epochs</span><span class="p">,</span> <span class="n">freqs</span><span class="o">=</span><span class="n">freqs</span><span class="p">,</span> <span class="n">n_cycles</span><span class="o">=</span><span class="n">n_cycles</span><span class="p">,</span>
-                        <span class="n">time_bandwidth</span><span class="o">=</span><span class="n">time_bandwidth</span><span class="p">,</span> <span class="n">return_itc</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
- <span class="c1"># Plot results. Baseline correct based on first 100 ms.</span>
- <span class="n">power</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="mi">0</span><span class="p">],</span> <span class="n">baseline</span><span class="o">=</span><span class="p">(</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">),</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;mean&#39;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">vmax</span><span class="p">,</span>
-            <span class="n">title</span><span class="o">=</span><span class="s1">&#39;Sim: Less time smoothing, more frequency smoothing&#39;</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">n_cycles</span> <span class="o">=</span> <span class="n">freqs</span> <span class="o">/</span> <span class="mf">2.</span>
+<span class="n">time_bandwidth</span> <span class="o">=</span> <span class="mf">8.0</span>  <span class="c1"># Same time-smoothing as (1), 7 tapers.</span>
+<span class="n">power</span> <span class="o">=</span> <a href="../../generated/mne.time_frequency.tfr_multitaper.html#mne.time_frequency.tfr_multitaper" title="View documentation for mne.time_frequency.tfr_multitaper"><span class="n">tfr_multitaper</span></a><span class="p">(</span><span class="n">epochs</span><span class="p">,</span> <span class="n">freqs</span><span class="o">=</span><span class="n">freqs</span><span class="p">,</span> <span class="n">n_cycles</span><span class="o">=</span><span class="n">n_cycles</span><span class="p">,</span>
+                       <span class="n">time_bandwidth</span><span class="o">=</span><span class="n">time_bandwidth</span><span class="p">,</span> <span class="n">return_itc</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="c1"># Plot results. Baseline correct based on first 100 ms.</span>
+<span class="n">power</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="mi">0</span><span class="p">],</span> <span class="n">baseline</span><span class="o">=</span><span class="p">(</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">),</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;mean&#39;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">vmax</span><span class="p">,</span>
+           <span class="n">title</span><span class="o">=</span><span class="s1">&#39;Sim: Less time smoothing, more frequency smoothing&#39;</span><span class="p">)</span>
 </pre></div>
-</td></tr></table></div>
+</div>
 <img alt="../../_images/sphx_glr_plot_time_frequency_simulated_004.png" class="sphx-glr-single-img" src="../../_images/sphx_glr_plot_time_frequency_simulated_004.png" />
 <p class="sphx-glr-script-out">Out:</p>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Applying baseline correction (mode: mean)
@@ -390,23 +328,16 @@ with regard to timing, and, the input signal can be recoverd from the
 transform in a lossless way if we disregard numerical errors. In this case,
 we control the spectral / temporal resolution by specifying different widths
 of the gaussian window using the <code class="docutils literal notranslate"><span class="pre">width</span></code> parameter.</p>
-<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>131
-132
-133
-134
-135
-136
-137
-138</pre></div></td><td class="code"><div class="highlight"><pre><span></span> <span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.subplots.html#matplotlib.pyplot.subplots" title="View documentation for matplotlib.pyplot.subplots"><span class="n">plt</span><span class="o">.</span><span class="n">subplots</span></a><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> <span class="n">sharey</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
- <span class="n">fmin</span><span class="p">,</span> <span class="n">fmax</span> <span class="o">=</span> <span class="n">freqs</span><span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]]</span>
- <span class="k">for</span> <span class="n">width</span><span class="p">,</span> <span class="n">ax</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">((</span><span class="mf">0.2</span><span class="p">,</span> <span class="o">.</span><span class="mi">7</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">),</span> <span class="n">axs</span><span class="p">):</span>
-     <span class="n">power</span> <span class="o">=</span> <a href="../../generated/mne.time_frequency.tfr_stockwell.html#mne.time_frequency.tfr_stockwell" title="View documentation for mne.time_frequency.tfr_stockwell"><span class="n">tfr_stockwell</span></a><span class="p">(</span><span class="n">epochs</span><span class="p">,</span> <span class="n">fmin</span><span class="o">=</span><span class="n">fmin</span><span class="p">,</span> <span class="n">fmax</span><span class="o">=</span><span class="n">fmax</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="n">width</span><span class="p">)</span>
-     <span class="n">power</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="mi">0</span><span class="p">],</span> <span class="n">baseline</span><span class="o">=</span><span class="p">(</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">),</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;mean&#39;</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
-                <span class="n">colorbar</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
-     <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Sim: Using S transform, width = {:0.1f}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">width</span><span class="p">))</span>
- <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.tight_layout.html#matplotlib.pyplot.tight_layout" title="View documentation for matplotlib.pyplot.tight_layout"><span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span></a><span class="p">()</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.subplots.html#matplotlib.pyplot.subplots" title="View documentation for matplotlib.pyplot.subplots"><span class="n">plt</span><span class="o">.</span><span class="n">subplots</span></a><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> <span class="n">sharey</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">fmin</span><span class="p">,</span> <span class="n">fmax</span> <span class="o">=</span> <span class="n">freqs</span><span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]]</span>
+<span class="k">for</span> <span class="n">width</span><span class="p">,</span> <span class="n">ax</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">((</span><span class="mf">0.2</span><span class="p">,</span> <span class="o">.</span><span class="mi">7</span><span class="p">,</span> <span class="mf">3.0</span><span class="p">),</span> <span class="n">axs</span><span class="p">):</span>
+    <span class="n">power</span> <span class="o">=</span> <a href="../../generated/mne.time_frequency.tfr_stockwell.html#mne.time_frequency.tfr_stockwell" title="View documentation for mne.time_frequency.tfr_stockwell"><span class="n">tfr_stockwell</span></a><span class="p">(</span><span class="n">epochs</span><span class="p">,</span> <span class="n">fmin</span><span class="o">=</span><span class="n">fmin</span><span class="p">,</span> <span class="n">fmax</span><span class="o">=</span><span class="n">fmax</span><span class="p">,</span> <span class="n">width</span><span class="o">=</span><span class="n">width</span><span class="p">)</span>
+    <span class="n">power</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="mi">0</span><span class="p">],</span> <span class="n">baseline</span><span class="o">=</span><span class="p">(</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">),</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;mean&#39;</span><span class="p">,</span> <span class="n">axes</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span>
+               <span class="n">colorbar</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Sim: Using S transform, width = {:0.1f}&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">width</span><span class="p">))</span>
+<a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.tight_layout.html#matplotlib.pyplot.tight_layout" title="View documentation for matplotlib.pyplot.tight_layout"><span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span></a><span class="p">()</span>
 </pre></div>
-</td></tr></table></div>
+</div>
 <img alt="../../_images/sphx_glr_plot_time_frequency_simulated_005.png" class="sphx-glr-single-img" src="../../_images/sphx_glr_plot_time_frequency_simulated_005.png" />
 <p class="sphx-glr-script-out">Out:</p>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Applying baseline correction (mode: mean)
@@ -421,27 +352,18 @@ Applying baseline correction (mode: mean)
 with a gaussian envelope. We can control the balance between spectral and
 temporal resolution with the <code class="docutils literal notranslate"><span class="pre">n_cycles</span></code> parameter, which defines the
 number of cycles to include in the window.</p>
-<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>149
-150
-151
-152
-153
-154
-155
-156
-157
-158</pre></div></td><td class="code"><div class="highlight"><pre><span></span> <span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.subplots.html#matplotlib.pyplot.subplots" title="View documentation for matplotlib.pyplot.subplots"><span class="n">plt</span><span class="o">.</span><span class="n">subplots</span></a><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> <span class="n">sharey</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
- <span class="n">all_n_cycles</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">freqs</span> <span class="o">/</span> <span class="mf">2.</span><span class="p">]</span>
- <span class="k">for</span> <span class="n">n_cycles</span><span class="p">,</span> <span class="n">ax</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">all_n_cycles</span><span class="p">,</span> <span class="n">axs</span><span class="p">):</span>
-     <span class="n">power</span> <span class="o">=</span> <a href="../../generated/mne.time_frequency.tfr_morlet.html#mne.time_frequency.tfr_morlet" title="View documentation for mne.time_frequency.tfr_morlet"><span class="n">tfr_morlet</span></a><span class="p">(</span><span class="n">epochs</span><span class="p">,</span> <span class="n">freqs</span><span class="o">=</span><span class="n">freqs</span><span class="p">,</span>
-                        <span class="n">n_cycles</span><span class="o">=</span><span class="n">n_cycles</span><span class="p">,</span> <span class="n">return_itc</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
-     <span class="n">power</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="mi">0</span><span class="p">],</span> <span class="n">baseline</span><span class="o">=</span><span class="p">(</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">),</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;mean&#39;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">vmax</span><span class="p">,</span>
-                <span class="n">axes</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">colorbar</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
-     <span class="n">n_cycles</span> <span class="o">=</span> <span class="s1">&#39;scaled by freqs&#39;</span> <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">n_cycles</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="k">else</span> <span class="n">n_cycles</span>
-     <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Sim: Using Morlet wavelet, n_cycles = </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">n_cycles</span><span class="p">)</span>
- <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.tight_layout.html#matplotlib.pyplot.tight_layout" title="View documentation for matplotlib.pyplot.tight_layout"><span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span></a><span class="p">()</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span><span class="p">,</span> <span class="n">axs</span> <span class="o">=</span> <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.subplots.html#matplotlib.pyplot.subplots" title="View documentation for matplotlib.pyplot.subplots"><span class="n">plt</span><span class="o">.</span><span class="n">subplots</span></a><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">15</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> <span class="n">sharey</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">all_n_cycles</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="n">freqs</span> <span class="o">/</span> <span class="mf">2.</span><span class="p">]</span>
+<span class="k">for</span> <span class="n">n_cycles</span><span class="p">,</span> <span class="n">ax</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">all_n_cycles</span><span class="p">,</span> <span class="n">axs</span><span class="p">):</span>
+    <span class="n">power</span> <span class="o">=</span> <a href="../../generated/mne.time_frequency.tfr_morlet.html#mne.time_frequency.tfr_morlet" title="View documentation for mne.time_frequency.tfr_morlet"><span class="n">tfr_morlet</span></a><span class="p">(</span><span class="n">epochs</span><span class="p">,</span> <span class="n">freqs</span><span class="o">=</span><span class="n">freqs</span><span class="p">,</span>
+                       <span class="n">n_cycles</span><span class="o">=</span><span class="n">n_cycles</span><span class="p">,</span> <span class="n">return_itc</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+    <span class="n">power</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="mi">0</span><span class="p">],</span> <span class="n">baseline</span><span class="o">=</span><span class="p">(</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">),</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;mean&#39;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">vmax</span><span class="p">,</span>
+               <span class="n">axes</span><span class="o">=</span><span class="n">ax</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">colorbar</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+    <span class="n">n_cycles</span> <span class="o">=</span> <span class="s1">&#39;scaled by freqs&#39;</span> <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">n_cycles</span><span class="p">,</span> <span class="nb">int</span><span class="p">)</span> <span class="k">else</span> <span class="n">n_cycles</span>
+    <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;Sim: Using Morlet wavelet, n_cycles = </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">n_cycles</span><span class="p">)</span>
+<a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.tight_layout.html#matplotlib.pyplot.tight_layout" title="View documentation for matplotlib.pyplot.tight_layout"><span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span></a><span class="p">()</span>
 </pre></div>
-</td></tr></table></div>
+</div>
 <img alt="../../_images/sphx_glr_plot_time_frequency_simulated_006.png" class="sphx-glr-single-img" src="../../_images/sphx_glr_plot_time_frequency_simulated_006.png" />
 <p class="sphx-glr-script-out">Out:</p>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Applying baseline correction (mode: mean)
@@ -456,21 +378,15 @@ Applying baseline correction (mode: mean)
 <p>It is also possible to calculate a TFR without averaging across trials.
 We can do this by using <code class="docutils literal notranslate"><span class="pre">average=False</span></code>. In this case, an instance of
 <a class="reference internal" href="../../generated/mne.time_frequency.EpochsTFR.html#mne.time_frequency.EpochsTFR" title="mne.time_frequency.EpochsTFR"><code class="xref py py-class docutils literal notranslate"><span class="pre">mne.time_frequency.EpochsTFR</span></code></a> is returned.</p>
-<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>168
-169
-170
-171
-172
-173
-174</pre></div></td><td class="code"><div class="highlight"><pre><span></span> <span class="n">n_cycles</span> <span class="o">=</span> <span class="n">freqs</span> <span class="o">/</span> <span class="mf">2.</span>
- <span class="n">power</span> <span class="o">=</span> <a href="../../generated/mne.time_frequency.tfr_morlet.html#mne.time_frequency.tfr_morlet" title="View documentation for mne.time_frequency.tfr_morlet"><span class="n">tfr_morlet</span></a><span class="p">(</span><span class="n">epochs</span><span class="p">,</span> <span class="n">freqs</span><span class="o">=</span><span class="n">freqs</span><span class="p">,</span>
-                    <span class="n">n_cycles</span><span class="o">=</span><span class="n">n_cycles</span><span class="p">,</span> <span class="n">return_itc</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">average</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
- <span class="k">print</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">power</span><span class="p">))</span>
- <span class="n">avgpower</span> <span class="o">=</span> <span class="n">power</span><span class="o">.</span><span class="n">average</span><span class="p">()</span>
- <span class="n">avgpower</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="mi">0</span><span class="p">],</span> <span class="n">baseline</span><span class="o">=</span><span class="p">(</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">),</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;mean&#39;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">vmax</span><span class="p">,</span>
-               <span class="n">title</span><span class="o">=</span><span class="s1">&#39;Using Morlet wavelets and EpochsTFR&#39;</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">n_cycles</span> <span class="o">=</span> <span class="n">freqs</span> <span class="o">/</span> <span class="mf">2.</span>
+<span class="n">power</span> <span class="o">=</span> <a href="../../generated/mne.time_frequency.tfr_morlet.html#mne.time_frequency.tfr_morlet" title="View documentation for mne.time_frequency.tfr_morlet"><span class="n">tfr_morlet</span></a><span class="p">(</span><span class="n">epochs</span><span class="p">,</span> <span class="n">freqs</span><span class="o">=</span><span class="n">freqs</span><span class="p">,</span>
+                   <span class="n">n_cycles</span><span class="o">=</span><span class="n">n_cycles</span><span class="p">,</span> <span class="n">return_itc</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">average</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">power</span><span class="p">))</span>
+<span class="n">avgpower</span> <span class="o">=</span> <span class="n">power</span><span class="o">.</span><span class="n">average</span><span class="p">()</span>
+<span class="n">avgpower</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="mi">0</span><span class="p">],</span> <span class="n">baseline</span><span class="o">=</span><span class="p">(</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">),</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;mean&#39;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">vmax</span><span class="p">,</span>
+              <span class="n">title</span><span class="o">=</span><span class="s1">&#39;Using Morlet wavelets and EpochsTFR&#39;</span><span class="p">,</span> <span class="n">show</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
 </pre></div>
-</td></tr></table></div>
+</div>
 <img alt="../../_images/sphx_glr_plot_time_frequency_simulated_007.png" class="sphx-glr-single-img" src="../../_images/sphx_glr_plot_time_frequency_simulated_007.png" />
 <p class="sphx-glr-script-out">Out:</p>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;class &#39;mne.time_frequency.tfr.EpochsTFR&#39;&gt;
@@ -484,41 +400,28 @@ Applying baseline correction (mode: mean)
 instead of MNE objects. They expect inputs of the shape
 <code class="docutils literal notranslate"><span class="pre">(n_epochs,</span> <span class="pre">n_channels,</span> <span class="pre">n_times)</span></code>. They will also return a numpy array
 of shape <code class="docutils literal notranslate"><span class="pre">(n_epochs,</span> <span class="pre">n_channels,</span> <span class="pre">n_freqs,</span> <span class="pre">n_times)</span></code>.</p>
-<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>185
-186
-187
-188
-189
-190
-191
-192
-193
-194
-195
-196
-197
-198</pre></div></td><td class="code"><div class="highlight"><pre><span></span> <span class="n">power</span> <span class="o">=</span> <a href="../../generated/mne.time_frequency.tfr_array_morlet.html#mne.time_frequency.tfr_array_morlet" title="View documentation for mne.time_frequency.tfr_array_morlet"><span class="n">tfr_array_morlet</span></a><span class="p">(</span><span class="n">epochs</span><span class="o">.</span><span class="n">get_data</span><span class="p">(),</span> <span class="n">sfreq</span><span class="o">=</span><span class="n">epochs</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;sfreq&#39;</span><span class="p">],</span>
-                          <span class="n">freqs</span><span class="o">=</span><span class="n">freqs</span><span class="p">,</span> <span class="n">n_cycles</span><span class="o">=</span><span class="n">n_cycles</span><span class="p">,</span>
-                          <span class="n">output</span><span class="o">=</span><span class="s1">&#39;avg_power&#39;</span><span class="p">)</span>
- <span class="c1"># Baseline the output</span>
- <span class="n">rescale</span><span class="p">(</span><span class="n">power</span><span class="p">,</span> <span class="n">epochs</span><span class="o">.</span><span class="n">times</span><span class="p">,</span> <span class="p">(</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">),</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;mean&#39;</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
- <span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.subplots.html#matplotlib.pyplot.subplots" title="View documentation for matplotlib.pyplot.subplots"><span class="n">plt</span><span class="o">.</span><span class="n">subplots</span></a><span class="p">()</span>
- <span class="n">mesh</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">pcolormesh</span><span class="p">(</span><span class="n">epochs</span><span class="o">.</span><span class="n">times</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">,</span> <span class="n">freqs</span><span class="p">,</span> <span class="n">power</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
-                      <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;RdBu_r&#39;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">vmax</span><span class="p">)</span>
- <span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;TFR calculated on a numpy array&#39;</span><span class="p">)</span>
- <span class="n">ax</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">ylim</span><span class="o">=</span><span class="n">freqs</span><span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]],</span> <span class="n">xlabel</span><span class="o">=</span><span class="s1">&#39;Time (ms)&#39;</span><span class="p">)</span>
- <span class="n">fig</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">mesh</span><span class="p">)</span>
- <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.tight_layout.html#matplotlib.pyplot.tight_layout" title="View documentation for matplotlib.pyplot.tight_layout"><span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span></a><span class="p">()</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">power</span> <span class="o">=</span> <a href="../../generated/mne.time_frequency.tfr_array_morlet.html#mne.time_frequency.tfr_array_morlet" title="View documentation for mne.time_frequency.tfr_array_morlet"><span class="n">tfr_array_morlet</span></a><span class="p">(</span><span class="n">epochs</span><span class="o">.</span><span class="n">get_data</span><span class="p">(),</span> <span class="n">sfreq</span><span class="o">=</span><span class="n">epochs</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;sfreq&#39;</span><span class="p">],</span>
+                         <span class="n">freqs</span><span class="o">=</span><span class="n">freqs</span><span class="p">,</span> <span class="n">n_cycles</span><span class="o">=</span><span class="n">n_cycles</span><span class="p">,</span>
+                         <span class="n">output</span><span class="o">=</span><span class="s1">&#39;avg_power&#39;</span><span class="p">)</span>
+<span class="c1"># Baseline the output</span>
+<span class="n">rescale</span><span class="p">(</span><span class="n">power</span><span class="p">,</span> <span class="n">epochs</span><span class="o">.</span><span class="n">times</span><span class="p">,</span> <span class="p">(</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">),</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;mean&#39;</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="bp">False</span><span class="p">)</span>
+<span class="n">fig</span><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.subplots.html#matplotlib.pyplot.subplots" title="View documentation for matplotlib.pyplot.subplots"><span class="n">plt</span><span class="o">.</span><span class="n">subplots</span></a><span class="p">()</span>
+<span class="n">mesh</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">pcolormesh</span><span class="p">(</span><span class="n">epochs</span><span class="o">.</span><span class="n">times</span> <span class="o">*</span> <span class="mi">1000</span><span class="p">,</span> <span class="n">freqs</span><span class="p">,</span> <span class="n">power</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span>
+                     <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;RdBu_r&#39;</span><span class="p">,</span> <span class="n">vmin</span><span class="o">=</span><span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">vmax</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set_title</span><span class="p">(</span><span class="s1">&#39;TFR calculated on a numpy array&#39;</span><span class="p">)</span>
+<span class="n">ax</span><span class="o">.</span><span class="n">set</span><span class="p">(</span><span class="n">ylim</span><span class="o">=</span><span class="n">freqs</span><span class="p">[[</span><span class="mi">0</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]],</span> <span class="n">xlabel</span><span class="o">=</span><span class="s1">&#39;Time (ms)&#39;</span><span class="p">)</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">colorbar</span><span class="p">(</span><span class="n">mesh</span><span class="p">)</span>
+<a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.tight_layout.html#matplotlib.pyplot.tight_layout" title="View documentation for matplotlib.pyplot.tight_layout"><span class="n">plt</span><span class="o">.</span><span class="n">tight_layout</span></a><span class="p">()</span>
 
- <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.show.html#matplotlib.pyplot.show" title="View documentation for matplotlib.pyplot.show"><span class="n">plt</span><span class="o">.</span><span class="n">show</span></a><span class="p">()</span>
+<a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.show.html#matplotlib.pyplot.show" title="View documentation for matplotlib.pyplot.show"><span class="n">plt</span><span class="o">.</span><span class="n">show</span></a><span class="p">()</span>
 </pre></div>
-</td></tr></table></div>
+</div>
 <img alt="../../_images/sphx_glr_plot_time_frequency_simulated_008.png" class="sphx-glr-single-img" src="../../_images/sphx_glr_plot_time_frequency_simulated_008.png" />
 <p class="sphx-glr-script-out">Out:</p>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Applying baseline correction (mode: mean)
 </pre></div>
 </div>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  13.864 seconds)</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  13.444 seconds)</p>
 <p><strong>Estimated memory usage:</strong>  10 MB</p>
 <div class="sphx-glr-footer class sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-time-frequency-plot-time-frequency-simulated-py">
 <div class="sphx-glr-download docutils container">
@@ -550,7 +453,7 @@ of shape <code class="docutils literal notranslate"><span class="pre">(n_epochs,
       <li><a href="faq.html#cite">Cite MNE</a></li>
       <li class="pull-right"><a href="#">Back to top</a></li>
     </ul>
-    <p>&copy; Copyright 2012-2018, MNE Developers. Last updated on 2018-11-14.</p>
+    <p>&copy; Copyright 2012-2018, MNE Developers. Last updated on 2018-11-16.</p>
   </div>
 </footer>
   </body>

@@ -198,89 +198,49 @@ multi-sensor data to a single time course that reveals experimental
 effects”, BMC Neuroscience 2013, 14:122.</td></tr>
 </tbody>
 </table>
-<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>26
-27
-28
-29
-30
-31
-32
-33
-34
-35
-36
-37
-38
-39
-40
-41
-42
-43
-44
-45
-46
-47
-48
-49
-50
-51
-52
-53
-54
-55
-56
-57
-58
-59
-60
-61
-62
-63
-64
-65
-66</pre></div></td><td class="code"><div class="highlight"><pre><span></span> <span class="c1"># Author: Denis Engemann &lt;denis.engemann@gmail.com&gt;</span>
- <span class="c1">#         Jean-Remi King &lt;jeanremi.king@gmail.com&gt;</span>
- <span class="c1">#</span>
- <span class="c1"># License: BSD (3-clause)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Author: Denis Engemann &lt;denis.engemann@gmail.com&gt;</span>
+<span class="c1">#         Jean-Remi King &lt;jeanremi.king@gmail.com&gt;</span>
+<span class="c1">#</span>
+<span class="c1"># License: BSD (3-clause)</span>
 
- <span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
- <span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="kn">as</span> <span class="nn">plt</span>
 
- <span class="kn">import</span> <span class="nn">mne</span>
- <span class="kn">from</span> <span class="nn">mne</span> <span class="kn">import</span> <span class="n">io</span><span class="p">,</span> <a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="View documentation for mne.EvokedArray"><span class="n">EvokedArray</span></a>
- <span class="kn">from</span> <span class="nn">mne.datasets</span> <span class="kn">import</span> <span class="n">sample</span>
- <span class="kn">from</span> <span class="nn">mne.decoding</span> <span class="kn">import</span> <a href="../../generated/mne.decoding.EMS.html#mne.decoding.EMS" title="View documentation for mne.decoding.EMS"><span class="n">EMS</span></a><span class="p">,</span> <a href="../../generated/mne.decoding.compute_ems.html#mne.decoding.compute_ems" title="View documentation for mne.decoding.compute_ems"><span class="n">compute_ems</span></a>
- <span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="kn">import</span> <a href="https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.StratifiedKFold.html#sklearn.model_selection.StratifiedKFold" title="View documentation for sklearn.model_selection.StratifiedKFold"><span class="n">StratifiedKFold</span></a>
+<span class="kn">import</span> <span class="nn">mne</span>
+<span class="kn">from</span> <span class="nn">mne</span> <span class="kn">import</span> <span class="n">io</span><span class="p">,</span> <a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="View documentation for mne.EvokedArray"><span class="n">EvokedArray</span></a>
+<span class="kn">from</span> <span class="nn">mne.datasets</span> <span class="kn">import</span> <span class="n">sample</span>
+<span class="kn">from</span> <span class="nn">mne.decoding</span> <span class="kn">import</span> <a href="../../generated/mne.decoding.EMS.html#mne.decoding.EMS" title="View documentation for mne.decoding.EMS"><span class="n">EMS</span></a><span class="p">,</span> <a href="../../generated/mne.decoding.compute_ems.html#mne.decoding.compute_ems" title="View documentation for mne.decoding.compute_ems"><span class="n">compute_ems</span></a>
+<span class="kn">from</span> <span class="nn">sklearn.model_selection</span> <span class="kn">import</span> <a href="https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.StratifiedKFold.html#sklearn.model_selection.StratifiedKFold" title="View documentation for sklearn.model_selection.StratifiedKFold"><span class="n">StratifiedKFold</span></a>
 
- <span class="k">print</span><span class="p">(</span><span class="vm">__doc__</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="vm">__doc__</span><span class="p">)</span>
 
- <span class="n">data_path</span> <span class="o">=</span> <a href="../../generated/mne.datasets.sample.data_path.html#mne.datasets.sample.data_path" title="View documentation for mne.datasets.sample.data_path"><span class="n">sample</span><span class="o">.</span><span class="n">data_path</span></a><span class="p">()</span>
+<span class="n">data_path</span> <span class="o">=</span> <a href="../../generated/mne.datasets.sample.data_path.html#mne.datasets.sample.data_path" title="View documentation for mne.datasets.sample.data_path"><span class="n">sample</span><span class="o">.</span><span class="n">data_path</span></a><span class="p">()</span>
 
- <span class="c1"># Preprocess the data</span>
- <span class="n">raw_fname</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis_filt-0-40_raw.fif&#39;</span>
- <span class="n">event_fname</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis_filt-0-40_raw-eve.fif&#39;</span>
- <span class="n">event_ids</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;AudL&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;VisL&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">}</span>
+<span class="c1"># Preprocess the data</span>
+<span class="n">raw_fname</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis_filt-0-40_raw.fif&#39;</span>
+<span class="n">event_fname</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis_filt-0-40_raw-eve.fif&#39;</span>
+<span class="n">event_ids</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;AudL&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;VisL&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">}</span>
 
- <span class="c1"># Read data and create epochs</span>
- <span class="n">raw</span> <span class="o">=</span> <a href="../../generated/mne.io.read_raw_fif.html#mne.io.read_raw_fif" title="View documentation for mne.io.read_raw_fif"><span class="n">io</span><span class="o">.</span><span class="n">read_raw_fif</span></a><span class="p">(</span><span class="n">raw_fname</span><span class="p">,</span> <span class="n">preload</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
- <span class="n">raw</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mi">45</span><span class="p">,</span> <span class="n">fir_design</span><span class="o">=</span><span class="s1">&#39;firwin&#39;</span><span class="p">)</span>
- <span class="n">events</span> <span class="o">=</span> <a href="../../generated/mne.read_events.html#mne.read_events" title="View documentation for mne.read_events"><span class="n">mne</span><span class="o">.</span><span class="n">read_events</span></a><span class="p">(</span><span class="n">event_fname</span><span class="p">)</span>
+<span class="c1"># Read data and create epochs</span>
+<span class="n">raw</span> <span class="o">=</span> <a href="../../generated/mne.io.read_raw_fif.html#mne.io.read_raw_fif" title="View documentation for mne.io.read_raw_fif"><span class="n">io</span><span class="o">.</span><span class="n">read_raw_fif</span></a><span class="p">(</span><span class="n">raw_fname</span><span class="p">,</span> <span class="n">preload</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">raw</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mi">45</span><span class="p">,</span> <span class="n">fir_design</span><span class="o">=</span><span class="s1">&#39;firwin&#39;</span><span class="p">)</span>
+<span class="n">events</span> <span class="o">=</span> <a href="../../generated/mne.read_events.html#mne.read_events" title="View documentation for mne.read_events"><span class="n">mne</span><span class="o">.</span><span class="n">read_events</span></a><span class="p">(</span><span class="n">event_fname</span><span class="p">)</span>
 
- <span class="n">picks</span> <span class="o">=</span> <a href="../../generated/mne.pick_types.html#mne.pick_types" title="View documentation for mne.pick_types"><span class="n">mne</span><span class="o">.</span><span class="n">pick_types</span></a><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">meg</span><span class="o">=</span><span class="s1">&#39;grad&#39;</span><span class="p">,</span> <span class="n">eeg</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">stim</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">eog</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
-                        <span class="n">exclude</span><span class="o">=</span><span class="s1">&#39;bads&#39;</span><span class="p">)</span>
+<span class="n">picks</span> <span class="o">=</span> <a href="../../generated/mne.pick_types.html#mne.pick_types" title="View documentation for mne.pick_types"><span class="n">mne</span><span class="o">.</span><span class="n">pick_types</span></a><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">meg</span><span class="o">=</span><span class="s1">&#39;grad&#39;</span><span class="p">,</span> <span class="n">eeg</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">stim</span><span class="o">=</span><span class="bp">False</span><span class="p">,</span> <span class="n">eog</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span>
+                       <span class="n">exclude</span><span class="o">=</span><span class="s1">&#39;bads&#39;</span><span class="p">)</span>
 
- <span class="n">epochs</span> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs" title="View documentation for mne.Epochs"><span class="n">mne</span><span class="o">.</span><span class="n">Epochs</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">event_ids</span><span class="p">,</span> <span class="n">tmin</span><span class="o">=-</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">tmax</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">picks</span><span class="o">=</span><span class="n">picks</span><span class="p">,</span>
-                     <span class="n">baseline</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">reject</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">grad</span><span class="o">=</span><span class="mf">4000e-13</span><span class="p">,</span> <span class="n">eog</span><span class="o">=</span><span class="mf">150e-6</span><span class="p">),</span>
-                     <span class="n">preload</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
- <span class="n">epochs</span><span class="o">.</span><span class="n">drop_bad</span><span class="p">()</span>
- <span class="n">epochs</span><span class="o">.</span><span class="n">pick_types</span><span class="p">(</span><span class="n">meg</span><span class="o">=</span><span class="s1">&#39;grad&#39;</span><span class="p">)</span>
+<span class="n">epochs</span> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs" title="View documentation for mne.Epochs"><span class="n">mne</span><span class="o">.</span><span class="n">Epochs</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">event_ids</span><span class="p">,</span> <span class="n">tmin</span><span class="o">=-</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">tmax</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">picks</span><span class="o">=</span><span class="n">picks</span><span class="p">,</span>
+                    <span class="n">baseline</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span> <span class="n">reject</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">grad</span><span class="o">=</span><span class="mf">4000e-13</span><span class="p">,</span> <span class="n">eog</span><span class="o">=</span><span class="mf">150e-6</span><span class="p">),</span>
+                    <span class="n">preload</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">epochs</span><span class="o">.</span><span class="n">drop_bad</span><span class="p">()</span>
+<span class="n">epochs</span><span class="o">.</span><span class="n">pick_types</span><span class="p">(</span><span class="n">meg</span><span class="o">=</span><span class="s1">&#39;grad&#39;</span><span class="p">)</span>
 
- <span class="c1"># Setup the data to use it a scikit-learn way:</span>
- <span class="n">X</span> <span class="o">=</span> <span class="n">epochs</span><span class="o">.</span><span class="n">get_data</span><span class="p">()</span>  <span class="c1"># The MEG data</span>
- <span class="n">y</span> <span class="o">=</span> <span class="n">epochs</span><span class="o">.</span><span class="n">events</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span>  <span class="c1"># The conditions indices</span>
- <span class="n">n_epochs</span><span class="p">,</span> <span class="n">n_channels</span><span class="p">,</span> <span class="n">n_times</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span>
+<span class="c1"># Setup the data to use it a scikit-learn way:</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">epochs</span><span class="o">.</span><span class="n">get_data</span><span class="p">()</span>  <span class="c1"># The MEG data</span>
+<span class="n">y</span> <span class="o">=</span> <span class="n">epochs</span><span class="o">.</span><span class="n">events</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span>  <span class="c1"># The conditions indices</span>
+<span class="n">n_epochs</span><span class="p">,</span> <span class="n">n_channels</span><span class="p">,</span> <span class="n">n_times</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">shape</span>
 </pre></div>
-</td></tr></table></div>
+</div>
 <p class="sphx-glr-script-out">Out:</p>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Opening raw data file /home/circleci/mne_data/MNE-sample-data/MEG/sample/sample_audvis_filt-0-40_raw.fif...
     Read a total of 4 projection items:
@@ -326,117 +286,63 @@ Loading data for 145 events and 106 original time points ...
 22 bad epochs dropped
 </pre></div>
 </div>
-<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre> 70
- 71
- 72
- 73
- 74
- 75
- 76
- 77
- 78
- 79
- 80
- 81
- 82
- 83
- 84
- 85
- 86
- 87
- 88
- 89
- 90
- 91
- 92
- 93
- 94
- 95
- 96
- 97
- 98
- 99
-100
-101
-102
-103
-104
-105
-106
-107
-108
-109
-110
-111
-112
-113
-114
-115
-116
-117
-118
-119
-120
-121
-122
-123
-124</pre></div></td><td class="code"><div class="highlight"><pre><span></span> <span class="c1"># Initialize EMS transformer</span>
- <span class="n">ems</span> <span class="o">=</span> <a href="../../generated/mne.decoding.EMS.html#mne.decoding.EMS" title="View documentation for mne.decoding.EMS"><span class="n">EMS</span></a><span class="p">()</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Initialize EMS transformer</span>
+<span class="n">ems</span> <span class="o">=</span> <a href="../../generated/mne.decoding.EMS.html#mne.decoding.EMS" title="View documentation for mne.decoding.EMS"><span class="n">EMS</span></a><span class="p">()</span>
 
- <span class="c1"># Initialize the variables of interest</span>
- <span class="n">X_transform</span> <span class="o">=</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.zeros.html#numpy.zeros" title="View documentation for numpy.zeros"><span class="n">np</span><span class="o">.</span><span class="n">zeros</span></a><span class="p">((</span><span class="n">n_epochs</span><span class="p">,</span> <span class="n">n_times</span><span class="p">))</span>  <span class="c1"># Data after EMS transformation</span>
- <span class="n">filters</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>  <span class="c1"># Spatial filters at each time point</span>
+<span class="c1"># Initialize the variables of interest</span>
+<span class="n">X_transform</span> <span class="o">=</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.zeros.html#numpy.zeros" title="View documentation for numpy.zeros"><span class="n">np</span><span class="o">.</span><span class="n">zeros</span></a><span class="p">((</span><span class="n">n_epochs</span><span class="p">,</span> <span class="n">n_times</span><span class="p">))</span>  <span class="c1"># Data after EMS transformation</span>
+<span class="n">filters</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>  <span class="c1"># Spatial filters at each time point</span>
 
- <span class="c1"># In the original paper, the cross-validation is a leave-one-out. However,</span>
- <span class="c1"># we recommend using a Stratified KFold, because leave-one-out tends</span>
- <span class="c1"># to overfit and cannot be used to estimate the variance of the</span>
- <span class="c1"># prediction within a given fold.</span>
+<span class="c1"># In the original paper, the cross-validation is a leave-one-out. However,</span>
+<span class="c1"># we recommend using a Stratified KFold, because leave-one-out tends</span>
+<span class="c1"># to overfit and cannot be used to estimate the variance of the</span>
+<span class="c1"># prediction within a given fold.</span>
 
- <span class="k">for</span> <span class="n">train</span><span class="p">,</span> <span class="n">test</span> <span class="ow">in</span> <a href="https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.StratifiedKFold.html#sklearn.model_selection.StratifiedKFold" title="View documentation for sklearn.model_selection.StratifiedKFold"><span class="n">StratifiedKFold</span></a><span class="p">(</span><span class="n">n_splits</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
-     <span class="c1"># In the original paper, the z-scoring is applied outside the CV.</span>
-     <span class="c1"># However, we recommend to apply this preprocessing inside the CV.</span>
-     <span class="c1"># Note that such scaling should be done separately for each channels if the</span>
-     <span class="c1"># data contains multiple channel types.</span>
-     <span class="n">X_scaled</span> <span class="o">=</span> <span class="n">X</span> <span class="o">/</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.std.html#numpy.std" title="View documentation for numpy.std"><span class="n">np</span><span class="o">.</span><span class="n">std</span></a><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">train</span><span class="p">])</span>
+<span class="k">for</span> <span class="n">train</span><span class="p">,</span> <span class="n">test</span> <span class="ow">in</span> <a href="https://scikit-learn.org/stable/modules/generated/sklearn.model_selection.StratifiedKFold.html#sklearn.model_selection.StratifiedKFold" title="View documentation for sklearn.model_selection.StratifiedKFold"><span class="n">StratifiedKFold</span></a><span class="p">(</span><span class="n">n_splits</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">y</span><span class="p">):</span>
+    <span class="c1"># In the original paper, the z-scoring is applied outside the CV.</span>
+    <span class="c1"># However, we recommend to apply this preprocessing inside the CV.</span>
+    <span class="c1"># Note that such scaling should be done separately for each channels if the</span>
+    <span class="c1"># data contains multiple channel types.</span>
+    <span class="n">X_scaled</span> <span class="o">=</span> <span class="n">X</span> <span class="o">/</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.std.html#numpy.std" title="View documentation for numpy.std"><span class="n">np</span><span class="o">.</span><span class="n">std</span></a><span class="p">(</span><span class="n">X</span><span class="p">[</span><span class="n">train</span><span class="p">])</span>
 
-     <span class="c1"># Fit and store the spatial filters</span>
-     <span class="n">ems</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_scaled</span><span class="p">[</span><span class="n">train</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="n">train</span><span class="p">])</span>
+    <span class="c1"># Fit and store the spatial filters</span>
+    <span class="n">ems</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">X_scaled</span><span class="p">[</span><span class="n">train</span><span class="p">],</span> <span class="n">y</span><span class="p">[</span><span class="n">train</span><span class="p">])</span>
 
-     <span class="c1"># Store filters for future plotting</span>
-     <span class="n">filters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ems</span><span class="o">.</span><span class="n">filters_</span><span class="p">)</span>
+    <span class="c1"># Store filters for future plotting</span>
+    <span class="n">filters</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">ems</span><span class="o">.</span><span class="n">filters_</span><span class="p">)</span>
 
-     <span class="c1"># Generate the transformed data</span>
-     <span class="n">X_transform</span><span class="p">[</span><span class="n">test</span><span class="p">]</span> <span class="o">=</span> <span class="n">ems</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">X_scaled</span><span class="p">[</span><span class="n">test</span><span class="p">])</span>
+    <span class="c1"># Generate the transformed data</span>
+    <span class="n">X_transform</span><span class="p">[</span><span class="n">test</span><span class="p">]</span> <span class="o">=</span> <span class="n">ems</span><span class="o">.</span><span class="n">transform</span><span class="p">(</span><span class="n">X_scaled</span><span class="p">[</span><span class="n">test</span><span class="p">])</span>
 
- <span class="c1"># Average the spatial filters across folds</span>
- <span class="n">filters</span> <span class="o">=</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.mean.html#numpy.mean" title="View documentation for numpy.mean"><span class="n">np</span><span class="o">.</span><span class="n">mean</span></a><span class="p">(</span><span class="n">filters</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<span class="c1"># Average the spatial filters across folds</span>
+<span class="n">filters</span> <span class="o">=</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.mean.html#numpy.mean" title="View documentation for numpy.mean"><span class="n">np</span><span class="o">.</span><span class="n">mean</span></a><span class="p">(</span><span class="n">filters</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
- <span class="c1"># Plot individual trials</span>
- <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.figure.html#matplotlib.pyplot.figure" title="View documentation for matplotlib.pyplot.figure"><span class="n">plt</span><span class="o">.</span><span class="n">figure</span></a><span class="p">()</span>
- <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.title.html#matplotlib.pyplot.title" title="View documentation for matplotlib.pyplot.title"><span class="n">plt</span><span class="o">.</span><span class="n">title</span></a><span class="p">(</span><span class="s1">&#39;single trial surrogates&#39;</span><span class="p">)</span>
- <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.imshow.html#matplotlib.pyplot.imshow" title="View documentation for matplotlib.pyplot.imshow"><span class="n">plt</span><span class="o">.</span><span class="n">imshow</span></a><span class="p">(</span><span class="n">X_transform</span><span class="p">[</span><span class="n">y</span><span class="o">.</span><span class="n">argsort</span><span class="p">()],</span> <span class="n">origin</span><span class="o">=</span><span class="s1">&#39;lower&#39;</span><span class="p">,</span> <span class="n">aspect</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span>
-            <span class="n">extent</span><span class="o">=</span><span class="p">[</span><span class="n">epochs</span><span class="o">.</span><span class="n">times</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">epochs</span><span class="o">.</span><span class="n">times</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">X_transform</span><span class="p">)],</span>
-            <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;RdBu_r&#39;</span><span class="p">)</span>
- <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.xlabel.html#matplotlib.pyplot.xlabel" title="View documentation for matplotlib.pyplot.xlabel"><span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span></a><span class="p">(</span><span class="s1">&#39;Time (ms)&#39;</span><span class="p">)</span>
- <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.ylabel.html#matplotlib.pyplot.ylabel" title="View documentation for matplotlib.pyplot.ylabel"><span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span></a><span class="p">(</span><span class="s1">&#39;Trials (reordered by condition)&#39;</span><span class="p">)</span>
+<span class="c1"># Plot individual trials</span>
+<a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.figure.html#matplotlib.pyplot.figure" title="View documentation for matplotlib.pyplot.figure"><span class="n">plt</span><span class="o">.</span><span class="n">figure</span></a><span class="p">()</span>
+<a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.title.html#matplotlib.pyplot.title" title="View documentation for matplotlib.pyplot.title"><span class="n">plt</span><span class="o">.</span><span class="n">title</span></a><span class="p">(</span><span class="s1">&#39;single trial surrogates&#39;</span><span class="p">)</span>
+<a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.imshow.html#matplotlib.pyplot.imshow" title="View documentation for matplotlib.pyplot.imshow"><span class="n">plt</span><span class="o">.</span><span class="n">imshow</span></a><span class="p">(</span><span class="n">X_transform</span><span class="p">[</span><span class="n">y</span><span class="o">.</span><span class="n">argsort</span><span class="p">()],</span> <span class="n">origin</span><span class="o">=</span><span class="s1">&#39;lower&#39;</span><span class="p">,</span> <span class="n">aspect</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span>
+           <span class="n">extent</span><span class="o">=</span><span class="p">[</span><span class="n">epochs</span><span class="o">.</span><span class="n">times</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">epochs</span><span class="o">.</span><span class="n">times</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="mi">1</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="n">X_transform</span><span class="p">)],</span>
+           <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;RdBu_r&#39;</span><span class="p">)</span>
+<a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.xlabel.html#matplotlib.pyplot.xlabel" title="View documentation for matplotlib.pyplot.xlabel"><span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span></a><span class="p">(</span><span class="s1">&#39;Time (ms)&#39;</span><span class="p">)</span>
+<a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.ylabel.html#matplotlib.pyplot.ylabel" title="View documentation for matplotlib.pyplot.ylabel"><span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span></a><span class="p">(</span><span class="s1">&#39;Trials (reordered by condition)&#39;</span><span class="p">)</span>
 
- <span class="c1"># Plot average response</span>
- <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.figure.html#matplotlib.pyplot.figure" title="View documentation for matplotlib.pyplot.figure"><span class="n">plt</span><span class="o">.</span><span class="n">figure</span></a><span class="p">()</span>
- <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.title.html#matplotlib.pyplot.title" title="View documentation for matplotlib.pyplot.title"><span class="n">plt</span><span class="o">.</span><span class="n">title</span></a><span class="p">(</span><span class="s1">&#39;Average EMS signal&#39;</span><span class="p">)</span>
- <span class="n">mappings</span> <span class="o">=</span> <span class="p">[(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">event_ids</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span>
- <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">mappings</span><span class="p">:</span>
-     <span class="n">ems_ave</span> <span class="o">=</span> <span class="n">X_transform</span><span class="p">[</span><span class="n">y</span> <span class="o">==</span> <span class="n">value</span><span class="p">]</span>
-     <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.plot.html#matplotlib.pyplot.plot" title="View documentation for matplotlib.pyplot.plot"><span class="n">plt</span><span class="o">.</span><span class="n">plot</span></a><span class="p">(</span><span class="n">epochs</span><span class="o">.</span><span class="n">times</span><span class="p">,</span> <span class="n">ems_ave</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">label</span><span class="o">=</span><span class="n">key</span><span class="p">)</span>
- <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.xlabel.html#matplotlib.pyplot.xlabel" title="View documentation for matplotlib.pyplot.xlabel"><span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span></a><span class="p">(</span><span class="s1">&#39;Time (ms)&#39;</span><span class="p">)</span>
- <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.ylabel.html#matplotlib.pyplot.ylabel" title="View documentation for matplotlib.pyplot.ylabel"><span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span></a><span class="p">(</span><span class="s1">&#39;a.u.&#39;</span><span class="p">)</span>
- <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.legend.html#matplotlib.pyplot.legend" title="View documentation for matplotlib.pyplot.legend"><span class="n">plt</span><span class="o">.</span><span class="n">legend</span></a><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s1">&#39;best&#39;</span><span class="p">)</span>
- <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.show.html#matplotlib.pyplot.show" title="View documentation for matplotlib.pyplot.show"><span class="n">plt</span><span class="o">.</span><span class="n">show</span></a><span class="p">()</span>
+<span class="c1"># Plot average response</span>
+<a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.figure.html#matplotlib.pyplot.figure" title="View documentation for matplotlib.pyplot.figure"><span class="n">plt</span><span class="o">.</span><span class="n">figure</span></a><span class="p">()</span>
+<a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.title.html#matplotlib.pyplot.title" title="View documentation for matplotlib.pyplot.title"><span class="n">plt</span><span class="o">.</span><span class="n">title</span></a><span class="p">(</span><span class="s1">&#39;Average EMS signal&#39;</span><span class="p">)</span>
+<span class="n">mappings</span> <span class="o">=</span> <span class="p">[(</span><span class="n">key</span><span class="p">,</span> <span class="n">value</span><span class="p">)</span> <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">event_ids</span><span class="o">.</span><span class="n">items</span><span class="p">()]</span>
+<span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">value</span> <span class="ow">in</span> <span class="n">mappings</span><span class="p">:</span>
+    <span class="n">ems_ave</span> <span class="o">=</span> <span class="n">X_transform</span><span class="p">[</span><span class="n">y</span> <span class="o">==</span> <span class="n">value</span><span class="p">]</span>
+    <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.plot.html#matplotlib.pyplot.plot" title="View documentation for matplotlib.pyplot.plot"><span class="n">plt</span><span class="o">.</span><span class="n">plot</span></a><span class="p">(</span><span class="n">epochs</span><span class="o">.</span><span class="n">times</span><span class="p">,</span> <span class="n">ems_ave</span><span class="o">.</span><span class="n">mean</span><span class="p">(</span><span class="mi">0</span><span class="p">),</span> <span class="n">label</span><span class="o">=</span><span class="n">key</span><span class="p">)</span>
+<a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.xlabel.html#matplotlib.pyplot.xlabel" title="View documentation for matplotlib.pyplot.xlabel"><span class="n">plt</span><span class="o">.</span><span class="n">xlabel</span></a><span class="p">(</span><span class="s1">&#39;Time (ms)&#39;</span><span class="p">)</span>
+<a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.ylabel.html#matplotlib.pyplot.ylabel" title="View documentation for matplotlib.pyplot.ylabel"><span class="n">plt</span><span class="o">.</span><span class="n">ylabel</span></a><span class="p">(</span><span class="s1">&#39;a.u.&#39;</span><span class="p">)</span>
+<a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.legend.html#matplotlib.pyplot.legend" title="View documentation for matplotlib.pyplot.legend"><span class="n">plt</span><span class="o">.</span><span class="n">legend</span></a><span class="p">(</span><span class="n">loc</span><span class="o">=</span><span class="s1">&#39;best&#39;</span><span class="p">)</span>
+<a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.show.html#matplotlib.pyplot.show" title="View documentation for matplotlib.pyplot.show"><span class="n">plt</span><span class="o">.</span><span class="n">show</span></a><span class="p">()</span>
 
- <span class="c1"># Visualize spatial filters across time</span>
- <span class="n">evoked</span> <span class="o">=</span> <a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="View documentation for mne.EvokedArray"><span class="n">EvokedArray</span></a><span class="p">(</span><span class="n">filters</span><span class="p">,</span> <span class="n">epochs</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">tmin</span><span class="o">=</span><span class="n">epochs</span><span class="o">.</span><span class="n">tmin</span><span class="p">)</span>
- <span class="n">evoked</span><span class="o">.</span><span class="n">plot_topomap</span><span class="p">(</span><span class="n">time_unit</span><span class="o">=</span><span class="s1">&#39;s&#39;</span><span class="p">,</span> <span class="n">scalings</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+<span class="c1"># Visualize spatial filters across time</span>
+<span class="n">evoked</span> <span class="o">=</span> <a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="View documentation for mne.EvokedArray"><span class="n">EvokedArray</span></a><span class="p">(</span><span class="n">filters</span><span class="p">,</span> <span class="n">epochs</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">tmin</span><span class="o">=</span><span class="n">epochs</span><span class="o">.</span><span class="n">tmin</span><span class="p">)</span>
+<span class="n">evoked</span><span class="o">.</span><span class="n">plot_topomap</span><span class="p">(</span><span class="n">time_unit</span><span class="o">=</span><span class="s1">&#39;s&#39;</span><span class="p">,</span> <span class="n">scalings</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 </pre></div>
-</td></tr></table></div>
+</div>
 <ul class="sphx-glr-horizontal">
 <li><img alt="../../_images/sphx_glr_plot_ems_filtering_001.png" class="sphx-glr-multi-img first" src="../../_images/sphx_glr_plot_ems_filtering_001.png" />
 </li>
@@ -449,18 +355,17 @@ Loading data for 145 events and 106 original time points ...
 However, this function replicates Schurger et al’s original paper, and thus
 applies the normalization outside a leave-one-out cross-validation, which we
 recommend not to do.</p>
-<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>131
-132</pre></div></td><td class="code"><div class="highlight"><pre><span></span> <span class="n">epochs</span><span class="o">.</span><span class="n">equalize_event_counts</span><span class="p">(</span><span class="n">event_ids</span><span class="p">)</span>
- <span class="n">X_transform</span><span class="p">,</span> <span class="n">filters</span><span class="p">,</span> <span class="n">classes</span> <span class="o">=</span> <a href="../../generated/mne.decoding.compute_ems.html#mne.decoding.compute_ems" title="View documentation for mne.decoding.compute_ems"><span class="n">compute_ems</span></a><span class="p">(</span><span class="n">epochs</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">epochs</span><span class="o">.</span><span class="n">equalize_event_counts</span><span class="p">(</span><span class="n">event_ids</span><span class="p">)</span>
+<span class="n">X_transform</span><span class="p">,</span> <span class="n">filters</span><span class="p">,</span> <span class="n">classes</span> <span class="o">=</span> <a href="../../generated/mne.decoding.compute_ems.html#mne.decoding.compute_ems" title="View documentation for mne.decoding.compute_ems"><span class="n">compute_ems</span></a><span class="p">(</span><span class="n">epochs</span><span class="p">)</span>
 </pre></div>
-</td></tr></table></div>
+</div>
 <p class="sphx-glr-script-out">Out:</p>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Dropped 11 epochs
 ...computing surrogate time series. This can take some time
 </pre></div>
 </div>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  5.113 seconds)</p>
-<p><strong>Estimated memory usage:</strong>  9 MB</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  4.484 seconds)</p>
+<p><strong>Estimated memory usage:</strong>  10 MB</p>
 <div class="sphx-glr-footer class sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-decoding-plot-ems-filtering-py">
 <div class="sphx-glr-download docutils container">
 <a class="reference download internal" download="" href="../../_downloads/af9badcc085051a25688e5c25fe341f0/plot_ems_filtering.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">plot_ems_filtering.py</span></code></a></div>
@@ -491,7 +396,7 @@ recommend not to do.</p>
       <li><a href="faq.html#cite">Cite MNE</a></li>
       <li class="pull-right"><a href="#">Back to top</a></li>
     </ul>
-    <p>&copy; Copyright 2012-2018, MNE Developers. Last updated on 2018-11-14.</p>
+    <p>&copy; Copyright 2012-2018, MNE Developers. Last updated on 2018-11-16.</p>
   </div>
 </footer>
   </body>

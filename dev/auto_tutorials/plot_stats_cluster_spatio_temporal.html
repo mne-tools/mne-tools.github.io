@@ -188,72 +188,43 @@ two conditions across subjects. Here just for demonstration purposes
 we simulate data from multiple subjects using one subject’s data.
 The multiple comparisons problem is addressed with a cluster-level
 permutation test across space and time.</p>
-<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>12
-13
-14
-15
-16
-17
-18
-19
-20
-21
-22
-23
-24
-25
-26
-27
-28
-29
-30</pre></div></td><td class="code"><div class="highlight"><pre><span></span> <span class="c1"># Authors: Alexandre Gramfort &lt;alexandre.gramfort@telecom-paristech.fr&gt;</span>
- <span class="c1">#          Eric Larson &lt;larson.eric.d@gmail.com&gt;</span>
- <span class="c1"># License: BSD (3-clause)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Authors: Alexandre Gramfort &lt;alexandre.gramfort@telecom-paristech.fr&gt;</span>
+<span class="c1">#          Eric Larson &lt;larson.eric.d@gmail.com&gt;</span>
+<span class="c1"># License: BSD (3-clause)</span>
 
 
- <span class="kn">import</span> <span class="nn">os.path</span> <span class="kn">as</span> <span class="nn">op</span>
+<span class="kn">import</span> <span class="nn">os.path</span> <span class="kn">as</span> <span class="nn">op</span>
 
- <span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
- <span class="kn">from</span> <span class="nn">numpy.random</span> <span class="kn">import</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.random.randn.html#numpy.random.randn" title="View documentation for numpy.random.randn"><span class="n">randn</span></a>
- <span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">stats</span> <span class="k">as</span> <span class="n">stats</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<span class="kn">from</span> <span class="nn">numpy.random</span> <span class="kn">import</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.random.randn.html#numpy.random.randn" title="View documentation for numpy.random.randn"><span class="n">randn</span></a>
+<span class="kn">from</span> <span class="nn">scipy</span> <span class="kn">import</span> <span class="n">stats</span> <span class="k">as</span> <span class="n">stats</span>
 
- <span class="kn">import</span> <span class="nn">mne</span>
- <span class="kn">from</span> <span class="nn">mne.epochs</span> <span class="kn">import</span> <a href="../generated/mne.epochs.equalize_epoch_counts.html#mne.epochs.equalize_epoch_counts" title="View documentation for mne.epochs.equalize_epoch_counts"><span class="n">equalize_epoch_counts</span></a>
- <span class="kn">from</span> <span class="nn">mne.stats</span> <span class="kn">import</span> <span class="p">(</span><a href="../generated/mne.stats.spatio_temporal_cluster_1samp_test.html#mne.stats.spatio_temporal_cluster_1samp_test" title="View documentation for mne.stats.spatio_temporal_cluster_1samp_test"><span class="n">spatio_temporal_cluster_1samp_test</span></a><span class="p">,</span>
-                        <a href="../generated/mne.stats.summarize_clusters_stc.html#mne.stats.summarize_clusters_stc" title="View documentation for mne.stats.summarize_clusters_stc"><span class="n">summarize_clusters_stc</span></a><span class="p">)</span>
- <span class="kn">from</span> <span class="nn">mne.minimum_norm</span> <span class="kn">import</span> <a href="../generated/mne.minimum_norm.apply_inverse.html#mne.minimum_norm.apply_inverse" title="View documentation for mne.minimum_norm.apply_inverse"><span class="n">apply_inverse</span></a><span class="p">,</span> <a href="../generated/mne.minimum_norm.read_inverse_operator.html#mne.minimum_norm.read_inverse_operator" title="View documentation for mne.minimum_norm.read_inverse_operator"><span class="n">read_inverse_operator</span></a>
- <span class="kn">from</span> <span class="nn">mne.datasets</span> <span class="kn">import</span> <span class="n">sample</span>
+<span class="kn">import</span> <span class="nn">mne</span>
+<span class="kn">from</span> <span class="nn">mne.epochs</span> <span class="kn">import</span> <a href="../generated/mne.epochs.equalize_epoch_counts.html#mne.epochs.equalize_epoch_counts" title="View documentation for mne.epochs.equalize_epoch_counts"><span class="n">equalize_epoch_counts</span></a>
+<span class="kn">from</span> <span class="nn">mne.stats</span> <span class="kn">import</span> <span class="p">(</span><a href="../generated/mne.stats.spatio_temporal_cluster_1samp_test.html#mne.stats.spatio_temporal_cluster_1samp_test" title="View documentation for mne.stats.spatio_temporal_cluster_1samp_test"><span class="n">spatio_temporal_cluster_1samp_test</span></a><span class="p">,</span>
+                       <a href="../generated/mne.stats.summarize_clusters_stc.html#mne.stats.summarize_clusters_stc" title="View documentation for mne.stats.summarize_clusters_stc"><span class="n">summarize_clusters_stc</span></a><span class="p">)</span>
+<span class="kn">from</span> <span class="nn">mne.minimum_norm</span> <span class="kn">import</span> <a href="../generated/mne.minimum_norm.apply_inverse.html#mne.minimum_norm.apply_inverse" title="View documentation for mne.minimum_norm.apply_inverse"><span class="n">apply_inverse</span></a><span class="p">,</span> <a href="../generated/mne.minimum_norm.read_inverse_operator.html#mne.minimum_norm.read_inverse_operator" title="View documentation for mne.minimum_norm.read_inverse_operator"><span class="n">read_inverse_operator</span></a>
+<span class="kn">from</span> <span class="nn">mne.datasets</span> <span class="kn">import</span> <span class="n">sample</span>
 
- <span class="k">print</span><span class="p">(</span><span class="vm">__doc__</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="vm">__doc__</span><span class="p">)</span>
 </pre></div>
-</td></tr></table></div>
+</div>
 <div class="section" id="set-parameters">
 <h2>Set parameters<a class="headerlink" href="#set-parameters" title="Permalink to this headline">¶</a></h2>
-<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>35
-36
-37
-38
-39
-40
-41
-42
-43
-44
-45
-46</pre></div></td><td class="code"><div class="highlight"><pre><span></span> <span class="n">data_path</span> <span class="o">=</span> <a href="../generated/mne.datasets.sample.data_path.html#mne.datasets.sample.data_path" title="View documentation for mne.datasets.sample.data_path"><span class="n">sample</span><span class="o">.</span><span class="n">data_path</span></a><span class="p">()</span>
- <span class="n">raw_fname</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis_filt-0-40_raw.fif&#39;</span>
- <span class="n">event_fname</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis_filt-0-40_raw-eve.fif&#39;</span>
- <span class="n">subjects_dir</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/subjects&#39;</span>
- <span class="n">src_fname</span> <span class="o">=</span> <span class="n">subjects_dir</span> <span class="o">+</span> <span class="s1">&#39;/fsaverage/bem/fsaverage-ico-5-src.fif&#39;</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">data_path</span> <span class="o">=</span> <a href="../generated/mne.datasets.sample.data_path.html#mne.datasets.sample.data_path" title="View documentation for mne.datasets.sample.data_path"><span class="n">sample</span><span class="o">.</span><span class="n">data_path</span></a><span class="p">()</span>
+<span class="n">raw_fname</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis_filt-0-40_raw.fif&#39;</span>
+<span class="n">event_fname</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis_filt-0-40_raw-eve.fif&#39;</span>
+<span class="n">subjects_dir</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/subjects&#39;</span>
+<span class="n">src_fname</span> <span class="o">=</span> <span class="n">subjects_dir</span> <span class="o">+</span> <span class="s1">&#39;/fsaverage/bem/fsaverage-ico-5-src.fif&#39;</span>
 
- <span class="n">tmin</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.2</span>
- <span class="n">tmax</span> <span class="o">=</span> <span class="mf">0.3</span>  <span class="c1"># Use a lower tmax to reduce multiple comparisons</span>
+<span class="n">tmin</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.2</span>
+<span class="n">tmax</span> <span class="o">=</span> <span class="mf">0.3</span>  <span class="c1"># Use a lower tmax to reduce multiple comparisons</span>
 
- <span class="c1">#   Setup for reading the raw data</span>
- <span class="n">raw</span> <span class="o">=</span> <a href="../generated/mne.io.read_raw_fif.html#mne.io.read_raw_fif" title="View documentation for mne.io.read_raw_fif"><span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read_raw_fif</span></a><span class="p">(</span><span class="n">raw_fname</span><span class="p">)</span>
- <span class="n">events</span> <span class="o">=</span> <a href="../generated/mne.read_events.html#mne.read_events" title="View documentation for mne.read_events"><span class="n">mne</span><span class="o">.</span><span class="n">read_events</span></a><span class="p">(</span><span class="n">event_fname</span><span class="p">)</span>
+<span class="c1">#   Setup for reading the raw data</span>
+<span class="n">raw</span> <span class="o">=</span> <a href="../generated/mne.io.read_raw_fif.html#mne.io.read_raw_fif" title="View documentation for mne.io.read_raw_fif"><span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read_raw_fif</span></a><span class="p">(</span><span class="n">raw_fname</span><span class="p">)</span>
+<span class="n">events</span> <span class="o">=</span> <a href="../generated/mne.read_events.html#mne.read_events" title="View documentation for mne.read_events"><span class="n">mne</span><span class="o">.</span><span class="n">read_events</span></a><span class="p">(</span><span class="n">event_fname</span><span class="p">)</span>
 </pre></div>
-</td></tr></table></div>
+</div>
 <p class="sphx-glr-script-out">Out:</p>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Opening raw data file /home/circleci/mne_data/MNE-sample-data/MEG/sample/sample_audvis_filt-0-40_raw.fif...
     Read a total of 4 projection items:
@@ -269,35 +240,22 @@ Current compensation grade : 0
 </div>
 <div class="section" id="read-epochs-for-all-channels-removing-a-bad-one">
 <h2>Read epochs for all channels, removing a bad one<a class="headerlink" href="#read-epochs-for-all-channels-removing-a-bad-one" title="Permalink to this headline">¶</a></h2>
-<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>51
-52
-53
-54
-55
-56
-57
-58
-59
-60
-61
-62
-63
-64</pre></div></td><td class="code"><div class="highlight"><pre><span></span> <span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;bads&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;MEG 2443&#39;</span><span class="p">]</span>
- <span class="n">picks</span> <span class="o">=</span> <a href="../generated/mne.pick_types.html#mne.pick_types" title="View documentation for mne.pick_types"><span class="n">mne</span><span class="o">.</span><span class="n">pick_types</span></a><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">meg</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">eog</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="s1">&#39;bads&#39;</span><span class="p">)</span>
- <span class="n">event_id</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># L auditory</span>
- <span class="n">reject</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">grad</span><span class="o">=</span><span class="mf">1000e-13</span><span class="p">,</span> <span class="n">mag</span><span class="o">=</span><span class="mf">4000e-15</span><span class="p">,</span> <span class="n">eog</span><span class="o">=</span><span class="mf">150e-6</span><span class="p">)</span>
- <span class="n">epochs1</span> <span class="o">=</span> <a href="../generated/mne.Epochs.html#mne.Epochs" title="View documentation for mne.Epochs"><span class="n">mne</span><span class="o">.</span><span class="n">Epochs</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">event_id</span><span class="p">,</span> <span class="n">tmin</span><span class="p">,</span> <span class="n">tmax</span><span class="p">,</span> <span class="n">picks</span><span class="o">=</span><span class="n">picks</span><span class="p">,</span>
-                      <span class="n">baseline</span><span class="o">=</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">reject</span><span class="o">=</span><span class="n">reject</span><span class="p">,</span> <span class="n">preload</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;bads&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;MEG 2443&#39;</span><span class="p">]</span>
+<span class="n">picks</span> <span class="o">=</span> <a href="../generated/mne.pick_types.html#mne.pick_types" title="View documentation for mne.pick_types"><span class="n">mne</span><span class="o">.</span><span class="n">pick_types</span></a><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">meg</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">eog</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="s1">&#39;bads&#39;</span><span class="p">)</span>
+<span class="n">event_id</span> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># L auditory</span>
+<span class="n">reject</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">grad</span><span class="o">=</span><span class="mf">1000e-13</span><span class="p">,</span> <span class="n">mag</span><span class="o">=</span><span class="mf">4000e-15</span><span class="p">,</span> <span class="n">eog</span><span class="o">=</span><span class="mf">150e-6</span><span class="p">)</span>
+<span class="n">epochs1</span> <span class="o">=</span> <a href="../generated/mne.Epochs.html#mne.Epochs" title="View documentation for mne.Epochs"><span class="n">mne</span><span class="o">.</span><span class="n">Epochs</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">event_id</span><span class="p">,</span> <span class="n">tmin</span><span class="p">,</span> <span class="n">tmax</span><span class="p">,</span> <span class="n">picks</span><span class="o">=</span><span class="n">picks</span><span class="p">,</span>
+                     <span class="n">baseline</span><span class="o">=</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">reject</span><span class="o">=</span><span class="n">reject</span><span class="p">,</span> <span class="n">preload</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 
- <span class="n">event_id</span> <span class="o">=</span> <span class="mi">3</span>  <span class="c1"># L visual</span>
- <span class="n">epochs2</span> <span class="o">=</span> <a href="../generated/mne.Epochs.html#mne.Epochs" title="View documentation for mne.Epochs"><span class="n">mne</span><span class="o">.</span><span class="n">Epochs</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">event_id</span><span class="p">,</span> <span class="n">tmin</span><span class="p">,</span> <span class="n">tmax</span><span class="p">,</span> <span class="n">picks</span><span class="o">=</span><span class="n">picks</span><span class="p">,</span>
-                      <span class="n">baseline</span><span class="o">=</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">reject</span><span class="o">=</span><span class="n">reject</span><span class="p">,</span> <span class="n">preload</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">event_id</span> <span class="o">=</span> <span class="mi">3</span>  <span class="c1"># L visual</span>
+<span class="n">epochs2</span> <span class="o">=</span> <a href="../generated/mne.Epochs.html#mne.Epochs" title="View documentation for mne.Epochs"><span class="n">mne</span><span class="o">.</span><span class="n">Epochs</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">event_id</span><span class="p">,</span> <span class="n">tmin</span><span class="p">,</span> <span class="n">tmax</span><span class="p">,</span> <span class="n">picks</span><span class="o">=</span><span class="n">picks</span><span class="p">,</span>
+                     <span class="n">baseline</span><span class="o">=</span><span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">reject</span><span class="o">=</span><span class="n">reject</span><span class="p">,</span> <span class="n">preload</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
 
- <span class="c1">#    Equalize trial counts to eliminate bias (which would otherwise be</span>
- <span class="c1">#    introduced by the abs() performed below)</span>
- <a href="../generated/mne.epochs.equalize_epoch_counts.html#mne.epochs.equalize_epoch_counts" title="View documentation for mne.epochs.equalize_epoch_counts"><span class="n">equalize_epoch_counts</span></a><span class="p">([</span><span class="n">epochs1</span><span class="p">,</span> <span class="n">epochs2</span><span class="p">])</span>
+<span class="c1">#    Equalize trial counts to eliminate bias (which would otherwise be</span>
+<span class="c1">#    introduced by the abs() performed below)</span>
+<a href="../generated/mne.epochs.equalize_epoch_counts.html#mne.epochs.equalize_epoch_counts" title="View documentation for mne.epochs.equalize_epoch_counts"><span class="n">equalize_epoch_counts</span></a><span class="p">([</span><span class="n">epochs1</span><span class="p">,</span> <span class="n">epochs2</span><span class="p">])</span>
 </pre></div>
-</td></tr></table></div>
+</div>
 <p class="sphx-glr-script-out">Out:</p>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>72 matching events found
 Applying baseline correction (mode: mean)
@@ -335,47 +293,28 @@ Dropped 4 epochs
 </div>
 <div class="section" id="transform-to-source-space">
 <h2>Transform to source space<a class="headerlink" href="#transform-to-source-space" title="Permalink to this headline">¶</a></h2>
-<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>70
-71
-72
-73
-74
-75
-76
-77
-78
-79
-80
-81
-82
-83
-84
-85
-86
-87
-88
-89</pre></div></td><td class="code"><div class="highlight"><pre><span></span> <span class="n">fname_inv</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis-meg-oct-6-meg-inv.fif&#39;</span>
- <span class="n">snr</span> <span class="o">=</span> <span class="mf">3.0</span>
- <span class="n">lambda2</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">snr</span> <span class="o">**</span> <span class="mi">2</span>
- <span class="n">method</span> <span class="o">=</span> <span class="s2">&quot;dSPM&quot;</span>  <span class="c1"># use dSPM method (could also be MNE, sLORETA, or eLORETA)</span>
- <span class="n">inverse_operator</span> <span class="o">=</span> <a href="../generated/mne.minimum_norm.read_inverse_operator.html#mne.minimum_norm.read_inverse_operator" title="View documentation for mne.minimum_norm.read_inverse_operator"><span class="n">read_inverse_operator</span></a><span class="p">(</span><span class="n">fname_inv</span><span class="p">)</span>
- <span class="n">sample_vertices</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="p">[</span><span class="s1">&#39;vertno&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">inverse_operator</span><span class="p">[</span><span class="s1">&#39;src&#39;</span><span class="p">]]</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">fname_inv</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis-meg-oct-6-meg-inv.fif&#39;</span>
+<span class="n">snr</span> <span class="o">=</span> <span class="mf">3.0</span>
+<span class="n">lambda2</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">snr</span> <span class="o">**</span> <span class="mi">2</span>
+<span class="n">method</span> <span class="o">=</span> <span class="s2">&quot;dSPM&quot;</span>  <span class="c1"># use dSPM method (could also be MNE, sLORETA, or eLORETA)</span>
+<span class="n">inverse_operator</span> <span class="o">=</span> <a href="../generated/mne.minimum_norm.read_inverse_operator.html#mne.minimum_norm.read_inverse_operator" title="View documentation for mne.minimum_norm.read_inverse_operator"><span class="n">read_inverse_operator</span></a><span class="p">(</span><span class="n">fname_inv</span><span class="p">)</span>
+<span class="n">sample_vertices</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="p">[</span><span class="s1">&#39;vertno&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">inverse_operator</span><span class="p">[</span><span class="s1">&#39;src&#39;</span><span class="p">]]</span>
 
- <span class="c1">#    Let&#39;s average and compute inverse, resampling to speed things up</span>
- <span class="n">evoked1</span> <span class="o">=</span> <span class="n">epochs1</span><span class="o">.</span><span class="n">average</span><span class="p">()</span>
- <span class="n">evoked1</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="mi">50</span><span class="p">,</span> <span class="n">npad</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">)</span>
- <span class="n">condition1</span> <span class="o">=</span> <a href="../generated/mne.minimum_norm.apply_inverse.html#mne.minimum_norm.apply_inverse" title="View documentation for mne.minimum_norm.apply_inverse"><span class="n">apply_inverse</span></a><span class="p">(</span><span class="n">evoked1</span><span class="p">,</span> <span class="n">inverse_operator</span><span class="p">,</span> <span class="n">lambda2</span><span class="p">,</span> <span class="n">method</span><span class="p">)</span>
- <span class="n">evoked2</span> <span class="o">=</span> <span class="n">epochs2</span><span class="o">.</span><span class="n">average</span><span class="p">()</span>
- <span class="n">evoked2</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="mi">50</span><span class="p">,</span> <span class="n">npad</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">)</span>
- <span class="n">condition2</span> <span class="o">=</span> <a href="../generated/mne.minimum_norm.apply_inverse.html#mne.minimum_norm.apply_inverse" title="View documentation for mne.minimum_norm.apply_inverse"><span class="n">apply_inverse</span></a><span class="p">(</span><span class="n">evoked2</span><span class="p">,</span> <span class="n">inverse_operator</span><span class="p">,</span> <span class="n">lambda2</span><span class="p">,</span> <span class="n">method</span><span class="p">)</span>
+<span class="c1">#    Let&#39;s average and compute inverse, resampling to speed things up</span>
+<span class="n">evoked1</span> <span class="o">=</span> <span class="n">epochs1</span><span class="o">.</span><span class="n">average</span><span class="p">()</span>
+<span class="n">evoked1</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="mi">50</span><span class="p">,</span> <span class="n">npad</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">)</span>
+<span class="n">condition1</span> <span class="o">=</span> <a href="../generated/mne.minimum_norm.apply_inverse.html#mne.minimum_norm.apply_inverse" title="View documentation for mne.minimum_norm.apply_inverse"><span class="n">apply_inverse</span></a><span class="p">(</span><span class="n">evoked1</span><span class="p">,</span> <span class="n">inverse_operator</span><span class="p">,</span> <span class="n">lambda2</span><span class="p">,</span> <span class="n">method</span><span class="p">)</span>
+<span class="n">evoked2</span> <span class="o">=</span> <span class="n">epochs2</span><span class="o">.</span><span class="n">average</span><span class="p">()</span>
+<span class="n">evoked2</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="mi">50</span><span class="p">,</span> <span class="n">npad</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">)</span>
+<span class="n">condition2</span> <span class="o">=</span> <a href="../generated/mne.minimum_norm.apply_inverse.html#mne.minimum_norm.apply_inverse" title="View documentation for mne.minimum_norm.apply_inverse"><span class="n">apply_inverse</span></a><span class="p">(</span><span class="n">evoked2</span><span class="p">,</span> <span class="n">inverse_operator</span><span class="p">,</span> <span class="n">lambda2</span><span class="p">,</span> <span class="n">method</span><span class="p">)</span>
 
- <span class="c1">#    Let&#39;s only deal with t &gt; 0, cropping to reduce multiple comparisons</span>
- <span class="n">condition1</span><span class="o">.</span><span class="n">crop</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
- <span class="n">condition2</span><span class="o">.</span><span class="n">crop</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
- <span class="n">tmin</span> <span class="o">=</span> <span class="n">condition1</span><span class="o">.</span><span class="n">tmin</span>
- <span class="n">tstep</span> <span class="o">=</span> <span class="n">condition1</span><span class="o">.</span><span class="n">tstep</span>
+<span class="c1">#    Let&#39;s only deal with t &gt; 0, cropping to reduce multiple comparisons</span>
+<span class="n">condition1</span><span class="o">.</span><span class="n">crop</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+<span class="n">condition2</span><span class="o">.</span><span class="n">crop</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="bp">None</span><span class="p">)</span>
+<span class="n">tmin</span> <span class="o">=</span> <span class="n">condition1</span><span class="o">.</span><span class="n">tmin</span>
+<span class="n">tstep</span> <span class="o">=</span> <span class="n">condition1</span><span class="o">.</span><span class="n">tstep</span>
 </pre></div>
-</td></tr></table></div>
+</div>
 <p class="sphx-glr-script-out">Out:</p>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Reading inverse operator decomposition from /home/circleci/mne_data/MNE-sample-data/MEG/sample/sample_audvis-meg-oct-6-meg-inv.fif...
     Reading inverse operator info...
@@ -460,25 +399,17 @@ response (just noisy in source space) here.</p>
 significance under a permutation test is only p = 1/(2 ** 6) = 0.015,
 which is large.</p>
 </div>
-<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>104
-105
-106
-107
-108
-109
-110
-111
-112</pre></div></td><td class="code"><div class="highlight"><pre><span></span> <span class="n">n_vertices_sample</span><span class="p">,</span> <span class="n">n_times</span> <span class="o">=</span> <span class="n">condition1</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span>
- <span class="n">n_subjects</span> <span class="o">=</span> <span class="mi">7</span>
- <span class="k">print</span><span class="p">(</span><span class="s1">&#39;Simulating data for </span><span class="si">%d</span><span class="s1"> subjects.&#39;</span> <span class="o">%</span> <span class="n">n_subjects</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">n_vertices_sample</span><span class="p">,</span> <span class="n">n_times</span> <span class="o">=</span> <span class="n">condition1</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span>
+<span class="n">n_subjects</span> <span class="o">=</span> <span class="mi">7</span>
+<span class="k">print</span><span class="p">(</span><span class="s1">&#39;Simulating data for </span><span class="si">%d</span><span class="s1"> subjects.&#39;</span> <span class="o">%</span> <span class="n">n_subjects</span><span class="p">)</span>
 
- <span class="c1">#    Let&#39;s make sure our results replicate, so set the seed.</span>
- <a href="https://www.numpy.org/devdocs/reference/generated/numpy.random.seed.html#numpy.random.seed" title="View documentation for numpy.random.seed"><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span></a><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
- <span class="n">X</span> <span class="o">=</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.random.randn.html#numpy.random.randn" title="View documentation for numpy.random.randn"><span class="n">randn</span></a><span class="p">(</span><span class="n">n_vertices_sample</span><span class="p">,</span> <span class="n">n_times</span><span class="p">,</span> <span class="n">n_subjects</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="mi">10</span>
- <span class="n">X</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+=</span> <span class="n">condition1</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="p">:,</span> <a href="https://www.numpy.org/devdocs/reference/constants.html#numpy.newaxis" title="View documentation for numpy.newaxis"><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span></a><span class="p">]</span>
- <span class="n">X</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="n">condition2</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="p">:,</span> <a href="https://www.numpy.org/devdocs/reference/constants.html#numpy.newaxis" title="View documentation for numpy.newaxis"><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span></a><span class="p">]</span>
+<span class="c1">#    Let&#39;s make sure our results replicate, so set the seed.</span>
+<a href="https://www.numpy.org/devdocs/reference/generated/numpy.random.seed.html#numpy.random.seed" title="View documentation for numpy.random.seed"><span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">seed</span></a><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+<span class="n">X</span> <span class="o">=</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.random.randn.html#numpy.random.randn" title="View documentation for numpy.random.randn"><span class="n">randn</span></a><span class="p">(</span><span class="n">n_vertices_sample</span><span class="p">,</span> <span class="n">n_times</span><span class="p">,</span> <span class="n">n_subjects</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span> <span class="o">*</span> <span class="mi">10</span>
+<span class="n">X</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">+=</span> <span class="n">condition1</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="p">:,</span> <a href="https://www.numpy.org/devdocs/reference/constants.html#numpy.newaxis" title="View documentation for numpy.newaxis"><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span></a><span class="p">]</span>
+<span class="n">X</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="mi">1</span><span class="p">]</span> <span class="o">+=</span> <span class="n">condition2</span><span class="o">.</span><span class="n">data</span><span class="p">[:,</span> <span class="p">:,</span> <a href="https://www.numpy.org/devdocs/reference/constants.html#numpy.newaxis" title="View documentation for numpy.newaxis"><span class="n">np</span><span class="o">.</span><span class="n">newaxis</span></a><span class="p">]</span>
 </pre></div>
-</td></tr></table></div>
+</div>
 <p class="sphx-glr-script-out">Out:</p>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Simulating data for 7 subjects.
 </pre></div>
@@ -489,35 +420,22 @@ with vertices 0:10242 for each hemisphere. Usually you’d have to morph
 each subject’s data separately (and you might want to use morph_data
 instead), but here since all estimates are on ‘sample’ we can use one
 morph matrix for all the heavy lifting.</p>
-<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>122
-123
-124
-125
-126
-127
-128
-129
-130
-131
-132
-133
-134
-135</pre></div></td><td class="code"><div class="highlight"><pre><span></span> <span class="c1"># Read the source space we are morphing to</span>
- <span class="n">src</span> <span class="o">=</span> <a href="../generated/mne.read_source_spaces.html#mne.read_source_spaces" title="View documentation for mne.read_source_spaces"><span class="n">mne</span><span class="o">.</span><span class="n">read_source_spaces</span></a><span class="p">(</span><span class="n">src_fname</span><span class="p">)</span>
- <span class="n">fsave_vertices</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="p">[</span><span class="s1">&#39;vertno&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">src</span><span class="p">]</span>
- <span class="n">morph_mat</span> <span class="o">=</span> <a href="../generated/mne.compute_source_morph.html#mne.compute_source_morph" title="View documentation for mne.compute_source_morph"><span class="n">mne</span><span class="o">.</span><span class="n">compute_source_morph</span></a><span class="p">(</span>
-     <span class="n">src</span><span class="o">=</span><span class="n">inverse_operator</span><span class="p">[</span><span class="s1">&#39;src&#39;</span><span class="p">],</span> <span class="n">subject_to</span><span class="o">=</span><span class="s1">&#39;fsaverage&#39;</span><span class="p">,</span>
-     <span class="n">spacing</span><span class="o">=</span><span class="n">fsave_vertices</span><span class="p">,</span> <span class="n">subjects_dir</span><span class="o">=</span><span class="n">subjects_dir</span><span class="p">)</span><span class="o">.</span><span class="n">morph_mat</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Read the source space we are morphing to</span>
+<span class="n">src</span> <span class="o">=</span> <a href="../generated/mne.read_source_spaces.html#mne.read_source_spaces" title="View documentation for mne.read_source_spaces"><span class="n">mne</span><span class="o">.</span><span class="n">read_source_spaces</span></a><span class="p">(</span><span class="n">src_fname</span><span class="p">)</span>
+<span class="n">fsave_vertices</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="p">[</span><span class="s1">&#39;vertno&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">s</span> <span class="ow">in</span> <span class="n">src</span><span class="p">]</span>
+<span class="n">morph_mat</span> <span class="o">=</span> <a href="../generated/mne.compute_source_morph.html#mne.compute_source_morph" title="View documentation for mne.compute_source_morph"><span class="n">mne</span><span class="o">.</span><span class="n">compute_source_morph</span></a><span class="p">(</span>
+    <span class="n">src</span><span class="o">=</span><span class="n">inverse_operator</span><span class="p">[</span><span class="s1">&#39;src&#39;</span><span class="p">],</span> <span class="n">subject_to</span><span class="o">=</span><span class="s1">&#39;fsaverage&#39;</span><span class="p">,</span>
+    <span class="n">spacing</span><span class="o">=</span><span class="n">fsave_vertices</span><span class="p">,</span> <span class="n">subjects_dir</span><span class="o">=</span><span class="n">subjects_dir</span><span class="p">)</span><span class="o">.</span><span class="n">morph_mat</span>
 
- <span class="n">n_vertices_fsave</span> <span class="o">=</span> <span class="n">morph_mat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<span class="n">n_vertices_fsave</span> <span class="o">=</span> <span class="n">morph_mat</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
 
- <span class="c1">#    We have to change the shape for the dot() to work properly</span>
- <span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">n_vertices_sample</span><span class="p">,</span> <span class="n">n_times</span> <span class="o">*</span> <span class="n">n_subjects</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span>
- <span class="k">print</span><span class="p">(</span><span class="s1">&#39;Morphing data.&#39;</span><span class="p">)</span>
- <span class="n">X</span> <span class="o">=</span> <span class="n">morph_mat</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>  <span class="c1"># morph_mat is a sparse matrix</span>
- <span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">n_vertices_fsave</span><span class="p">,</span> <span class="n">n_times</span><span class="p">,</span> <span class="n">n_subjects</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
+<span class="c1">#    We have to change the shape for the dot() to work properly</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">n_vertices_sample</span><span class="p">,</span> <span class="n">n_times</span> <span class="o">*</span> <span class="n">n_subjects</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="s1">&#39;Morphing data.&#39;</span><span class="p">)</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">morph_mat</span><span class="o">.</span><span class="n">dot</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>  <span class="c1"># morph_mat is a sparse matrix</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">n_vertices_fsave</span><span class="p">,</span> <span class="n">n_times</span><span class="p">,</span> <span class="n">n_subjects</span><span class="p">,</span> <span class="mi">2</span><span class="p">)</span>
 </pre></div>
-</td></tr></table></div>
+</div>
 <p class="sphx-glr-script-out">Out:</p>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Reading a source space...
     [done]
@@ -538,55 +456,36 @@ Morphing data.
 <p>Finally, we want to compare the overall activity levels in each condition,
 the diff is taken along the last axis (condition). The negative sign makes
 it so condition1 &gt; condition2 shows up as “red blobs” (instead of blue).</p>
-<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>141
-142</pre></div></td><td class="code"><div class="highlight"><pre><span></span> <span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>  <span class="c1"># only magnitude</span>
- <span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">X</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="mi">1</span><span class="p">]</span>  <span class="c1"># make paired contrast</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">X</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">X</span><span class="p">)</span>  <span class="c1"># only magnitude</span>
+<span class="n">X</span> <span class="o">=</span> <span class="n">X</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">X</span><span class="p">[:,</span> <span class="p">:,</span> <span class="p">:,</span> <span class="mi">1</span><span class="p">]</span>  <span class="c1"># make paired contrast</span>
 </pre></div>
-</td></tr></table></div>
+</div>
 </div>
 <div class="section" id="compute-statistic">
 <h2>Compute statistic<a class="headerlink" href="#compute-statistic" title="Permalink to this headline">¶</a></h2>
 <p>To use an algorithm optimized for spatio-temporal clustering, we
 just pass the spatial connectivity matrix (instead of spatio-temporal)</p>
-<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>151
-152
-153
-154
-155
-156
-157
-158
-159
-160
-161
-162
-163
-164
-165
-166
-167
-168
-169</pre></div></td><td class="code"><div class="highlight"><pre><span></span> <span class="k">print</span><span class="p">(</span><span class="s1">&#39;Computing connectivity.&#39;</span><span class="p">)</span>
- <span class="n">connectivity</span> <span class="o">=</span> <a href="../generated/mne.spatial_src_connectivity.html#mne.spatial_src_connectivity" title="View documentation for mne.spatial_src_connectivity"><span class="n">mne</span><span class="o">.</span><span class="n">spatial_src_connectivity</span></a><span class="p">(</span><span class="n">src</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="s1">&#39;Computing connectivity.&#39;</span><span class="p">)</span>
+<span class="n">connectivity</span> <span class="o">=</span> <a href="../generated/mne.spatial_src_connectivity.html#mne.spatial_src_connectivity" title="View documentation for mne.spatial_src_connectivity"><span class="n">mne</span><span class="o">.</span><span class="n">spatial_src_connectivity</span></a><span class="p">(</span><span class="n">src</span><span class="p">)</span>
 
- <span class="c1">#    Note that X needs to be a multi-dimensional array of shape</span>
- <span class="c1">#    samples (subjects) x time x space, so we permute dimensions</span>
- <span class="n">X</span> <span class="o">=</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.transpose.html#numpy.transpose" title="View documentation for numpy.transpose"><span class="n">np</span><span class="o">.</span><span class="n">transpose</span></a><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
+<span class="c1">#    Note that X needs to be a multi-dimensional array of shape</span>
+<span class="c1">#    samples (subjects) x time x space, so we permute dimensions</span>
+<span class="n">X</span> <span class="o">=</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.transpose.html#numpy.transpose" title="View documentation for numpy.transpose"><span class="n">np</span><span class="o">.</span><span class="n">transpose</span></a><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">])</span>
 
- <span class="c1">#    Now let&#39;s actually do the clustering. This can take a long time...</span>
- <span class="c1">#    Here we set the threshold quite high to reduce computation.</span>
- <span class="n">p_threshold</span> <span class="o">=</span> <span class="mf">0.001</span>
- <span class="n">t_threshold</span> <span class="o">=</span> <span class="o">-</span><span class="n">stats</span><span class="o">.</span><span class="n">distributions</span><span class="o">.</span><span class="n">t</span><span class="o">.</span><span class="n">ppf</span><span class="p">(</span><span class="n">p_threshold</span> <span class="o">/</span> <span class="mf">2.</span><span class="p">,</span> <span class="n">n_subjects</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
- <span class="k">print</span><span class="p">(</span><span class="s1">&#39;Clustering.&#39;</span><span class="p">)</span>
- <span class="n">T_obs</span><span class="p">,</span> <span class="n">clusters</span><span class="p">,</span> <span class="n">cluster_p_values</span><span class="p">,</span> <span class="n">H0</span> <span class="o">=</span> <span class="n">clu</span> <span class="o">=</span> \
-     <a href="../generated/mne.stats.spatio_temporal_cluster_1samp_test.html#mne.stats.spatio_temporal_cluster_1samp_test" title="View documentation for mne.stats.spatio_temporal_cluster_1samp_test"><span class="n">spatio_temporal_cluster_1samp_test</span></a><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">connectivity</span><span class="o">=</span><span class="n">connectivity</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-                                        <span class="n">threshold</span><span class="o">=</span><span class="n">t_threshold</span><span class="p">,</span> <span class="n">buffer_size</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
-                                        <span class="n">verbose</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
- <span class="c1">#    Now select the clusters that are sig. at p &lt; 0.05 (note that this value</span>
- <span class="c1">#    is multiple-comparisons corrected).</span>
- <span class="n">good_cluster_inds</span> <span class="o">=</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.where.html#numpy.where" title="View documentation for numpy.where"><span class="n">np</span><span class="o">.</span><span class="n">where</span></a><span class="p">(</span><span class="n">cluster_p_values</span> <span class="o">&lt;</span> <span class="mf">0.05</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+<span class="c1">#    Now let&#39;s actually do the clustering. This can take a long time...</span>
+<span class="c1">#    Here we set the threshold quite high to reduce computation.</span>
+<span class="n">p_threshold</span> <span class="o">=</span> <span class="mf">0.001</span>
+<span class="n">t_threshold</span> <span class="o">=</span> <span class="o">-</span><span class="n">stats</span><span class="o">.</span><span class="n">distributions</span><span class="o">.</span><span class="n">t</span><span class="o">.</span><span class="n">ppf</span><span class="p">(</span><span class="n">p_threshold</span> <span class="o">/</span> <span class="mf">2.</span><span class="p">,</span> <span class="n">n_subjects</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="s1">&#39;Clustering.&#39;</span><span class="p">)</span>
+<span class="n">T_obs</span><span class="p">,</span> <span class="n">clusters</span><span class="p">,</span> <span class="n">cluster_p_values</span><span class="p">,</span> <span class="n">H0</span> <span class="o">=</span> <span class="n">clu</span> <span class="o">=</span> \
+    <a href="../generated/mne.stats.spatio_temporal_cluster_1samp_test.html#mne.stats.spatio_temporal_cluster_1samp_test" title="View documentation for mne.stats.spatio_temporal_cluster_1samp_test"><span class="n">spatio_temporal_cluster_1samp_test</span></a><span class="p">(</span><span class="n">X</span><span class="p">,</span> <span class="n">connectivity</span><span class="o">=</span><span class="n">connectivity</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
+                                       <span class="n">threshold</span><span class="o">=</span><span class="n">t_threshold</span><span class="p">,</span> <span class="n">buffer_size</span><span class="o">=</span><span class="bp">None</span><span class="p">,</span>
+                                       <span class="n">verbose</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="c1">#    Now select the clusters that are sig. at p &lt; 0.05 (note that this value</span>
+<span class="c1">#    is multiple-comparisons corrected).</span>
+<span class="n">good_cluster_inds</span> <span class="o">=</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.where.html#numpy.where" title="View documentation for numpy.where"><span class="n">np</span><span class="o">.</span><span class="n">where</span></a><span class="p">(</span><span class="n">cluster_p_values</span> <span class="o">&lt;</span> <span class="mf">0.05</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
 </pre></div>
-</td></tr></table></div>
+</div>
 <p class="sphx-glr-script-out">Out:</p>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Computing connectivity.
 -- number of connected vertices : 20484
@@ -603,47 +502,31 @@ Done.
 </div>
 <div class="section" id="visualize-the-clusters">
 <h2>Visualize the clusters<a class="headerlink" href="#visualize-the-clusters" title="Permalink to this headline">¶</a></h2>
-<div class="highlight-python notranslate"><table class="highlighttable"><tr><td class="linenos"><div class="linenodiv"><pre>174
-175
-176
-177
-178
-179
-180
-181
-182
-183
-184
-185
-186
-187
-188
-189
-190</pre></div></td><td class="code"><div class="highlight"><pre><span></span> <span class="k">print</span><span class="p">(</span><span class="s1">&#39;Visualizing clusters.&#39;</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">print</span><span class="p">(</span><span class="s1">&#39;Visualizing clusters.&#39;</span><span class="p">)</span>
 
- <span class="c1">#    Now let&#39;s build a convenient representation of each cluster, where each</span>
- <span class="c1">#    cluster becomes a &quot;time point&quot; in the SourceEstimate</span>
- <span class="n">stc_all_cluster_vis</span> <span class="o">=</span> <a href="../generated/mne.stats.summarize_clusters_stc.html#mne.stats.summarize_clusters_stc" title="View documentation for mne.stats.summarize_clusters_stc"><span class="n">summarize_clusters_stc</span></a><span class="p">(</span><span class="n">clu</span><span class="p">,</span> <span class="n">tstep</span><span class="o">=</span><span class="n">tstep</span><span class="p">,</span>
-                                              <span class="n">vertices</span><span class="o">=</span><span class="n">fsave_vertices</span><span class="p">,</span>
-                                              <span class="n">subject</span><span class="o">=</span><span class="s1">&#39;fsaverage&#39;</span><span class="p">)</span>
+<span class="c1">#    Now let&#39;s build a convenient representation of each cluster, where each</span>
+<span class="c1">#    cluster becomes a &quot;time point&quot; in the SourceEstimate</span>
+<span class="n">stc_all_cluster_vis</span> <span class="o">=</span> <a href="../generated/mne.stats.summarize_clusters_stc.html#mne.stats.summarize_clusters_stc" title="View documentation for mne.stats.summarize_clusters_stc"><span class="n">summarize_clusters_stc</span></a><span class="p">(</span><span class="n">clu</span><span class="p">,</span> <span class="n">tstep</span><span class="o">=</span><span class="n">tstep</span><span class="p">,</span>
+                                             <span class="n">vertices</span><span class="o">=</span><span class="n">fsave_vertices</span><span class="p">,</span>
+                                             <span class="n">subject</span><span class="o">=</span><span class="s1">&#39;fsaverage&#39;</span><span class="p">)</span>
 
- <span class="c1">#    Let&#39;s actually plot the first &quot;time point&quot; in the SourceEstimate, which</span>
- <span class="c1">#    shows all the clusters, weighted by duration</span>
- <span class="n">subjects_dir</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_path</span><span class="p">,</span> <span class="s1">&#39;subjects&#39;</span><span class="p">)</span>
- <span class="c1"># blue blobs are for condition A &lt; condition B, red for A &gt; B</span>
- <span class="n">brain</span> <span class="o">=</span> <span class="n">stc_all_cluster_vis</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
-     <span class="n">hemi</span><span class="o">=</span><span class="s1">&#39;both&#39;</span><span class="p">,</span> <span class="n">views</span><span class="o">=</span><span class="s1">&#39;lateral&#39;</span><span class="p">,</span> <span class="n">subjects_dir</span><span class="o">=</span><span class="n">subjects_dir</span><span class="p">,</span>
-     <span class="n">time_label</span><span class="o">=</span><span class="s1">&#39;Duration significant (ms)&#39;</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">800</span><span class="p">,</span> <span class="mi">800</span><span class="p">),</span>
-     <span class="n">smoothing_steps</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">clim</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="s1">&#39;value&#39;</span><span class="p">,</span> <span class="n">pos_lims</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">40</span><span class="p">]))</span>
- <span class="c1"># brain.save_image(&#39;clusters.png&#39;)</span>
+<span class="c1">#    Let&#39;s actually plot the first &quot;time point&quot; in the SourceEstimate, which</span>
+<span class="c1">#    shows all the clusters, weighted by duration</span>
+<span class="n">subjects_dir</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_path</span><span class="p">,</span> <span class="s1">&#39;subjects&#39;</span><span class="p">)</span>
+<span class="c1"># blue blobs are for condition A &lt; condition B, red for A &gt; B</span>
+<span class="n">brain</span> <span class="o">=</span> <span class="n">stc_all_cluster_vis</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+    <span class="n">hemi</span><span class="o">=</span><span class="s1">&#39;both&#39;</span><span class="p">,</span> <span class="n">views</span><span class="o">=</span><span class="s1">&#39;lateral&#39;</span><span class="p">,</span> <span class="n">subjects_dir</span><span class="o">=</span><span class="n">subjects_dir</span><span class="p">,</span>
+    <span class="n">time_label</span><span class="o">=</span><span class="s1">&#39;Duration significant (ms)&#39;</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">800</span><span class="p">,</span> <span class="mi">800</span><span class="p">),</span>
+    <span class="n">smoothing_steps</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">clim</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="s1">&#39;value&#39;</span><span class="p">,</span> <span class="n">pos_lims</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">40</span><span class="p">]))</span>
+<span class="c1"># brain.save_image(&#39;clusters.png&#39;)</span>
 </pre></div>
-</td></tr></table></div>
+</div>
 <img alt="../_images/sphx_glr_plot_stats_cluster_spatio_temporal_001.png" class="sphx-glr-single-img" src="../_images/sphx_glr_plot_stats_cluster_spatio_temporal_001.png" />
 <p class="sphx-glr-script-out">Out:</p>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Visualizing clusters.
 </pre></div>
 </div>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  24.728 seconds)</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  20.918 seconds)</p>
 <p><strong>Estimated memory usage:</strong>  10 MB</p>
 <div class="sphx-glr-footer class sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-tutorials-plot-stats-cluster-spatio-temporal-py">
 <div class="sphx-glr-download docutils container">
@@ -675,7 +558,7 @@ Done.
       <li><a href="faq.html#cite">Cite MNE</a></li>
       <li class="pull-right"><a href="#">Back to top</a></li>
     </ul>
-    <p>&copy; Copyright 2012-2018, MNE Developers. Last updated on 2018-11-14.</p>
+    <p>&copy; Copyright 2012-2018, MNE Developers. Last updated on 2018-11-16.</p>
   </div>
 </footer>
   </body>
