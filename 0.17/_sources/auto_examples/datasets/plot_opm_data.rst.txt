@@ -1,0 +1,396 @@
+.. note::
+    :class: sphx-glr-download-link-note
+
+    Click :ref:`here <sphx_glr_download_auto_examples_datasets_plot_opm_data.py>` to download the full example code
+.. rst-class:: sphx-glr-example-title
+
+.. _sphx_glr_auto_examples_datasets_plot_opm_data.py:
+
+
+Optically pumped magnetometer (OPM) data
+========================================
+
+In this dataset, electrical median nerve stimulation was delivered to the
+left wrist of the subject. Somatosensory evoked fields were measured using
+nine QuSpin SERF OPMs placed over the right-hand side somatomotor area.
+Here we demonstrate how to localize these custom OPM data in MNE.
+
+
+.. code-block:: python
+
+
+    # sphinx_gallery_thumbnail_number = 4
+
+    import os.path as op
+
+    import numpy as np
+    import mne
+    from mayavi import mlab
+
+    data_path = mne.datasets.opm.data_path()
+    subject = 'OPM_sample'
+    subjects_dir = op.join(data_path, 'subjects')
+    raw_fname = op.join(data_path, 'MEG', 'OPM', 'OPM_SEF_raw.fif')
+    bem_fname = op.join(subjects_dir, subject, 'bem',
+                        subject + '-5120-5120-5120-bem-sol.fif')
+    fwd_fname = op.join(data_path, 'MEG', 'OPM', 'OPM_sample-fwd.fif')
+    coil_def_fname = op.join(data_path, 'MEG', 'OPM', 'coil_def.dat')
+
+
+
+
+
+
+
+Prepare data for localization
+-----------------------------
+First we filter and epoch the data:
+
+
+.. code-block:: python
+
+
+    raw = mne.io.read_raw_fif(raw_fname, preload=True)
+    raw.filter(None, 90, h_trans_bandwidth=10.)
+    raw.notch_filter(50., notch_widths=1)
+
+
+    # Set epoch rejection threshold a bit larger than for SQUIDs
+    reject = dict(mag=2e-10)
+    tmin, tmax = -0.5, 1
+
+    # Find Median nerve stimulator trigger
+    event_id = dict(Median=257)
+    events = mne.find_events(raw, stim_channel='STI101', mask=257, mask_type='and')
+    picks = mne.pick_types(raw.info, meg=True, eeg=False)
+    epochs = mne.Epochs(raw, events, event_id, tmin, tmax,
+                        reject=reject, picks=picks, proj=False, decim=4)
+    evoked = epochs.average()
+    evoked.plot()
+    cov = mne.compute_covariance(epochs, tmax=0.)
+
+
+
+
+.. image:: /auto_examples/datasets/images/sphx_glr_plot_opm_data_001.png
+    :class: sphx-glr-single-img
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    Opening raw data file /home/circleci/mne_data/MNE-OPM-data/MEG/OPM/OPM_SEF_raw.fif...
+    Isotrak not found
+        Range : 0 ... 700999 =      0.000 ...   700.999 secs
+    Ready.
+    Current compensation grade : 0
+    Reading 0 ... 700999  =      0.000 ...   700.999 secs...
+    Setting up low-pass filter at 90 Hz
+    Filter length of 331 samples (0.331 sec) selected
+    Setting up band-stop filter from 49 - 51 Hz
+    Filter length of 6601 samples (6.601 sec) selected
+    Trigger channel has a non-zero initial value of 256 (consider using initial_event=True to detect this event)
+    201 events found
+    Event IDs: [257]
+    201 matching events found
+    Applying baseline correction (mode: mean)
+    Not setting metadata
+    Loading data for 201 events and 1501 original time points ...
+    0 bad epochs dropped
+    Estimating covariance using EMPIRICAL
+    Done.
+    Number of samples used : 25326
+    [done]
+
+
+Examine our coordinate alignment for source localization and compute a
+forward operator:
+
+.. note:: The Head<->MRI transform is an identity matrix, as the
+          co-registration method used equates the two coordinate
+          systems. This mis-defines the head coordinate system
+          (which should be based on the LPA, Nasion, and RPA)
+          but should be fine for these analyses.
+
+
+.. code-block:: python
+
+
+    bem = mne.read_bem_solution(bem_fname)
+    trans = None
+
+    # To compute the forward solution, we must
+    # provide our temporary/custom coil definitions, which can be done as::
+    #
+    # with mne.use_coil_def(coil_def_fname):
+    #     fwd = mne.make_forward_solution(
+    #         raw.info, trans, src, bem, eeg=False, mindist=5.0,
+    #         n_jobs=1, verbose=True)
+
+    fwd = mne.read_forward_solution(fwd_fname)
+
+    with mne.use_coil_def(coil_def_fname):
+        mne.viz.plot_alignment(
+            raw.info, trans, subject, subjects_dir, ('head', 'pial'), bem=bem)
+
+    mlab.view(45, 60, distance=0.4, focalpoint=(0.02, 0, 0.04))
+
+
+
+
+.. image:: /auto_examples/datasets/images/sphx_glr_plot_opm_data_002.png
+    :class: sphx-glr-single-img
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    Loading surfaces...
+    Three-layer model surfaces loaded.
+
+    Loading the solution matrix...
+
+    Loaded linear_collocation BEM solution from /home/circleci/mne_data/MNE-OPM-data/subjects/OPM_sample/bem/OPM_sample-5120-5120-5120-bem-sol.fif
+    Reading forward solution from /home/circleci/mne_data/MNE-OPM-data/MEG/OPM/OPM_sample-fwd.fif...
+        Reading a source space...
+        Computing patch statistics...
+        Patch information added...
+        Distance information added...
+        [done]
+        Reading a source space...
+        Computing patch statistics...
+        Patch information added...
+        Distance information added...
+        [done]
+        2 source spaces read
+        Desired named matrix (kind = 3523) not available
+        Read MEG forward solution (8196 sources, 9 channels, free orientations)
+        Source spaces transformed to the forward solution coordinate frame
+    Getting helmet for system unknown (derived from 9 MEG channel locations)
+
+
+Perform dipole fitting
+----------------------
+
+
+.. code-block:: python
+
+
+    # Fit dipoles on a subset of time points
+    with mne.use_coil_def(coil_def_fname):
+        dip_opm, _ = mne.fit_dipole(evoked.copy().crop(0.015, 0.080),
+                                    cov, bem, trans, verbose=True)
+    idx = np.argmax(dip_opm.gof)
+    print('Best dipole at t=%0.1f ms with %0.1f%% GOF'
+          % (1000 * dip_opm.times[idx], dip_opm.gof[idx]))
+
+    # Plot N20m dipole as an example
+    dip_opm.plot_locations(trans, subject, subjects_dir,
+                           mode='orthoview', idx=idx)
+
+
+
+
+.. image:: /auto_examples/datasets/images/sphx_glr_plot_opm_data_003.png
+    :class: sphx-glr-single-img
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    BEM               : <ConductorModel  |  BEM (3 layers)>
+    MRI transform     : identity
+    Head origin       :    1.3  -15.5   36.7 mm rad =   77.9 mm.
+    Guess grid        :   20.0 mm
+    Guess mindist     :    5.0 mm
+    Guess exclude     :   20.0 mm
+    Using standard MEG coil definitions.
+
+    Coordinate transformation: MRI (surface RAS) -> head
+         1.000000  0.000000  0.000000       0.00 mm
+         0.000000  1.000000  0.000000       0.00 mm
+         0.000000  0.000000  1.000000       0.00 mm
+         0.000000  0.000000  0.000000       1.00
+    Coordinate transformation: MEG device -> head
+         0.999800  0.015800 -0.009200       0.10 mm
+        -0.018100  0.930500 -0.365900      16.60 mm
+         0.002800  0.366000  0.930600     -14.40 mm
+         0.000000  0.000000  0.000000       1.00
+    0 bad channels total
+    Read   9 MEG channels from info
+    2 coil definitions read
+    84 coil definitions read
+    Coordinate transformation: MEG device -> head
+         0.999800  0.015800 -0.009200       0.10 mm
+        -0.018100  0.930500 -0.365900      16.60 mm
+         0.002800  0.366000  0.930600     -14.40 mm
+         0.000000  0.000000  0.000000       1.00
+    MEG coil definitions created in head coordinates.
+    Decomposing the sensor noise covariance matrix...
+    estimated rank (mag): 9
+    Setting small MAG eigenvalues to zero.
+    Not doing PCA for MAG.
+        Created the whitener using a noise covariance matrix with rank 9 (0 small eigenvalues omitted)
+
+    ---- Computing the forward solution for the guesses...
+    Guess surface (inner_skull) is in MRI (surface RAS) coordinates
+    Filtering (grid =     20 mm)...
+    Surface CM = (   1.5  -15.0   35.4) mm
+    Surface fits inside a sphere with radius  102.1 mm
+    Surface extent:
+        x =  -73.3 ...   77.3 mm
+        y = -100.7 ...   86.4 mm
+        z =  -42.9 ...  108.2 mm
+    Grid extent:
+        x =  -80.0 ...   80.0 mm
+        y = -120.0 ...  100.0 mm
+        z =  -60.0 ...  120.0 mm
+    1080 sources before omitting any.
+    543 sources after omitting infeasible sources.
+    Source spaces are in MRI coordinates.
+    Checking that the sources are inside the bounding surface and at least    5.0 mm away (will take a few...)
+    299 source space points omitted because they are outside the inner skull surface.
+    30 source space points omitted because of the    5.0-mm distance limit.
+    Thank you for waiting.
+    214 sources remaining after excluding the sources outside the surface and less than    5.0 mm inside.
+    Go through all guess source locations...
+    [done 214 sources]
+    ---- Fitted :    16.0 ms, distance to inner skull : 5.0005 mm
+    ---- Fitted :    20.0 ms, distance to inner skull : 11.9923 mm
+    ---- Fitted :    24.0 ms, distance to inner skull : 7.2798 mm
+    ---- Fitted :    28.0 ms, distance to inner skull : 8.6452 mm
+    ---- Fitted :    32.0 ms, distance to inner skull : 14.8044 mm
+    ---- Fitted :    36.0 ms, distance to inner skull : 9.6319 mm
+    ---- Fitted :    40.0 ms, distance to inner skull : 9.1578 mm
+    ---- Fitted :    44.0 ms, distance to inner skull : 12.6649 mm
+    ---- Fitted :    48.0 ms, distance to inner skull : 14.9163 mm
+    ---- Fitted :    52.0 ms, distance to inner skull : 15.7407 mm
+    ---- Fitted :    56.0 ms, distance to inner skull : 16.9577 mm
+    ---- Fitted :    60.0 ms, distance to inner skull : 18.7919 mm
+    ---- Fitted :    64.0 ms, distance to inner skull : 18.5921 mm
+    ---- Fitted :    68.0 ms, distance to inner skull : 16.1823 mm
+    ---- Fitted :    72.0 ms, distance to inner skull : 13.0160 mm
+    ---- Fitted :    76.0 ms, distance to inner skull : 8.6882 mm
+    ---- Fitted :    80.0 ms, distance to inner skull : 5.5176 mm
+    No projector specified for this dataset. Please consider the method self.add_proj.
+    17 time points fitted
+    Best dipole at t=52.0 ms with 99.8% GOF
+
+
+Perform minimum-norm localization
+---------------------------------
+Due to the small number of sensors, there will be some leakage of activity
+to areas with low/no sensitivity. Constraining the source space to
+areas we are sensitive to might be a good idea.
+
+
+.. code-block:: python
+
+
+    inverse_operator = mne.minimum_norm.make_inverse_operator(
+        evoked.info, fwd, cov)
+
+    method = "MNE"
+    snr = 3.
+    lambda2 = 1. / snr ** 2
+    stc = mne.minimum_norm.apply_inverse(
+        evoked, inverse_operator, lambda2, method=method,
+        pick_ori=None, verbose=True)
+
+    # Plot source estimate at time of best dipole fit
+    brain = stc.plot(hemi='rh', views='lat', subjects_dir=subjects_dir,
+                     initial_time=dip_opm.times[idx],
+                     clim=dict(kind='percent', lims=[99, 99.9, 99.99]))
+
+
+
+.. image:: /auto_examples/datasets/images/sphx_glr_plot_opm_data_004.png
+    :class: sphx-glr-single-img
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    Converting forward solution to surface orientation
+        Average patch normals will be employed in the rotation to the local surface coordinates....
+        Converting to surface-based source orientations...
+        [done]
+    Computing inverse operator with 9 channels.
+    estimated rank (mag): 9
+    Setting small MAG eigenvalues to zero.
+    Not doing PCA for MAG.
+        Created the whitener using a noise covariance matrix with rank 9 (0 small eigenvalues omitted)
+    Creating the depth weighting matrix...
+        9 magnetometer or axial gradiometer channels
+        limit = 6597/8196 = 10.009502
+        scale = 5.90306e-11 exp = 0.8
+    Computing inverse operator with 9 channels.
+    Creating the source covariance matrix
+    Applying loose dipole orientations. Loose value of 0.2.
+    Whitening the forward solution.
+    Adjusting source covariance matrix.
+    Computing SVD of whitened and weighted lead field matrix.
+        largest singular value = 1.58618
+        scaling factor to adjust the trace = 9.70367e+17
+    Preparing the inverse operator for use...
+        Scaled noise and source covariance from nave = 1 to nave = 201
+        Created the regularized inverter
+        The projection vectors do not apply to these channels.
+        Created the whitener using a noise covariance matrix with rank 9 (0 small eigenvalues omitted)
+    Applying inverse operator to "Median"...
+        Picked 9 channels from the data
+        Computing inverse...
+        Eigenleads need to be weighted ...
+        Computing residual...
+        Explained  95.3% variance
+        Combining the current components...
+    [done]
+    Using control points [6.42652723e-11 1.21195124e-10 2.13789206e-10]
+
+
+
+.. rst-class:: sphx-glr-timing
+
+   **Total running time of the script:** ( 0 minutes  41.148 seconds)
+
+**Estimated memory usage:**  876 MB
+
+
+.. _sphx_glr_download_auto_examples_datasets_plot_opm_data.py:
+
+
+.. only :: html
+
+ .. container:: sphx-glr-footer
+    :class: sphx-glr-footer-example
+
+
+
+  .. container:: sphx-glr-download
+
+     :download:`Download Python source code: plot_opm_data.py <plot_opm_data.py>`
+
+
+
+  .. container:: sphx-glr-download
+
+     :download:`Download Jupyter notebook: plot_opm_data.ipynb <plot_opm_data.ipynb>`
+
+
+.. only:: html
+
+ .. rst-class:: sphx-glr-signature
+
+    `Gallery generated by Sphinx-Gallery <https://sphinx-gallery.readthedocs.io>`_
