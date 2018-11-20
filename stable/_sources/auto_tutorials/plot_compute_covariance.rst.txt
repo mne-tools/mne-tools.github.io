@@ -19,7 +19,6 @@ construct a noise covariance matrix that can be used when computing the
 minimum-norm inverse solution. For more information, see :ref:`BABDEEEB`.
 
 
-
 .. code-block:: python
 
 
@@ -40,7 +39,6 @@ construct a noise covariance matrix that can be used when computing the
 inverse solution. For more information, see :ref:`BABDEEEB`.
 
 
-
 .. code-block:: python
 
     data_path = sample.data_path()
@@ -57,6 +55,31 @@ inverse solution. For more information, see :ref:`BABDEEEB`.
 
 
 
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    Opening raw data file /home/circleci/mne_data/MNE-sample-data/MEG/sample/ernoise_raw.fif...
+    Isotrak not found
+        Read a total of 3 projection items:
+            PCA-v1 (1 x 102)  idle
+            PCA-v2 (1 x 102)  idle
+            PCA-v3 (1 x 102)  idle
+        Range : 19800 ... 85867 =     32.966 ...   142.965 secs
+    Ready.
+    Current compensation grade : 0
+    Opening raw data file /home/circleci/mne_data/MNE-sample-data/MEG/sample/sample_audvis_raw.fif...
+        Read a total of 3 projection items:
+            PCA-v1 (1 x 102)  idle
+            PCA-v2 (1 x 102)  idle
+            PCA-v3 (1 x 102)  idle
+        Range : 25800 ... 192599 =     42.956 ...   320.670 secs
+    Ready.
+    Current compensation grade : 0
+    Adding average EEG reference projection.
+    1 projection items deactivated
 
 
 The definition of noise depends on the paradigm. In MEG it is quite common
@@ -78,7 +101,6 @@ the MEG data, and, hence, we want to make sure they get stored in the
 covariance object.
 
 
-
 .. code-block:: python
 
 
@@ -94,6 +116,16 @@ covariance object.
 
 
 
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    3 projection items deactivated
+    Using up to 550 segments
+    Number of samples used : 66000
+    [done]
 
 
 Now that you have the covariance matrix in an MNE-Python object you can
@@ -107,7 +139,6 @@ covariance matrix will be inaccurate. In MNE this is done by default, but
 just to be sure, we define it here manually.
 
 
-
 .. code-block:: python
 
     events = mne.find_events(raw)
@@ -119,11 +150,18 @@ just to be sure, we define it here manually.
 
 
 
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    320 events found
+    Event IDs: [ 1  2  3  4  5 32]
 
 
 Note that this method also attenuates any activity in your
 source estimates that resemble the baseline, if you like it or not.
-
 
 
 .. code-block:: python
@@ -134,6 +172,16 @@ source estimates that resemble the baseline, if you like it or not.
 
 
 
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    Estimating covariance using EMPIRICAL
+    Done.
+    Number of samples used : 2952
+    [done]
 
 
 Plot the covariance matrices
@@ -141,7 +189,6 @@ Plot the covariance matrices
 
 Try setting proj to False to see the effect. Notice that the projectors in
 epochs are already applied, so ``proj`` parameter has no effect.
-
 
 
 .. code-block:: python
@@ -176,6 +223,14 @@ epochs are already applied, so ``proj`` parameter has no effect.
             :class: sphx-glr-multi-img
 
 
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    Created an SSP operator (subspace dimension = 3)
+        Created an SSP operator (subspace dimension = 4)
 
 
 How should I regularize the covariance matrix?
@@ -193,16 +248,56 @@ described in [1]_. For this the 'auto' option can be used. With this
 option cross-validation will be used to learn the optimal regularization:
 
 
-
 .. code-block:: python
 
 
-    noise_cov_reg = mne.compute_covariance(epochs, tmax=0., method='auto')
+    noise_cov_reg = mne.compute_covariance(epochs, tmax=0., method='auto',
+                                           rank=None)
 
 
 
 
 
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    Created an SSP operator (subspace dimension = 4)
+    estimated rank (mag + grad): 302
+    Setting small MEG eigenvalues to zero.
+    Not doing PCA for MEG.
+    estimated rank (eeg): 58
+    Setting small EEG eigenvalues to zero.
+    Not doing PCA for EEG.
+    Reducing data rank from 364 -> 360
+    Estimating covariance using SHRUNK
+    Done.
+    Estimating covariance using DIAGONAL_FIXED
+        MAG regularization : 0.1
+        GRAD regularization : 0.1
+        EEG regularization : 0.1
+    Done.
+    Estimating covariance using EMPIRICAL
+    Done.
+    Using cross-validation to select the best estimator.
+        MAG regularization : 0.1
+        GRAD regularization : 0.1
+        EEG regularization : 0.1
+        MAG regularization : 0.1
+        GRAD regularization : 0.1
+        EEG regularization : 0.1
+        MAG regularization : 0.1
+        GRAD regularization : 0.1
+        EEG regularization : 0.1
+    Number of samples used : 2952
+    log-likelihood on unseen data (descending order):
+       shrunk: -1768.804
+       diagonal_fixed: -1785.472
+       empirical: -1797.005
+    selecting best estimator: shrunk
+    [done]
 
 
 This procedure evaluates the noise covariance quantitatively by how well it
@@ -219,7 +314,6 @@ Based on the same reasoning, the expected value for the global field power
 of freedom, e.g. ``ddof=3`` with 2 active SSP vectors):
 
 
-
 .. code-block:: python
 
 
@@ -233,6 +327,26 @@ of freedom, e.g. ``ddof=3`` with 2 active SSP vectors):
     :class: sphx-glr-single-img
 
 
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    Created an SSP operator (subspace dimension = 1)
+    8 projection items activated
+    estimated rank (eeg): 58
+    8 projection items activated
+    estimated rank (grad): 203
+    Created an SSP operator (subspace dimension = 3)
+    8 projection items activated
+    estimated rank (mag): 99
+        Created an SSP operator (subspace dimension = 4)
+    Setting small MEG eigenvalues to zero.
+    Not doing PCA for MEG.
+    Setting small EEG eigenvalues to zero.
+    Not doing PCA for EEG.
+        Created the whitener using a noise covariance matrix with rank 360 (4 small eigenvalues omitted)
 
 
 This plot displays both, the whitened evoked signals for each channels and
@@ -258,12 +372,12 @@ compared (see
 :ref:`sphx_glr_auto_examples_inverse_plot_covariance_whitening_dspm.py`):
 
 
-
 .. code-block:: python
 
 
     noise_covs = mne.compute_covariance(
-        epochs, tmax=0., method=('empirical', 'shrunk'), return_estimators=True)
+        epochs, tmax=0., method=('empirical', 'shrunk'), return_estimators=True,
+        rank=None)
     evoked.plot_white(noise_covs, time_unit='s')
 
 
@@ -274,15 +388,65 @@ compared (see
     :class: sphx-glr-single-img
 
 
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    Created an SSP operator (subspace dimension = 4)
+    estimated rank (mag + grad): 302
+    Setting small MEG eigenvalues to zero.
+    Not doing PCA for MEG.
+    estimated rank (eeg): 58
+    Setting small EEG eigenvalues to zero.
+    Not doing PCA for EEG.
+    Reducing data rank from 364 -> 360
+    Estimating covariance using EMPIRICAL
+    Done.
+    Estimating covariance using SHRUNK
+    Done.
+    Using cross-validation to select the best estimator.
+    Number of samples used : 2952
+    log-likelihood on unseen data (descending order):
+       shrunk: -1768.804
+       empirical: -1797.005
+    [done]
+    Created an SSP operator (subspace dimension = 1)
+    8 projection items activated
+    estimated rank (eeg): 58
+    8 projection items activated
+    estimated rank (grad): 203
+    Created an SSP operator (subspace dimension = 3)
+    8 projection items activated
+    estimated rank (mag): 99
+    Created an SSP operator (subspace dimension = 1)
+    8 projection items activated
+    estimated rank (eeg): 58
+    8 projection items activated
+    estimated rank (grad): 203
+    Created an SSP operator (subspace dimension = 3)
+    8 projection items activated
+    estimated rank (mag): 99
+        Created an SSP operator (subspace dimension = 4)
+    Setting small MEG eigenvalues to zero.
+    Not doing PCA for MEG.
+    Setting small EEG eigenvalues to zero.
+    Not doing PCA for EEG.
+        Created the whitener using a noise covariance matrix with rank 360 (4 small eigenvalues omitted)
+        Created an SSP operator (subspace dimension = 4)
+    Setting small MEG eigenvalues to zero.
+    Not doing PCA for MEG.
+    Setting small EEG eigenvalues to zero.
+    Not doing PCA for EEG.
+        Created the whitener using a noise covariance matrix with rank 360 (4 small eigenvalues omitted)
 
 
 This will plot the whitened evoked for the optimal estimator and display the
 GFPs for all estimators as separate lines in the related panel.
 
-
 Finally, let's have a look at the difference between empty room and
 event related covariance.
-
 
 
 .. code-block:: python
@@ -303,11 +467,34 @@ event related covariance.
     :class: sphx-glr-single-img
 
 
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    8 projection items activated
+    estimated rank (grad): 203
+    Created an SSP operator (subspace dimension = 3)
+    8 projection items activated
+    estimated rank (mag): 99
+    7 projection items activated
+    estimated rank (grad): 203
+    Created an SSP operator (subspace dimension = 3)
+    7 projection items activated
+    estimated rank (mag): 99
+        Created an SSP operator (subspace dimension = 3)
+    Setting small MEG eigenvalues to zero.
+    Not doing PCA for MEG.
+        Created the whitener using a noise covariance matrix with rank 302 (3 small eigenvalues omitted)
+        Created an SSP operator (subspace dimension = 3)
+    Setting small MEG eigenvalues to zero.
+    Not doing PCA for MEG.
+        Created the whitener using a noise covariance matrix with rank 302 (3 small eigenvalues omitted)
 
 
 Based on the negative log-likelihood, the baseline covariance
 seems more appropriate.
-
 
 References
 ----------
@@ -320,7 +507,11 @@ References
    space separation method. IEEE Trans. Signal Proc. 53, 3359-3372.
 
 
-**Total running time of the script:** ( 1 minutes  0.667 seconds)
+.. rst-class:: sphx-glr-timing
+
+   **Total running time of the script:** ( 2 minutes  1.016 seconds)
+
+**Estimated memory usage:**  10 MB
 
 
 .. _sphx_glr_download_auto_tutorials_plot_compute_covariance.py:

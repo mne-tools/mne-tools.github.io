@@ -1,0 +1,566 @@
+.. note::
+    :class: sphx-glr-download-link-note
+
+    Click :ref:`here <sphx_glr_download_auto_tutorials_plot_visualize_stc.py>` to download the full example code
+.. rst-class:: sphx-glr-example-title
+
+.. _sphx_glr_auto_tutorials_plot_visualize_stc.py:
+
+
+.. _tut_viz_stcs:
+
+Visualize Source time courses
+=============================
+
+This tutorial focuses on visualization of stcs.
+
+.. contents:: Table of Contents
+   :local:
+
+Surface Source Estimates
+------------------------
+First, we get the paths for the evoked data and the time courses (stcs).
+
+
+.. code-block:: python
+
+
+    import os
+
+    import mne
+    from mne.datasets import sample
+    from mne.minimum_norm import apply_inverse, read_inverse_operator
+    from mne import read_evokeds
+
+    data_path = sample.data_path()
+    sample_dir = os.path.join(data_path, 'MEG', 'sample')
+    subjects_dir = os.path.join(data_path, 'subjects')
+
+    fname_evoked = data_path + '/MEG/sample/sample_audvis-ave.fif'
+    fname_stc = os.path.join(sample_dir, 'sample_audvis-meg')
+
+
+
+
+
+
+
+Then, we read the stc from file
+
+
+.. code-block:: python
+
+    stc = mne.read_source_estimate(fname_stc, subject='sample')
+
+
+
+
+
+
+
+This is a :class:`SourceEstimate <mne.SourceEstimate>` object
+
+
+.. code-block:: python
+
+    print(stc)
+
+
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    <SourceEstimate  |  7498 vertices, subject : sample, tmin : 0.0 (ms), tmax : 240.0 (ms), tstep : 10.0 (ms), data shape : (7498, 25)>
+
+
+The SourceEstimate object is in fact a *surface* source estimate. MNE also
+supports volume-based source estimates but more on that later.
+
+We can plot the source estimate using the
+:func:`stc.plot <mne.SourceEstimate.plot>` just as in other MNE
+objects. Note that for this visualization to work, you must have ``mayavi``
+and ``pysurfer`` installed on your machine.
+
+
+.. code-block:: python
+
+    initial_time = 0.1
+    stc.plot(subjects_dir=subjects_dir, initial_time=initial_time)
+
+
+
+
+.. image:: /auto_tutorials/images/sphx_glr_plot_visualize_stc_001.png
+    :class: sphx-glr-single-img
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    Using control points [ 5.016326  6.063033 21.635654]
+
+
+Note that here we used ``initial_time=0.1``, but we can also browse through
+time using ``time_viewer=True``.
+
+In case ``mayavi`` is not available, we also offer a ``matplotlib``
+backend. Here we use verbose='error' to ignore a warning that not all
+vertices were used in plotting.
+
+
+.. code-block:: python
+
+    stc.plot(subjects_dir=subjects_dir, initial_time=initial_time,
+             backend='matplotlib', verbose='error')
+
+
+
+
+.. image:: /auto_tutorials/images/sphx_glr_plot_visualize_stc_002.png
+    :class: sphx-glr-single-img
+
+
+
+
+Volume Source Estimates
+-----------------------
+We can also visualize volume source estimates (used for deep structures).
+
+Let us load the sensor-level evoked data. We select the MEG channels
+to keep things simple.
+
+
+.. code-block:: python
+
+    evoked = read_evokeds(fname_evoked, condition=0, baseline=(None, 0))
+    evoked.pick_types(meg=True, eeg=False)
+
+
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    Reading /home/circleci/mne_data/MNE-sample-data/MEG/sample/sample_audvis-ave.fif ...
+        Read a total of 4 projection items:
+            PCA-v1 (1 x 102) active
+            PCA-v2 (1 x 102) active
+            PCA-v3 (1 x 102) active
+            Average EEG reference (1 x 60) active
+        Found the data of interest:
+            t =    -199.80 ...     499.49 ms (Left Auditory)
+            0 CTF compensation matrices available
+            nave = 55 - aspect type = 100
+    Projections have already been applied. Setting proj attribute to True.
+    Applying baseline correction (mode: mean)
+
+
+Then, we can load the precomputed inverse operator from a file.
+
+
+.. code-block:: python
+
+    fname_inv = data_path + '/MEG/sample/sample_audvis-meg-vol-7-meg-inv.fif'
+    inv = read_inverse_operator(fname_inv)
+    src = inv['src']
+
+
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    Reading inverse operator decomposition from /home/circleci/mne_data/MNE-sample-data/MEG/sample/sample_audvis-meg-vol-7-meg-inv.fif...
+        Reading inverse operator info...
+        [done]
+        Reading inverse operator decomposition...
+        [done]
+        305 x 305 full covariance (kind = 1) found.
+        Read a total of 4 projection items:
+            PCA-v1 (1 x 102) active
+            PCA-v2 (1 x 102) active
+            PCA-v3 (1 x 102) active
+            Average EEG reference (1 x 60) active
+        Noise covariance matrix read.
+        11271 x 11271 diagonal covariance (kind = 2) found.
+        Source covariance matrix read.
+        Did not find the desired covariance matrix (kind = 6)
+        11271 x 11271 diagonal covariance (kind = 5) found.
+        Depth priors read.
+        Did not find the desired covariance matrix (kind = 3)
+        Reading a source space...
+        [done]
+        1 source spaces read
+        Read a total of 4 projection items:
+            PCA-v1 (1 x 102) active
+            PCA-v2 (1 x 102) active
+            PCA-v3 (1 x 102) active
+            Average EEG reference (1 x 60) active
+        Source spaces transformed to the inverse solution coordinate frame
+
+
+The source estimate is computed using the inverse operator and the
+sensor-space data.
+
+
+.. code-block:: python
+
+    snr = 3.0
+    lambda2 = 1.0 / snr ** 2
+    method = "dSPM"  # use dSPM method (could also be MNE or sLORETA)
+    stc = apply_inverse(evoked, inv, lambda2, method)
+    stc.crop(0.0, 0.2)
+
+
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    Preparing the inverse operator for use...
+        Scaled noise and source covariance from nave = 1 to nave = 55
+        Created the regularized inverter
+        Created an SSP operator (subspace dimension = 3)
+        Created the whitener using a noise covariance matrix with rank 302 (3 small eigenvalues omitted)
+        Computing noise-normalization factors (dSPM)...
+    [done]
+    Applying inverse operator to "Left Auditory"...
+        Picked 305 channels from the data
+        Computing inverse...
+        Eigenleads need to be weighted ...
+        Computing residual...
+        Explained  59.7% variance
+        Combining the current components...
+        dSPM...
+    [done]
+
+
+This time, we have a different container
+(:class:`VolSourceEstimate <mne.VolSourceEstimate>`) for the source time
+course.
+
+
+.. code-block:: python
+
+    print(stc)
+
+
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    <VolSourceEstimate  |  3757 vertices, tmin : 2.7755575615628914e-14 (ms), tmax : 199.79521315838792 (ms), tstep : 1.6649601096532323 (ms), data size : 3757 x 121>
+
+
+This too comes with a convenient plot method.
+
+
+.. code-block:: python
+
+
+    stc.plot(src, subject='sample', subjects_dir=subjects_dir)
+
+
+
+
+.. image:: /auto_tutorials/images/sphx_glr_plot_visualize_stc_003.png
+    :class: sphx-glr-single-img
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    Using control points [ 6.132934  7.422834 19.110577]
+
+
+For this visualization, ``nilearn`` must be installed.
+This visualization is interactive. Click on any of the anatomical slices
+to explore the time series. Clicking on any time point will bring up the
+corresponding anatomical map.
+
+We could visualize the source estimate on a glass brain. Unlike the previous
+visualization, a glass brain does not show us one slice but what we would
+see if the brain was transparent like glass.
+
+
+.. code-block:: python
+
+    stc.plot(src, subject='sample', subjects_dir=subjects_dir, mode='glass_brain')
+
+
+
+
+.. image:: /auto_tutorials/images/sphx_glr_plot_visualize_stc_004.png
+    :class: sphx-glr-single-img
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    Using control points [ 6.132934  7.422834 19.110577]
+
+
+Vector Source Estimates
+-----------------------
+If we choose to use ``pick_ori='vector'`` in
+:func:`apply_inverse <mne.minimum_norm.apply_inverse>`
+
+
+.. code-block:: python
+
+    fname_inv = data_path + '/MEG/sample/sample_audvis-meg-oct-6-meg-inv.fif'
+
+    inv = read_inverse_operator(fname_inv)
+    stc = apply_inverse(evoked, inv, lambda2, 'dSPM', pick_ori='vector')
+    stc.plot(subject='sample', subjects_dir=subjects_dir,
+             initial_time=initial_time)
+
+
+
+
+.. image:: /auto_tutorials/images/sphx_glr_plot_visualize_stc_005.png
+    :class: sphx-glr-single-img
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    Reading inverse operator decomposition from /home/circleci/mne_data/MNE-sample-data/MEG/sample/sample_audvis-meg-oct-6-meg-inv.fif...
+        Reading inverse operator info...
+        [done]
+        Reading inverse operator decomposition...
+        [done]
+        305 x 305 full covariance (kind = 1) found.
+        Read a total of 4 projection items:
+            PCA-v1 (1 x 102) active
+            PCA-v2 (1 x 102) active
+            PCA-v3 (1 x 102) active
+            Average EEG reference (1 x 60) active
+        Noise covariance matrix read.
+        22494 x 22494 diagonal covariance (kind = 2) found.
+        Source covariance matrix read.
+        22494 x 22494 diagonal covariance (kind = 6) found.
+        Orientation priors read.
+        22494 x 22494 diagonal covariance (kind = 5) found.
+        Depth priors read.
+        Did not find the desired covariance matrix (kind = 3)
+        Reading a source space...
+        Computing patch statistics...
+        Patch information added...
+        Distance information added...
+        [done]
+        Reading a source space...
+        Computing patch statistics...
+        Patch information added...
+        Distance information added...
+        [done]
+        2 source spaces read
+        Read a total of 4 projection items:
+            PCA-v1 (1 x 102) active
+            PCA-v2 (1 x 102) active
+            PCA-v3 (1 x 102) active
+            Average EEG reference (1 x 60) active
+        Source spaces transformed to the inverse solution coordinate frame
+    Preparing the inverse operator for use...
+        Scaled noise and source covariance from nave = 1 to nave = 55
+        Created the regularized inverter
+        Created an SSP operator (subspace dimension = 3)
+        Created the whitener using a noise covariance matrix with rank 302 (3 small eigenvalues omitted)
+        Computing noise-normalization factors (dSPM)...
+    [done]
+    Applying inverse operator to "Left Auditory"...
+        Picked 305 channels from the data
+        Computing inverse...
+        Eigenleads need to be weighted ...
+        Computing residual...
+        Explained  59.4% variance
+        dSPM...
+    [done]
+    Using control points [1.869115 2.269445 6.370463]
+
+
+Dipole fits
+-----------
+For computing a dipole fit, we need to load the noise covariance, the BEM
+solution, and the coregistration transformation files. Note that for the
+other methods, these were already used to generate the inverse operator.
+
+
+.. code-block:: python
+
+    fname_cov = os.path.join(data_path, 'MEG', 'sample', 'sample_audvis-cov.fif')
+    fname_bem = os.path.join(subjects_dir, 'sample', 'bem',
+                             'sample-5120-bem-sol.fif')
+    fname_trans = os.path.join(data_path, 'MEG', 'sample',
+                               'sample_audvis_raw-trans.fif')
+
+
+
+
+
+
+
+Dipoles are fit independently for each time point, so let us crop our time
+series to visualize the dipole fit for the time point of interest.
+
+
+.. code-block:: python
+
+    evoked.crop(0.1, 0.1)
+    dip = mne.fit_dipole(evoked, fname_cov, fname_bem, fname_trans)[0]
+
+
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    MRI transform     : /home/circleci/mne_data/MNE-sample-data/MEG/sample/sample_audvis_raw-trans.fif
+    Head origin       :   -4.3   18.4   67.0 mm rad =   71.8 mm.
+    Guess grid        :   20.0 mm
+    Guess mindist     :    5.0 mm
+    Guess exclude     :   20.0 mm
+    Using standard MEG coil definitions.
+    Noise covariance  : /home/circleci/mne_data/MNE-sample-data/MEG/sample/sample_audvis-cov.fif
+
+    Coordinate transformation: MRI (surface RAS) -> head
+         0.999310  0.009985 -0.035787      -3.17 mm
+         0.012759  0.812405  0.582954       6.86 mm
+         0.034894 -0.583008  0.811716      28.88 mm
+         0.000000  0.000000  0.000000       1.00
+    Coordinate transformation: MEG device -> head
+         0.991420 -0.039936 -0.124467      -6.13 mm
+         0.060661  0.984012  0.167456       0.06 mm
+         0.115790 -0.173570  0.977991      64.74 mm
+         0.000000  0.000000  0.000000       1.00
+    0 bad channels total
+    Read 305 MEG channels from info
+    84 coil definitions read
+    Coordinate transformation: MEG device -> head
+         0.991420 -0.039936 -0.124467      -6.13 mm
+         0.060661  0.984012  0.167456       0.06 mm
+         0.115790 -0.173570  0.977991      64.74 mm
+         0.000000  0.000000  0.000000       1.00
+    MEG coil definitions created in head coordinates.
+    Decomposing the sensor noise covariance matrix...
+        Created an SSP operator (subspace dimension = 3)
+    estimated rank (mag + grad): 302
+    Setting small MEG eigenvalues to zero.
+    Not doing PCA for MEG.
+        Created the whitener using a noise covariance matrix with rank 302 (3 small eigenvalues omitted)
+
+    ---- Computing the forward solution for the guesses...
+    Guess surface (inner_skull) is in MRI (surface RAS) coordinates
+    Filtering (grid =     20 mm)...
+    Surface CM = (   0.7  -10.0   44.3) mm
+    Surface fits inside a sphere with radius   91.8 mm
+    Surface extent:
+        x =  -66.7 ...   68.8 mm
+        y =  -88.0 ...   79.0 mm
+        z =  -44.5 ...  105.8 mm
+    Grid extent:
+        x =  -80.0 ...   80.0 mm
+        y = -100.0 ...   80.0 mm
+        z =  -60.0 ...  120.0 mm
+    900 sources before omitting any.
+    396 sources after omitting infeasible sources.
+    Source spaces are in MRI coordinates.
+    Checking that the sources are inside the bounding surface and at least    5.0 mm away (will take a few...)
+    195 source space points omitted because they are outside the inner skull surface.
+    45 source space points omitted because of the    5.0-mm distance limit.
+    Thank you for waiting.
+    156 sources remaining after excluding the sources outside the surface and less than    5.0 mm inside.
+    Go through all guess source locations...
+    [done 156 sources]
+    ---- Fitted :    99.9 ms, distance to inner skull : 7.5945 mm
+    Projections have already been applied. Setting proj attribute to True.
+    1 time points fitted
+
+
+Finally, we can visualize the dipole.
+
+
+.. code-block:: python
+
+    dip.plot_locations(fname_trans, 'sample', subjects_dir)
+
+
+
+.. image:: /auto_tutorials/images/sphx_glr_plot_visualize_stc_006.png
+    :class: sphx-glr-single-img
+
+
+
+
+
+.. rst-class:: sphx-glr-timing
+
+   **Total running time of the script:** ( 1 minutes  19.719 seconds)
+
+**Estimated memory usage:**  695 MB
+
+
+.. _sphx_glr_download_auto_tutorials_plot_visualize_stc.py:
+
+
+.. only :: html
+
+ .. container:: sphx-glr-footer
+    :class: sphx-glr-footer-example
+
+
+
+  .. container:: sphx-glr-download
+
+     :download:`Download Python source code: plot_visualize_stc.py <plot_visualize_stc.py>`
+
+
+
+  .. container:: sphx-glr-download
+
+     :download:`Download Jupyter notebook: plot_visualize_stc.ipynb <plot_visualize_stc.ipynb>`
+
+
+.. only:: html
+
+ .. rst-class:: sphx-glr-signature
+
+    `Gallery generated by Sphinx-Gallery <https://sphinx-gallery.readthedocs.io>`_

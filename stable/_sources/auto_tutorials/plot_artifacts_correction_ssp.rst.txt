@@ -10,6 +10,11 @@
 Artifact Correction with SSP
 ============================
 
+This tutorial explains how to estimate Signal Subspace Projectors (SSP)
+for correction of ECG and EOG artifacts.
+
+See :ref:`sphx_glr_auto_examples_io_plot_read_proj.py` for how to read
+and visualize already present SSP projection vectors.
 
 
 
@@ -31,13 +36,28 @@ Artifact Correction with SSP
 
 
 
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    Opening raw data file /home/circleci/mne_data/MNE-sample-data/MEG/sample/sample_audvis_filt-0-40_raw.fif...
+        Read a total of 4 projection items:
+            PCA-v1 (1 x 102)  idle
+            PCA-v2 (1 x 102)  idle
+            PCA-v3 (1 x 102)  idle
+            Average EEG reference (1 x 60)  idle
+        Range : 6450 ... 48149 =     42.956 ...   320.665 secs
+    Ready.
+    Current compensation grade : 0
+    Reading 0 ... 41699  =      0.000 ...   277.709 secs...
 
 
 Compute SSP projections
 -----------------------
 
 First let's do ECG.
-
 
 
 .. code-block:: python
@@ -62,12 +82,41 @@ First let's do ECG.
 
  .. code-block:: none
 
+    Including 4 SSP projectors from raw file
+    Running ECG SSP computation
+    Reconstructing ECG signal from Magnetometers
+    Setting up band-pass filter from 5 - 35 Hz
+    Filter length of 2048 samples (13.639 sec) selected
+    Number of ECG events detected : 285 (average pulse 61 / min.)
+    Computing projector
+    Filtering a subset of channels. The highpass and lowpass values in the measurement info will not be updated.
+    Setting up band-pass filter from 1 - 35 Hz
+    Filter length of 2048 samples (13.639 sec) selected
+    285 matching events found
+    No baseline correction applied
+    Not setting metadata
+    Created an SSP operator (subspace dimension = 4)
+    4 projection items activated
+    Loading data for 285 events and 91 original time points ...
+        Rejecting  epoch based on MAG : ['MEG 1421']
+        Rejecting  epoch based on MAG : ['MEG 1411', 'MEG 1421']
+        Rejecting  epoch based on MAG : ['MEG 1711']
+        Rejecting  epoch based on MAG : ['MEG 1711']
+        Rejecting  epoch based on MAG : ['MEG 1411', 'MEG 1421']
+        Rejecting  epoch based on MAG : ['MEG 1411']
+        Rejecting  epoch based on MAG : ['MEG 1421']
+        Rejecting  epoch based on MAG : ['MEG 1411']
+        Rejecting  epoch based on MAG : ['MEG 1441']
+        Rejecting  epoch based on MAG : ['MEG 1411', 'MEG 1421']
+    10 bad epochs dropped
+    Adding projection: planar--0.200-0.400-PCA-01
+    Adding projection: axial--0.200-0.400-PCA-01
+    Done.
     [<Projection  |  PCA-v1, active : False, n_channels : 102>, <Projection  |  PCA-v2, active : False, n_channels : 102>, <Projection  |  PCA-v3, active : False, n_channels : 102>, <Projection  |  Average EEG reference, active : False, n_channels : 60>, <Projection  |  ECG-planar--0.200-0.400-PCA-01, active : False, n_channels : 203>, <Projection  |  ECG-axial--0.200-0.400-PCA-01, active : False, n_channels : 102>]
 
 
 Now let's do EOG. Here we compute an EEG projector, and need to pass
 the measurement info so the topomap coordinates can be created.
-
 
 
 .. code-block:: python
@@ -92,6 +141,36 @@ the measurement info so the topomap coordinates can be created.
 
  .. code-block:: none
 
+    Including 4 SSP projectors from raw file
+    Running EOG SSP computation
+    EOG channel index for this subject is: [375]
+    Filtering the data to remove DC offset to help distinguish blinks from saccades
+    Setting up band-pass filter from 2 - 45 Hz
+    Filter length of 2048 samples (13.639 sec) selected
+    Setting up band-pass filter from 1 - 10 Hz
+    Filter length of 2048 samples (13.639 sec) selected
+    Now detecting blinks and generating corresponding events
+    Number of EOG events detected : 46
+    Computing projector
+    Filtering a subset of channels. The highpass and lowpass values in the measurement info will not be updated.
+    Setting up band-pass filter from 1 - 35 Hz
+    Filter length of 2048 samples (13.639 sec) selected
+    46 matching events found
+    No baseline correction applied
+    Not setting metadata
+    Created an SSP operator (subspace dimension = 4)
+    4 projection items activated
+    Loading data for 46 events and 61 original time points ...
+        Rejecting  epoch based on MAG : ['MEG 1421']
+        Rejecting  epoch based on MAG : ['MEG 1411', 'MEG 1421']
+        Rejecting  epoch based on MAG : ['MEG 1411', 'MEG 1421']
+        Rejecting  epoch based on MAG : ['MEG 1411']
+        Rejecting  epoch based on MAG : ['MEG 1411', 'MEG 1421']
+    5 bad epochs dropped
+    Adding projection: planar--0.200-0.200-PCA-01
+    Adding projection: axial--0.200-0.200-PCA-01
+    Adding projection: eeg--0.200-0.200-PCA-01
+    Done.
     [<Projection  |  PCA-v1, active : False, n_channels : 102>, <Projection  |  PCA-v2, active : False, n_channels : 102>, <Projection  |  PCA-v3, active : False, n_channels : 102>, <Projection  |  Average EEG reference, active : False, n_channels : 60>, <Projection  |  EOG-planar--0.200-0.200-PCA-01, active : False, n_channels : 203>, <Projection  |  EOG-axial--0.200-0.200-PCA-01, active : False, n_channels : 102>, <Projection  |  EOG-eeg--0.200-0.200-PCA-01, active : False, n_channels : 59>]
 
 
@@ -100,7 +179,6 @@ Apply SSP projections
 
 MNE is handling projections at the level of the info,
 so to register them populate the list that you find in the 'proj' field
-
 
 
 .. code-block:: python
@@ -118,10 +196,8 @@ Yes this was it. Now MNE will apply the projs on demand at any later stage,
 so watch out for proj parmeters in functions or to it explicitly
 with the ``.apply_proj`` method
 
-
 Demonstrate SSP cleaning on some evoked data
 --------------------------------------------
-
 
 
 .. code-block:: python
@@ -158,12 +234,62 @@ Demonstrate SSP cleaning on some evoked data
             :class: sphx-glr-multi-img
 
 
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    319 events found
+    Event IDs: [ 1  2  3  4  5 32]
+    72 matching events found
+    Applying baseline correction (mode: mean)
+    Not setting metadata
+    Created an SSP operator (subspace dimension = 9)
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on MAG : ['MEG 1711']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+    72 matching events found
+    Applying baseline correction (mode: mean)
+    Not setting metadata
+    Created an SSP operator (subspace dimension = 9)
+    9 projection items activated
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on MAG : ['MEG 1711']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
 
 
 Looks cool right? It is however often not clear how many components you
 should take and unfortunately this can have bad consequences as can be seen
 interactively using the delayed SSP mode:
-
 
 
 .. code-block:: python
@@ -195,13 +321,45 @@ interactively using the delayed SSP mode:
             :class: sphx-glr-multi-img
 
 
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    72 matching events found
+    Applying baseline correction (mode: mean)
+    Not setting metadata
+    Entering delayed SSP mode.
+    Created an SSP operator (subspace dimension = 9)
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on MAG : ['MEG 1711']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
+        Rejecting  epoch based on EOG : ['EOG 061']
 
 
 now you should see checkboxes. Remove a few SSP and see how the auditory
 pattern suddenly drops off
 
 
-**Total running time of the script:** ( 0 minutes  11.278 seconds)
+.. rst-class:: sphx-glr-timing
+
+   **Total running time of the script:** ( 1 minutes  27.398 seconds)
+
+**Estimated memory usage:**  129 MB
 
 
 .. _sphx_glr_download_auto_tutorials_plot_artifacts_correction_ssp.py:

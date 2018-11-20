@@ -22,7 +22,6 @@ comparisons problem is addressed with a cluster-level permutation test
 across space and time.
 
 
-
 .. code-block:: python
 
     # Authors: Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
@@ -53,7 +52,6 @@ across space and time.
 
 Set parameters
 --------------
-
 
 
 .. code-block:: python
@@ -94,7 +92,6 @@ Set parameters
 
 Read epochs for all channels, removing a bad one
 ------------------------------------------------
-
 
 
 .. code-block:: python
@@ -167,7 +164,6 @@ Read epochs for all channels, removing a bad one
 
 Transform to source space
 -------------------------
-
 
 
 .. code-block:: python
@@ -245,13 +241,15 @@ Transform to source space
         Scaled noise and source covariance from nave = 1 to nave = 60
         Created the regularized inverter
         Created an SSP operator (subspace dimension = 3)
-        Created the whitener using a full noise covariance matrix (3 small eigenvalues omitted)
+        Created the whitener using a noise covariance matrix with rank 302 (3 small eigenvalues omitted)
         Computing noise-normalization factors (dSPM)...
     [done]
     Applying inverse operator to "l_aud"...
         Picked 305 channels from the data
         Computing inverse...
         Eigenleads need to be weighted ...
+        Computing residual...
+        Explained  68.9% variance
         Combining the current components...
         dSPM...
     [done]
@@ -259,13 +257,15 @@ Transform to source space
         Scaled noise and source covariance from nave = 1 to nave = 60
         Created the regularized inverter
         Created an SSP operator (subspace dimension = 3)
-        Created the whitener using a full noise covariance matrix (3 small eigenvalues omitted)
+        Created the whitener using a noise covariance matrix with rank 302 (3 small eigenvalues omitted)
         Computing noise-normalization factors (dSPM)...
     [done]
     Applying inverse operator to "r_aud"...
         Picked 305 channels from the data
         Computing inverse...
         Eigenleads need to be weighted ...
+        Computing residual...
+        Explained  66.2% variance
         Combining the current components...
         dSPM...
     [done]
@@ -273,13 +273,15 @@ Transform to source space
         Scaled noise and source covariance from nave = 1 to nave = 60
         Created the regularized inverter
         Created an SSP operator (subspace dimension = 3)
-        Created the whitener using a full noise covariance matrix (3 small eigenvalues omitted)
+        Created the whitener using a noise covariance matrix with rank 302 (3 small eigenvalues omitted)
         Computing noise-normalization factors (dSPM)...
     [done]
     Applying inverse operator to "l_vis"...
         Picked 305 channels from the data
         Computing inverse...
         Eigenleads need to be weighted ...
+        Computing residual...
+        Explained  69.1% variance
         Combining the current components...
         dSPM...
     [done]
@@ -287,13 +289,15 @@ Transform to source space
         Scaled noise and source covariance from nave = 1 to nave = 60
         Created the regularized inverter
         Created an SSP operator (subspace dimension = 3)
-        Created the whitener using a full noise covariance matrix (3 small eigenvalues omitted)
+        Created the whitener using a noise covariance matrix with rank 302 (3 small eigenvalues omitted)
         Computing noise-normalization factors (dSPM)...
     [done]
     Applying inverse operator to "r_vis"...
         Picked 305 channels from the data
         Computing inverse...
         Eigenleads need to be weighted ...
+        Computing residual...
+        Explained  74.3% variance
         Combining the current components...
         dSPM...
     [done]
@@ -308,7 +312,6 @@ simulate this by just having each "subject" have the same response (just
 noisy in source space) here.
 
 We'll only consider the left hemisphere in this tutorial.
-
 
 
 .. code-block:: python
@@ -343,15 +346,16 @@ each subject's data separately, but here since all estimates are on
 'sample' we can use one morph matrix for all the heavy lifting.
 
 
-
 .. code-block:: python
 
 
     # Read the source space we are morphing to (just left hemisphere)
     src = mne.read_source_spaces(src_fname)
     fsave_vertices = [src[0]['vertno'], []]
-    morph_mat = mne.compute_morph_matrix('sample', 'fsaverage', sample_vertices,
-                                         fsave_vertices, 20, subjects_dir)
+    morph_mat = mne.compute_source_morph(
+        src=inverse_operator['src'], subject_to='fsaverage',
+        spacing=fsave_vertices, subjects_dir=subjects_dir, smooth=20).morph_mat
+    morph_mat = morph_mat[:, :n_vertices_sample]  # just left hemi from src
     n_vertices_fsave = morph_mat.shape[0]
 
     #    We have to change the shape for the dot() to work properly
@@ -375,10 +379,13 @@ each subject's data separately, but here since all estimates are on
         Reading a source space...
         [done]
         2 source spaces read
+    surface source space inferred...
     Computing morph matrix...
         Left-hemisphere map read.
         Right-hemisphere map read.
         20 smooth iterations done.
+        20 smooth iterations done.
+    [done]
     [done]
     Morphing data.
 
@@ -390,7 +397,6 @@ list of multi-dimensional arrays (one per condition) of shape: samples
 
 First we permute dimensions, then split the array into a list of conditions
 and discard the empty dimension resulting from the split using numpy squeeze.
-
 
 
 .. code-block:: python
@@ -416,7 +422,6 @@ factors. This is done via the factor levels argument which is a list
 of the number factor levels for each factor.
 
 
-
 .. code-block:: python
 
     factor_levels = [2, 2]
@@ -430,7 +435,6 @@ of the number factor levels for each factor.
 Finally we will pick the interaction effect by passing 'A:B'.
 (this notation is borrowed from the R formula language). Without this also
 the main effects will be returned.
-
 
 
 .. code-block:: python
@@ -463,7 +467,6 @@ second dimension, and finally calls ANOVA.
           :ref:`time-frequency tutorial <sphx_glr_auto_tutorials_plot_stats_cluster_time_frequency_repeated_measures_anova.py>`.  # noqa: E501
 
 
-
 .. code-block:: python
 
 
@@ -485,7 +488,6 @@ Compute clustering statistic
 
 To use an algorithm optimized for spatio-temporal clustering, we
 just pass the spatial connectivity matrix (instead of spatio-temporal).
-
 
 
 .. code-block:: python
@@ -530,13 +532,13 @@ just pass the spatial connectivity matrix (instead of spatio-temporal).
     Running initial clustering
     Found 146 clusters
     Permuting 127 times...
+
     Computing cluster p-values
     Done.
 
 
 Visualize the clusters
 ----------------------
-
 
 
 .. code-block:: python
@@ -557,9 +559,9 @@ Visualize the clusters
     # The brighter the color, the stronger the interaction between
     # stimulus modality and stimulus location
 
-    brain = stc_all_cluster_vis.plot(subjects_dir=subjects_dir, colormap='mne',
-                                     views='lateral',
-                                     time_label='Duration significant (ms)')
+    brain = stc_all_cluster_vis.plot(subjects_dir=subjects_dir, views='lat',
+                                     time_label='Duration significant (ms)',
+                                     clim=dict(kind='value', lims=[0, 1, 40]))
     brain.save_image('cluster-lh.png')
     brain.show_view('medial')
 
@@ -581,7 +583,6 @@ Visualize the clusters
 
 Finally, let's investigate interaction effect by reconstructing the time
 courses
-
 
 
 .. code-block:: python
@@ -627,7 +628,12 @@ courses
 
 
 
-**Total running time of the script:** ( 0 minutes  55.188 seconds)
+
+.. rst-class:: sphx-glr-timing
+
+   **Total running time of the script:** ( 1 minutes  25.996 seconds)
+
+**Estimated memory usage:**  10 MB
 
 
 .. _sphx_glr_download_auto_tutorials_plot_stats_cluster_spatio_temporal_repeated_measures_anova.py:

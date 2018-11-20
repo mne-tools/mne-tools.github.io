@@ -7,14 +7,12 @@
 .. _sphx_glr_auto_examples_inverse_plot_lcmv_beamformer_volume.py:
 
 
-===================================================================
-Compute LCMV inverse solution on evoked data in volume source space
-===================================================================
+====================================================
+Compute LCMV inverse solution in volume source space
+====================================================
 
 Compute LCMV inverse solution on an auditory evoked dataset in a volume source
-space. It stores the solution in a nifti file for visualisation, e.g. with
-Freeview.
-
+space.
 
 
 .. code-block:: python
@@ -23,20 +21,13 @@ Freeview.
     #
     # License: BSD (3-clause)
 
-    import numpy as np
-    import matplotlib.pyplot as plt
+    # sphinx_gallery_thumbnail_number = 3
 
     import mne
     from mne.datasets import sample
     from mne.beamformer import make_lcmv, apply_lcmv
 
-    from nilearn.plotting import plot_stat_map
-    from nilearn.image import index_img
-
     print(__doc__)
-
-    # sphinx_gallery_thumbnail_number = 3
-
 
 
 
@@ -47,17 +38,20 @@ Freeview.
 Data preprocessing:
 
 
-
 .. code-block:: python
 
 
     data_path = sample.data_path()
+    subjects_dir = data_path + '/subjects'
     raw_fname = data_path + '/MEG/sample/sample_audvis_raw.fif'
     event_fname = data_path + '/MEG/sample/sample_audvis_raw-eve.fif'
     fname_fwd = data_path + '/MEG/sample/sample_audvis-meg-vol-7-fwd.fif'
 
     # Get epochs
     event_id, tmin, tmax = [1, 2], -0.2, 0.5
+
+    # Read forward model
+    forward = mne.read_forward_solution(fname_fwd)
 
     # Setup for reading the raw data
     raw = mne.io.read_raw_fif(raw_fname, preload=True)
@@ -108,6 +102,13 @@ Data preprocessing:
 
  .. code-block:: none
 
+    Reading forward solution from /home/circleci/mne_data/MNE-sample-data/MEG/sample/sample_audvis-meg-vol-7-fwd.fif...
+        Reading a source space...
+        [done]
+        1 source spaces read
+        Desired named matrix (kind = 3523) not available
+        Read MEG forward solution (3757 sources, 306 channels, free orientations)
+        Source spaces transformed to the forward solution coordinate frame
     Opening raw data file /home/circleci/mne_data/MNE-sample-data/MEG/sample/sample_audvis_raw.fif...
         Read a total of 3 projection items:
             PCA-v1 (1 x 102)  idle
@@ -159,17 +160,14 @@ Data preprocessing:
 Compute covariance matrices, fit and apply  spatial filter.
 
 
-
 .. code-block:: python
 
 
     # Read regularized noise covariance and compute regularized data covariance
-    noise_cov = mne.compute_covariance(epochs, tmin=tmin, tmax=0, method='shrunk')
+    noise_cov = mne.compute_covariance(epochs, tmin=tmin, tmax=0, method='shrunk',
+                                       rank=None)
     data_cov = mne.compute_covariance(epochs, tmin=0.04, tmax=0.15,
-                                      method='shrunk')
-
-    # Read forward model
-    forward = mne.read_forward_solution(fname_fwd)
+                                      method='shrunk', rank=None)
 
     # Compute weights of free orientation (vector) beamformer with weight
     # normalization (neural activity index, NAI). Providing a noise covariance
@@ -181,7 +179,11 @@ Compute covariance matrices, fit and apply  spatial filter.
     # of orientation selection and weight normalization are implemented yet.
     filters = make_lcmv(evoked.info, forward, data_cov, reg=0.05,
                         noise_cov=noise_cov, pick_ori='max-power',
-                        weight_norm='nai')
+                        weight_norm='nai', rank=None)
+    print(filters)
+
+    # You can save these with:
+    # filters.save('filters-lcmv.h5')
 
     # Apply this spatial filter to the evoked data.
     stc = apply_lcmv(evoked, filters, max_ori_out='signed')
@@ -196,92 +198,80 @@ Compute covariance matrices, fit and apply  spatial filter.
 
  .. code-block:: none
 
+    Created an SSP operator (subspace dimension = 3)
+    estimated rank (mag + grad): 302
+    Setting small MEG eigenvalues to zero.
+    Not doing PCA for MEG.
+    Reducing data rank from 305 -> 302
     Estimating covariance using SHRUNK
     Done.
     Number of samples used : 13794
     [done]
+        Created an SSP operator (subspace dimension = 3)
+    estimated rank (mag + grad): 302
+    Setting small MEG eigenvalues to zero.
+    Not doing PCA for MEG.
+    Reducing data rank from 305 -> 302
     Estimating covariance using SHRUNK
     Done.
     Number of samples used : 7638
     [done]
-    Reading forward solution from /home/circleci/mne_data/MNE-sample-data/MEG/sample/sample_audvis-meg-vol-7-fwd.fif...
-        Reading a source space...
-        [done]
-        1 source spaces read
-        Desired named matrix (kind = 3523) not available
-        Read MEG forward solution (3757 sources, 306 channels, free orientations)
-        Source spaces transformed to the forward solution coordinate frame
         305 out of 306 channels remain after picking
         Created an SSP operator (subspace dimension = 3)
     estimated rank (mag + grad): 302
     Setting small MEG eigenvalues to zero.
     Not doing PCA for MEG.
-    Total rank is 302
+        Created the whitener using a noise covariance matrix with rank 302 (3 small eigenvalues omitted)
+    <Beamformer  |  LCMV, subject unknown, 3757 vert, 305 ch, max-power ori, nai norm, rank 302>
 
 
 Plot source space activity:
 
 
+.. code-block:: python
+
+
+    # You can save result in stc files with:
+    # stc.save('lcmv-vol')
+
+    clim = dict(kind='value', pos_lims=[0.3, 0.6, 0.9])
+    stc.plot(src=forward['src'], subject='sample', subjects_dir=subjects_dir,
+             clim=clim)
+
+
+
+
+.. image:: /auto_examples/inverse/images/sphx_glr_plot_lcmv_beamformer_volume_003.png
+    :class: sphx-glr-single-img
+
+
+
+
+We can also visualize the activity on a "glass brain" (shown here with
+absolute values):
+
 
 .. code-block:: python
 
 
-    # take absolute values for plotting
-    stc.data[:, :] = np.abs(stc.data)
-
-    # Save result in stc files
-    stc.save('lcmv-vol')
-
-    stc.crop(0.0, 0.2)
-
-    # Save result in a 4D nifti file
-    img = mne.save_stc_as_volume('lcmv_inverse.nii.gz', stc,
-                                 forward['src'], mri_resolution=False)
-
-    t1_fname = data_path + '/subjects/sample/mri/T1.mgz'
-
-    # Plotting with nilearn ######################################################
-    # Based on the visualization of the sensor space data (gradiometers), plot
-    # activity at 88 ms
-    idx = stc.time_as_index(0.088)
-    plot_stat_map(index_img(img, idx), t1_fname, threshold=0.45,
-                  title='LCMV (t=%.3f s.)' % stc.times[idx])
-
-    # plot source time courses with the maximum peak amplitudes at 88 ms
-    plt.figure()
-    plt.plot(stc.times, stc.data[np.argsort(np.max(stc.data[:, idx],
-                                                   axis=1))[-40:]].T)
-    plt.xlabel('Time (ms)')
-    plt.ylabel('LCMV value')
-    plt.show()
+    clim = dict(kind='value', lims=[0.3, 0.6, 0.9])
+    abs(stc).plot(src=forward['src'], subject='sample', subjects_dir=subjects_dir,
+                  mode='glass_brain', clim=clim)
 
 
 
-.. rst-class:: sphx-glr-horizontal
+.. image:: /auto_examples/inverse/images/sphx_glr_plot_lcmv_beamformer_volume_004.png
+    :class: sphx-glr-single-img
 
 
-    *
-
-      .. image:: /auto_examples/inverse/images/sphx_glr_plot_lcmv_beamformer_volume_003.png
-            :class: sphx-glr-multi-img
-
-    *
-
-      .. image:: /auto_examples/inverse/images/sphx_glr_plot_lcmv_beamformer_volume_004.png
-            :class: sphx-glr-multi-img
 
 
-.. rst-class:: sphx-glr-script-out
 
- Out:
+.. rst-class:: sphx-glr-timing
 
- .. code-block:: none
+   **Total running time of the script:** ( 0 minutes  52.795 seconds)
 
-    Writing STC to disk...
-    [done]
-
-
-**Total running time of the script:** ( 0 minutes  45.758 seconds)
+**Estimated memory usage:**  813 MB
 
 
 .. _sphx_glr_download_auto_examples_inverse_plot_lcmv_beamformer_volume.py:

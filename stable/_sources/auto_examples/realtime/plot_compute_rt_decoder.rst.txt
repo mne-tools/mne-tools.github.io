@@ -13,8 +13,7 @@ Decoding real-time data
 
 Supervised machine learning applied to MEG data in sensor space.
 Here the classifier is updated every 5 trials and the decoding
-accuracy is plotted
-
+accuracy is plotted.
 
 
 
@@ -67,7 +66,30 @@ accuracy is plotted
     Just got epoch 24
     Just got epoch 25
     Just got epoch 26
-    Time of 4.0 seconds exceeded.
+    Just got epoch 27
+    Just got epoch 28
+    Just got epoch 29
+    Just got epoch 30
+    Just got epoch 31
+    Just got epoch 32
+    Just got epoch 33
+    Just got epoch 34
+    Just got epoch 35
+    Just got epoch 36
+    Just got epoch 37
+    Just got epoch 38
+    Just got epoch 39
+    Just got epoch 40
+    Just got epoch 41
+    Just got epoch 42
+    Just got epoch 43
+    Just got epoch 44
+    Just got epoch 45
+    Just got epoch 46
+    Just got epoch 47
+    Just got epoch 48
+    Just got epoch 49
+    Just got epoch 50
 
 
 
@@ -83,6 +105,12 @@ accuracy is plotted
 
     import numpy as np
     import matplotlib.pyplot as plt
+
+    from sklearn import preprocessing
+    from sklearn.linear_model import LogisticRegression
+    from sklearn.pipeline import Pipeline
+    from sklearn.model_selection import cross_val_score, ShuffleSplit
+    from mne.decoding import Vectorizer, FilterEstimator
 
     import mne
     from mne.realtime import MockRtClient, RtEpochs
@@ -122,13 +150,6 @@ accuracy is plotted
     # Decoding in sensor space using a linear SVM
     n_times = len(rt_epochs.times)
 
-    from sklearn import preprocessing  # noqa
-    from sklearn.svm import SVC  # noqa
-    from sklearn.pipeline import Pipeline  # noqa
-    from sklearn.model_selection import cross_val_score, ShuffleSplit  # noqa
-    from mne.decoding import Vectorizer, FilterEstimator  # noqa
-
-
     scores_x, scores, std_scores = [], [], []
 
     # don't highpass filter because it's epoched data and the signal length
@@ -136,12 +157,12 @@ accuracy is plotted
     filt = FilterEstimator(rt_epochs.info, None, 40, fir_design='firwin')
     scaler = preprocessing.StandardScaler()
     vectorizer = Vectorizer()
-    clf = SVC(C=1, kernel='linear')
+    clf = LogisticRegression(solver='lbfgs')
 
     concat_classifier = Pipeline([('filter', filt), ('vector', vectorizer),
                                   ('scaler', scaler), ('svm', clf)])
 
-    data_picks = mne.pick_types(rt_epochs.info, meg='grad', eeg=False, eog=True,
+    data_picks = mne.pick_types(rt_epochs.info, meg='grad', eeg=False, eog=False,
                                 stim=False, exclude=raw.info['bads'])
     ax = plt.subplot(111)
     ax.set_xlabel('Trials')
@@ -153,19 +174,20 @@ accuracy is plotted
     plt.show(block=False)
 
     for ev_num, ev in enumerate(rt_epochs.iter_evoked()):
+        if ev_num >= 50:  # stop at 50
+            break
 
         print("Just got epoch %d" % (ev_num + 1))
 
         if ev_num == 0:
-            X = ev.data[None, data_picks, :]
+            X = ev.data[np.newaxis, data_picks, :]
             y = int(ev.comment)  # the comment attribute contains the event_id
         else:
-            X = np.concatenate((X, ev.data[None, data_picks, :]), axis=0)
+            X = np.concatenate((X, ev.data[np.newaxis, data_picks, :]), axis=0)
             y = np.append(y, int(ev.comment))
 
-        if ev_num >= min_trials:
-
-            cv = ShuffleSplit(5, test_size=0.2, random_state=42)
+        if ev_num >= min_trials and ev_num % 5 == 0:
+            cv = ShuffleSplit(5, test_size=0.2, random_state=42)  # 3 for speed
             scores_t = cross_val_score(concat_classifier, X, y, cv=cv,
                                        n_jobs=1) * 100
 
@@ -191,7 +213,12 @@ accuracy is plotted
                      alpha=0.5)
     plt.draw()  # Final figure
 
-**Total running time of the script:** ( 0 minutes  44.203 seconds)
+
+.. rst-class:: sphx-glr-timing
+
+   **Total running time of the script:** ( 2 minutes  6.609 seconds)
+
+**Estimated memory usage:**  10 MB
 
 
 .. _sphx_glr_download_auto_examples_realtime_plot_compute_rt_decoder.py:

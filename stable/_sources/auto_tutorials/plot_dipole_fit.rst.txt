@@ -19,7 +19,6 @@ For a comparison of fits between MNE-C and mne-python, see:
 
 
 
-
 .. code-block:: python
 
 
@@ -31,6 +30,9 @@ For a comparison of fits between MNE-C and mne-python, see:
     from mne.forward import make_forward_dipole
     from mne.evoked import combine_evoked
     from mne.simulation import simulate_evoked
+
+    from nilearn.plotting import plot_anat
+    from nilearn.datasets import load_mni152_template
 
     data_path = mne.datasets.sample.data_path()
     subjects_dir = op.join(data_path, 'subjects')
@@ -50,7 +52,6 @@ For a comparison of fits between MNE-C and mne-python, see:
 Let's localize the N100m (using MEG only)
 
 
-
 .. code-block:: python
 
     evoked = mne.read_evokeds(fname_ave, condition='Right Auditory',
@@ -65,18 +66,50 @@ Let's localize the N100m (using MEG only)
     # Plot the result in 3D brain with the MRI image.
     dip.plot_locations(fname_trans, 'sample', subjects_dir, mode='orthoview')
 
+    # Plot the result in 3D brain with the MRI image using Nilearn
+    # In MRI coordinates and in MNI coordinates (template brain)
+
+    trans = mne.read_trans(fname_trans)
+    subject = 'sample'
+    mni_pos = mne.head_to_mni(dip.pos, mri_head_t=trans,
+                              subject=subject, subjects_dir=subjects_dir)
+
+    mri_pos = mne.head_to_mri(dip.pos, mri_head_t=trans,
+                              subject=subject, subjects_dir=subjects_dir)
+
+    t1_fname = op.join(subjects_dir, subject, 'mri', 'T1.mgz')
+    fig = plot_anat(t1_fname, cut_coords=mri_pos[0], title='Dipole loc.')
+
+    template = load_mni152_template()
+    fig = plot_anat(template, cut_coords=mni_pos[0],
+                    title='Dipole loc. (MNI Space)')
 
 
 
-.. image:: /auto_tutorials/images/sphx_glr_plot_dipole_fit_001.png
-    :class: sphx-glr-single-img
+
+.. rst-class:: sphx-glr-horizontal
+
+
+    *
+
+      .. image:: /auto_tutorials/images/sphx_glr_plot_dipole_fit_001.png
+            :class: sphx-glr-multi-img
+
+    *
+
+      .. image:: /auto_tutorials/images/sphx_glr_plot_dipole_fit_002.png
+            :class: sphx-glr-multi-img
+
+    *
+
+      .. image:: /auto_tutorials/images/sphx_glr_plot_dipole_fit_003.png
+            :class: sphx-glr-multi-img
 
 
 
 
 Calculate and visualise magnetic field predicted by dipole with maximum GOF
 and compare to the measured data, highlighting the ipsilateral (right) source
-
 
 
 .. code-block:: python
@@ -113,7 +146,7 @@ and compare to the measured data, highlighting the ipsilateral (right) source
 
 
 
-.. image:: /auto_tutorials/images/sphx_glr_plot_dipole_fit_002.png
+.. image:: /auto_tutorials/images/sphx_glr_plot_dipole_fit_004.png
     :class: sphx-glr-single-img
 
 
@@ -123,12 +156,11 @@ and compare to the measured data, highlighting the ipsilateral (right) source
 
  .. code-block:: none
 
-    Highest GOF 56.9% at t=79.9 ms with confidence volume 8.2 cm^3
+    Highest GOF 56.9% at t=79.9 ms with confidence volume 8.1 cm^3
 
 
 Estimate the time course of a single dipole with fixed position and
 orientation (the one that maximized GOF) over the entire interval
-
 
 
 .. code-block:: python
@@ -139,13 +171,18 @@ orientation (the one that maximized GOF) over the entire interval
 
 
 
-.. image:: /auto_tutorials/images/sphx_glr_plot_dipole_fit_003.png
+.. image:: /auto_tutorials/images/sphx_glr_plot_dipole_fit_005.png
     :class: sphx-glr-single-img
 
 
 
 
-**Total running time of the script:** ( 0 minutes  44.855 seconds)
+
+.. rst-class:: sphx-glr-timing
+
+   **Total running time of the script:** ( 1 minutes  58.616 seconds)
+
+**Estimated memory usage:**  392 MB
 
 
 .. _sphx_glr_download_auto_tutorials_plot_dipole_fit.py:

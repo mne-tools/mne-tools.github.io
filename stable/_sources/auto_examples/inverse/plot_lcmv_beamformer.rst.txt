@@ -16,7 +16,6 @@ choices of source orientation and store the solutions in stc files for
 visualisation.
 
 
-
 .. code-block:: python
 
     # Author: Alexandre Gramfort <alexandre.gramfort@telecom-paristech.fr>
@@ -51,7 +50,6 @@ visualisation.
 Get epochs
 
 
-
 .. code-block:: python
 
     event_id, tmin, tmax = 1, -0.2, 0.5
@@ -80,9 +78,10 @@ Get epochs
     forward = mne.convert_forward_solution(forward, surf_ori=True)
 
     # Compute regularized noise and data covariances
-    noise_cov = mne.compute_covariance(epochs, tmin=tmin, tmax=0, method='shrunk')
+    noise_cov = mne.compute_covariance(epochs, tmin=tmin, tmax=0, method='shrunk',
+                                       rank=None)
     data_cov = mne.compute_covariance(epochs, tmin=0.04, tmax=0.15,
-                                      method='shrunk')
+                                      method='shrunk', rank=None)
     evoked.plot(time_unit='s')
 
 
@@ -152,10 +151,20 @@ Get epochs
         Average patch normals will be employed in the rotation to the local surface coordinates....
         Converting to surface-based source orientations...
         [done]
+        Created an SSP operator (subspace dimension = 3)
+    estimated rank (mag + grad): 302
+    Setting small MEG eigenvalues to zero.
+    Not doing PCA for MEG.
+    Reducing data rank from 305 -> 302
     Estimating covariance using SHRUNK
     Done.
     Number of samples used : 6655
     [done]
+        Created an SSP operator (subspace dimension = 3)
+    estimated rank (mag + grad): 302
+    Setting small MEG eigenvalues to zero.
+    Not doing PCA for MEG.
+    Reducing data rank from 305 -> 302
     Estimating covariance using SHRUNK
     Done.
     Number of samples used : 3685
@@ -163,7 +172,6 @@ Get epochs
 
 
 Run beamformers and look at maximum outputs
-
 
 
 .. code-block:: python
@@ -182,20 +190,21 @@ Run beamformers and look at maximum outputs
         # data (enabled by passing a noise covariance matrix)
         filters = make_lcmv(evoked.info, forward, data_cov, reg=0.05,
                             noise_cov=noise_cov, pick_ori=pick_ori,
-                            weight_norm='unit-noise-gain')
+                            weight_norm='unit-noise-gain', rank=None)
+        print(filters)
         # apply this spatial filter to source-reconstruct the evoked data
         stc = apply_lcmv(evoked, filters, max_ori_out='signed')
 
         # View activation time-series in maximum voxel at 100 ms:
         time_idx = stc.time_as_index(0.1)
-        max_idx = np.argmax(stc.data[:, time_idx])
+        max_idx = np.argmax(np.abs(stc.data[:, time_idx]))
         # we know these are all left hemi, so we can just use vertices[0]
         max_voxs.append(stc.vertices[0][max_idx])
         ax.plot(stc.times, stc.data[max_idx, :], color, label=desc % max_idx)
 
-    ax.set(xlabel='Time (ms)', ylabel='LCMV value', ylim=(-0.8, 2.2),
+    ax.set(xlabel='Time (ms)', ylabel='LCMV value',
            title='LCMV in maximum voxel')
-    ax.legend()
+    ax.legend(loc='lower right')
     mne.viz.utils.plt_show()
 
 
@@ -216,36 +225,34 @@ Run beamformers and look at maximum outputs
     estimated rank (mag + grad): 302
     Setting small MEG eigenvalues to zero.
     Not doing PCA for MEG.
-    Total rank is 302
+        Created the whitener using a noise covariance matrix with rank 302 (3 small eigenvalues omitted)
+    <Beamformer  |  LCMV, subject "sample", 7498 vert, 305 ch, unit-noise-gain norm, rank 302>
     combining the current components...
         305 out of 366 channels remain after picking
         Created an SSP operator (subspace dimension = 3)
     estimated rank (mag + grad): 302
     Setting small MEG eigenvalues to zero.
     Not doing PCA for MEG.
-    Total rank is 302
+        Created the whitener using a noise covariance matrix with rank 302 (3 small eigenvalues omitted)
+    <Beamformer  |  LCMV, subject "sample", 7498 vert, 305 ch, normal ori, unit-noise-gain norm, rank 302>
         305 out of 366 channels remain after picking
         Created an SSP operator (subspace dimension = 3)
     estimated rank (mag + grad): 302
     Setting small MEG eigenvalues to zero.
     Not doing PCA for MEG.
-    Total rank is 302
+        Created the whitener using a noise covariance matrix with rank 302 (3 small eigenvalues omitted)
+    <Beamformer  |  LCMV, subject "sample", 7498 vert, 305 ch, max-power ori, unit-noise-gain norm, rank 302>
 
 
 We can also look at the spatial distribution
 
 
-
 .. code-block:: python
 
 
-    # take absolute value for plotting
-    np.abs(stc.data, out=stc.data)
-
     # Plot last stc in the brain in 3D with PySurfer if available
-    brain = stc.plot(hemi='lh', subjects_dir=subjects_dir,
-                     initial_time=0.1, time_unit='s')
-    brain.show_view('lateral')
+    brain = stc.plot(hemi='lh', views='lat', subjects_dir=subjects_dir,
+                     initial_time=0.1, time_unit='s', smoothing_steps=5)
     for color, vertex in zip(colors, max_voxs):
         brain.add_foci([vertex], coords_as_verts=True, scale_factor=0.5,
                        hemi='lh', color=color)
@@ -256,9 +263,21 @@ We can also look at the spatial distribution
     :class: sphx-glr-single-img
 
 
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    Using control points [0.5100192  0.57160062 0.97697969]
 
 
-**Total running time of the script:** ( 0 minutes  57.596 seconds)
+
+.. rst-class:: sphx-glr-timing
+
+   **Total running time of the script:** ( 1 minutes  0.256 seconds)
+
+**Estimated memory usage:**  750 MB
 
 
 .. _sphx_glr_download_auto_examples_inverse_plot_lcmv_beamformer.py:
