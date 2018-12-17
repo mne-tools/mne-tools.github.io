@@ -177,7 +177,7 @@ This documentation is for <strong>development version 0.18.dev0</strong>.
 <h1>mne.io.read_raw_edf<a class="headerlink" href="#mne-io-read-raw-edf" title="Permalink to this headline">¶</a></h1>
 <dl class="function">
 <dt id="mne.io.read_raw_edf">
-<code class="descclassname">mne.io.</code><code class="descname">read_raw_edf</code><span class="sig-paren">(</span><em>input_fname</em>, <em>montage=None</em>, <em>eog=None</em>, <em>misc=None</em>, <em>stim_channel=''</em>, <em>annot=None</em>, <em>annotmap=None</em>, <em>exclude=()</em>, <em>preload=False</em>, <em>verbose=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/io/edf/edf.py#L1219-L1304"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.io.read_raw_edf" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">mne.io.</code><code class="descname">read_raw_edf</code><span class="sig-paren">(</span><em>input_fname</em>, <em>montage=None</em>, <em>eog=None</em>, <em>misc=None</em>, <em>stim_channel=None</em>, <em>exclude=()</em>, <em>preload=False</em>, <em>verbose=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/io/edf/edf.py#L1044-L1121"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.io.read_raw_edf" title="Permalink to this definition">¶</a></dt>
 <dd><p>Reader function for EDF+, BDF, GDF conversion to FIF.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -202,30 +202,18 @@ edf file. Default is None.</p>
 MISC channels. Values should correspond to the electrodes in the
 edf file. Default is None.</p>
 </dd>
-<dt><strong>stim_channel</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str | int | ‘auto’ | False</span></dt>
-<dd><p class="first">The channel name or channel index (starting at 0). -1 corresponds to
-the last channel. If False, there will be no stim channel added. If
-‘auto’ (default), the stim channel will be added as the last channel if
-the header contains <code class="docutils literal notranslate"><span class="pre">'EDF</span> <span class="pre">Annotations'</span></code> or GDF events (otherwise stim
-channel will not be added). None is accepted as an alias for False.</p>
+<dt><strong>stim_channel</strong> <span class="classifier-delimiter">:</span> <span class="classifier">False</span></dt>
+<dd><p class="first">If False, there will be no stim channel added from a TAL channel.
+None is accepted as an alias for False.</p>
 <div class="last admonition warning">
 <p class="first admonition-title">Warning</p>
-<p class="last">This defaults to ‘auto’ in 0.17 but will default to False
-in 0.18 (when no stim channel synthesis will be allowed)
-and will be removed in 0.19; migrate code to use
-<a class="reference internal" href="mne.events_from_annotations.html#mne.events_from_annotations" title="mne.events_from_annotations"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.events_from_annotations()</span></code></a> instead.</p>
+<p class="last">0.18 does not allow for stim channel synthesis from
+the TAL channels called ‘EDF Annotations’ or
+‘BDF Annotations’. The TAL channel is parsed
+and put in the raw.annotations attribute.
+Use <a class="reference internal" href="mne.events_from_annotations.html#mne.events_from_annotations" title="mne.events_from_annotations"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.events_from_annotations()</span></code></a> to obtain
+events for the annotations instead.</p>
 </div>
-</dd>
-<dt><strong>annot</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str | None</span></dt>
-<dd><p class="first last">Path to annotation file.
-If None, no derived stim channel will be added (for files requiring
-annotation file to interpret stim channel).
-This was deprecated in 0.17 and will be removed in 0.18.</p>
-</dd>
-<dt><strong>annotmap</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str | None</span></dt>
-<dd><p class="first last">Path to annotation map file containing mapping from label to trigger.
-Must be specified if annot is not None.
-This was deprecated in 0.17 and will be removed in 0.18.</p>
 </dd>
 <dt><strong>exclude</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list of str</span></dt>
 <dd><p class="first last">Channel names to exclude. This can help when reading data with
@@ -272,11 +260,13 @@ To retrieve correct event values (bits 1-16), one could do:</p>
 </div>
 <p>It is also possible to retrieve system codes, but no particular effort has
 been made to decode these in MNE.</p>
-<p>For GDF files, the stimulus channel is constructed from the events in the
-header. You should use keyword <code class="docutils literal notranslate"><span class="pre">stim_channel=-1</span></code> to add it at the end of
-the channel list. The id numbers of overlapping events are simply combined
-through addition. To get the original events from the header, use method
-<code class="docutils literal notranslate"><span class="pre">raw.find_edf_events</span></code>.</p>
+<p>The TAL channel called ‘EDF Annotations’ or ‘BDF Annotations’ is parsed and
+put in the raw.annotations attribute.
+Use <a class="reference internal" href="mne.events_from_annotations.html#mne.events_from_annotations" title="mne.events_from_annotations"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.events_from_annotations()</span></code></a> to obtain events from the
+annotations.</p>
+<p>Channels that are named ‘Status’ or ‘STATUS’ will be considered analog stim
+channels. Use method <code class="docutils literal notranslate"><span class="pre">raw.find_edf_events</span></code> to recover the events encoded
+in this channel.</p>
 </dd></dl>
 
 <div class="section" id="examples-using-mne-io-read-raw-edf">
@@ -316,7 +306,7 @@ through addition. To get the original events from the header, use method
       <li><a href="faq.html#cite">Cite MNE</a></li>
       <li class="pull-right"><a href="#">Back to top</a></li>
     </ul>
-    <p>&copy; Copyright 2012-2018, MNE Developers. Last updated on 2018-12-14.</p>
+    <p>&copy; Copyright 2012-2018, MNE Developers. Last updated on 2018-12-17.</p>
   </div>
 </footer>
   </body>
