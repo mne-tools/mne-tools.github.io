@@ -189,7 +189,8 @@ This documentation is for <strong>development version 0.18.dev0</strong>.
 computation.</p>
 <p>For more extensive details and presentation of the general
 concepts for forward modeling. See <a class="reference internal" href="../manual/source_localization/forward.html#ch-forward"><span class="std std-ref">The forward solution</span></a>.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">mne</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os.path</span> <span class="kn">as</span> <span class="nn">op</span>
+<span class="kn">import</span> <span class="nn">mne</span>
 <span class="kn">from</span> <span class="nn">mne.datasets</span> <span class="kn">import</span> <span class="n">sample</span>
 <span class="n">data_path</span> <span class="o">=</span> <a href="../generated/mne.datasets.sample.data_path.html#mne.datasets.sample.data_path" title="View documentation for mne.datasets.sample.data_path"><span class="n">sample</span><span class="o">.</span><span class="n">data_path</span></a><span class="p">()</span>
 
@@ -207,16 +208,16 @@ concepts for forward modeling. See <a class="reference internal" href="../manual
 <div><ul class="simple">
 <li>a <code class="docutils literal notranslate"><span class="pre">-trans.fif</span></code> file that contains the coregistration info.</li>
 <li>a source space</li>
-<li>the BEM surfaces</li>
+<li>the <a class="reference internal" href="../glossary.html#term-bem"><span class="xref std std-term">BEM</span></a> surfaces</li>
 </ul>
 </div></blockquote>
 </div>
 <div class="section" id="compute-and-visualize-bem-surfaces">
 <h2>Compute and visualize BEM surfaces<a class="headerlink" href="#compute-and-visualize-bem-surfaces" title="Permalink to this headline">¶</a></h2>
-<p>The BEM surfaces are the triangulations of the interfaces between different
-tissues needed for forward computation. These surfaces are for example
-the inner skull surface, the outer skull surface and the outer skill
-surface.</p>
+<p>The <a class="reference internal" href="../glossary.html#term-bem"><span class="xref std std-term">BEM</span></a> surfaces are the triangulations of the interfaces between
+different tissues needed for forward computation. These surfaces are for
+example the inner skull surface, the outer skull surface and the outer skin
+surface, a.k.a. scalp surface.</p>
 <p>Computing the BEM surfaces requires FreeSurfer and makes use of either of
 the two following command line tools:</p>
 <blockquote>
@@ -225,6 +226,8 @@ the two following command line tools:</p>
 <li><a class="reference internal" href="../generated/commands.html#gen-mne-flash-bem"><span class="std std-ref">mne flash_bem</span></a></li>
 </ul>
 </div></blockquote>
+<p>Or by calling in a Python script one of the functions
+<a class="reference internal" href="../generated/mne.bem.make_watershed_bem.html#mne.bem.make_watershed_bem" title="mne.bem.make_watershed_bem"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.bem.make_watershed_bem()</span></code></a> or <a class="reference internal" href="../generated/mne.bem.make_flash_bem.html#mne.bem.make_flash_bem" title="mne.bem.make_flash_bem"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.bem.make_flash_bem()</span></code></a>.</p>
 <p>Here we’ll assume it’s already computed. It takes a few minutes per subject.</p>
 <p>For EEG we use 3 layers (inner skull, outer skull, and skin) while for
 MEG 1 layer (inner skull) is enough.</p>
@@ -275,8 +278,7 @@ arbitrarily located source points bounded by the surface.</li>
 <p><strong>Source-based</strong> source space is computed using
 <a class="reference internal" href="../generated/mne.setup_source_space.html#mne.setup_source_space" title="mne.setup_source_space"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.setup_source_space()</span></code></a>, while <strong>volumetric</strong> source space is computed
 using <a class="reference internal" href="../generated/mne.setup_volume_source_space.html#mne.setup_volume_source_space" title="mne.setup_volume_source_space"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.setup_volume_source_space()</span></code></a>.</p>
-<p>The rest of this tutorial uses a source-based source space with
-an OCT-6 resolution.
+<p>We will now compute a source-based source space with an OCT-6 resolution.
 See <a class="reference internal" href="../manual/cookbook.html#setting-up-source-space"><span class="std std-ref">Setting up the source space</span></a> for details on source space definition
 and spacing parameter.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">src</span> <span class="o">=</span> <a href="../generated/mne.setup_source_space.html#mne.setup_source_space" title="View documentation for mne.setup_source_space"><span class="n">mne</span><span class="o">.</span><span class="n">setup_source_space</span></a><span class="p">(</span><span class="n">subject</span><span class="p">,</span> <span class="n">spacing</span><span class="o">=</span><span class="s1">&#39;oct6&#39;</span><span class="p">,</span>
@@ -288,16 +290,53 @@ and spacing parameter.</p>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;SourceSpaces: [&lt;surface (lh), n_vertices=155407, n_used=4098, coordinate_frame=MRI (surface RAS)&gt;, &lt;surface (rh), n_vertices=156866, n_used=4098, coordinate_frame=MRI (surface RAS)&gt;]&gt;
 </pre></div>
 </div>
-<p><code class="docutils literal notranslate"><span class="pre">src</span></code> contains two parts, one for the left hemisphere (4098 locations) and
-one for the right hemisphere (4098 locations). Sources can be visualized on
-top of the BEM surfaces.</p>
+<p>The surface based source space <code class="docutils literal notranslate"><span class="pre">src</span></code> contains two parts, one for the left
+hemisphere (4098 locations) and one for the right hemisphere
+(4098 locations). Sources can be visualized on top of the BEM surfaces
+in purple.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><a href="../generated/mne.viz.plot_bem.html#mne.viz.plot_bem" title="View documentation for mne.viz.plot_bem"><span class="n">mne</span><span class="o">.</span><span class="n">viz</span><span class="o">.</span><span class="n">plot_bem</span></a><span class="p">(</span><span class="n">subject</span><span class="o">=</span><span class="n">subject</span><span class="p">,</span> <span class="n">subjects_dir</span><span class="o">=</span><span class="n">subjects_dir</span><span class="p">,</span>
                  <span class="n">brain_surfaces</span><span class="o">=</span><span class="s1">&#39;white&#39;</span><span class="p">,</span> <span class="n">src</span><span class="o">=</span><span class="n">src</span><span class="p">,</span> <span class="n">orientation</span><span class="o">=</span><span class="s1">&#39;coronal&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
 <img alt="../_images/sphx_glr_plot_forward_003.png" class="sphx-glr-single-img" src="../_images/sphx_glr_plot_forward_003.png" />
-<p>However, only sources that lie in the plotted MRI slices are shown.
-Let’s write a few lines of mayavi to see all sources.</p>
+<p>To compute a volume based source space defined with a grid of candidate
+dipoles inside a sphere of radius 90mm centered at (0.0, 0.0, 40.0)
+you can use the following code.
+Obviously here, the sphere is not perfect. It is not restricted to the
+brain and it can miss some parts of the cortex.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">sphere</span> <span class="o">=</span> <span class="p">(</span><span class="mf">0.0</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="mf">40.0</span><span class="p">,</span> <span class="mf">90.0</span><span class="p">)</span>
+<span class="n">vol_src</span> <span class="o">=</span> <a href="../generated/mne.setup_volume_source_space.html#mne.setup_volume_source_space" title="View documentation for mne.setup_volume_source_space"><span class="n">mne</span><span class="o">.</span><span class="n">setup_volume_source_space</span></a><span class="p">(</span><span class="n">subject</span><span class="p">,</span> <span class="n">subjects_dir</span><span class="o">=</span><span class="n">subjects_dir</span><span class="p">,</span>
+                                        <span class="n">sphere</span><span class="o">=</span><span class="n">sphere</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">vol_src</span><span class="p">)</span>
+
+<a href="../generated/mne.viz.plot_bem.html#mne.viz.plot_bem" title="View documentation for mne.viz.plot_bem"><span class="n">mne</span><span class="o">.</span><span class="n">viz</span><span class="o">.</span><span class="n">plot_bem</span></a><span class="p">(</span><span class="n">subject</span><span class="o">=</span><span class="n">subject</span><span class="p">,</span> <span class="n">subjects_dir</span><span class="o">=</span><span class="n">subjects_dir</span><span class="p">,</span>
+                 <span class="n">brain_surfaces</span><span class="o">=</span><span class="s1">&#39;white&#39;</span><span class="p">,</span> <span class="n">src</span><span class="o">=</span><span class="n">vol_src</span><span class="p">,</span> <span class="n">orientation</span><span class="o">=</span><span class="s1">&#39;coronal&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="../_images/sphx_glr_plot_forward_004.png" class="sphx-glr-single-img" src="../_images/sphx_glr_plot_forward_004.png" />
+<p class="sphx-glr-script-out">Out:</p>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;SourceSpaces: [&lt;volume, shape=[39 39 38], n_used=20377, coordinate_frame=MRI (surface RAS)&gt;]&gt;
+</pre></div>
+</div>
+<p>To compute a volume based source space defined with a grid of candidate
+dipoles inside the brain (requires the <a class="reference internal" href="../glossary.html#term-bem"><span class="xref std std-term">BEM</span></a> surfaces) you can use the
+following.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">surface</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">subjects_dir</span><span class="p">,</span> <span class="n">subject</span><span class="p">,</span> <span class="s1">&#39;bem&#39;</span><span class="p">,</span> <span class="s1">&#39;inner_skull.surf&#39;</span><span class="p">)</span>
+<span class="n">vol_src</span> <span class="o">=</span> <a href="../generated/mne.setup_volume_source_space.html#mne.setup_volume_source_space" title="View documentation for mne.setup_volume_source_space"><span class="n">mne</span><span class="o">.</span><span class="n">setup_volume_source_space</span></a><span class="p">(</span><span class="n">subject</span><span class="p">,</span> <span class="n">subjects_dir</span><span class="o">=</span><span class="n">subjects_dir</span><span class="p">,</span>
+                                        <span class="n">surface</span><span class="o">=</span><span class="n">surface</span><span class="p">)</span>
+<span class="k">print</span><span class="p">(</span><span class="n">vol_src</span><span class="p">)</span>
+
+<a href="../generated/mne.viz.plot_bem.html#mne.viz.plot_bem" title="View documentation for mne.viz.plot_bem"><span class="n">mne</span><span class="o">.</span><span class="n">viz</span><span class="o">.</span><span class="n">plot_bem</span></a><span class="p">(</span><span class="n">subject</span><span class="o">=</span><span class="n">subject</span><span class="p">,</span> <span class="n">subjects_dir</span><span class="o">=</span><span class="n">subjects_dir</span><span class="p">,</span>
+                 <span class="n">brain_surfaces</span><span class="o">=</span><span class="s1">&#39;white&#39;</span><span class="p">,</span> <span class="n">src</span><span class="o">=</span><span class="n">vol_src</span><span class="p">,</span> <span class="n">orientation</span><span class="o">=</span><span class="s1">&#39;coronal&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="../_images/sphx_glr_plot_forward_005.png" class="sphx-glr-single-img" src="../_images/sphx_glr_plot_forward_005.png" />
+<p class="sphx-glr-script-out">Out:</p>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;SourceSpaces: [&lt;volume, shape=[29 35 32], n_used=10376, coordinate_frame=MRI (surface RAS)&gt;]&gt;
+</pre></div>
+</div>
+<p>With the surface-based source space only sources that lie in the plotted MRI
+slices are shown. Let’s write a few lines of mayavi to see all sources in 3D.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>  <span class="c1"># noqa</span>
 <span class="kn">from</span> <span class="nn">mayavi</span> <span class="kn">import</span> <span class="n">mlab</span>  <span class="c1"># noqa</span>
 <span class="kn">from</span> <span class="nn">surfer</span> <span class="kn">import</span> <a href="https://pysurfer.github.io/generated/surfer.Brain.html#surfer.Brain" title="View documentation for surfer.Brain"><span class="n">Brain</span></a>  <span class="c1"># noqa</span>
@@ -311,7 +350,7 @@ Let’s write a few lines of mayavi to see all sources.</p>
               <span class="n">surf</span><span class="o">.</span><span class="n">z</span><span class="p">[</span><span class="n">vertidx</span><span class="p">],</span> <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">scale_factor</span><span class="o">=</span><span class="mf">1.5</span><span class="p">)</span>
 </pre></div>
 </div>
-<img alt="../_images/sphx_glr_plot_forward_004.png" class="sphx-glr-single-img" src="../_images/sphx_glr_plot_forward_004.png" />
+<img alt="../_images/sphx_glr_plot_forward_006.png" class="sphx-glr-single-img" src="../_images/sphx_glr_plot_forward_006.png" />
 </div>
 <div class="section" id="compute-forward-solution">
 <span id="plot-forward-compute-forward-solution"></span><h2>Compute forward solution<a class="headerlink" href="#compute-forward-solution" title="Permalink to this headline">¶</a></h2>
@@ -330,7 +369,7 @@ of the head the conductivities of the different tissues.</p>
 <span class="n">bem</span> <span class="o">=</span> <a href="../generated/mne.make_bem_solution.html#mne.make_bem_solution" title="View documentation for mne.make_bem_solution"><span class="n">mne</span><span class="o">.</span><span class="n">make_bem_solution</span></a><span class="p">(</span><span class="n">model</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Note that the BEM does not involve any use of the trans file. The BEM
+<p>Note that the <a class="reference internal" href="../glossary.html#term-bem"><span class="xref std std-term">BEM</span></a> does not involve any use of the trans file. The BEM
 only depends on the head geometry and conductivities.
 It is therefore independent from the MEG data and the head position.</p>
 <p>Let’s now compute the forward operator, commonly referred to as the
@@ -400,8 +439,8 @@ justify the claims that:</p>
 instead if a fixed/surface oriented orientation?</p>
 <p>Try this changing the mode parameter in <a class="reference internal" href="../generated/mne.sensitivity_map.html#mne.sensitivity_map" title="mne.sensitivity_map"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.sensitivity_map()</span></code></a>
 accordingly. Why don’t we see any dipoles on the gyri?</p>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  38.289 seconds)</p>
-<p><strong>Estimated memory usage:</strong>  929 MB</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 1 minutes  22.084 seconds)</p>
+<p><strong>Estimated memory usage:</strong>  1087 MB</p>
 <div class="sphx-glr-footer class sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-tutorials-plot-forward-py">
 <div class="sphx-glr-download docutils container">
 <a class="reference download internal" download="" href="../_downloads/a7e7fe438d475130bc2d2f3337432535/plot_forward.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">plot_forward.py</span></code></a></div>

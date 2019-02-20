@@ -178,22 +178,18 @@ This documentation is for <strong>development version 0.18.dev0</strong>.
 <h1>mne.setup_volume_source_space<a class="headerlink" href="#mne-setup-volume-source-space" title="Permalink to this headline">¶</a></h1>
 <dl class="function">
 <dt id="mne.setup_volume_source_space">
-<code class="descclassname">mne.</code><code class="descname">setup_volume_source_space</code><span class="sig-paren">(</span><em>subject=None</em>, <em>pos=5.0</em>, <em>mri=None</em>, <em>sphere=(0.0</em>, <em>0.0</em>, <em>0.0</em>, <em>90.0)</em>, <em>bem=None</em>, <em>surface=None</em>, <em>mindist=5.0</em>, <em>exclude=0.0</em>, <em>subjects_dir=None</em>, <em>volume_label=None</em>, <em>add_interpolator=True</em>, <em>verbose=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/source_space.py#L1477-L1706"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.setup_volume_source_space" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">mne.</code><code class="descname">setup_volume_source_space</code><span class="sig-paren">(</span><em>subject=None</em>, <em>pos=5.0</em>, <em>mri=None</em>, <em>sphere=(0.0</em>, <em>0.0</em>, <em>0.0</em>, <em>90.0)</em>, <em>bem=None</em>, <em>surface=None</em>, <em>mindist=5.0</em>, <em>exclude=0.0</em>, <em>subjects_dir=None</em>, <em>volume_label=None</em>, <em>add_interpolator=True</em>, <em>verbose=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/source_space.py#L1477-L1734"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.setup_volume_source_space" title="Permalink to this definition">¶</a></dt>
 <dd><p>Set up a volume source space with grid spacing or discrete source space.</p>
-<p>When you work with a volume source space you need to specify the domain in
-which the grid will be defined. There are three ways of specifying this:
-(i) sphere, (ii) bem model, and (iii) surface.
-The default behavior is to use sphere model
-(<code class="docutils literal notranslate"><span class="pre">sphere=(0.0,</span> <span class="pre">0.0,</span> <span class="pre">0.0,</span> <span class="pre">90.0)</span></code>) if <code class="docutils literal notranslate"><span class="pre">bem</span></code> or <code class="docutils literal notranslate"><span class="pre">sourface</span></code> is not
-<code class="docutils literal notranslate"><span class="pre">None</span></code> then <code class="docutils literal notranslate"><span class="pre">sphere</span></code> is ignored.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
 <dt><strong>subject</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str | None</span></dt>
-<dd><p class="first last">Subject to process. If None, the path to the mri volume must be
-absolute. Defaults to None.</p>
+<dd><p class="first last">Subject to process. If None, the path to the MRI volume must be
+absolute to get a volume source space. If a subject name
+is provided the T1.mgz file will be found automatically.
+Defaults to None.</p>
 </dd>
 <dt><strong>pos</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float | dict</span></dt>
 <dd><p class="first last">Positions to use for sources. If float, a grid will be constructed
@@ -207,7 +203,10 @@ a dict), <em class="xref py py-obj">mri</em> must be None.</p>
 <dd><p class="first last">The filename of an MRI volume (mgh or mgz) to create the
 interpolation matrix over. Source estimates obtained in the
 volume source space can then be morphed onto the MRI volume
-using this interpolator. If pos is a dict, this can be None.</p>
+using this interpolator. If pos is a dict, this cannot be None.
+If subject name is provided, <em class="xref py py-obj">pos</em> is a float or <em class="xref py py-obj">volume_label</em>
+are not provided then the <em class="xref py py-obj">mri</em> parameter will default to ‘T1.mgz’
+else it will stay None.</p>
 </dd>
 <dt><strong>sphere</strong> <span class="classifier-delimiter">:</span> <span class="classifier">ndarray, shape (4,) | ConductorModel</span></dt>
 <dd><p class="first last">Define spherical source space bounds using origin and radius given
@@ -215,9 +214,9 @@ by (ox, oy, oz, rad) in mm. Only used if <code class="docutils literal notransla
 are both None. Can also be a spherical ConductorModel, which will
 use the origin and radius.</p>
 </dd>
-<dt><strong>bem</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str | None</span></dt>
+<dt><strong>bem</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str | None | ConductorModel</span></dt>
 <dd><p class="first last">Define source space bounds using a BEM file (specifically the inner
-skull surface).</p>
+skull surface) or a ConductorModel for a 1-layer of 3-layers BEM.</p>
 </dd>
 <dt><strong>surface</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str | dict | None</span></dt>
 <dd><p class="first last">Define source space bounds using a FreeSurfer surface file. Can
@@ -264,6 +263,20 @@ entry of <code class="docutils literal notranslate"><span class="pre">volume_lab
 <p class="last"><a class="reference internal" href="mne.setup_source_space.html#mne.setup_source_space" title="mne.setup_source_space"><code class="xref py py-obj docutils literal notranslate"><span class="pre">setup_source_space</span></code></a></p>
 </div>
 <p class="rubric">Notes</p>
+<p>Volume source spaces are related to an MRI image such as T1 and allow to
+visualize source estimates overlaid on MRIs and to morph estimates
+to a template brain for group analysis. Discrete source spaces
+don’t allow this. If you provide a subject name the T1 MRI will be
+used by default.</p>
+<p>When you work with a source space formed from a grid you need to specify
+the domain in which the grid will be defined. There are three ways
+of specifying this:
+(i) sphere, (ii) bem model, and (iii) surface.
+The default behavior is to use sphere model
+(<code class="docutils literal notranslate"><span class="pre">sphere=(0.0,</span> <span class="pre">0.0,</span> <span class="pre">0.0,</span> <span class="pre">90.0)</span></code>) if <code class="docutils literal notranslate"><span class="pre">bem</span></code> or <code class="docutils literal notranslate"><span class="pre">surface</span></code> is not
+<code class="docutils literal notranslate"><span class="pre">None</span></code> then <code class="docutils literal notranslate"><span class="pre">sphere</span></code> is ignored.
+If you’re going to use a BEM conductor model for forward model
+it is recommended to pass it here.</p>
 <p>To create a discrete source space, <em class="xref py py-obj">pos</em> must be a dict, ‘mri’ must be
 None, and ‘volume_label’ must be None. To create a whole brain volume
 source space, <em class="xref py py-obj">pos</em> must be a float and ‘mri’ must be provided. To create
