@@ -175,7 +175,7 @@ This documentation is for <strong>development version 0.18.dev0</strong>.
 <h1>mne.cov.compute_whitener<a class="headerlink" href="#mne-cov-compute-whitener" title="Permalink to this headline">¶</a></h1>
 <dl class="function">
 <dt id="mne.cov.compute_whitener">
-<code class="descclassname">mne.cov.</code><code class="descname">compute_whitener</code><span class="sig-paren">(</span><em>noise_cov</em>, <em>info</em>, <em>picks=None</em>, <em>rank=None</em>, <em>scalings=None</em>, <em>return_rank=False</em>, <em>pca=False</em>, <em>verbose=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/cov.py#L1649-L1711"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.cov.compute_whitener" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">mne.cov.</code><code class="descname">compute_whitener</code><span class="sig-paren">(</span><em>noise_cov</em>, <em>info=None</em>, <em>picks=None</em>, <em>rank=None</em>, <em>scalings=None</em>, <em>return_rank=False</em>, <em>pca=False</em>, <em>return_colorer=False</em>, <em>verbose=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/cov.py#L1629-L1732"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.cov.compute_whitener" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute whitening matrix.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
@@ -185,8 +185,9 @@ This documentation is for <strong>development version 0.18.dev0</strong>.
 <dt><strong>noise_cov</strong> <span class="classifier-delimiter">:</span> <span class="classifier">Covariance</span></dt>
 <dd><p class="first last">The noise covariance.</p>
 </dd>
-<dt><strong>info</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict</span></dt>
-<dd><p class="first last">The measurement info.</p>
+<dt><strong>info</strong> <span class="classifier-delimiter">:</span> <span class="classifier">dict | None</span></dt>
+<dd><p class="first last">The measurement info. Can be None if <em class="xref py py-obj">noise_cov</em> has already been
+prepared with <a class="reference internal" href="mne.cov.prepare_noise_cov.html#mne.cov.prepare_noise_cov" title="mne.cov.prepare_noise_cov"><code class="xref py py-func docutils literal notranslate"><span class="pre">prepare_noise_cov()</span></code></a>.</p>
 </dd>
 <dt><strong>picks</strong> <span class="classifier-delimiter">:</span> <span class="classifier">str | list | slice | None</span></dt>
 <dd><p class="first last">Channels to include. Slices and lists of integers will be
@@ -217,11 +218,28 @@ of <a class="reference internal" href="mne.compute_rank.html#mne.compute_rank" t
 <p><span class="versionmodified">New in version 0.15.</span></p>
 </div>
 </dd>
-<dt><strong>pca</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
-<dd><p class="first">If True, return the rank-reduced whitener will be returned.</p>
+<dt><strong>pca</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool | str</span></dt>
+<dd><p class="first">Space to project the data into. Options:</p>
+<dl class="docutils">
+<dt><a class="reference external" href="https://docs.python.org/3/library/constants.html#True" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">True</span></code></a></dt>
+<dd><p class="first last">Whitener will be shape (n_nonzero, n_channels).</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">'white'</span></code></dt>
+<dd><p class="first last">Whitener will be shape (n_channels, n_channels), potentially rank
+deficient, and have the first <code class="docutils literal notranslate"><span class="pre">n_channels</span> <span class="pre">-</span> <span class="pre">n_nonzero</span></code> rows and
+columns set to zero.</p>
+</dd>
+<dt><a class="reference external" href="https://docs.python.org/3/library/constants.html#False" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">False</span></code></a> (default)</dt>
+<dd><p class="first last">Whitener will be shape (n_channels, n_channels), potentially rank
+deficient, and rotated back to the space of the original data.</p>
+</dd>
+</dl>
 <div class="last versionadded">
 <p><span class="versionmodified">New in version 0.18.</span></p>
 </div>
+</dd>
+<dt><strong>return_colorer</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
+<dd><p class="first last">If True, return the colorer as well.</p>
 </dd>
 <dt><strong>verbose</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, str, int, or None</span></dt>
 <dd><p class="first last">If not None, override default verbose level (see <a class="reference internal" href="mne.verbose.html#mne.verbose" title="mne.verbose"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.verbose()</span></code></a>
@@ -232,14 +250,16 @@ and <a class="reference internal" href="../auto_tutorials/plot_configuration.htm
 </tr>
 <tr class="field-even field"><th class="field-name">Returns:</th><td class="field-body"><dl class="first last docutils">
 <dt><strong>W</strong> <span class="classifier-delimiter">:</span> <span class="classifier">ndarray, shape (n_channels, n_channels) or (n_nonzero, n_channels)</span></dt>
-<dd><p class="first last">The whitening matrix, backprojected or not based on whether <em class="xref py py-obj">pca</em> is
-False or True, respectively.</p>
+<dd><p class="first last">The whitening matrix.</p>
 </dd>
 <dt><strong>ch_names</strong> <span class="classifier-delimiter">:</span> <span class="classifier">list</span></dt>
 <dd><p class="first last">The channel names.</p>
 </dd>
 <dt><strong>rank</strong> <span class="classifier-delimiter">:</span> <span class="classifier">int</span></dt>
 <dd><p class="first last">Rank reduction of the whitener. Returned only if return_rank is True.</p>
+</dd>
+<dt><strong>colorer</strong> <span class="classifier-delimiter">:</span> <span class="classifier">ndarray, shape (n_channels, n_channels) or (n_channels, n_nonzero)</span></dt>
+<dd><p class="first last">The coloring matrix.</p>
 </dd>
 </dl>
 </td>
@@ -270,7 +290,7 @@ False or True, respectively.</p>
       <li><a href="faq.html#cite">Cite MNE</a></li>
       <li class="pull-right"><a href="#">Back to top</a></li>
     </ul>
-    <p>&copy; Copyright 2012-2019, MNE Developers. Last updated on 2019-02-21.</p>
+    <p>&copy; Copyright 2012-2019, MNE Developers. Last updated on 2019-02-22.</p>
   </div>
 </footer>
   </body>
