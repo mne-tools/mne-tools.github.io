@@ -175,45 +175,88 @@ This documentation is for <strong>development version 0.18.dev0</strong>.
 <h1>mne.forward.compute_depth_prior<a class="headerlink" href="#mne-forward-compute-depth-prior" title="Permalink to this headline">¶</a></h1>
 <dl class="function">
 <dt id="mne.forward.compute_depth_prior">
-<code class="descclassname">mne.forward.</code><code class="descname">compute_depth_prior</code><span class="sig-paren">(</span><em>G</em>, <em>gain_info</em>, <em>is_fixed_ori</em>, <em>exp=0.8</em>, <em>limit=10.0</em>, <em>patch_areas=None</em>, <em>limit_depth_chs=False</em>, <em>loose_method='svd'</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/forward/forward.py#L1067-L1172"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.forward.compute_depth_prior" title="Permalink to this definition">¶</a></dt>
-<dd><p>Compute weighting for depth prior.</p>
+<code class="descclassname">mne.forward.</code><code class="descname">compute_depth_prior</code><span class="sig-paren">(</span><em>forward</em>, <em>info</em>, <em>is_fixed_ori=None</em>, <em>exp=0.8</em>, <em>limit=10.0</em>, <em>patch_areas=None</em>, <em>limit_depth_chs=False</em>, <em>combine_xyz='spectral'</em>, <em>noise_cov=None</em>, <em>rank=None</em>, <em>verbose=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/forward/forward.py#L1059-L1232"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.forward.compute_depth_prior" title="Permalink to this definition">¶</a></dt>
+<dd><p>Compute depth prior for depth weighting.</p>
 <table class="docutils field-list" frame="void" rules="none">
 <col class="field-name" />
 <col class="field-body" />
 <tbody valign="top">
 <tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><dl class="first docutils">
-<dt><strong>G</strong> <span class="classifier-delimiter">:</span> <span class="classifier">ndarray, shape (n_channels, n_vertices)</span></dt>
-<dd><p class="first last">The gain matrix.</p>
+<dt><strong>forward</strong> <span class="classifier-delimiter">:</span> <span class="classifier">instance of Forward</span></dt>
+<dd><p class="first last">The forward solution.</p>
 </dd>
-<dt><strong>gain_info</strong> <span class="classifier-delimiter">:</span> <span class="classifier">instance of Info</span></dt>
-<dd><p class="first last">The info associated with the gain matrix.</p>
+<dt><strong>info</strong> <span class="classifier-delimiter">:</span> <span class="classifier">instance of Info</span></dt>
+<dd><p class="first last">The measurement info.</p>
 </dd>
-<dt><strong>is_fixed_ori</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
-<dd><p class="first last">Whether or not <code class="docutils literal notranslate"><span class="pre">G</span></code> is fixed orientation.</p>
+<dt><strong>is_fixed_ori</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool | None</span></dt>
+<dd><p class="first last">Deprecated, will be removed in 0.19.</p>
 </dd>
 <dt><strong>exp</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float</span></dt>
-<dd><p class="first last">Exponent for the depth weighting.</p>
+<dd><p class="first last">Exponent for the depth weighting, must be between 0 and 1.</p>
 </dd>
 <dt><strong>limit</strong> <span class="classifier-delimiter">:</span> <span class="classifier">float | None</span></dt>
-<dd><p class="first last">The upper bound on depth weighting. Can be None to be unbounded.</p>
+<dd><p class="first last">The upper bound on depth weighting.
+Can be None to be bounded by the largest finite prior.</p>
 </dd>
 <dt><strong>patch_areas</strong> <span class="classifier-delimiter">:</span> <span class="classifier">ndarray | None</span></dt>
-<dd><p class="first last">Patch areas of the vertices from the forward solution.</p>
+<dd><p class="first last">Deprecated, will be removed in 0.19.</p>
 </dd>
-<dt><strong>limit_depth_chs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool</span></dt>
-<dd><p class="first last">If True, limit depth weighting computation to gradiometers
-if present (ignoring magnetometers). This can improve the
-computations on systems that have both (e.g., Neuromag).</p>
+<dt><strong>limit_depth_chs</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool | ‘whiten’</span></dt>
+<dd><p class="first">How to deal with multiple channel types in depth weighting. Options:</p>
+<dl class="last docutils">
+<dt><a class="reference external" href="https://docs.python.org/3/library/constants.html#True" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">True</span></code></a> (default)</dt>
+<dd><p class="first last">Use only grad channels in depth weighting (equivalent to MNE C
+minimum-norm code). If grad channels aren’t present, only mag
+channels will be used (if no mag, then eeg). This makes the depth
+prior dependent only on the sensor geometry (and relationship
+to the sources).</p>
 </dd>
-<dt><strong>loose_method</strong> <span class="classifier-delimiter">:</span> <span class="classifier">‘svd’ | ‘sum’</span></dt>
-<dd><p class="first">When a loose (or free) orientation is used, how the depth weighting
-for each triplet should be calculated.
-If ‘svd’, use the largest singular value of the 3x3 matrix
-formed by the dot product <code class="docutils literal notranslate"><span class="pre">Gk.T</span> <span class="pre">&#64;</span> <span class="pre">Gk</span></code> will be used.
-If ‘sum’, then <code class="docutils literal notranslate"><span class="pre">np.sum(Gk</span> <span class="pre">**</span> <span class="pre">2)</span></code> will be used.</p>
+<dt><code class="docutils literal notranslate"><span class="pre">'whiten'</span></code></dt>
+<dd><p class="first">Compute a whitener and apply it to the channels before computing
+the depth prior. In this case <code class="docutils literal notranslate"><span class="pre">noise_cov</span></code> must not be None.</p>
 <div class="last versionadded">
 <p><span class="versionmodified">New in version 0.18.</span></p>
 </div>
+</dd>
+<dt><a class="reference external" href="https://docs.python.org/3/library/constants.html#False" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">False</span></code></a></dt>
+<dd><p class="first last">Use all channels. Only recommended when the gain matrix has
+already been whitened (otherwise it will be arbitrarily
+biased toward whichever channel type has the largest values in
+SI units). Whitening the gain matrix makes the depth prior
+depend on both sensor geometry and the data of interest captured
+by the noise covariance (e.g., projections, SNR).</p>
+</dd>
+</dl>
+</dd>
+<dt><strong>combine_xyz</strong> <span class="classifier-delimiter">:</span> <span class="classifier">‘spectral’ | ‘fro’</span></dt>
+<dd><p class="first">When a loose (or free) orientation is used, how the depth weighting
+for each triplet should be calculated.
+If ‘spectral’, use the squared spectral norm of Gk.
+If ‘fro’, use the squared Frobenius norm of Gk.</p>
+<div class="last versionadded">
+<p><span class="versionmodified">New in version 0.18.</span></p>
+</div>
+</dd>
+<dt><strong>noise_cov</strong> <span class="classifier-delimiter">:</span> <span class="classifier">instance of Covariance | None</span></dt>
+<dd><p class="first">The noise covariance to use to whiten the gain matrix when
+<code class="docutils literal notranslate"><span class="pre">limit_depth_chs='whiten'</span></code>.</p>
+<div class="last versionadded">
+<p><span class="versionmodified">New in version 0.18.</span></p>
+</div>
+</dd>
+<dt><strong>rank</strong> <span class="classifier-delimiter">:</span> <span class="classifier">None | dict | ‘info’ | ‘full’</span></dt>
+<dd><blockquote class="first">
+<div><p>This controls the rank computation that can be read from the
+measurement info or estimated from the data. See <code class="docutils literal notranslate"><span class="pre">Notes</span></code>
+of <a class="reference internal" href="mne.compute_rank.html#mne.compute_rank" title="mne.compute_rank"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.compute_rank()</span></code></a> for details.The default is None.</p>
+</div></blockquote>
+<div class="last versionadded">
+<p><span class="versionmodified">New in version 0.18.</span></p>
+</div>
+</dd>
+<dt><strong>verbose</strong> <span class="classifier-delimiter">:</span> <span class="classifier">bool, str, int, or None</span></dt>
+<dd><p class="first last">If not None, override default verbose level (see <a class="reference internal" href="mne.verbose.html#mne.verbose" title="mne.verbose"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.verbose()</span></code></a>
+and <a class="reference internal" href="../auto_tutorials/plot_configuration.html#tut-logging"><span class="std std-ref">Logging documentation</span></a> for more).</p>
 </dd>
 </dl>
 </td>
@@ -230,6 +273,18 @@ If ‘sum’, then <code class="docutils literal notranslate"><span class="pre">
 <div class="admonition seealso">
 <p class="first admonition-title">See also</p>
 <p class="last"><a class="reference internal" href="mne.forward.compute_orient_prior.html#mne.forward.compute_orient_prior" title="mne.forward.compute_orient_prior"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_orient_prior</span></code></a></p>
+</div>
+<p class="rubric">Notes</p>
+<p>The defaults used by the minimum norm code and sparse solvers differ.
+In particular, the values for MNE are:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">compute_depth_prior</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="mf">10.</span><span class="p">,</span> <span class="n">limit_depth_chs</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <span class="n">combine_xyz</span><span class="o">=</span><span class="s1">&#39;spectral&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>In sparse solvers, the values are:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">compute_depth_prior</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">limit</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">limit_depth_chs</span><span class="o">=</span><span class="s1">&#39;whiten&#39;</span><span class="p">,</span>
+                    <span class="n">combine_xyz</span><span class="o">=</span><span class="s1">&#39;fro&#39;</span><span class="p">)</span>
+</pre></div>
 </div>
 </dd></dl>
 
@@ -255,7 +310,7 @@ If ‘sum’, then <code class="docutils literal notranslate"><span class="pre">
       <li><a href="faq.html#cite">Cite MNE</a></li>
       <li class="pull-right"><a href="#">Back to top</a></li>
     </ul>
-    <p>&copy; Copyright 2012-2019, MNE Developers. Last updated on 2019-02-27.</p>
+    <p>&copy; Copyright 2012-2019, MNE Developers. Last updated on 2019-03-02.</p>
   </div>
 </footer>
   </body>
