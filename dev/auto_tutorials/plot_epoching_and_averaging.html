@@ -177,8 +177,8 @@ This documentation is for <strong>development version 0.18.dev0</strong>.
 </div>
 <div class="sphx-glr-example-title section" id="epoching-and-averaging-erp-erf">
 <span id="tut-epoching-and-averaging"></span><span id="sphx-glr-auto-tutorials-plot-epoching-and-averaging-py"></span><h1>Epoching and averaging (ERP/ERF)<a class="headerlink" href="#epoching-and-averaging-erp-erf" title="Permalink to this headline">¶</a></h1>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os.path</span> <span class="kn">as</span> <span class="nn">op</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="kn">as</span> <span class="nn">np</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os.path</span> <span class="k">as</span> <span class="nn">op</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
 
 <span class="kn">import</span> <span class="nn">mne</span>
 </pre></div>
@@ -189,19 +189,19 @@ of time locked raw data. If you haven’t already, you might want to check out
 In this tutorial we take a deeper look into
 construction of epochs and averaging the epoch data to evoked instances.
 First let’s read in the raw sample data.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">data_path</span> <span class="o">=</span> <a href="../generated/mne.datasets.sample.data_path.html#mne.datasets.sample.data_path" title="View documentation for mne.datasets.sample.data_path"><span class="n">mne</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">sample</span><span class="o">.</span><span class="n">data_path</span></a><span class="p">()</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">data_path</span> <span class="o">=</span> <a href="../generated/mne.datasets.sample.data_path.html#mne.datasets.sample.data_path" title="View documentation for mne.datasets.sample.data_path"><span class="n">mne</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">sample</span><span class="o">.</span><span class="n">data_path</span></a><span class="p">()</span>
 <span class="n">fname</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_path</span><span class="p">,</span> <span class="s1">&#39;MEG&#39;</span><span class="p">,</span> <span class="s1">&#39;sample&#39;</span><span class="p">,</span> <span class="s1">&#39;sample_audvis_raw.fif&#39;</span><span class="p">)</span>
 <span class="n">raw</span> <span class="o">=</span> <a href="../generated/mne.io.read_raw_fif.html#mne.io.read_raw_fif" title="View documentation for mne.io.read_raw_fif"><span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read_raw_fif</span></a><span class="p">(</span><span class="n">fname</span><span class="p">)</span>
-<span class="n">raw</span><span class="o">.</span><span class="n">set_eeg_reference</span><span class="p">(</span><span class="s1">&#39;average&#39;</span><span class="p">,</span> <span class="n">projection</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>  <span class="c1"># set EEG average reference</span>
+<span class="n">raw</span><span class="o">.</span><span class="n">set_eeg_reference</span><span class="p">(</span><span class="s1">&#39;average&#39;</span><span class="p">,</span> <span class="n">projection</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># set EEG average reference</span>
 </pre></div>
 </div>
 <p>To create time locked epochs, we first need a set of events that contain the
 information about the times. In this tutorial we use the stimulus channel to
 define the events. Let’s look at the raw data.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">order</span> <span class="o">=</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.arange.html#numpy.arange" title="View documentation for numpy.arange"><span class="n">np</span><span class="o">.</span><span class="n">arange</span></a><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;nchan&#39;</span><span class="p">])</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">order</span> <span class="o">=</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.arange.html#numpy.arange" title="View documentation for numpy.arange"><span class="n">np</span><span class="o">.</span><span class="n">arange</span></a><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;nchan&#39;</span><span class="p">])</span>
 <span class="n">order</span><span class="p">[</span><span class="mi">9</span><span class="p">]</span> <span class="o">=</span> <span class="mi">312</span>  <span class="c1"># We exchange the plotting order of two channels</span>
 <span class="n">order</span><span class="p">[</span><span class="mi">312</span><span class="p">]</span> <span class="o">=</span> <span class="mi">9</span>  <span class="c1"># to show the trigger channel as the 10th channel.</span>
-<span class="n">raw</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">n_channels</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="n">order</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<span class="n">raw</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">n_channels</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="n">order</span><span class="p">,</span> <span class="n">block</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
 <img alt="../_images/sphx_glr_plot_epoching_and_averaging_001.png" class="sphx-glr-single-img" src="../_images/sphx_glr_plot_epoching_and_averaging_001.png" />
@@ -215,9 +215,9 @@ data, we simply call a function dedicated just for that. Since the event list
 is simply a numpy array, you can also manually create one. If you create one
 from an outside source (like a separate file of events), pay special
 attention in aligning the events correctly with the raw data.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">events</span> <span class="o">=</span> <a href="../generated/mne.find_events.html#mne.find_events" title="View documentation for mne.find_events"><span class="n">mne</span><span class="o">.</span><span class="n">find_events</span></a><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
-<span class="k">print</span><span class="p">(</span><span class="s1">&#39;Found </span><span class="si">%s</span><span class="s1"> events, first five:&#39;</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">events</span><span class="p">))</span>
-<span class="k">print</span><span class="p">(</span><span class="n">events</span><span class="p">[:</span><span class="mi">5</span><span class="p">])</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">events</span> <span class="o">=</span> <a href="../generated/mne.find_events.html#mne.find_events" title="View documentation for mne.find_events"><span class="n">mne</span><span class="o">.</span><span class="n">find_events</span></a><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Found </span><span class="si">%s</span><span class="s1"> events, first five:&#39;</span> <span class="o">%</span> <span class="nb">len</span><span class="p">(</span><span class="n">events</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">events</span><span class="p">[:</span><span class="mi">5</span><span class="p">])</span>
 
 <span class="c1"># Plot the events to get an idea of the paradigm</span>
 <span class="c1"># Specify colors and an event_id dictionary for the legend.</span>
@@ -257,7 +257,7 @@ about this offset as it is taken into account with MNE functions, but it is
 good to be aware of. Just to confirm, let’s plot the events together with the
 raw data. Notice how the vertical lines (events) align nicely with the pulses
 on <em class="xref py py-obj">STI 014</em>.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">raw</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">events</span><span class="o">=</span><span class="n">events</span><span class="p">,</span> <span class="n">n_channels</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="n">order</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">raw</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">events</span><span class="o">=</span><span class="n">events</span><span class="p">,</span> <span class="n">n_channels</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><span class="n">order</span><span class="p">)</span>
 </pre></div>
 </div>
 <img alt="../_images/sphx_glr_plot_epoching_and_averaging_003.png" class="sphx-glr-single-img" src="../_images/sphx_glr_plot_epoching_and_averaging_003.png" />
@@ -269,7 +269,7 @@ is lost. First we shall define some parameters to feed to the
 <a class="reference internal" href="../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal notranslate"><span class="pre">mne.Epochs</span></code></a> constructor. The values <code class="docutils literal notranslate"><span class="pre">tmin</span></code> and <code class="docutils literal notranslate"><span class="pre">tmax</span></code> refer to
 offsets in relation to the events. Here we make epochs that collect the data
 from 200 ms before to 500 ms after the event.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">tmin</span><span class="p">,</span> <span class="n">tmax</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.5</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">tmin</span><span class="p">,</span> <span class="n">tmax</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.5</span>
 <span class="n">event_id</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Auditory/Left&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;Auditory/Right&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
             <span class="s1">&#39;Visual/Left&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s1">&#39;Visual/Right&#39;</span><span class="p">:</span> <span class="mi">4</span><span class="p">}</span>
 </pre></div>
@@ -292,7 +292,7 @@ for EEG and EOG electrodes.</p>
 something you would normally do. See our <a class="reference internal" href="../documentation.html#documentation"><span class="std std-ref">Documentation</span></a> on
 preprocessing for more.</p>
 </div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">baseline</span> <span class="o">=</span> <span class="p">(</span><span class="bp">None</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">baseline</span> <span class="o">=</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">)</span>
 <span class="n">reject</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;mag&#39;</span><span class="p">:</span> <span class="mf">4e-12</span><span class="p">,</span> <span class="s1">&#39;eog&#39;</span><span class="p">:</span> <span class="mf">200e-6</span><span class="p">}</span>
 <span class="n">epochs</span> <span class="o">=</span> <a href="../generated/mne.Epochs.html#mne.Epochs" title="View documentation for mne.Epochs"><span class="n">mne</span><span class="o">.</span><span class="n">Epochs</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">events</span><span class="o">=</span><span class="n">events</span><span class="p">,</span> <span class="n">event_id</span><span class="o">=</span><span class="n">event_id</span><span class="p">,</span> <span class="n">tmin</span><span class="o">=</span><span class="n">tmin</span><span class="p">,</span>
                     <span class="n">tmax</span><span class="o">=</span><span class="n">tmax</span><span class="p">,</span> <span class="n">baseline</span><span class="o">=</span><span class="n">baseline</span><span class="p">,</span> <span class="n">reject</span><span class="o">=</span><span class="n">reject</span><span class="p">,</span>
@@ -309,12 +309,12 @@ epochs and which thresholds to use is not a trivial question and this
 tutorial takes no stand on that matter.</p>
 <p>To see all the interactive features of the epochs browser, click ‘Help’ in
 the lower left corner of the browser window.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">epochs</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">block</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">epochs</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">block</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
 <img alt="../_images/sphx_glr_plot_epoching_and_averaging_004.png" class="sphx-glr-single-img" src="../_images/sphx_glr_plot_epoching_and_averaging_004.png" />
 <p>To see why the epochs were rejected, we can plot the drop log.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">epochs</span><span class="o">.</span><span class="n">plot_drop_log</span><span class="p">()</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">epochs</span><span class="o">.</span><span class="n">plot_drop_log</span><span class="p">()</span>
 </pre></div>
 </div>
 <img alt="../_images/sphx_glr_plot_epoching_and_averaging_005.png" class="sphx-glr-single-img" src="../_images/sphx_glr_plot_epoching_and_averaging_005.png" />
@@ -326,7 +326,7 @@ you might ask. They’re different because <code class="docutils literal notrans
 channel indices and as the epochs were constructed, also a new info structure
 is created where the channel indices run from 0 to <code class="docutils literal notranslate"><span class="pre">epochs.info['nchan']</span></code>.
 See <a class="reference internal" href="plot_info.html#sphx-glr-auto-tutorials-plot-info-py"><span class="std std-ref">The Info data structure</span></a> for more information.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">picks</span> <span class="o">=</span> <a href="../generated/mne.pick_types.html#mne.pick_types" title="View documentation for mne.pick_types"><span class="n">mne</span><span class="o">.</span><span class="n">pick_types</span></a><span class="p">(</span><span class="n">epochs</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">meg</span><span class="o">=</span><span class="bp">True</span><span class="p">,</span> <span class="n">eog</span><span class="o">=</span><span class="bp">True</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">picks</span> <span class="o">=</span> <a href="../generated/mne.pick_types.html#mne.pick_types" title="View documentation for mne.pick_types"><span class="n">mne</span><span class="o">.</span><span class="n">pick_types</span></a><span class="p">(</span><span class="n">epochs</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">meg</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">eog</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="n">evoked_left</span> <span class="o">=</span> <span class="n">epochs</span><span class="p">[</span><span class="s1">&#39;Auditory/Left&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">average</span><span class="p">(</span><span class="n">picks</span><span class="o">=</span><span class="n">picks</span><span class="p">)</span>
 <span class="n">evoked_right</span> <span class="o">=</span> <span class="n">epochs</span><span class="p">[</span><span class="s1">&#39;Auditory/Right&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">average</span><span class="p">(</span><span class="n">picks</span><span class="o">=</span><span class="n">picks</span><span class="p">)</span>
 </pre></div>
@@ -334,10 +334,10 @@ See <a class="reference internal" href="plot_info.html#sphx-glr-auto-tutorials-p
 <p>Notice we have used forward slashes (‘/’) to separate the factors of the
 conditions of the experiment. We can use these ‘tags’ to select for example
 all left trials (both visual left and auditory right) …</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">epochs_left</span> <span class="o">=</span> <span class="n">epochs</span><span class="p">[</span><span class="s1">&#39;Left&#39;</span><span class="p">]</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">epochs_left</span> <span class="o">=</span> <span class="n">epochs</span><span class="p">[</span><span class="s1">&#39;Left&#39;</span><span class="p">]</span>
 
 <span class="c1"># ... or to select a very specific subset. This is the same as above:</span>
-<span class="n">evoked_left</span> <span class="o">=</span> <span class="n">epochs</span><span class="p">[</span><span class="s1">&#39;Left/Auditory&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">average</span><span class="p">(</span><span class="n">picks</span><span class="o">=</span><span class="n">picks</span><span class="p">)</span>
+<span class="n">evoked_left_again</span> <span class="o">=</span> <span class="n">epochs</span><span class="p">[</span><span class="s1">&#39;Left/Auditory&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">average</span><span class="p">(</span><span class="n">picks</span><span class="o">=</span><span class="n">picks</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="admonition note">
@@ -348,7 +348,7 @@ more complex selections on subsets of Epochs. See
 information.</p>
 </div>
 <p>Finally, let’s plot the evoked responses.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">evoked_left</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">time_unit</span><span class="o">=</span><span class="s1">&#39;s&#39;</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">evoked_left</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">time_unit</span><span class="o">=</span><span class="s1">&#39;s&#39;</span><span class="p">)</span>
 <span class="n">evoked_right</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">time_unit</span><span class="o">=</span><span class="s1">&#39;s&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -358,7 +358,7 @@ information.</p>
 <li><img alt="../_images/sphx_glr_plot_epoching_and_averaging_007.png" class="sphx-glr-multi-img first" src="../_images/sphx_glr_plot_epoching_and_averaging_007.png" />
 </li>
 </ul>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  12.669 seconds)</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  12.380 seconds)</p>
 <p><strong>Estimated memory usage:</strong>  8 MB</p>
 <div class="sphx-glr-footer class sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-tutorials-plot-epoching-and-averaging-py">
 <div class="sphx-glr-download docutils container">
@@ -389,7 +389,7 @@ information.</p>
       <li><a href="faq.html#cite">Cite MNE</a></li>
       <li class="pull-right"><a href="#">Back to top</a></li>
     </ul>
-    <p>&copy; Copyright 2012-2019, MNE Developers. Last updated on 2019-03-02.</p>
+    <p>&copy; Copyright 2012-2019, MNE Developers. Last updated on 2019-03-04.</p>
   </div>
 </footer>
   </body>

@@ -14,7 +14,7 @@ of good practice to analyse your data.
 
 The example makes use of 2 functions ``apply_solver`` and ``solver``
 so changes can be limited to the ``solver`` function (which only takes three
-parameters: the whitened data, the gain matrix, and the number of orientations)
+parameters: the whitened data, the gain matrix and the number of orientations)
 in order to try out another inverse algorithm.
 """
 
@@ -145,7 +145,9 @@ def solver(M, G, n_orient):
         We have ``X_full[active_set] == X`` where X_full is the full X matrix
         such that ``M = G X_full``.
     """
-    K = linalg.solve(np.dot(G, G.T) + 1e15 * np.eye(G.shape[0]), G).T
+    inner = np.dot(G, G.T)
+    trace = np.trace(inner)
+    K = linalg.solve(inner + 4e-6 * trace * np.eye(G.shape[0]), G).T
     K /= np.linalg.norm(K, axis=1)[:, None]
     X = np.dot(K, M)
 
