@@ -170,7 +170,7 @@ This documentation is for <strong>development version 0.18.dev0</strong>.
 <h1>mne.forward.compute_depth_prior<a class="headerlink" href="#mne-forward-compute-depth-prior" title="Permalink to this headline">¶</a></h1>
 <dl class="function">
 <dt id="mne.forward.compute_depth_prior">
-<code class="descclassname">mne.forward.</code><code class="descname">compute_depth_prior</code><span class="sig-paren">(</span><em>forward</em>, <em>info</em>, <em>is_fixed_ori=None</em>, <em>exp=0.8</em>, <em>limit=10.0</em>, <em>patch_areas=None</em>, <em>limit_depth_chs=False</em>, <em>combine_xyz='spectral'</em>, <em>noise_cov=None</em>, <em>rank=None</em>, <em>verbose=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/forward/forward.py#L1059-L1232"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.forward.compute_depth_prior" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">mne.forward.</code><code class="descname">compute_depth_prior</code><span class="sig-paren">(</span><em>forward</em>, <em>info</em>, <em>is_fixed_ori=None</em>, <em>exp=0.8</em>, <em>limit=10.0</em>, <em>patch_areas=None</em>, <em>limit_depth_chs=False</em>, <em>combine_xyz='spectral'</em>, <em>noise_cov=None</em>, <em>rank=None</em>, <em>verbose=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/forward/forward.py#L1059-L1238"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.forward.compute_depth_prior" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute depth prior for depth weighting.</p>
 <dl class="field-list">
 <dt class="field-odd">Parameters</dt>
@@ -188,28 +188,12 @@ Can be None to be bounded by the largest finite prior.</p>
 </dd>
 <dt><strong>patch_areas</strong><span class="classifier">ndarray | None</span></dt><dd><p>Deprecated, will be removed in 0.19.</p>
 </dd>
-<dt><strong>limit_depth_chs</strong><span class="classifier">bool | ‘whiten’</span></dt><dd><p>How to deal with multiple channel types in depth weighting. Options:</p>
-<dl>
-<dt><a class="reference external" href="https://docs.python.org/3/library/constants.html#True" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">True</span></code></a> (default)</dt><dd><p>Use only grad channels in depth weighting (equivalent to MNE C
-minimum-norm code). If grad channels aren’t present, only mag
-channels will be used (if no mag, then eeg). This makes the depth
-prior dependent only on the sensor geometry (and relationship
-to the sources).</p>
-</dd>
-<dt><code class="docutils literal notranslate"><span class="pre">'whiten'</span></code></dt><dd><p>Compute a whitener and apply it to the channels before computing
-the depth prior. In this case <code class="docutils literal notranslate"><span class="pre">noise_cov</span></code> must not be None.</p>
-<div class="versionadded">
-<p><span class="versionmodified added">New in version 0.18.</span></p>
+<dt><strong>limit_depth_chs</strong><span class="classifier">bool | ‘whiten’</span></dt><dd><p>How to deal with multiple channel types in depth weighting.
+The default is True, which whitens based on the source sensitivity
+of the highest-SNR channel type. See Notes for details.</p>
+<div class="versionchanged">
+<p><span class="versionmodified changed">Changed in version 0.18: </span>Added the “whiten” option.</p>
 </div>
-</dd>
-<dt><a class="reference external" href="https://docs.python.org/3/library/constants.html#False" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">False</span></code></a></dt><dd><p>Use all channels. Only recommended when the gain matrix has
-already been whitened (otherwise it will be arbitrarily
-biased toward whichever channel type has the largest values in
-SI units). Whitening the gain matrix makes the depth prior
-depend on both sensor geometry and the data of interest captured
-by the noise covariance (e.g., projections, SNR).</p>
-</dd>
-</dl>
 </dd>
 <dt><strong>combine_xyz</strong><span class="classifier">‘spectral’ | ‘fro’</span></dt><dd><p>When a loose (or free) orientation is used, how the depth weighting
 for each triplet should be calculated.
@@ -225,11 +209,9 @@ If ‘fro’, use the squared Frobenius norm of Gk.</p>
 <p><span class="versionmodified added">New in version 0.18.</span></p>
 </div>
 </dd>
-<dt><strong>rank</strong><span class="classifier">None | dict | ‘info’ | ‘full’</span></dt><dd><blockquote>
-<div><p>This controls the rank computation that can be read from the
+<dt><strong>rank</strong><span class="classifier">None | dict | ‘info’ | ‘full’</span></dt><dd><p>This controls the rank computation that can be read from the
 measurement info or estimated from the data. See <code class="docutils literal notranslate"><span class="pre">Notes</span></code>
 of <a class="reference internal" href="mne.compute_rank.html#mne.compute_rank" title="mne.compute_rank"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.compute_rank()</span></code></a> for details.The default is None.</p>
-</div></blockquote>
 <div class="versionadded">
 <p><span class="versionmodified added">New in version 0.18.</span></p>
 </div>
@@ -262,6 +244,37 @@ In particular, the values for MNE are:</p>
                     <span class="n">combine_xyz</span><span class="o">=</span><span class="s1">&#39;fro&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
+<p>The <code class="docutils literal notranslate"><span class="pre">limit_depth_chs</span></code> argument can take the following values:</p>
+<ul>
+<li><dl class="simple">
+<dt><a class="reference external" href="https://docs.python.org/3/library/constants.html#True" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">True</span></code></a> (default)</dt><dd><p>Use only grad channels in depth weighting (equivalent to MNE C
+minimum-norm code). If grad channels aren’t present, only mag
+channels will be used (if no mag, then eeg). This makes the depth
+prior dependent only on the sensor geometry (and relationship
+to the sources).</p>
+</dd>
+</dl>
+</li>
+<li><dl>
+<dt><code class="docutils literal notranslate"><span class="pre">'whiten'</span></code></dt><dd><p>Compute a whitener and apply it to the gain matirx before computing
+the depth prior. In this case <code class="docutils literal notranslate"><span class="pre">noise_cov</span></code> must not be None.
+Whitening the gain matrix makes the depth prior
+depend on both sensor geometry and the data of interest captured
+by the noise covariance (e.g., projections, SNR).</p>
+<div class="versionadded">
+<p><span class="versionmodified added">New in version 0.18.</span></p>
+</div>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><a class="reference external" href="https://docs.python.org/3/library/constants.html#False" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">False</span></code></a></dt><dd><p>Use all channels. Not recommended since the depth weighting will be
+biased toward whichever channel type has the largest values in
+SI units (such as EEG being orders of magnitude larger than MEG).</p>
+</dd>
+</dl>
+</li>
+</ul>
 </dd></dl>
 
 <div style='clear:both'></div></div>
