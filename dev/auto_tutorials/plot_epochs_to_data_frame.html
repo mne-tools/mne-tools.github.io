@@ -281,7 +281,7 @@ back into a data frame.</p>
 
 <span class="c1"># Add a bad channel</span>
 <span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;bads&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;MEG 2443&#39;</span><span class="p">]</span>
-<span class="n">picks</span> <span class="o">=</span> <a href="../generated/mne.pick_types.html#mne.pick_types" title="View documentation for mne.pick_types"><span class="n">mne</span><span class="o">.</span><span class="n">pick_types</span></a><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">meg</span><span class="o">=</span><span class="s1">&#39;grad&#39;</span><span class="p">,</span> <span class="n">eeg</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">eog</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="n">picks</span> <span class="o">=</span> <a href="../generated/mne.pick_types.html#mne.pick_types" title="View documentation for mne.pick_types"><span class="n">mne</span><span class="o">.</span><span class="n">pick_types</span></a><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">meg</span><span class="o">=</span><span class="s1">&#39;grad&#39;</span><span class="p">,</span> <span class="n">eeg</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">eog</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
                        <span class="n">stim</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="s1">&#39;bads&#39;</span><span class="p">)</span>
 
 <span class="n">tmin</span><span class="p">,</span> <span class="n">tmax</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.5</span>
@@ -436,7 +436,54 @@ Name: MEG 1332, dtype: int64
 [9 rows x 3 columns]
 </pre></div>
 </div>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  2.909 seconds)</p>
+<p>Long-format dataframes</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Many statistical modelling functions expect data in a long format</span>
+<span class="c1"># where each row is one observation at a unique coordinate of factors</span>
+<span class="c1"># such as sensors, conditions, subjects etc.</span>
+<span class="n">df_long</span> <span class="o">=</span> <span class="n">epochs</span><span class="o">.</span><span class="n">to_data_frame</span><span class="p">(</span><span class="n">long_format</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">df_long</span><span class="o">.</span><span class="n">head</span><span class="p">())</span>
+
+<span class="c1"># Here the MEG or EEG signal appears in the column &quot;observation&quot;.</span>
+<span class="c1"># The total length is therefore the number of channels times the time points.</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">df_long</span><span class="p">),</span> <span class="s2">&quot;=&quot;</span><span class="p">,</span> <span class="n">epochs</span><span class="o">.</span><span class="n">get_data</span><span class="p">()</span><span class="o">.</span><span class="n">size</span><span class="p">)</span>
+
+<span class="c1"># To simplify subsetting and filtering a channwel type column is added.</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">df_long</span><span class="o">.</span><span class="n">query</span><span class="p">(</span><span class="s2">&quot;ch_type == &#39;eeg&#39;&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">head</span><span class="p">())</span>
+
+<span class="c1"># Note that some of the columns are transformed to &quot;category&quot; data types.</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">df_long</span><span class="o">.</span><span class="n">dtypes</span><span class="p">)</span>
+
+<span class="c1"># This facilitates seamless processing in other tools like R and ggplot.</span>
+</pre></div>
+</div>
+<p class="sphx-glr-script-out">Out:</p>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>condition  ... ch_type
+0  visual_l  ...    grad
+1  visual_l  ...    grad
+2  visual_l  ...    grad
+3  visual_l  ...    grad
+4  visual_l  ...    grad
+
+[5 rows x 6 columns]
+250902 = 250902
+    condition  ... ch_type
+203  visual_l  ...     eeg
+204  visual_l  ...     eeg
+205  visual_l  ...     eeg
+206  visual_l  ...     eeg
+207  visual_l  ...     eeg
+
+[5 rows x 6 columns]
+condition      category
+epoch          category
+time            float64
+channel        category
+observation     float64
+ch_type        category
+dtype: object
+</pre></div>
+</div>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  3.466 seconds)</p>
 <p><strong>Estimated memory usage:</strong>  11 MB</p>
 <div class="sphx-glr-footer class sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-tutorials-plot-epochs-to-data-frame-py">
 <div class="sphx-glr-download docutils container">
@@ -471,7 +518,7 @@ Name: MEG 1332, dtype: int64
       <li><a href="faq.html#cite">Cite MNE</a></li>
       <li class="pull-right"><a href="#">Back to top</a></li>
     </ul>
-    <p>&copy; Copyright 2012-2019, MNE Developers. Last updated on 2019-04-24.</p>
+    <p>&copy; Copyright 2012-2019, MNE Developers. Last updated on 2019-04-25.</p>
   </div>
 </footer>
   </body>
