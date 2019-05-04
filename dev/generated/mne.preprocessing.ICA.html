@@ -173,7 +173,7 @@ This documentation is for <strong>development version 0.18.dev0</strong>.
 <h1>mne.preprocessing.ICA<a class="headerlink" href="#mne-preprocessing-ica" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="mne.preprocessing.ICA">
-<em class="property">class </em><code class="descclassname">mne.preprocessing.</code><code class="descname">ICA</code><span class="sig-paren">(</span><em>n_components=None</em>, <em>max_pca_components=None</em>, <em>n_pca_components=None</em>, <em>noise_cov=None</em>, <em>random_state=None</em>, <em>method='fastica'</em>, <em>fit_params=None</em>, <em>max_iter=200</em>, <em>allow_ref_meg=False</em>, <em>verbose=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L118-L1725"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="descclassname">mne.preprocessing.</code><code class="descname">ICA</code><span class="sig-paren">(</span><em>n_components=None</em>, <em>max_pca_components=None</em>, <em>n_pca_components=None</em>, <em>noise_cov=None</em>, <em>random_state=None</em>, <em>method='fastica'</em>, <em>fit_params=None</em>, <em>max_iter=200</em>, <em>allow_ref_meg=False</em>, <em>verbose=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L118-L1734"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA" title="Permalink to this definition">¶</a></dt>
 <dd><p>M/EEG signal decomposition using Independent Component Analysis (ICA).</p>
 <p>This object can be used to estimate ICA components and then remove some
 from <a class="reference internal" href="mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-class docutils literal notranslate"><span class="pre">mne.io.Raw</span></code></a>, <a class="reference internal" href="mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal notranslate"><span class="pre">mne.Epochs</span></code></a>, or <a class="reference internal" href="mne.Evoked.html#mne.Evoked" title="mne.Evoked"><code class="xref py py-class docutils literal notranslate"><span class="pre">mne.Evoked</span></code></a>
@@ -266,11 +266,14 @@ This is controllable by the two parameters <em class="xref py py-obj">max_pca_co
 ii) additional noise reduction, it is a matter of current debate
 whether pre-ICA dimensionality reduction could decrease the
 reliability and stability of the ICA, at least for EEG data and
-especially during preprocessing <a class="reference internal" href="#r6498ecef9c1f-5" id="id5"><span>[R6498ecef9c1f-5]</span></a>.
+especially during preprocessing <a class="reference internal" href="#r6498ecef9c1f-5" id="id5"><span>[R6498ecef9c1f-5]</span></a>. (But see also <a class="reference internal" href="#r6498ecef9c1f-6" id="id6"><span>[R6498ecef9c1f-6]</span></a> for a
+possibly confounding effect of the different whitening/sphering
+methods used in this paper (ZCA vs. PCA).)
 On the other hand, for rank-deficient data such as EEG data after
 average reference or interpolation, it is recommended to reduce
-the dimensionality by 1 for optimal ICA performance
-(see the <a class="reference external" href="https://sccn.ucsd.edu/wiki/Chapter_09:_Decomposing_Data_Using_ICA#Issue:_ICA_returns_near-identical_components_with_opposite_polarities">EEGLAB wiki</a>).</p>
+the dimensionality (by 1 for average reference and 1 for each
+interpolated channel) for optimal ICA performance (see the
+<a class="reference external" href="https://sccn.ucsd.edu/wiki/Chapter_09:_Decomposing_Data_Using_ICA#Issue:_ICA_returns_near-identical_components_with_opposite_polarities">EEGLAB wiki</a>).</p>
 </div>
 <p>Caveat! If supplying a noise covariance, keep track of the projections
 available in the cov or in the raw object. For example, if you are
@@ -308,7 +311,7 @@ subgaussian and supergaussian sources. Neural computation, 11(2),
 pp.417-441.</p>
 </dd>
 <dt class="label" id="r6498ecef9c1f-4"><span class="brackets"><a class="fn-backref" href="#id4">R6498ecef9c1f-4</a></span></dt>
-<dd><p>Ablin P, Cardoso J, Gramfort A (2018). Faster Independent Component
+<dd><p>Ablin P, Cardoso J, Gramfort A, 2018. Faster Independent Component
 Analysis by Preconditioning With Hessian Approximations.
 IEEE Transactions on Signal Processing 66:4040–4049</p>
 </dd>
@@ -317,6 +320,12 @@ IEEE Transactions on Signal Processing 66:4040–4049</p>
 Reduction to EEG Data by Principal Component Analysis Reduces the
 Quality of Its Subsequent Independent Component Decomposition.
 NeuroImage 175, pp.176–187.</p>
+</dd>
+<dt class="label" id="r6498ecef9c1f-6"><span class="brackets"><a class="fn-backref" href="#id6">R6498ecef9c1f-6</a></span></dt>
+<dd><p>Montoya-Martínez, J., Cardoso, J.-F., Gramfort, A, 2017. Caveats
+with stochastic gradient and maximum likelihood based ICA for EEG.
+LVA-ICA International Conference, Feb 2017, Grenoble, France.
+<a class="reference external" href="https://hal.archives-ouvertes.fr/hal-01451432/document">〈hal-01451432〉</a></p>
 </dd>
 </dl>
 <p class="rubric">Attributes</p>
@@ -354,7 +363,7 @@ NeuroImage 175, pp.176–187.</p>
 <td><p>(ndarray, shape (<em class="xref py py-obj">n_components_</em>, <em class="xref py py-obj">n_components_</em>)) If fit, the whitened matrix to go from PCA space to ICA space. Used, in combination with the <em class="xref py py-obj">pca_components_</em>, by the methods <a class="reference internal" href="#mne.preprocessing.ICA.get_sources" title="mne.preprocessing.ICA.get_sources"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ICA.get_sources()</span></code></a> and <a class="reference internal" href="#mne.preprocessing.ICA.apply" title="mne.preprocessing.ICA.apply"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ICA.apply()</span></code></a> to unmix the observed data.</p></td>
 </tr>
 <tr class="row-even"><td><p><strong>exclude</strong></p></td>
-<td><p>(list) List of sources indices to exclude when re-mixing the data in the <a class="reference internal" href="#mne.preprocessing.ICA.apply" title="mne.preprocessing.ICA.apply"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ICA.apply()</span></code></a> method, i.e. artifactual ICA components. The components identified manually and by the various automatic artifact detection methods should be (manually) appended to this list (e.g. <code class="docutils literal notranslate"><span class="pre">ica.exclude.extend(eog_inds)</span></code>). (There is also an <em class="xref py py-obj">exclude</em> parameter in the <a class="reference internal" href="#mne.preprocessing.ICA.apply" title="mne.preprocessing.ICA.apply"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ICA.apply()</span></code></a> method.) To scrap all marked components, set this attribute to an empty list.</p></td>
+<td><p>(array-like of int) List or np.array of sources indices to exclude when re-mixing the data in the <a class="reference internal" href="#mne.preprocessing.ICA.apply" title="mne.preprocessing.ICA.apply"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ICA.apply()</span></code></a> method, i.e. artifactual ICA components. The components identified manually and by the various automatic artifact detection methods should be (manually) appended (e.g. <code class="docutils literal notranslate"><span class="pre">ica.exclude.extend(eog_inds)</span></code>). (There is also an <em class="xref py py-obj">exclude</em> parameter in the <a class="reference internal" href="#mne.preprocessing.ICA.apply" title="mne.preprocessing.ICA.apply"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ICA.apply()</span></code></a> method.) To scrap all marked components, set this attribute to an empty list.</p></td>
 </tr>
 <tr class="row-odd"><td><p><strong>info</strong></p></td>
 <td><p>(None | instance of Info) The measurement info copied from the object fitted.</p></td>
@@ -466,7 +475,7 @@ NeuroImage 175, pp.176–187.</p>
 
 <dl class="method">
 <dt id="mne.preprocessing.ICA.apply">
-<code class="descname">apply</code><span class="sig-paren">(</span><em>self</em>, <em>inst</em>, <em>include=None</em>, <em>exclude=None</em>, <em>n_pca_components=None</em>, <em>start=None</em>, <em>stop=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L1313-L1364"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.apply" title="Permalink to this definition">¶</a></dt>
+<code class="descname">apply</code><span class="sig-paren">(</span><em>self</em>, <em>inst</em>, <em>include=None</em>, <em>exclude=None</em>, <em>n_pca_components=None</em>, <em>start=None</em>, <em>stop=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L1325-L1376"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.apply" title="Permalink to this definition">¶</a></dt>
 <dd><p>Remove selected components from the signal.</p>
 <p>Given the unmixing matrix, transform data,
 zero out components, and inverse transform the data.
@@ -513,7 +522,7 @@ time in seconds. If None, data will be used to the last sample.</p>
 
 <dl class="method">
 <dt id="mne.preprocessing.ICA.copy">
-<code class="descname">copy</code><span class="sig-paren">(</span><em>self</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L1537-L1545"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.copy" title="Permalink to this definition">¶</a></dt>
+<code class="descname">copy</code><span class="sig-paren">(</span><em>self</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L1543-L1551"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.copy" title="Permalink to this definition">¶</a></dt>
 <dd><p>Copy the ICA object.</p>
 <dl class="field-list">
 <dt class="field-odd">Returns</dt>
@@ -527,9 +536,9 @@ time in seconds. If None, data will be used to the last sample.</p>
 
 <dl class="method">
 <dt id="mne.preprocessing.ICA.detect_artifacts">
-<code class="descname">detect_artifacts</code><span class="sig-paren">(</span><em>self</em>, <em>raw</em>, <em>start_find=None</em>, <em>stop_find=None</em>, <em>ecg_ch=None</em>, <em>ecg_score_func='pearsonr'</em>, <em>ecg_criterion=0.1</em>, <em>eog_ch=None</em>, <em>eog_score_func='pearsonr'</em>, <em>eog_criterion=0.1</em>, <em>skew_criterion=-1</em>, <em>kurt_criterion=-1</em>, <em>var_criterion=0</em>, <em>add_nodes=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L1598-L1709"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.detect_artifacts" title="Permalink to this definition">¶</a></dt>
+<code class="descname">detect_artifacts</code><span class="sig-paren">(</span><em>self</em>, <em>raw</em>, <em>start_find=None</em>, <em>stop_find=None</em>, <em>ecg_ch=None</em>, <em>ecg_score_func='pearsonr'</em>, <em>ecg_criterion=0.1</em>, <em>eog_ch=None</em>, <em>eog_score_func='pearsonr'</em>, <em>eog_criterion=0.1</em>, <em>skew_criterion=0</em>, <em>kurt_criterion=0</em>, <em>var_criterion=-1</em>, <em>add_nodes=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L1604-L1718"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.detect_artifacts" title="Permalink to this definition">¶</a></dt>
 <dd><p>Run ICA artifacts detection workflow.</p>
-<p>Note. This is still experimental and will most likely change. Over
+<p>Note. This is still experimental and will most likely change over
 the next releases. For maximum control use the workflow exposed in
 the examples.</p>
 <p>Hints and caveats:
@@ -548,7 +557,10 @@ for start and stop. It can save you much time.</p>
 <dl class="field-list">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl>
-<dt><strong>raw</strong><span class="classifier">instance of <a class="reference internal" href="mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Raw</span></code></a></span></dt><dd><p>Raw object to draw sources from.</p>
+<dt><strong>raw</strong><span class="classifier">instance of <a class="reference internal" href="mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Raw</span></code></a></span></dt><dd><p>Raw object to draw sources from. No components are actually removed
+here, i.e. ica is not applied to raw in this function. Use
+<em class="xref py py-obj">ica.apply()</em> for this after inspection of the identified
+components.</p>
 </dd>
 <dt><strong>start_find</strong><span class="classifier"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">int</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">float</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">None</span></code></a></span></dt><dd><p>First sample to include for artifact search. If float, data will be
 interpreted as time in seconds. If None, data will be used from the
@@ -565,11 +577,11 @@ will be skipped.</p>
 <dt><strong>ecg_score_func</strong><span class="classifier"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">str</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/functions.html#callable" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">callable()</span></code></a></span></dt><dd><p>The <em class="xref py py-obj">score_func</em> argument passed to ica.find_sources_raw. Either
 the name of function supported by ICA or a custom function.</p>
 </dd>
-<dt><strong>ecg_criterion</strong><span class="classifier"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">float</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">int</span></code></a> | list-like | <a class="reference external" href="https://docs.python.org/3/library/functions.html#slice" title="(in Python v3.7)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">slice</span></code></a></span></dt><dd><p>The indices of the sorted skewness scores. If float, sources with
-scores smaller than the criterion will be dropped. Else, the scores
-sorted in descending order will be indexed accordingly.
-E.g. range(2) would return the two sources with the highest score.
-If None, this step will be skipped.</p>
+<dt><strong>ecg_criterion</strong><span class="classifier"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">float</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">int</span></code></a> | list-like | <a class="reference external" href="https://docs.python.org/3/library/functions.html#slice" title="(in Python v3.7)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">slice</span></code></a></span></dt><dd><p>The indices of the sorted ecg scores. If float, sources with
+absolute scores greater than the criterion will be dropped. Else,
+the absolute scores sorted in descending order will be indexed
+accordingly. E.g. range(2) would return the two sources with the
+highest absolute score. If None, this step will be skipped.</p>
 </dd>
 <dt><strong>eog_ch</strong><span class="classifier"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">list</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">str</span></code></a> | <a class="reference external" href="https://www.numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17.dev0)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ndarray</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">None</span></code></a></span></dt><dd><p>The <em class="xref py py-obj">target</em> argument or the list of target arguments subsequently
 passed to ica.find_sources_raw. Either the name of the vertical EOG
@@ -579,29 +591,29 @@ will be skipped.</p>
 <dt><strong>eog_score_func</strong><span class="classifier"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">str</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/functions.html#callable" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">callable()</span></code></a></span></dt><dd><p>The <em class="xref py py-obj">score_func</em> argument passed to ica.find_sources_raw. Either
 the name of function supported by ICA or a custom function.</p>
 </dd>
-<dt><strong>eog_criterion</strong><span class="classifier"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">float</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">int</span></code></a> | list-like | <a class="reference external" href="https://docs.python.org/3/library/functions.html#slice" title="(in Python v3.7)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">slice</span></code></a></span></dt><dd><p>The indices of the sorted skewness scores. If float, sources with
-scores smaller than the criterion will be dropped. Else, the scores
-sorted in descending order will be indexed accordingly.
-E.g. range(2) would return the two sources with the highest score.
-If None, this step will be skipped.</p>
+<dt><strong>eog_criterion</strong><span class="classifier"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">float</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">int</span></code></a> | list-like | <a class="reference external" href="https://docs.python.org/3/library/functions.html#slice" title="(in Python v3.7)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">slice</span></code></a></span></dt><dd><p>The indices of the sorted eog scores. If float, sources with
+absolute scores greater than the criterion will be dropped. Else,
+the absolute scores sorted in descending order will be indexed
+accordingly. E.g. range(2) would return the two sources with the
+highest absolute score. If None, this step will be skipped.</p>
 </dd>
 <dt><strong>skew_criterion</strong><span class="classifier"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">float</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">int</span></code></a> | list-like | <a class="reference external" href="https://docs.python.org/3/library/functions.html#slice" title="(in Python v3.7)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">slice</span></code></a></span></dt><dd><p>The indices of the sorted skewness scores. If float, sources with
-scores smaller than the criterion will be dropped. Else, the scores
-sorted in descending order will be indexed accordingly.
-E.g. range(2) would return the two sources with the highest score.
-If None, this step will be skipped.</p>
+absolute scores greater than the criterion will be dropped. Else,
+the absolute scores sorted in descending order will be indexed
+accordingly. E.g. range(2) would return the two sources with the
+highest absolute score. If None, this step will be skipped.</p>
 </dd>
-<dt><strong>kurt_criterion</strong><span class="classifier"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">float</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">int</span></code></a> | list-like | <a class="reference external" href="https://docs.python.org/3/library/functions.html#slice" title="(in Python v3.7)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">slice</span></code></a></span></dt><dd><p>The indices of the sorted skewness scores. If float, sources with
-scores smaller than the criterion will be dropped. Else, the scores
-sorted in descending order will be indexed accordingly.
-E.g. range(2) would return the two sources with the highest score.
-If None, this step will be skipped.</p>
+<dt><strong>kurt_criterion</strong><span class="classifier"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">float</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">int</span></code></a> | list-like | <a class="reference external" href="https://docs.python.org/3/library/functions.html#slice" title="(in Python v3.7)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">slice</span></code></a></span></dt><dd><p>The indices of the sorted kurtosis scores. If float, sources with
+absolute scores greater than the criterion will be dropped. Else,
+the absolute scores sorted in descending order will be indexed
+accordingly. E.g. range(2) would return the two sources with the
+highest absolute score. If None, this step will be skipped.</p>
 </dd>
-<dt><strong>var_criterion</strong><span class="classifier"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">float</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">int</span></code></a> | list-like | <a class="reference external" href="https://docs.python.org/3/library/functions.html#slice" title="(in Python v3.7)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">slice</span></code></a></span></dt><dd><p>The indices of the sorted skewness scores. If float, sources with
-scores smaller than the criterion will be dropped. Else, the scores
-sorted in descending order will be indexed accordingly.
-E.g. range(2) would return the two sources with the highest score.
-If None, this step will be skipped.</p>
+<dt><strong>var_criterion</strong><span class="classifier"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">float</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">int</span></code></a> | list-like | <a class="reference external" href="https://docs.python.org/3/library/functions.html#slice" title="(in Python v3.7)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">slice</span></code></a></span></dt><dd><p>The indices of the sorted variance scores. If float, sources with
+absolute scores greater than the criterion will be dropped. Else,
+the absolute scores sorted in descending order will be indexed
+accordingly. E.g. range(2) would return the two sources with the
+highest absolute score. If None, this step will be skipped.</p>
 </dd>
 <dt><strong>add_nodes</strong><span class="classifier"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">list</span></code></a> of <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#tuple" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">tuple</span></code></a></span></dt><dd><p>Additional list if tuples carrying the following parameters
 of ica nodes:
@@ -625,7 +637,7 @@ exclusion</p>
 
 <dl class="method">
 <dt id="mne.preprocessing.ICA.find_bads_ecg">
-<code class="descname">find_bads_ecg</code><span class="sig-paren">(</span><em>self</em>, <em>inst</em>, <em>ch_name=None</em>, <em>threshold=None</em>, <em>start=None</em>, <em>stop=None</em>, <em>l_freq=8</em>, <em>h_freq=16</em>, <em>method='ctps'</em>, <em>reject_by_annotation=True</em>, <em>verbose=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L1067-L1178"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.find_bads_ecg" title="Permalink to this definition">¶</a></dt>
+<code class="descname">find_bads_ecg</code><span class="sig-paren">(</span><em>self</em>, <em>inst</em>, <em>ch_name=None</em>, <em>threshold=None</em>, <em>start=None</em>, <em>stop=None</em>, <em>l_freq=8</em>, <em>h_freq=16</em>, <em>method='ctps'</em>, <em>reject_by_annotation=True</em>, <em>verbose=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L1079-L1190"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.find_bads_ecg" title="Permalink to this definition">¶</a></dt>
 <dd><p>Detect ECG related components using correlation.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -702,7 +714,7 @@ Engineering, IEEE Transactions on 55 (10), 2353-2362.</p>
 
 <dl class="method">
 <dt id="mne.preprocessing.ICA.find_bads_eog">
-<code class="descname">find_bads_eog</code><span class="sig-paren">(</span><em>self</em>, <em>inst</em>, <em>ch_name=None</em>, <em>threshold=3.0</em>, <em>start=None</em>, <em>stop=None</em>, <em>l_freq=1</em>, <em>h_freq=10</em>, <em>reject_by_annotation=True</em>, <em>verbose=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L1251-L1311"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.find_bads_eog" title="Permalink to this definition">¶</a></dt>
+<code class="descname">find_bads_eog</code><span class="sig-paren">(</span><em>self</em>, <em>inst</em>, <em>ch_name=None</em>, <em>threshold=3.0</em>, <em>start=None</em>, <em>stop=None</em>, <em>l_freq=1</em>, <em>h_freq=10</em>, <em>reject_by_annotation=True</em>, <em>verbose=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L1263-L1323"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.find_bads_eog" title="Permalink to this definition">¶</a></dt>
 <dd><p>Detect EOG related components using correlation.</p>
 <p>Detection is based on Pearson correlation between the
 filtered data and the filtered EOG channel.
@@ -759,7 +771,7 @@ and <a class="reference internal" href="../auto_tutorials/misc/plot_configuratio
 
 <dl class="method">
 <dt id="mne.preprocessing.ICA.find_bads_ref">
-<code class="descname">find_bads_ref</code><span class="sig-paren">(</span><em>self</em>, <em>inst</em>, <em>ch_name=None</em>, <em>threshold=3.0</em>, <em>start=None</em>, <em>stop=None</em>, <em>l_freq=None</em>, <em>h_freq=None</em>, <em>reject_by_annotation=True</em>, <em>verbose=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L1180-L1249"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.find_bads_ref" title="Permalink to this definition">¶</a></dt>
+<code class="descname">find_bads_ref</code><span class="sig-paren">(</span><em>self</em>, <em>inst</em>, <em>ch_name=None</em>, <em>threshold=3.0</em>, <em>start=None</em>, <em>stop=None</em>, <em>l_freq=None</em>, <em>h_freq=None</em>, <em>reject_by_annotation=True</em>, <em>verbose=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L1192-L1261"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.find_bads_ref" title="Permalink to this definition">¶</a></dt>
 <dd><p>Detect MEG reference related components using correlation.</p>
 <dl class="field-list">
 <dt class="field-odd">Parameters</dt>
@@ -821,7 +833,7 @@ that they can be automatically detected.</p>
 
 <dl class="method">
 <dt id="mne.preprocessing.ICA.fit">
-<code class="descname">fit</code><span class="sig-paren">(</span><em>self</em>, <em>inst</em>, <em>picks=None</em>, <em>start=None</em>, <em>stop=None</em>, <em>decim=None</em>, <em>reject=None</em>, <em>flat=None</em>, <em>tstep=2.0</em>, <em>reject_by_annotation=True</em>, <em>verbose=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L388-L471"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.fit" title="Permalink to this definition">¶</a></dt>
+<code class="descname">fit</code><span class="sig-paren">(</span><em>self</em>, <em>inst</em>, <em>picks=None</em>, <em>start=None</em>, <em>stop=None</em>, <em>decim=None</em>, <em>reject=None</em>, <em>flat=None</em>, <em>tstep=2.0</em>, <em>reject_by_annotation=True</em>, <em>verbose=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L398-L481"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.fit" title="Permalink to this definition">¶</a></dt>
 <dd><p>Run the ICA decomposition on raw data.</p>
 <p>Caveat! If supplying a noise covariance keep track of the projections
 available in the cov, the raw or the epochs object. For example,
@@ -897,7 +909,7 @@ and <a class="reference internal" href="../auto_tutorials/misc/plot_configuratio
 
 <dl class="method">
 <dt id="mne.preprocessing.ICA.get_components">
-<code class="descname">get_components</code><span class="sig-paren">(</span><em>self</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L751-L760"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.get_components" title="Permalink to this definition">¶</a></dt>
+<code class="descname">get_components</code><span class="sig-paren">(</span><em>self</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L761-L770"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.get_components" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get ICA topomap for components as numpy arrays.</p>
 <dl class="field-list">
 <dt class="field-odd">Returns</dt>
@@ -911,7 +923,7 @@ and <a class="reference internal" href="../auto_tutorials/misc/plot_configuratio
 
 <dl class="method">
 <dt id="mne.preprocessing.ICA.get_sources">
-<code class="descname">get_sources</code><span class="sig-paren">(</span><em>self</em>, <em>inst</em>, <em>add_channels=None</em>, <em>start=None</em>, <em>stop=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L762-L806"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.get_sources" title="Permalink to this definition">¶</a></dt>
+<code class="descname">get_sources</code><span class="sig-paren">(</span><em>self</em>, <em>inst</em>, <em>add_channels=None</em>, <em>start=None</em>, <em>stop=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L772-L816"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.get_sources" title="Permalink to this definition">¶</a></dt>
 <dd><p>Estimate sources given the unmixing matrix.</p>
 <p>This method will return the sources in the container format passed.
 Typical usecases:</p>
@@ -947,7 +959,7 @@ time in seconds. If None, the entire data will be used.</p>
 
 <dl class="method">
 <dt id="mne.preprocessing.ICA.plot_components">
-<code class="descname">plot_components</code><span class="sig-paren">(</span><em>self</em>, <em>picks=None</em>, <em>ch_type=None</em>, <em>res=64</em>, <em>layout=None</em>, <em>vmin=None</em>, <em>vmax=None</em>, <em>cmap='RdBu_r'</em>, <em>sensors=True</em>, <em>colorbar=False</em>, <em>title=None</em>, <em>show=True</em>, <em>outlines='head'</em>, <em>contours=6</em>, <em>image_interp='bilinear'</em>, <em>head_pos=None</em>, <em>inst=None</em>, <em>plot_std=True</em>, <em>topomap_args=None</em>, <em>image_args=None</em>, <em>psd_args=None</em>, <em>reject='auto'</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L1547-L1564"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.plot_components" title="Permalink to this definition">¶</a></dt>
+<code class="descname">plot_components</code><span class="sig-paren">(</span><em>self</em>, <em>picks=None</em>, <em>ch_type=None</em>, <em>res=64</em>, <em>layout=None</em>, <em>vmin=None</em>, <em>vmax=None</em>, <em>cmap='RdBu_r'</em>, <em>sensors=True</em>, <em>colorbar=False</em>, <em>title=None</em>, <em>show=True</em>, <em>outlines='head'</em>, <em>contours=6</em>, <em>image_interp='bilinear'</em>, <em>head_pos=None</em>, <em>inst=None</em>, <em>plot_std=True</em>, <em>topomap_args=None</em>, <em>image_args=None</em>, <em>psd_args=None</em>, <em>reject='auto'</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L1553-L1570"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.plot_components" title="Permalink to this definition">¶</a></dt>
 <dd><p>Project unmixing matrix on interpolated sensor topography.</p>
 <dl class="field-list">
 <dt class="field-odd">Parameters</dt>
@@ -1074,7 +1086,7 @@ supplied).</p>
 
 <dl class="method">
 <dt id="mne.preprocessing.ICA.plot_overlay">
-<code class="descname">plot_overlay</code><span class="sig-paren">(</span><em>self</em>, <em>inst</em>, <em>exclude=None</em>, <em>picks=None</em>, <em>start=None</em>, <em>stop=None</em>, <em>title=None</em>, <em>show=True</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L1592-L1596"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.plot_overlay" title="Permalink to this definition">¶</a></dt>
+<code class="descname">plot_overlay</code><span class="sig-paren">(</span><em>self</em>, <em>inst</em>, <em>exclude=None</em>, <em>picks=None</em>, <em>start=None</em>, <em>stop=None</em>, <em>title=None</em>, <em>show=True</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L1598-L1602"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.plot_overlay" title="Permalink to this definition">¶</a></dt>
 <dd><p>Overlay of raw and cleaned signals given the unmixing matrix.</p>
 <p>This method helps visualizing signal quality and artifact rejection.</p>
 <dl class="field-list">
@@ -1119,7 +1131,7 @@ None (default) will pick  all channels that were included during fitting.</p>
 
 <dl class="method">
 <dt id="mne.preprocessing.ICA.plot_properties">
-<code class="descname">plot_properties</code><span class="sig-paren">(</span><em>self</em>, <em>inst</em>, <em>picks=None</em>, <em>axes=None</em>, <em>dB=True</em>, <em>plot_std=True</em>, <em>topomap_args=None</em>, <em>image_args=None</em>, <em>psd_args=None</em>, <em>figsize=None</em>, <em>show=True</em>, <em>reject='auto'</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L1566-L1574"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.plot_properties" title="Permalink to this definition">¶</a></dt>
+<code class="descname">plot_properties</code><span class="sig-paren">(</span><em>self</em>, <em>inst</em>, <em>picks=None</em>, <em>axes=None</em>, <em>dB=True</em>, <em>plot_std=True</em>, <em>topomap_args=None</em>, <em>image_args=None</em>, <em>psd_args=None</em>, <em>figsize=None</em>, <em>show=True</em>, <em>reject='auto'</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L1572-L1580"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.plot_properties" title="Permalink to this definition">¶</a></dt>
 <dd><p>Display component properties.</p>
 <p>Properties include the topography, epochs image, ERP/ERF, power
 spectrum, and epoch variance.</p>
@@ -1186,7 +1198,7 @@ the ICA object.</p>
 
 <dl class="method">
 <dt id="mne.preprocessing.ICA.plot_scores">
-<code class="descname">plot_scores</code><span class="sig-paren">(</span><em>self</em>, <em>scores</em>, <em>exclude=None</em>, <em>labels=None</em>, <em>axhline=None</em>, <em>title='ICA component scores'</em>, <em>figsize=None</em>, <em>show=True</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L1584-L1590"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.plot_scores" title="Permalink to this definition">¶</a></dt>
+<code class="descname">plot_scores</code><span class="sig-paren">(</span><em>self</em>, <em>scores</em>, <em>exclude=None</em>, <em>labels=None</em>, <em>axhline=None</em>, <em>title='ICA component scores'</em>, <em>figsize=None</em>, <em>show=True</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L1590-L1596"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.plot_scores" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot scores related to detected components.</p>
 <p>Use this function to asses how well your score describes outlier
 sources and how well you were detecting them.</p>
@@ -1225,7 +1237,7 @@ EOG channels.</p>
 
 <dl class="method">
 <dt id="mne.preprocessing.ICA.plot_sources">
-<code class="descname">plot_sources</code><span class="sig-paren">(</span><em>self</em>, <em>inst</em>, <em>picks=None</em>, <em>exclude=None</em>, <em>start=None</em>, <em>stop=None</em>, <em>title=None</em>, <em>show=True</em>, <em>block=False</em>, <em>show_first_samp=False</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L1576-L1582"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.plot_sources" title="Permalink to this definition">¶</a></dt>
+<code class="descname">plot_sources</code><span class="sig-paren">(</span><em>self</em>, <em>inst</em>, <em>picks=None</em>, <em>exclude=None</em>, <em>start=None</em>, <em>stop=None</em>, <em>title=None</em>, <em>show=True</em>, <em>block=False</em>, <em>show_first_samp=False</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L1582-L1588"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.plot_sources" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot estimated latent sources given the unmixing matrix.</p>
 <p>Typical usecases:</p>
 <ol class="arabic simple">
@@ -1284,7 +1296,7 @@ exclusion by clicking on the line. The selected components are added to
 
 <dl class="method">
 <dt id="mne.preprocessing.ICA.save">
-<code class="descname">save</code><span class="sig-paren">(</span><em>self</em>, <em>fname</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L1508-L1535"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.save" title="Permalink to this definition">¶</a></dt>
+<code class="descname">save</code><span class="sig-paren">(</span><em>self</em>, <em>fname</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L1514-L1541"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.save" title="Permalink to this definition">¶</a></dt>
 <dd><p>Store ICA solution into a fiff file.</p>
 <dl class="field-list">
 <dt class="field-odd">Parameters</dt>
@@ -1299,7 +1311,7 @@ The file name should end with -ica.fif or -ica.fif.gz.</p>
 
 <dl class="method">
 <dt id="mne.preprocessing.ICA.score_sources">
-<code class="descname">score_sources</code><span class="sig-paren">(</span><em>self</em>, <em>inst</em>, <em>target=None</em>, <em>score_func='pearsonr'</em>, <em>start=None</em>, <em>stop=None</em>, <em>l_freq=None</em>, <em>h_freq=None</em>, <em>reject_by_annotation=True</em>, <em>verbose=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L907-L985"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.score_sources" title="Permalink to this definition">¶</a></dt>
+<code class="descname">score_sources</code><span class="sig-paren">(</span><em>self</em>, <em>inst</em>, <em>target=None</em>, <em>score_func='pearsonr'</em>, <em>start=None</em>, <em>stop=None</em>, <em>l_freq=None</em>, <em>h_freq=None</em>, <em>reject_by_annotation=True</em>, <em>verbose=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L917-L997"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.score_sources" title="Permalink to this definition">¶</a></dt>
 <dd><p>Assign score to components based on statistic or metric.</p>
 <dl class="field-list">
 <dt class="field-odd">Parameters</dt>
@@ -1354,25 +1366,25 @@ and <a class="reference internal" href="../auto_tutorials/misc/plot_configuratio
 
 <div class="section" id="examples-using-mne-preprocessing-ica">
 <h2>Examples using <code class="docutils literal notranslate"><span class="pre">mne.preprocessing.ICA</span></code><a class="headerlink" href="#examples-using-mne-preprocessing-ica" title="Permalink to this headline">¶</a></h2>
-<div class="sphx-glr-thumbcontainer" tooltip="Different ICA algorithms are fit to raw MEG data, and the corresponding maps are displayed."><div class="figure align-center" id="id11">
+<div class="sphx-glr-thumbcontainer" tooltip="Different ICA algorithms are fit to raw MEG data, and the corresponding maps are displayed."><div class="figure align-center" id="id13">
 <img alt="../_images/sphx_glr_plot_ica_comparison_thumb.png" src="../_images/sphx_glr_plot_ica_comparison_thumb.png" />
-<p class="caption"><span class="caption-text"><a class="reference internal" href="../auto_examples/preprocessing/plot_ica_comparison.html#sphx-glr-auto-examples-preprocessing-plot-ica-comparison-py"><span class="std std-ref">Compare the different ICA algorithms in MNE</span></a></span><a class="headerlink" href="#id11" title="Permalink to this image">¶</a></p>
+<p class="caption"><span class="caption-text"><a class="reference internal" href="../auto_examples/preprocessing/plot_ica_comparison.html#sphx-glr-auto-examples-preprocessing-plot-ica-comparison-py"><span class="std std-ref">Compare the different ICA algorithms in MNE</span></a></span><a class="headerlink" href="#id13" title="Permalink to this image">¶</a></p>
 </div>
-</div><div class="sphx-glr-thumbcontainer" tooltip="ICA is fit to MEG raw data. We assume that the non-stationary EOG artifacts have already been r..."><div class="figure align-center" id="id12">
+</div><div class="sphx-glr-thumbcontainer" tooltip="ICA is fit to MEG raw data. We assume that the non-stationary EOG artifacts have already been r..."><div class="figure align-center" id="id14">
 <img alt="../_images/sphx_glr_plot_run_ica_thumb.png" src="../_images/sphx_glr_plot_run_ica_thumb.png" />
-<p class="caption"><span class="caption-text"><a class="reference internal" href="../auto_examples/preprocessing/plot_run_ica.html#sphx-glr-auto-examples-preprocessing-plot-run-ica-py"><span class="std std-ref">Compute ICA components on epochs</span></a></span><a class="headerlink" href="#id12" title="Permalink to this image">¶</a></p>
+<p class="caption"><span class="caption-text"><a class="reference internal" href="../auto_examples/preprocessing/plot_run_ica.html#sphx-glr-auto-examples-preprocessing-plot-run-ica-py"><span class="std std-ref">Compute ICA components on epochs</span></a></span><a class="headerlink" href="#id14" title="Permalink to this image">¶</a></p>
 </div>
-</div><div class="sphx-glr-thumbcontainer" tooltip="Runs a full pipeline using MNE-Python:"><div class="figure align-center" id="id13">
+</div><div class="sphx-glr-thumbcontainer" tooltip="Runs a full pipeline using MNE-Python:"><div class="figure align-center" id="id15">
 <img alt="../_images/sphx_glr_spm_faces_dataset_thumb.png" src="../_images/sphx_glr_spm_faces_dataset_thumb.png" />
-<p class="caption"><span class="caption-text"><a class="reference internal" href="../auto_examples/datasets/spm_faces_dataset.html#sphx-glr-auto-examples-datasets-spm-faces-dataset-py"><span class="std std-ref">From raw data to dSPM on SPM Faces dataset</span></a></span><a class="headerlink" href="#id13" title="Permalink to this image">¶</a></p>
+<p class="caption"><span class="caption-text"><a class="reference internal" href="../auto_examples/datasets/spm_faces_dataset.html#sphx-glr-auto-examples-datasets-spm-faces-dataset-py"><span class="std std-ref">From raw data to dSPM on SPM Faces dataset</span></a></span><a class="headerlink" href="#id15" title="Permalink to this image">¶</a></p>
 </div>
-</div><div class="sphx-glr-thumbcontainer" tooltip="ICA finds directions in the feature space corresponding to projections with high non-Gaussianit..."><div class="figure align-center" id="id14">
+</div><div class="sphx-glr-thumbcontainer" tooltip="ICA finds directions in the feature space corresponding to projections with high non-Gaussianit..."><div class="figure align-center" id="id16">
 <img alt="../_images/sphx_glr_plot_artifacts_correction_ica_thumb.png" src="../_images/sphx_glr_plot_artifacts_correction_ica_thumb.png" />
-<p class="caption"><span class="caption-text"><a class="reference internal" href="../auto_tutorials/preprocessing/plot_artifacts_correction_ica.html#sphx-glr-auto-tutorials-preprocessing-plot-artifacts-correction-ica-py"><span class="std std-ref">Artifact Correction with ICA</span></a></span><a class="headerlink" href="#id14" title="Permalink to this image">¶</a></p>
+<p class="caption"><span class="caption-text"><a class="reference internal" href="../auto_tutorials/preprocessing/plot_artifacts_correction_ica.html#sphx-glr-auto-tutorials-preprocessing-plot-artifacts-correction-ica-py"><span class="std std-ref">Artifact Correction with ICA</span></a></span><a class="headerlink" href="#id16" title="Permalink to this image">¶</a></p>
 </div>
-</div><div class="sphx-glr-thumbcontainer" tooltip="ICA is fit to MEG raw data. The sources matching the ECG and EOG are automatically found and di..."><div class="figure align-center" id="id15">
+</div><div class="sphx-glr-thumbcontainer" tooltip="ICA is fit to MEG raw data. The sources matching the ECG and EOG are automatically found and di..."><div class="figure align-center" id="id17">
 <img alt="../_images/sphx_glr_plot_ica_from_raw_thumb.png" src="../_images/sphx_glr_plot_ica_from_raw_thumb.png" />
-<p class="caption"><span class="caption-text"><a class="reference internal" href="../auto_tutorials/preprocessing/plot_ica_from_raw.html#sphx-glr-auto-tutorials-preprocessing-plot-ica-from-raw-py"><span class="std std-ref">Compute ICA on MEG data and remove artifacts</span></a></span><a class="headerlink" href="#id15" title="Permalink to this image">¶</a></p>
+<p class="caption"><span class="caption-text"><a class="reference internal" href="../auto_tutorials/preprocessing/plot_ica_from_raw.html#sphx-glr-auto-tutorials-preprocessing-plot-ica-from-raw-py"><span class="std std-ref">Compute ICA on MEG data and remove artifacts</span></a></span><a class="headerlink" href="#id17" title="Permalink to this image">¶</a></p>
 </div>
 </div></div>
 </div>
@@ -1397,7 +1409,7 @@ and <a class="reference internal" href="../auto_tutorials/misc/plot_configuratio
       <li><a href="faq.html#cite">Cite MNE</a></li>
       <li class="pull-right"><a href="#">Back to top</a></li>
     </ul>
-    <p>&copy; Copyright 2012-2019, MNE Developers. Last updated on 2019-05-03.</p>
+    <p>&copy; Copyright 2012-2019, MNE Developers. Last updated on 2019-05-04.</p>
   </div>
 </footer>
   </body>
