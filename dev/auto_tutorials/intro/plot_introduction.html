@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>Basic MEG and EEG data processing &#8212; MNE 0.18.dev0 documentation</title>
+    <title>Overview of MEG/EEG analysis with MNE-Python &#8212; MNE 0.18.dev0 documentation</title>
     <link rel="stylesheet" href="../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../../_static/gallery.css" />
@@ -164,19 +164,14 @@ This documentation is for <strong>development version 0.18.dev0</strong>.
             <p class="logo"><a href="../../index.html">
               <img class="logo" src="../../_static/mne_logo_small.png" alt="Logo"/>
             </a></p><ul>
-<li><a class="reference internal" href="#">Basic MEG and EEG data processing</a><ul>
-<li><a class="reference internal" href="#what-you-can-do-with-mne-python">What you can do with MNE Python</a></li>
-<li><a class="reference internal" href="#what-you-re-not-supposed-to-do-with-mne-python">What you’re not supposed to do with MNE Python</a></li>
-<li><a class="reference internal" href="#installation-of-the-required-materials">Installation of the required materials</a></li>
-<li><a class="reference internal" href="#from-raw-data-to-evoked-data">From raw data to evoked data</a><ul>
-<li><a class="reference internal" href="#access-raw-data">Access raw data</a></li>
-<li><a class="reference internal" href="#define-and-read-epochs">Define and read epochs</a></li>
-<li><a class="reference internal" href="#time-frequency-induced-power-and-inter-trial-coherence">Time-Frequency: Induced power and inter trial coherence</a></li>
-<li><a class="reference internal" href="#inverse-modeling-mne-and-dspm-on-evoked-and-raw-data">Inverse modeling: MNE and dSPM on evoked and raw data</a></li>
-<li><a class="reference internal" href="#what-else-can-you-do">What else can you do?</a></li>
-<li><a class="reference internal" href="#want-to-know-more">Want to know more ?</a></li>
-</ul>
-</li>
+<li><a class="reference internal" href="#">Overview of MEG/EEG analysis with MNE-Python</a><ul>
+<li><a class="reference internal" href="#loading-data">Loading data</a></li>
+<li><a class="reference internal" href="#preprocessing">Preprocessing</a></li>
+<li><a class="reference internal" href="#detecting-experimental-events">Detecting experimental events</a></li>
+<li><a class="reference internal" href="#epoching-continuous-data">Epoching continuous data</a></li>
+<li><a class="reference internal" href="#time-frequency-analysis">Time-frequency analysis</a></li>
+<li><a class="reference internal" href="#estimating-evoked-responses">Estimating evoked responses</a></li>
+<li><a class="reference internal" href="#inverse-modeling">Inverse modeling</a></li>
 </ul>
 </li>
 </ul>
@@ -196,131 +191,56 @@ This documentation is for <strong>development version 0.18.dev0</strong>.
 <p class="admonition-title">Note</p>
 <p>Click <a class="reference internal" href="#sphx-glr-download-auto-tutorials-intro-plot-introduction-py"><span class="std std-ref">here</span></a> to download the full example code</p>
 </div>
-<div class="sphx-glr-example-title section" id="basic-meg-and-eeg-data-processing">
-<span id="sphx-glr-auto-tutorials-intro-plot-introduction-py"></span><h1>Basic MEG and EEG data processing<a class="headerlink" href="#basic-meg-and-eeg-data-processing" title="Permalink to this headline">¶</a></h1>
-<img alt="http://mne-tools.github.io/stable/_static/mne_logo.png" src="http://mne-tools.github.io/stable/_static/mne_logo.png" />
-<p>MNE-Python reimplements most of MNE-C’s (the original MNE command line utils)
-functionality and offers transparent scripting.
-On top of that it extends MNE-C’s functionality considerably
-(customize events, compute contrasts, group statistics, time-frequency
-analysis, EEG-sensor space analyses, etc.) It uses the same files as standard
-MNE unix commands: no need to convert your files to a new system or database.</p>
-<p>This package is based on the FIF file format from Neuromag. It
-can read and convert CTF, BTI/4D, KIT and various EEG formats to FIF.</p>
-<div class="section" id="what-you-can-do-with-mne-python">
-<h2>What you can do with MNE Python<a class="headerlink" href="#what-you-can-do-with-mne-python" title="Permalink to this headline">¶</a></h2>
+<div class="sphx-glr-example-title section" id="overview-of-meg-eeg-analysis-with-mne-python">
+<span id="sphx-glr-auto-tutorials-intro-plot-introduction-py"></span><h1>Overview of MEG/EEG analysis with MNE-Python<a class="headerlink" href="#overview-of-meg-eeg-analysis-with-mne-python" title="Permalink to this headline">¶</a></h1>
+<p>This tutorial covers the basic EEG/MEG pipeline for event-related analysis:
+loading data, epoching, averaging, plotting, and estimating cortical activity
+from sensor data. It introduces the core MNE-Python data structures
+<a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-class docutils literal notranslate"><span class="pre">Raw</span></code></a>, <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal notranslate"><span class="pre">Epochs</span></code></a>, <a class="reference internal" href="../../generated/mne.Evoked.html#mne.Evoked" title="mne.Evoked"><code class="xref py py-class docutils literal notranslate"><span class="pre">Evoked</span></code></a>, and
+<a class="reference internal" href="../../generated/mne.SourceEstimate.html#mne.SourceEstimate" title="mne.SourceEstimate"><code class="xref py py-class docutils literal notranslate"><span class="pre">SourceEstimate</span></code></a>, and covers a lot of ground fairly quickly (at the
+expense of depth). Subsequent tutorials address each of these topics in greater
+detail.</p>
+<div class="contents local topic" id="page-contents">
+<p class="topic-title first">Page contents</p>
 <ul class="simple">
-<li><p><strong>Raw data visualization</strong> to visualize recordings, can also use
-<em>mne_browse_raw</em> for extended functionality (see <a class="reference internal" href="../../manual/gui/browse.html#ch-browse"><span class="std std-ref">Browsing raw data with mne_browse_raw</span></a>)</p></li>
-<li><p><strong>Epoching</strong>: Define epochs, baseline correction, handle conditions etc.</p></li>
-<li><p><strong>Averaging</strong> to get Evoked data</p></li>
-<li><p><strong>Compute SSP projectors</strong> to remove ECG and EOG artifacts</p></li>
-<li><p><strong>Compute ICA</strong> to remove artifacts or select latent sources.</p></li>
-<li><p><strong>Maxwell filtering</strong> to remove environmental noise.</p></li>
-<li><p><strong>Boundary Element Modeling</strong>: single and three-layer BEM model
-creation and solution computation.</p></li>
-<li><p><strong>Forward modeling</strong>: BEM computation and mesh creation
-(see <a class="reference internal" href="../../manual/source_localization/forward.html#ch-forward"><span class="std std-ref">The forward solution</span></a>)</p></li>
-<li><p><strong>Linear inverse solvers</strong> (MNE, dSPM, sLORETA, eLORETA, LCMV, DICS)</p></li>
-<li><p><strong>Sparse inverse solvers</strong> (L1/L2 mixed norm MxNE, Gamma Map,
-Time-Frequency MxNE)</p></li>
-<li><p><strong>Connectivity estimation</strong> in sensor and source space</p></li>
-<li><p><strong>Visualization of sensor and source space data</strong></p></li>
-<li><p><strong>Time-frequency</strong> analysis with Morlet wavelets (induced power,
-intertrial coherence, phase lock value) also in the source space</p></li>
-<li><p><strong>Spectrum estimation</strong> using multi-taper method</p></li>
-<li><p><strong>Mixed Source Models</strong> combining cortical and subcortical structures</p></li>
-<li><p><strong>Dipole Fitting</strong></p></li>
-<li><p><strong>Decoding</strong> multivariate pattern analysis of M/EEG topographies</p></li>
-<li><p><strong>Compute contrasts</strong> between conditions, between sensors, across
-subjects etc.</p></li>
-<li><p><strong>Non-parametric statistics</strong> in time, space and frequency
-(including cluster-level)</p></li>
-<li><p><strong>Scripting</strong> (batch and parallel computing)</p></li>
+<li><p><a class="reference internal" href="#loading-data" id="id1">Loading data</a></p></li>
+<li><p><a class="reference internal" href="#preprocessing" id="id2">Preprocessing</a></p></li>
+<li><p><a class="reference internal" href="#detecting-experimental-events" id="id3">Detecting experimental events</a></p></li>
+<li><p><a class="reference internal" href="#epoching-continuous-data" id="id4">Epoching continuous data</a></p></li>
+<li><p><a class="reference internal" href="#time-frequency-analysis" id="id5">Time-frequency analysis</a></p></li>
+<li><p><a class="reference internal" href="#estimating-evoked-responses" id="id6">Estimating evoked responses</a></p></li>
+<li><p><a class="reference internal" href="#inverse-modeling" id="id7">Inverse modeling</a></p></li>
 </ul>
 </div>
-<div class="section" id="what-you-re-not-supposed-to-do-with-mne-python">
-<h2>What you’re not supposed to do with MNE Python<a class="headerlink" href="#what-you-re-not-supposed-to-do-with-mne-python" title="Permalink to this headline">¶</a></h2>
-<ul class="simple">
-<li><p><strong>Brain and head surface segmentation</strong> for use with BEM
-models – use Freesurfer.</p></li>
-</ul>
-</div>
-<div class="section" id="installation-of-the-required-materials">
-<h2>Installation of the required materials<a class="headerlink" href="#installation-of-the-required-materials" title="Permalink to this headline">¶</a></h2>
-<p>See <a class="reference internal" href="../../install_mne_python.html#install-python-and-mne-python"><span class="std std-ref">Installing MNE-Python</span></a>.</p>
-</div>
-<div class="section" id="from-raw-data-to-evoked-data">
-<h2>From raw data to evoked data<a class="headerlink" href="#from-raw-data-to-evoked-data" title="Permalink to this headline">¶</a></h2>
-<p>Now, launch <a class="reference external" href="https://ipython.org/">ipython</a> (Advanced Python shell) using the QT backend, which
-is best supported across systems:</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$</span> ipython --matplotlib<span class="o">=</span>qt
+<p>We begin by importing the necessary Python modules:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">mne</span>
 </pre></div>
 </div>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>In IPython, you can press <strong>shift-enter</strong> with a given cell
-selected to execute it and advance to the next cell.</p>
-<p>Also, the standard location for the MNE-sample data is
-<code class="docutils literal notranslate"><span class="pre">~/mne_data</span></code>. If you downloaded data and an example asks you
-whether to download it again, make sure the data reside in the
-examples directory and you run the script from its current directory.</p>
-<p>From IPython e.g. say:</p>
-<div class="highlight-IPython notranslate"><div class="highlight"><pre><span></span><span class="n">In</span> <span class="p">[</span><span class="mi">1</span><span class="p">]:</span> <span class="n">cd</span> <span class="n">examples</span><span class="o">/</span><span class="n">preprocessing</span>
-<span class="n">In</span> <span class="p">[</span><span class="mi">2</span><span class="p">]:</span> <span class="o">%</span><span class="k">run</span> plot_find_ecg_artifacts.py
-</pre></div>
-</div>
-</div>
-<p>First, load the mne package:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">mne</span>
-</pre></div>
-</div>
-<p>If you’d like to turn information status messages off:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="../../generated/mne.set_log_level.html#mne.set_log_level" title="View documentation for mne.set_log_level"><span class="n">mne</span><span class="o">.</span><span class="n">set_log_level</span></a><span class="p">(</span><span class="s1">&#39;WARNING&#39;</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>But it’s generally a good idea to leave them on:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="../../generated/mne.set_log_level.html#mne.set_log_level" title="View documentation for mne.set_log_level"><span class="n">mne</span><span class="o">.</span><span class="n">set_log_level</span></a><span class="p">(</span><span class="s1">&#39;INFO&#39;</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>You can set the default level in every session by setting the environment
-variable “MNE_LOGGING_LEVEL”, or by having mne-python write preferences to a
-file with:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><a href="../../generated/mne.set_config.html#mne.set_config" title="View documentation for mne.set_config"><span class="n">mne</span><span class="o">.</span><span class="n">set_config</span></a><span class="p">(</span><span class="s1">&#39;MNE_LOGGING_LEVEL&#39;</span><span class="p">,</span> <span class="s1">&#39;WARNING&#39;</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>Note that the location of the mne-python preferences file (for easier manual
-editing) can be found using:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><a href="../../generated/mne.get_config_path.html#mne.get_config_path" title="View documentation for mne.get_config_path"><span class="n">mne</span><span class="o">.</span><span class="n">get_config_path</span></a><span class="p">())</span>
-</pre></div>
-</div>
-<p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>/home/circleci/.mne/mne-python.json
-</pre></div>
-</div>
-<p>By default logging messages print to the console, but look at
-<a class="reference internal" href="../../generated/mne.set_log_file.html#mne.set_log_file" title="mne.set_log_file"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.set_log_file()</span></code></a> to save output to a file.</p>
-<div class="section" id="access-raw-data">
-<h3>Access raw data<a class="headerlink" href="#access-raw-data" title="Permalink to this headline">¶</a></h3>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">mne.datasets</span> <span class="k">import</span> <span class="n">sample</span>  <span class="c1"># noqa</span>
-<span class="n">data_path</span> <span class="o">=</span> <a href="../../generated/mne.datasets.sample.data_path.html#mne.datasets.sample.data_path" title="View documentation for mne.datasets.sample.data_path"><span class="n">sample</span><span class="o">.</span><span class="n">data_path</span></a><span class="p">()</span>
-<span class="n">raw_fname</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis_filt-0-40_raw.fif&#39;</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">raw_fname</span><span class="p">)</span>
-</pre></div>
-</div>
-<p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>/home/circleci/mne_data/MNE-sample-data/MEG/sample/sample_audvis_filt-0-40_raw.fif
-</pre></div>
-</div>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>The MNE sample dataset should be downloaded automatically but be
-patient (approx. 2GB)</p>
-</div>
-<p>Read data from file:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">raw</span> <span class="o">=</span> <a href="../../generated/mne.io.read_raw_fif.html#mne.io.read_raw_fif" title="View documentation for mne.io.read_raw_fif"><span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read_raw_fif</span></a><span class="p">(</span><span class="n">raw_fname</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">)</span>
+<div class="section" id="loading-data">
+<h2><a class="toc-backref" href="#id1">Loading data</a><a class="headerlink" href="#loading-data" title="Permalink to this headline">¶</a></h2>
+<p>MNE-Python data structures are based around the FIF file format from
+Neuromag, but there are reader functions for <a class="reference internal" href="../../manual/io.html#data-formats"><span class="std std-ref">a wide variety of other
+data formats</span></a>. MNE-Python also has interfaces to a
+variety of <a class="reference internal" href="../../manual/datasets_index.html"><span class="doc">publicly available datasets</span></a>,
+which MNE-Python can download and manage for you.</p>
+<p>We’ll start this tutorial by loading one of the example datasets (called
+“<a class="reference internal" href="../../manual/datasets_index.html#sample-dataset"><span class="std std-ref">Sample</span></a>”), which contains EEG and MEG data from one subject
+performing an audiovisual experiment, along with structural MRI scans for
+that subject. The <a class="reference internal" href="../../generated/mne.datasets.sample.data_path.html#mne.datasets.sample.data_path" title="mne.datasets.sample.data_path"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.datasets.sample.data_path()</span></code></a> function will
+automatically download the dataset if it isn’t found in one of the expected
+locations, then return the directory path to the dataset (see the
+documentation of <a class="reference internal" href="../../generated/mne.datasets.sample.data_path.html#mne.datasets.sample.data_path" title="mne.datasets.sample.data_path"><code class="xref py py-func docutils literal notranslate"><span class="pre">data_path()</span></code></a> for a list of places
+it checks before downloading). Note also that for this tutorial to run
+smoothly on our servers, we’re using a filtered and downsampled version of
+the data (<code class="file docutils literal notranslate"><span class="pre">sample_audvis_filt-0-40_raw.fif</span></code>), but an unfiltered version
+(<code class="file docutils literal notranslate"><span class="pre">sample_audvis_raw.fif</span></code>) is also included in the sample dataset and
+could be substituted here when running the tutorial locally.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sample_data_folder</span> <span class="o">=</span> <a href="../../generated/mne.datasets.sample.data_path.html#mne.datasets.sample.data_path" title="View documentation for mne.datasets.sample.data_path"><span class="n">mne</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">sample</span><span class="o">.</span><span class="n">data_path</span></a><span class="p">()</span>
+<span class="n">sample_data_raw_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">sample_data_folder</span><span class="p">,</span> <span class="s1">&#39;MEG&#39;</span><span class="p">,</span> <span class="s1">&#39;sample&#39;</span><span class="p">,</span>
+                                    <span class="s1">&#39;sample_audvis_filt-0-40_raw.fif&#39;</span><span class="p">)</span>
+<span class="n">raw</span> <span class="o">=</span> <a href="../../generated/mne.io.read_raw_fif.html#mne.io.read_raw_fif" title="View documentation for mne.io.read_raw_fif"><span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read_raw_fif</span></a><span class="p">(</span><span class="n">sample_data_raw_file</span><span class="p">)</span>
 </pre></div>
 </div>
 <p class="sphx-glr-script-out">Out:</p>
@@ -333,7 +253,29 @@ patient (approx. 2GB)</p>
     Range : 6450 ... 48149 =     42.956 ...   320.665 secs
 Ready.
 Current compensation grade : 0
-&lt;Raw  |  sample_audvis_filt-0-40_raw.fif, n_channels x n_times : 376 x 41700 (277.7 sec), ~3.7 MB, data not loaded&gt;
+</pre></div>
+</div>
+<p>By default, <a class="reference internal" href="../../generated/mne.io.read_raw_fif.html#mne.io.read_raw_fif" title="mne.io.read_raw_fif"><code class="xref py py-func docutils literal notranslate"><span class="pre">read_raw_fif()</span></code></a> displays some information about the
+file it’s loading; for example, here it tells us that there are four
+“projection items” in the file along with the recorded data; those are
+<a class="reference internal" href="../../glossary.html#term-projector"><span class="xref std std-term">SSP projectors</span></a> calculated to remove environmental noise
+from the MEG signals, plus a projector to mean-reference the EEG channels;
+these are discussed
+in a later tutorial. In addition to the information displayed during loading,
+you can get a glimpse of the basic details of a <a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-class docutils literal notranslate"><span class="pre">Raw</span></code></a> object
+by printing it; even more is available by printing its <code class="docutils literal notranslate"><span class="pre">info</span></code> attribute
+(a <a class="reference internal" href="../../generated/mne.Info.html#mne.Info" title="mne.Info"><code class="xref py py-class docutils literal notranslate"><span class="pre">dictionary-like</span> <span class="pre">object</span></code></a> that is preserved across
+<a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-class docutils literal notranslate"><span class="pre">Raw</span></code></a>, <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal notranslate"><span class="pre">Epochs</span></code></a>, and <a class="reference internal" href="../../generated/mne.Evoked.html#mne.Evoked" title="mne.Evoked"><code class="xref py py-class docutils literal notranslate"><span class="pre">Evoked</span></code></a>
+objects). The <code class="docutils literal notranslate"><span class="pre">info</span></code> data structure keeps track of channel locations,
+applied filters, projectors, etc. Notice especially the <code class="docutils literal notranslate"><span class="pre">chs</span></code> entry,
+showing that MNE-Python detects different sensor types and handles each
+appropriately.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">)</span>
+</pre></div>
+</div>
+<p class="sphx-glr-script-out">Out:</p>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;Raw  |  sample_audvis_filt-0-40_raw.fif, n_channels x n_times : 376 x 41700 (277.7 sec), ~3.7 MB, data not loaded&gt;
 &lt;Info | 19 non-empty fields
     bads : list | MEG 2443, EEG 053
     ch_names : list | MEG 0113, MEG 0112, MEG 0111, MEG 0122, MEG 0123, ...
@@ -371,45 +313,112 @@ Current compensation grade : 0
 &gt;
 </pre></div>
 </div>
-<p>Look at the channels in raw:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">ch_names</span><span class="p">)</span>
+<p><a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-class docutils literal notranslate"><span class="pre">Raw</span></code></a> objects also have several built-in plotting methods;
+here we show the power spectral density (PSD) for each sensor type with
+<a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw.plot_psd" title="mne.io.Raw.plot_psd"><code class="xref py py-meth docutils literal notranslate"><span class="pre">plot_psd()</span></code></a>, as well as a plot of the raw sensor traces with
+<a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw.plot" title="mne.io.Raw.plot"><code class="xref py py-meth docutils literal notranslate"><span class="pre">plot()</span></code></a>. In the PSD plot, we’ll only plot frequencies below
+50 Hz (since our data are low-pass filtered at 40 Hz). In interactive Python
+sessions, <a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw.plot" title="mne.io.Raw.plot"><code class="xref py py-meth docutils literal notranslate"><span class="pre">plot()</span></code></a> is interactive and allows scrolling,
+scaling, bad channel marking, annotation, projector toggling, etc.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">raw</span><span class="o">.</span><span class="n">plot_psd</span><span class="p">(</span><span class="n">fmax</span><span class="o">=</span><span class="mi">50</span><span class="p">)</span>
+<span class="n">raw</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">duration</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">n_channels</span><span class="o">=</span><span class="mi">30</span><span class="p">)</span>
 </pre></div>
 </div>
+<ul class="sphx-glr-horizontal">
+<li><img alt="../../_images/sphx_glr_plot_introduction_001.png" class="sphx-glr-multi-img" src="../../_images/sphx_glr_plot_introduction_001.png" />
+</li>
+<li><img alt="../../_images/sphx_glr_plot_introduction_002.png" class="sphx-glr-multi-img" src="../../_images/sphx_glr_plot_introduction_002.png" />
+</li>
+</ul>
 <p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>[&#39;MEG 0113&#39;, &#39;MEG 0112&#39;, &#39;MEG 0111&#39;, &#39;MEG 0122&#39;, &#39;MEG 0123&#39;, &#39;MEG 0121&#39;, &#39;MEG 0132&#39;, &#39;MEG 0133&#39;, &#39;MEG 0131&#39;, &#39;MEG 0143&#39;, &#39;MEG 0142&#39;, &#39;MEG 0141&#39;, &#39;MEG 0213&#39;, &#39;MEG 0212&#39;, &#39;MEG 0211&#39;, &#39;MEG 0222&#39;, &#39;MEG 0223&#39;, &#39;MEG 0221&#39;, &#39;MEG 0232&#39;, &#39;MEG 0233&#39;, &#39;MEG 0231&#39;, &#39;MEG 0243&#39;, &#39;MEG 0242&#39;, &#39;MEG 0241&#39;, &#39;MEG 0313&#39;, &#39;MEG 0312&#39;, &#39;MEG 0311&#39;, &#39;MEG 0322&#39;, &#39;MEG 0323&#39;, &#39;MEG 0321&#39;, &#39;MEG 0333&#39;, &#39;MEG 0332&#39;, &#39;MEG 0331&#39;, &#39;MEG 0343&#39;, &#39;MEG 0342&#39;, &#39;MEG 0341&#39;, &#39;MEG 0413&#39;, &#39;MEG 0412&#39;, &#39;MEG 0411&#39;, &#39;MEG 0422&#39;, &#39;MEG 0423&#39;, &#39;MEG 0421&#39;, &#39;MEG 0432&#39;, &#39;MEG 0433&#39;, &#39;MEG 0431&#39;, &#39;MEG 0443&#39;, &#39;MEG 0442&#39;, &#39;MEG 0441&#39;, &#39;MEG 0513&#39;, &#39;MEG 0512&#39;, &#39;MEG 0511&#39;, &#39;MEG 0523&#39;, &#39;MEG 0522&#39;, &#39;MEG 0521&#39;, &#39;MEG 0532&#39;, &#39;MEG 0533&#39;, &#39;MEG 0531&#39;, &#39;MEG 0542&#39;, &#39;MEG 0543&#39;, &#39;MEG 0541&#39;, &#39;MEG 0613&#39;, &#39;MEG 0612&#39;, &#39;MEG 0611&#39;, &#39;MEG 0622&#39;, &#39;MEG 0623&#39;, &#39;MEG 0621&#39;, &#39;MEG 0633&#39;, &#39;MEG 0632&#39;, &#39;MEG 0631&#39;, &#39;MEG 0642&#39;, &#39;MEG 0643&#39;, &#39;MEG 0641&#39;, &#39;MEG 0713&#39;, &#39;MEG 0712&#39;, &#39;MEG 0711&#39;, &#39;MEG 0723&#39;, &#39;MEG 0722&#39;, &#39;MEG 0721&#39;, &#39;MEG 0733&#39;, &#39;MEG 0732&#39;, &#39;MEG 0731&#39;, &#39;MEG 0743&#39;, &#39;MEG 0742&#39;, &#39;MEG 0741&#39;, &#39;MEG 0813&#39;, &#39;MEG 0812&#39;, &#39;MEG 0811&#39;, &#39;MEG 0822&#39;, &#39;MEG 0823&#39;, &#39;MEG 0821&#39;, &#39;MEG 0913&#39;, &#39;MEG 0912&#39;, &#39;MEG 0911&#39;, &#39;MEG 0923&#39;, &#39;MEG 0922&#39;, &#39;MEG 0921&#39;, &#39;MEG 0932&#39;, &#39;MEG 0933&#39;, &#39;MEG 0931&#39;, &#39;MEG 0942&#39;, &#39;MEG 0943&#39;, &#39;MEG 0941&#39;, &#39;MEG 1013&#39;, &#39;MEG 1012&#39;, &#39;MEG 1011&#39;, &#39;MEG 1023&#39;, &#39;MEG 1022&#39;, &#39;MEG 1021&#39;, &#39;MEG 1032&#39;, &#39;MEG 1033&#39;, &#39;MEG 1031&#39;, &#39;MEG 1043&#39;, &#39;MEG 1042&#39;, &#39;MEG 1041&#39;, &#39;MEG 1112&#39;, &#39;MEG 1113&#39;, &#39;MEG 1111&#39;, &#39;MEG 1123&#39;, &#39;MEG 1122&#39;, &#39;MEG 1121&#39;, &#39;MEG 1133&#39;, &#39;MEG 1132&#39;, &#39;MEG 1131&#39;, &#39;MEG 1142&#39;, &#39;MEG 1143&#39;, &#39;MEG 1141&#39;, &#39;MEG 1213&#39;, &#39;MEG 1212&#39;, &#39;MEG 1211&#39;, &#39;MEG 1223&#39;, &#39;MEG 1222&#39;, &#39;MEG 1221&#39;, &#39;MEG 1232&#39;, &#39;MEG 1233&#39;, &#39;MEG 1231&#39;, &#39;MEG 1243&#39;, &#39;MEG 1242&#39;, &#39;MEG 1241&#39;, &#39;MEG 1312&#39;, &#39;MEG 1313&#39;, &#39;MEG 1311&#39;, &#39;MEG 1323&#39;, &#39;MEG 1322&#39;, &#39;MEG 1321&#39;, &#39;MEG 1333&#39;, &#39;MEG 1332&#39;, &#39;MEG 1331&#39;, &#39;MEG 1342&#39;, &#39;MEG 1343&#39;, &#39;MEG 1341&#39;, &#39;MEG 1412&#39;, &#39;MEG 1413&#39;, &#39;MEG 1411&#39;, &#39;MEG 1423&#39;, &#39;MEG 1422&#39;, &#39;MEG 1421&#39;, &#39;MEG 1433&#39;, &#39;MEG 1432&#39;, &#39;MEG 1431&#39;, &#39;MEG 1442&#39;, &#39;MEG 1443&#39;, &#39;MEG 1441&#39;, &#39;MEG 1512&#39;, &#39;MEG 1513&#39;, &#39;MEG 1511&#39;, &#39;MEG 1522&#39;, &#39;MEG 1523&#39;, &#39;MEG 1521&#39;, &#39;MEG 1533&#39;, &#39;MEG 1532&#39;, &#39;MEG 1531&#39;, &#39;MEG 1543&#39;, &#39;MEG 1542&#39;, &#39;MEG 1541&#39;, &#39;MEG 1613&#39;, &#39;MEG 1612&#39;, &#39;MEG 1611&#39;, &#39;MEG 1622&#39;, &#39;MEG 1623&#39;, &#39;MEG 1621&#39;, &#39;MEG 1632&#39;, &#39;MEG 1633&#39;, &#39;MEG 1631&#39;, &#39;MEG 1643&#39;, &#39;MEG 1642&#39;, &#39;MEG 1641&#39;, &#39;MEG 1713&#39;, &#39;MEG 1712&#39;, &#39;MEG 1711&#39;, &#39;MEG 1722&#39;, &#39;MEG 1723&#39;, &#39;MEG 1721&#39;, &#39;MEG 1732&#39;, &#39;MEG 1733&#39;, &#39;MEG 1731&#39;, &#39;MEG 1743&#39;, &#39;MEG 1742&#39;, &#39;MEG 1741&#39;, &#39;MEG 1813&#39;, &#39;MEG 1812&#39;, &#39;MEG 1811&#39;, &#39;MEG 1822&#39;, &#39;MEG 1823&#39;, &#39;MEG 1821&#39;, &#39;MEG 1832&#39;, &#39;MEG 1833&#39;, &#39;MEG 1831&#39;, &#39;MEG 1843&#39;, &#39;MEG 1842&#39;, &#39;MEG 1841&#39;, &#39;MEG 1912&#39;, &#39;MEG 1913&#39;, &#39;MEG 1911&#39;, &#39;MEG 1923&#39;, &#39;MEG 1922&#39;, &#39;MEG 1921&#39;, &#39;MEG 1932&#39;, &#39;MEG 1933&#39;, &#39;MEG 1931&#39;, &#39;MEG 1943&#39;, &#39;MEG 1942&#39;, &#39;MEG 1941&#39;, &#39;MEG 2013&#39;, &#39;MEG 2012&#39;, &#39;MEG 2011&#39;, &#39;MEG 2023&#39;, &#39;MEG 2022&#39;, &#39;MEG 2021&#39;, &#39;MEG 2032&#39;, &#39;MEG 2033&#39;, &#39;MEG 2031&#39;, &#39;MEG 2042&#39;, &#39;MEG 2043&#39;, &#39;MEG 2041&#39;, &#39;MEG 2113&#39;, &#39;MEG 2112&#39;, &#39;MEG 2111&#39;, &#39;MEG 2122&#39;, &#39;MEG 2123&#39;, &#39;MEG 2121&#39;, &#39;MEG 2133&#39;, &#39;MEG 2132&#39;, &#39;MEG 2131&#39;, &#39;MEG 2143&#39;, &#39;MEG 2142&#39;, &#39;MEG 2141&#39;, &#39;MEG 2212&#39;, &#39;MEG 2213&#39;, &#39;MEG 2211&#39;, &#39;MEG 2223&#39;, &#39;MEG 2222&#39;, &#39;MEG 2221&#39;, &#39;MEG 2233&#39;, &#39;MEG 2232&#39;, &#39;MEG 2231&#39;, &#39;MEG 2242&#39;, &#39;MEG 2243&#39;, &#39;MEG 2241&#39;, &#39;MEG 2312&#39;, &#39;MEG 2313&#39;, &#39;MEG 2311&#39;, &#39;MEG 2323&#39;, &#39;MEG 2322&#39;, &#39;MEG 2321&#39;, &#39;MEG 2332&#39;, &#39;MEG 2333&#39;, &#39;MEG 2331&#39;, &#39;MEG 2343&#39;, &#39;MEG 2342&#39;, &#39;MEG 2341&#39;, &#39;MEG 2412&#39;, &#39;MEG 2413&#39;, &#39;MEG 2411&#39;, &#39;MEG 2423&#39;, &#39;MEG 2422&#39;, &#39;MEG 2421&#39;, &#39;MEG 2433&#39;, &#39;MEG 2432&#39;, &#39;MEG 2431&#39;, &#39;MEG 2442&#39;, &#39;MEG 2443&#39;, &#39;MEG 2441&#39;, &#39;MEG 2512&#39;, &#39;MEG 2513&#39;, &#39;MEG 2511&#39;, &#39;MEG 2522&#39;, &#39;MEG 2523&#39;, &#39;MEG 2521&#39;, &#39;MEG 2533&#39;, &#39;MEG 2532&#39;, &#39;MEG 2531&#39;, &#39;MEG 2543&#39;, &#39;MEG 2542&#39;, &#39;MEG 2541&#39;, &#39;MEG 2612&#39;, &#39;MEG 2613&#39;, &#39;MEG 2611&#39;, &#39;MEG 2623&#39;, &#39;MEG 2622&#39;, &#39;MEG 2621&#39;, &#39;MEG 2633&#39;, &#39;MEG 2632&#39;, &#39;MEG 2631&#39;, &#39;MEG 2642&#39;, &#39;MEG 2643&#39;, &#39;MEG 2641&#39;, &#39;STI 001&#39;, &#39;STI 002&#39;, &#39;STI 003&#39;, &#39;STI 004&#39;, &#39;STI 005&#39;, &#39;STI 006&#39;, &#39;STI 014&#39;, &#39;STI 015&#39;, &#39;STI 016&#39;, &#39;EEG 001&#39;, &#39;EEG 002&#39;, &#39;EEG 003&#39;, &#39;EEG 004&#39;, &#39;EEG 005&#39;, &#39;EEG 006&#39;, &#39;EEG 007&#39;, &#39;EEG 008&#39;, &#39;EEG 009&#39;, &#39;EEG 010&#39;, &#39;EEG 011&#39;, &#39;EEG 012&#39;, &#39;EEG 013&#39;, &#39;EEG 014&#39;, &#39;EEG 015&#39;, &#39;EEG 016&#39;, &#39;EEG 017&#39;, &#39;EEG 018&#39;, &#39;EEG 019&#39;, &#39;EEG 020&#39;, &#39;EEG 021&#39;, &#39;EEG 022&#39;, &#39;EEG 023&#39;, &#39;EEG 024&#39;, &#39;EEG 025&#39;, &#39;EEG 026&#39;, &#39;EEG 027&#39;, &#39;EEG 028&#39;, &#39;EEG 029&#39;, &#39;EEG 030&#39;, &#39;EEG 031&#39;, &#39;EEG 032&#39;, &#39;EEG 033&#39;, &#39;EEG 034&#39;, &#39;EEG 035&#39;, &#39;EEG 036&#39;, &#39;EEG 037&#39;, &#39;EEG 038&#39;, &#39;EEG 039&#39;, &#39;EEG 040&#39;, &#39;EEG 041&#39;, &#39;EEG 042&#39;, &#39;EEG 043&#39;, &#39;EEG 044&#39;, &#39;EEG 045&#39;, &#39;EEG 046&#39;, &#39;EEG 047&#39;, &#39;EEG 048&#39;, &#39;EEG 049&#39;, &#39;EEG 050&#39;, &#39;EEG 051&#39;, &#39;EEG 052&#39;, &#39;EEG 053&#39;, &#39;EEG 054&#39;, &#39;EEG 055&#39;, &#39;EEG 056&#39;, &#39;EEG 057&#39;, &#39;EEG 058&#39;, &#39;EEG 059&#39;, &#39;EEG 060&#39;, &#39;EOG 061&#39;]
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Effective window size : 13.639 (s)
+Effective window size : 13.639 (s)
+Effective window size : 13.639 (s)
 </pre></div>
 </div>
-<p>Read and plot a segment of raw data</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">start</span><span class="p">,</span> <span class="n">stop</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">time_as_index</span><span class="p">([</span><span class="mi">100</span><span class="p">,</span> <span class="mi">115</span><span class="p">])</span>  <span class="c1"># 100 s to 115 s data segment</span>
-<span class="n">data</span><span class="p">,</span> <span class="n">times</span> <span class="o">=</span> <span class="n">raw</span><span class="p">[:,</span> <span class="n">start</span><span class="p">:</span><span class="n">stop</span><span class="p">]</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">data</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">times</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-<span class="n">data</span><span class="p">,</span> <span class="n">times</span> <span class="o">=</span> <span class="n">raw</span><span class="p">[</span><span class="mi">2</span><span class="p">:</span><span class="mi">20</span><span class="p">:</span><span class="mi">3</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span><span class="n">stop</span><span class="p">]</span>  <span class="c1"># access underlying data</span>
-<span class="n">raw</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
+</div>
+<div class="section" id="preprocessing">
+<h2><a class="toc-backref" href="#id2">Preprocessing</a><a class="headerlink" href="#preprocessing" title="Permalink to this headline">¶</a></h2>
+<p>MNE-Python supports a variety of preprocessing approaches and techniques
+(maxwell filtering, signal-space projection, independent components analysis,
+filtering, downsampling, etc); see the full list of capabilities in the
+<a class="reference internal" href="../../python_reference.html#module-mne.preprocessing" title="mne.preprocessing"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mne.preprocessing</span></code></a> and <a class="reference internal" href="../../python_reference.html#module-mne.filter" title="mne.filter"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mne.filter</span></code></a> submodules. Here we’ll clean
+up our data by performing independent components analysis
+(<a class="reference internal" href="../../generated/mne.preprocessing.ICA.html#mne.preprocessing.ICA" title="mne.preprocessing.ICA"><code class="xref py py-class docutils literal notranslate"><span class="pre">ICA</span></code></a>); for brevity we’ll skip the steps that
+helped us determined which components best capture the artifacts (see
+<a class="reference internal" href="../preprocessing/plot_artifacts_correction_ica.html"><span class="doc">Artifact Correction with ICA</span></a> for a detailed
+walk-through of that process).</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># set up and fit the ICA</span>
+<span class="n">ica</span> <span class="o">=</span> <a href="../../generated/mne.preprocessing.ICA.html#mne.preprocessing.ICA" title="View documentation for mne.preprocessing.ICA"><span class="n">mne</span><span class="o">.</span><span class="n">preprocessing</span><span class="o">.</span><span class="n">ICA</span></a><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">97</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="mi">800</span><span class="p">)</span>
+<span class="n">ica</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
+<span class="n">ica</span><span class="o">.</span><span class="n">exclude</span> <span class="o">=</span> <span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span>  <span class="c1"># details on how we picked these are omitted here</span>
+<span class="n">ica</span><span class="o">.</span><span class="n">plot_properties</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">picks</span><span class="o">=</span><span class="n">ica</span><span class="o">.</span><span class="n">exclude</span><span class="p">)</span>
 </pre></div>
 </div>
-<img alt="../../_images/sphx_glr_plot_introduction_001.png" class="sphx-glr-single-img" src="../../_images/sphx_glr_plot_introduction_001.png" />
+<ul class="sphx-glr-horizontal">
+<li><img alt="../../_images/sphx_glr_plot_introduction_003.png" class="sphx-glr-multi-img" src="../../_images/sphx_glr_plot_introduction_003.png" />
+</li>
+<li><img alt="../../_images/sphx_glr_plot_introduction_004.png" class="sphx-glr-multi-img" src="../../_images/sphx_glr_plot_introduction_004.png" />
+</li>
+</ul>
 <p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>(376, 2252)
-(2252,)
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Fitting ICA to data using 364 channels (please be patient, this may take a while)
+Inferring max_pca_components from picks
+Selection by number: 20 components
+Fitting ICA took 3.6s.
+    Using multitaper spectrum estimation with 7 DPSS windows
 </pre></div>
 </div>
-<p>Save a segment of 150s of raw data (MEG only):</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">raw</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;sample_audvis_meg_raw.fif&#39;</span><span class="p">,</span> <span class="n">tmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">tmax</span><span class="o">=</span><span class="mi">150</span><span class="p">,</span> <span class="n">picks</span><span class="o">=</span><span class="s1">&#39;meg&#39;</span><span class="p">,</span>
-         <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<p>Once we’re confident about which component(s) we want to remove, we pass them
+as the <code class="docutils literal notranslate"><span class="pre">exclude</span></code> parameter and then apply the ICA to the raw signal. The
+<a class="reference internal" href="../../generated/mne.preprocessing.ICA.html#mne.preprocessing.ICA.apply" title="mne.preprocessing.ICA.apply"><code class="xref py py-meth docutils literal notranslate"><span class="pre">apply()</span></code></a> method requires the raw data to be
+loaded into memory (by default it’s only read from disk as-needed), so we’ll
+use <a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw.load_data" title="mne.io.Raw.load_data"><code class="xref py py-meth docutils literal notranslate"><span class="pre">load_data()</span></code></a> first. We’ll also make a copy of the
+<a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-class docutils literal notranslate"><span class="pre">Raw</span></code></a> object so we can compare the signal before and after
+artifact removal side-by-side:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">orig_raw</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<span class="n">raw</span><span class="o">.</span><span class="n">load_data</span><span class="p">()</span>
+<span class="n">ica</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
+
+<span class="c1"># show some frontal channels to clearly illustrate the artifact removal</span>
+<span class="n">chs</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;MEG 0111&#39;</span><span class="p">,</span> <span class="s1">&#39;MEG 0121&#39;</span><span class="p">,</span> <span class="s1">&#39;MEG 0131&#39;</span><span class="p">,</span> <span class="s1">&#39;MEG 0211&#39;</span><span class="p">,</span> <span class="s1">&#39;MEG 0221&#39;</span><span class="p">,</span> <span class="s1">&#39;MEG 0231&#39;</span><span class="p">,</span>
+       <span class="s1">&#39;MEG 0311&#39;</span><span class="p">,</span> <span class="s1">&#39;MEG 0321&#39;</span><span class="p">,</span> <span class="s1">&#39;MEG 0331&#39;</span><span class="p">,</span> <span class="s1">&#39;MEG 1511&#39;</span><span class="p">,</span> <span class="s1">&#39;MEG 1521&#39;</span><span class="p">,</span> <span class="s1">&#39;MEG 1531&#39;</span><span class="p">,</span>
+       <span class="s1">&#39;EEG 001&#39;</span><span class="p">,</span> <span class="s1">&#39;EEG 002&#39;</span><span class="p">,</span> <span class="s1">&#39;EEG 003&#39;</span><span class="p">,</span> <span class="s1">&#39;EEG 004&#39;</span><span class="p">,</span> <span class="s1">&#39;EEG 005&#39;</span><span class="p">,</span> <span class="s1">&#39;EEG 006&#39;</span><span class="p">,</span>
+       <span class="s1">&#39;EEG 007&#39;</span><span class="p">,</span> <span class="s1">&#39;EEG 008&#39;</span><span class="p">]</span>
+<span class="n">chan_idxs</span> <span class="o">=</span> <span class="p">[</span><span class="n">raw</span><span class="o">.</span><span class="n">ch_names</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">ch</span><span class="p">)</span> <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="n">chs</span><span class="p">]</span>
+<span class="n">orig_raw</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">order</span><span class="o">=</span><span class="n">chan_idxs</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+<span class="n">raw</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">order</span><span class="o">=</span><span class="n">chan_idxs</span><span class="p">,</span> <span class="n">start</span><span class="o">=</span><span class="mi">12</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
 </pre></div>
 </div>
+<ul class="sphx-glr-horizontal">
+<li><img alt="../../_images/sphx_glr_plot_introduction_005.png" class="sphx-glr-multi-img" src="../../_images/sphx_glr_plot_introduction_005.png" />
+</li>
+<li><img alt="../../_images/sphx_glr_plot_introduction_006.png" class="sphx-glr-multi-img" src="../../_images/sphx_glr_plot_introduction_006.png" />
+</li>
+</ul>
 <p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Writing /home/circleci/project/tutorials/intro/sample_audvis_meg_raw.fif
-Closing /home/circleci/project/tutorials/intro/sample_audvis_meg_raw.fif [done]
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Reading 0 ... 41699  =      0.000 ...   277.709 secs...
+Transforming to ICA space (20 components)
+Zeroing out 2 ICA components
 </pre></div>
 </div>
 </div>
-<div class="section" id="define-and-read-epochs">
-<h3>Define and read epochs<a class="headerlink" href="#define-and-read-epochs" title="Permalink to this headline">¶</a></h3>
-<p>First extract events:</p>
+<div class="section" id="detecting-experimental-events">
+<h2><a class="toc-backref" href="#id3">Detecting experimental events</a><a class="headerlink" href="#detecting-experimental-events" title="Permalink to this headline">¶</a></h2>
+<p>The sample dataset includes several <a class="reference internal" href="../../glossary.html#term-stim-channel"><span class="xref std std-term">“STIM” channels</span></a>
+that recorded electrical
+signals sent from the stimulus delivery computer (as brief DC shifts /
+squarewave pulses). These pulses (often called “triggers”) are used in this
+dataset to mark experimental events: stimulus onset, stimulus type, and
+participant response (button press). The individual STIM channels are
+combined onto a single channel, in such a way that voltage
+levels on that channel can be unambiguously decoded as a particular event
+type. On older Neuromag systems (such as that used to record the sample data)
+this summation channel was called <code class="docutils literal notranslate"><span class="pre">STI</span> <span class="pre">014</span></code>, so we can pass that channel
+name to the <a class="reference internal" href="../../generated/mne.find_events.html#mne.find_events" title="mne.find_events"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.find_events()</span></code></a> function to recover the timing and
+identity of the stimulus events.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">events</span> <span class="o">=</span> <a href="../../generated/mne.find_events.html#mne.find_events" title="View documentation for mne.find_events"><span class="n">mne</span><span class="o">.</span><span class="n">find_events</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">stim_channel</span><span class="o">=</span><span class="s1">&#39;STI 014&#39;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">events</span><span class="p">[:</span><span class="mi">5</span><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">events</span><span class="p">[:</span><span class="mi">5</span><span class="p">])</span>  <span class="c1"># show the first 5</span>
 </pre></div>
 </div>
 <p class="sphx-glr-script-out">Out:</p>
@@ -422,304 +431,273 @@ Event IDs: [ 1  2  3  4  5 32]
  [7413    0    2]]
 </pre></div>
 </div>
-<p>Note that, by default, we use stim_channel=’STI 014’. If you have a different
-system (e.g., a newer system that uses channel ‘STI101’ by default), you can
-use the following to set the default stim channel to use for finding events:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="../../generated/mne.set_config.html#mne.set_config" title="View documentation for mne.set_config"><span class="n">mne</span><span class="o">.</span><span class="n">set_config</span></a><span class="p">(</span><span class="s1">&#39;MNE_STIM_CHANNEL&#39;</span><span class="p">,</span> <span class="s1">&#39;STI101&#39;</span><span class="p">,</span> <span class="n">set_env</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<p>The resulting events array is an ordinary 3-column <a class="reference external" href="https://www.numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17.dev0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">NumPy</span> <span class="pre">array</span></code></a>, with sample number in the first column and integer event ID
+in the last column; the middle column is usually ignored. Rather than keeping
+track of integer event IDs, we can provide an <em>event dictionary</em> that maps
+the integer IDs to experimental conditions or events. In this dataset, the
+mapping looks like this:</p>
+<table class="docutils align-center" id="sample-data-event-dict-table">
+<colgroup>
+<col style="width: 15%" />
+<col style="width: 85%" />
+</colgroup>
+<thead>
+<tr class="row-odd"><th class="head"><p>Event ID</p></th>
+<th class="head"><p>Condition</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>1</p></td>
+<td><p>auditory stimulus (tone) to the left ear</p></td>
+</tr>
+<tr class="row-odd"><td><p>2</p></td>
+<td><p>auditory stimulus (tone) to the right ear</p></td>
+</tr>
+<tr class="row-even"><td><p>3</p></td>
+<td><p>visual stimulus (checkerboard) to the left visual field</p></td>
+</tr>
+<tr class="row-odd"><td><p>4</p></td>
+<td><p>visual stimulus (checkerboard) to the right visual field</p></td>
+</tr>
+<tr class="row-even"><td><p>5</p></td>
+<td><p>smiley face (catch trial)</p></td>
+</tr>
+<tr class="row-odd"><td><p>32</p></td>
+<td><p>subject button press</p></td>
+</tr>
+</tbody>
+</table>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">event_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;auditory/left&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;auditory/right&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;visual/left&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+              <span class="s1">&#39;visual/right&#39;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span> <span class="s1">&#39;smiley&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span> <span class="s1">&#39;buttonpress&#39;</span><span class="p">:</span> <span class="mi">32</span><span class="p">}</span>
 </pre></div>
 </div>
-<p>Events are stored as a 2D numpy array where the first column is the time
-instant and the last one is the event number. It is therefore easy to
-manipulate.</p>
-<p>Define epochs parameters:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">event_id</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">aud_l</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">aud_r</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>  <span class="c1"># event trigger and conditions</span>
-<span class="n">tmin</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.2</span>  <span class="c1"># start of each epoch (200ms before the trigger)</span>
-<span class="n">tmax</span> <span class="o">=</span> <span class="mf">0.5</span>  <span class="c1"># end of each epoch (500ms after the trigger)</span>
+<p>Event dictionaries like this one are used when extracting epochs from
+continuous data; the <code class="docutils literal notranslate"><span class="pre">/</span></code> character in the dictionary keys allows pooling
+across conditions by requesting partial condition descriptors (i.e.,
+requesting <code class="docutils literal notranslate"><span class="pre">'auditory'</span></code> will select all epochs with Event IDs 1 and 2;
+requesting <code class="docutils literal notranslate"><span class="pre">'left'</span></code> will select all epochs with Event IDs 1 and 3). An
+example of this is shown in the next section. There is also a convenient
+<a class="reference internal" href="../../generated/mne.viz.plot_events.html#mne.viz.plot_events" title="mne.viz.plot_events"><code class="xref py py-func docutils literal notranslate"><span class="pre">plot_events()</span></code></a> function for visualizing the distribution of
+events across the duration of the recording (to make sure event detection
+worked as expected). Here we’ll also make use of the <a class="reference internal" href="../../generated/mne.Info.html#mne.Info" title="mne.Info"><code class="xref py py-class docutils literal notranslate"><span class="pre">Info</span></code></a>
+attribute to get the sampling frequency of the recording (so our x-axis will
+be in seconds instead of in samples).</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">fig</span> <span class="o">=</span> <a href="../../generated/mne.viz.plot_events.html#mne.viz.plot_events" title="View documentation for mne.viz.plot_events"><span class="n">mne</span><span class="o">.</span><span class="n">viz</span><span class="o">.</span><span class="n">plot_events</span></a><span class="p">(</span><span class="n">events</span><span class="p">,</span> <span class="n">event_id</span><span class="o">=</span><span class="n">event_dict</span><span class="p">,</span> <span class="n">sfreq</span><span class="o">=</span><span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;sfreq&#39;</span><span class="p">])</span>
+<span class="n">fig</span><span class="o">.</span><span class="n">subplots_adjust</span><span class="p">(</span><span class="n">right</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>  <span class="c1"># make room for the legend</span>
 </pre></div>
 </div>
-<p>Exclude some channels (original bads + 2 more):</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;bads&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;MEG 2443&#39;</span><span class="p">,</span> <span class="s1">&#39;EEG 053&#39;</span><span class="p">]</span>
+<img alt="../../_images/sphx_glr_plot_introduction_007.png" class="sphx-glr-single-img" src="../../_images/sphx_glr_plot_introduction_007.png" />
+<p>For paradigms that are not event-related (e.g., analysis of resting-state
+data), you can extract regularly spaced (possibly overlapping) spans of data
+by creating events using <a class="reference internal" href="../../generated/mne.make_fixed_length_events.html#mne.make_fixed_length_events" title="mne.make_fixed_length_events"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.make_fixed_length_events()</span></code></a> and then
+proceeding with epoching as described in the next section.</p>
+</div>
+<div class="section" id="epoching-continuous-data">
+<h2><a class="toc-backref" href="#id4">Epoching continuous data</a><a class="headerlink" href="#epoching-continuous-data" title="Permalink to this headline">¶</a></h2>
+<p>The <a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-class docutils literal notranslate"><span class="pre">Raw</span></code></a> object and the events array are the bare minimum
+needed to create an <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal notranslate"><span class="pre">Epochs</span></code></a> object, which we create with the
+<a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal notranslate"><span class="pre">mne.Epochs</span></code></a> class constructor. Here we’ll also specify some data
+quality constraints: we’ll reject any epoch where peak-to-peak signal
+amplitude is beyond reasonable limits for that channel type. This is done
+with a <em>rejection dictionary</em>; you may include or omit thresholds for any of
+the channel types present in your data. The values given here are reasonable
+for this particular dataset, but may need to be adapted for different
+hardware or recording conditions. For a more automated approach, consider
+using the <a class="reference external" href="http://autoreject.github.io/">autoreject package</a>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">reject_criteria</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">mag</span><span class="o">=</span><span class="mf">4000e-15</span><span class="p">,</span>     <span class="c1"># 4000 fT</span>
+                       <span class="n">grad</span><span class="o">=</span><span class="mf">4000e-13</span><span class="p">,</span>    <span class="c1"># 4000 fT/cm</span>
+                       <span class="n">eeg</span><span class="o">=</span><span class="mf">150e-6</span><span class="p">,</span>       <span class="c1"># 150 μV</span>
+                       <span class="n">eog</span><span class="o">=</span><span class="mf">250e-6</span><span class="p">)</span>       <span class="c1"># 250 μV</span>
 </pre></div>
 </div>
-<p>The variable <code class="docutils literal notranslate"><span class="pre">raw.info['bads']</span></code> is just a Python list.</p>
-<p>You can get indices corresponding to the good channels,
-excluding <code class="docutils literal notranslate"><span class="pre">raw.info['bads']</span></code>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">picks</span> <span class="o">=</span> <a href="../../generated/mne.pick_types.html#mne.pick_types" title="View documentation for mne.pick_types"><span class="n">mne</span><span class="o">.</span><span class="n">pick_types</span></a><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">meg</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">eeg</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">eog</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">stim</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                       <span class="n">exclude</span><span class="o">=</span><span class="s1">&#39;bads&#39;</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>Alternatively one can restrict to magnetometers or gradiometers with:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">mag_picks</span> <span class="o">=</span> <a href="../../generated/mne.pick_types.html#mne.pick_types" title="View documentation for mne.pick_types"><span class="n">mne</span><span class="o">.</span><span class="n">pick_types</span></a><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">meg</span><span class="o">=</span><span class="s1">&#39;mag&#39;</span><span class="p">,</span> <span class="n">eog</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="s1">&#39;bads&#39;</span><span class="p">)</span>
-<span class="n">grad_picks</span> <span class="o">=</span> <a href="../../generated/mne.pick_types.html#mne.pick_types" title="View documentation for mne.pick_types"><span class="n">mne</span><span class="o">.</span><span class="n">pick_types</span></a><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">meg</span><span class="o">=</span><span class="s1">&#39;grad&#39;</span><span class="p">,</span> <span class="n">eog</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="s1">&#39;bads&#39;</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>Define the baseline period:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">baseline</span> <span class="o">=</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>  <span class="c1"># means from the first instant to t = 0</span>
-</pre></div>
-</div>
-<p>Define peak-to-peak rejection parameters for gradiometers, magnetometers
-and EOG:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">reject</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">grad</span><span class="o">=</span><span class="mf">4000e-13</span><span class="p">,</span> <span class="n">mag</span><span class="o">=</span><span class="mf">4e-12</span><span class="p">,</span> <span class="n">eog</span><span class="o">=</span><span class="mf">150e-6</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>Read epochs:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">epochs</span> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs" title="View documentation for mne.Epochs"><span class="n">mne</span><span class="o">.</span><span class="n">Epochs</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">event_id</span><span class="p">,</span> <span class="n">tmin</span><span class="p">,</span> <span class="n">tmax</span><span class="p">,</span> <span class="n">proj</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-                    <span class="n">picks</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;meg&#39;</span><span class="p">,</span> <span class="s1">&#39;eeg&#39;</span><span class="p">,</span> <span class="s1">&#39;eog&#39;</span><span class="p">),</span>  <span class="c1"># or could pass &quot;picks&quot; here</span>
-                    <span class="n">baseline</span><span class="o">=</span><span class="n">baseline</span><span class="p">,</span> <span class="n">preload</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">reject</span><span class="o">=</span><span class="n">reject</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">epochs</span><span class="p">)</span>
+<p>We’ll also pass the event dictionary as the <code class="docutils literal notranslate"><span class="pre">event_id</span></code> parameter (so we can
+work with easy-to-pool event labels instead of the integer event IDs), and
+specify <code class="docutils literal notranslate"><span class="pre">tmin</span></code> and <code class="docutils literal notranslate"><span class="pre">tmax</span></code> (the time relative to each event at which to
+start and end each epoch). As mentioned above, by default
+<a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-class docutils literal notranslate"><span class="pre">Raw</span></code></a> and <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal notranslate"><span class="pre">Epochs</span></code></a> data aren’t loaded into memory
+(they’re accessed from disk only when needed), but here we’ll force loading
+into memory using the <code class="docutils literal notranslate"><span class="pre">preload=True</span></code> parameter so that we can see the
+results of the rejection criteria being applied:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">epochs</span> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs" title="View documentation for mne.Epochs"><span class="n">mne</span><span class="o">.</span><span class="n">Epochs</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">event_id</span><span class="o">=</span><span class="n">event_dict</span><span class="p">,</span> <span class="n">tmin</span><span class="o">=-</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">tmax</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span>
+                    <span class="n">reject</span><span class="o">=</span><span class="n">reject_criteria</span><span class="p">,</span> <span class="n">preload</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
 <p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>145 matching events found
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>319 matching events found
 Applying baseline correction (mode: mean)
 Not setting metadata
 Created an SSP operator (subspace dimension = 4)
 4 projection items activated
-&lt;Epochs  |   145 events (good &amp; bad), -0.199795 - 0.499488 sec, baseline [None, 0], ~3.7 MB, data not loaded,
- &#39;aud_l&#39;: 72
- &#39;aud_r&#39;: 73&gt;
-</pre></div>
-</div>
-<p>Get single epochs for one condition:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">epochs_data</span> <span class="o">=</span> <span class="n">epochs</span><span class="p">[</span><span class="s1">&#39;aud_l&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">get_data</span><span class="p">()</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">epochs_data</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
-</pre></div>
-</div>
-<p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Loading data for 72 events and 106 original time points ...
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+Loading data for 319 events and 106 original time points ...
     Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
     Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
     Rejecting  epoch based on MAG : [&#39;MEG 1711&#39;]
     Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
     Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-17 bad epochs dropped
-(55, 367, 106)
-</pre></div>
-</div>
-<p>epochs_data is a 3D array of dimension (55 epochs, 365 channels, 106 time
-instants).</p>
-<p>Scipy supports read and write of matlab files. You can save your single
-trials with:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">scipy</span> <span class="k">import</span> <span class="n">io</span>  <span class="c1"># noqa</span>
-<a href="https://scipy.github.io/devdocs/generated/scipy.io.savemat.html#scipy.io.savemat" title="View documentation for scipy.io.savemat"><span class="n">io</span><span class="o">.</span><span class="n">savemat</span></a><span class="p">(</span><span class="s1">&#39;epochs_data.mat&#39;</span><span class="p">,</span> <span class="nb">dict</span><span class="p">(</span><span class="n">epochs_data</span><span class="o">=</span><span class="n">epochs_data</span><span class="p">),</span> <span class="n">oned_as</span><span class="o">=</span><span class="s1">&#39;row&#39;</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>or if you want to keep all the information about the data you can save your
-epochs in a fif file:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">epochs</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;sample-epo.fif&#39;</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-</pre></div>
-</div>
-<p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Loading data for 145 events and 106 original time points ...
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
     Rejecting  epoch based on MAG : [&#39;MEG 1711&#39;]
+    Rejecting  epoch based on EEG : [&#39;EEG 008&#39;]
     Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
     Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
     Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on MAG : [&#39;MEG 1711&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-29 bad epochs dropped
-Loading data for 1 events and 106 original time points ...
-Loading data for 116 events and 106 original time points ...
+10 bad epochs dropped
 </pre></div>
 </div>
-<p>and read them later with:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">saved_epochs</span> <span class="o">=</span> <a href="../../generated/mne.read_epochs.html#mne.read_epochs" title="View documentation for mne.read_epochs"><span class="n">mne</span><span class="o">.</span><span class="n">read_epochs</span></a><span class="p">(</span><span class="s1">&#39;sample-epo.fif&#39;</span><span class="p">)</span>
+<p>Next we’ll pool across left/right stimulus presentations so we can compare
+auditory versus visual responses. To avoid biasing our signals to the
+left or right, we’ll use <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs.equalize_event_counts" title="mne.Epochs.equalize_event_counts"><code class="xref py py-meth docutils literal notranslate"><span class="pre">equalize_event_counts()</span></code></a> first to
+randomly sample epochs from each condition to match the number of epochs
+present in the condition with the fewest good epochs.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conds_we_care_about</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;auditory/left&#39;</span><span class="p">,</span> <span class="s1">&#39;auditory/right&#39;</span><span class="p">,</span>
+                       <span class="s1">&#39;visual/left&#39;</span><span class="p">,</span> <span class="s1">&#39;visual/right&#39;</span><span class="p">]</span>
+<span class="n">epochs</span><span class="o">.</span><span class="n">equalize_event_counts</span><span class="p">(</span><span class="n">conds_we_care_about</span><span class="p">)</span>  <span class="c1"># this operates in-place</span>
+<span class="n">aud_epochs</span> <span class="o">=</span> <span class="n">epochs</span><span class="p">[</span><span class="s1">&#39;auditory&#39;</span><span class="p">]</span>
+<span class="n">vis_epochs</span> <span class="o">=</span> <span class="n">epochs</span><span class="p">[</span><span class="s1">&#39;visual&#39;</span><span class="p">]</span>
+<span class="k">del</span> <span class="n">raw</span><span class="p">,</span> <span class="n">epochs</span>  <span class="c1"># free up memory</span>
 </pre></div>
 </div>
 <p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Reading sample-epo.fif ...
-    Read a total of 4 projection items:
-        PCA-v1 (1 x 102) active
-        PCA-v2 (1 x 102) active
-        PCA-v3 (1 x 102) active
-        Average EEG reference (1 x 60) active
-    Found the data of interest:
-        t =    -199.80 ...     499.49 ms
-        0 CTF compensation matrices available
-116 matching events found
-Applying baseline correction (mode: mean)
-Not setting metadata
-Created an SSP operator (subspace dimension = 4)
-4 projection items activated
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Dropped 7 epochs
 </pre></div>
 </div>
-<p>Compute evoked responses for auditory responses by averaging and plot it:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">evoked</span> <span class="o">=</span> <span class="n">epochs</span><span class="p">[</span><span class="s1">&#39;aud_l&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">average</span><span class="p">()</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">evoked</span><span class="p">)</span>
-<span class="n">evoked</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">time_unit</span><span class="o">=</span><span class="s1">&#39;s&#39;</span><span class="p">)</span>
+<p>Like <a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-class docutils literal notranslate"><span class="pre">Raw</span></code></a> objects, <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal notranslate"><span class="pre">Epochs</span></code></a> objects also have a
+number of built-in plotting methods. One is <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs.plot_image" title="mne.Epochs.plot_image"><code class="xref py py-meth docutils literal notranslate"><span class="pre">plot_image()</span></code></a>,
+which shows each epoch as one row of an image map, with color representing
+signal magnitude; the average evoked response and the sensor location are
+shown below the image:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">aud_epochs</span><span class="o">.</span><span class="n">plot_image</span><span class="p">(</span><span class="n">picks</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;MEG 1332&#39;</span><span class="p">,</span> <span class="s1">&#39;EEG 021&#39;</span><span class="p">])</span>
 </pre></div>
 </div>
-<img alt="../../_images/sphx_glr_plot_introduction_002.png" class="sphx-glr-single-img" src="../../_images/sphx_glr_plot_introduction_002.png" />
+<ul class="sphx-glr-horizontal">
+<li><img alt="../../_images/sphx_glr_plot_introduction_008.png" class="sphx-glr-multi-img" src="../../_images/sphx_glr_plot_introduction_008.png" />
+</li>
+<li><img alt="../../_images/sphx_glr_plot_introduction_009.png" class="sphx-glr-multi-img" src="../../_images/sphx_glr_plot_introduction_009.png" />
+</li>
+</ul>
 <p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;Evoked  |  &#39;aud_l&#39; (mean, N=55), [-0.1998, 0.49949] sec, 366 ch, ~3.9 MB&gt;
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>No picks and no groupby, showing the first five channels ...
 </pre></div>
 </div>
-<div class="topic">
-<p class="topic-title first">Exercise</p>
-<ol class="arabic simple">
-<li><p>Extract the max value of each epoch</p></li>
-</ol>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>Both <a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-class docutils literal notranslate"><span class="pre">Raw</span></code></a> and <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal notranslate"><span class="pre">Epochs</span></code></a> objects have
+<a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs.get_data" title="mne.Epochs.get_data"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_data()</span></code></a> methods that return the underlying data
+as a <a class="reference external" href="https://www.numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17.dev0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">NumPy</span> <span class="pre">array</span></code></a>. Both methods have a <code class="docutils literal notranslate"><span class="pre">picks</span></code>
+parameter for subselecting which channel(s) to return; <code class="docutils literal notranslate"><span class="pre">raw.get_data()</span></code>
+has additional parameters for restricting the time domain. The resulting
+matrices have dimension <code class="docutils literal notranslate"><span class="pre">(n_channels,</span> <span class="pre">n_times)</span></code> for
+<a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-class docutils literal notranslate"><span class="pre">Raw</span></code></a> and <code class="docutils literal notranslate"><span class="pre">(n_epochs,</span> <span class="pre">n_channels,</span> <span class="pre">n_times)</span></code> for
+<a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal notranslate"><span class="pre">Epochs</span></code></a>.</p>
 </div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">max_in_each_epoch</span> <span class="o">=</span> <span class="p">[</span><span class="n">e</span><span class="o">.</span><span class="n">max</span><span class="p">()</span> <span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">epochs</span><span class="p">[</span><span class="s1">&#39;aud_l&#39;</span><span class="p">]]</span>  <span class="c1"># doctest:+ELLIPSIS</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">max_in_each_epoch</span><span class="p">[:</span><span class="mi">4</span><span class="p">])</span>  <span class="c1"># doctest:+ELLIPSIS</span>
+</div>
+<div class="section" id="time-frequency-analysis">
+<h2><a class="toc-backref" href="#id5">Time-frequency analysis</a><a class="headerlink" href="#time-frequency-analysis" title="Permalink to this headline">¶</a></h2>
+<p>The <a class="reference internal" href="../../python_reference.html#module-mne.time_frequency" title="mne.time_frequency"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mne.time_frequency</span></code></a> submodule provides implementations of several
+algorithms to compute time-frequency representations, power spectral density,
+and cross-spectral density. Here, for example, we’ll compute for the auditory
+epochs the induced power at different frequencies and times, using Morlet
+wavelets. On this dataset the result is not especially informative (it just
+shows the evoked “auditory N100” response); see <a class="reference internal" href="../time-freq/plot_sensors_time_frequency.html#inter-trial-coherence"><span class="std std-ref">here</span></a> for a more extended example on a dataset with richer
+frequency content.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">frequencies</span> <span class="o">=</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.arange.html#numpy.arange" title="View documentation for numpy.arange"><span class="n">np</span><span class="o">.</span><span class="n">arange</span></a><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>
+<span class="n">power</span> <span class="o">=</span> <a href="../../generated/mne.time_frequency.tfr_morlet.html#mne.time_frequency.tfr_morlet" title="View documentation for mne.time_frequency.tfr_morlet"><span class="n">mne</span><span class="o">.</span><span class="n">time_frequency</span><span class="o">.</span><span class="n">tfr_morlet</span></a><span class="p">(</span><span class="n">aud_epochs</span><span class="p">,</span> <span class="n">n_cycles</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">return_itc</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+                                      <span class="n">freqs</span><span class="o">=</span><span class="n">frequencies</span><span class="p">,</span> <span class="n">decim</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<span class="n">power</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="s1">&#39;MEG 1332&#39;</span><span class="p">])</span>
 </pre></div>
 </div>
+<img alt="../../_images/sphx_glr_plot_introduction_010.png" class="sphx-glr-single-img" src="../../_images/sphx_glr_plot_introduction_010.png" />
 <p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>[1.937516720163134e-05, 1.6405516986429127e-05, 1.8545377810380145e-05, 2.0412807568093327e-05]
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>No baseline correction applied
 </pre></div>
 </div>
-<p>It is also possible to read evoked data stored in a fif file:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">evoked_fname</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis-ave.fif&#39;</span>
-<span class="n">evoked1</span> <span class="o">=</span> <a href="../../generated/mne.read_evokeds.html#mne.read_evokeds" title="View documentation for mne.read_evokeds"><span class="n">mne</span><span class="o">.</span><span class="n">read_evokeds</span></a><span class="p">(</span>
-    <span class="n">evoked_fname</span><span class="p">,</span> <span class="n">condition</span><span class="o">=</span><span class="s1">&#39;Left Auditory&#39;</span><span class="p">,</span> <span class="n">baseline</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">proj</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</div>
+<div class="section" id="estimating-evoked-responses">
+<h2><a class="toc-backref" href="#id6">Estimating evoked responses</a><a class="headerlink" href="#estimating-evoked-responses" title="Permalink to this headline">¶</a></h2>
+<p>Now that we have our conditions in <code class="docutils literal notranslate"><span class="pre">aud_epochs</span></code> and <code class="docutils literal notranslate"><span class="pre">vis_epochs</span></code>, we can
+get an estimate of evoked responses to auditory versus visual stimuli by
+averaging together the epochs in each condition. This is as simple as calling
+the <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs.average" title="mne.Epochs.average"><code class="xref py py-meth docutils literal notranslate"><span class="pre">average()</span></code></a> method on the <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal notranslate"><span class="pre">Epochs</span></code></a> object,
+and then using a function from the <a class="reference internal" href="../../python_reference.html#module-mne.viz" title="mne.viz"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mne.viz</span></code></a> module to compare the
+global field power for each sensor type of the two <a class="reference internal" href="../../generated/mne.Evoked.html#mne.Evoked" title="mne.Evoked"><code class="xref py py-class docutils literal notranslate"><span class="pre">Evoked</span></code></a>
+objects:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">aud_evoked</span> <span class="o">=</span> <span class="n">aud_epochs</span><span class="o">.</span><span class="n">average</span><span class="p">()</span>
+<span class="n">vis_evoked</span> <span class="o">=</span> <span class="n">vis_epochs</span><span class="o">.</span><span class="n">average</span><span class="p">()</span>
+
+<a href="../../generated/mne.viz.plot_compare_evokeds.html#mne.viz.plot_compare_evokeds" title="View documentation for mne.viz.plot_compare_evokeds"><span class="n">mne</span><span class="o">.</span><span class="n">viz</span><span class="o">.</span><span class="n">plot_compare_evokeds</span></a><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">auditory</span><span class="o">=</span><span class="n">aud_evoked</span><span class="p">,</span> <span class="n">visual</span><span class="o">=</span><span class="n">vis_evoked</span><span class="p">),</span>
+                             <span class="n">show_legend</span><span class="o">=</span><span class="s1">&#39;upper left&#39;</span><span class="p">,</span>
+                             <span class="n">show_sensors</span><span class="o">=</span><span class="s1">&#39;upper right&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
+<ul class="sphx-glr-horizontal">
+<li><img alt="../../_images/sphx_glr_plot_introduction_011.png" class="sphx-glr-multi-img" src="../../_images/sphx_glr_plot_introduction_011.png" />
+</li>
+<li><img alt="../../_images/sphx_glr_plot_introduction_012.png" class="sphx-glr-multi-img" src="../../_images/sphx_glr_plot_introduction_012.png" />
+</li>
+<li><img alt="../../_images/sphx_glr_plot_introduction_013.png" class="sphx-glr-multi-img" src="../../_images/sphx_glr_plot_introduction_013.png" />
+</li>
+</ul>
 <p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Reading /home/circleci/mne_data/MNE-sample-data/MEG/sample/sample_audvis-ave.fif ...
-    Read a total of 4 projection items:
-        PCA-v1 (1 x 102) active
-        PCA-v2 (1 x 102) active
-        PCA-v3 (1 x 102) active
-        Average EEG reference (1 x 60) active
-    Found the data of interest:
-        t =    -199.80 ...     499.49 ms (Left Auditory)
-        0 CTF compensation matrices available
-        nave = 55 - aspect type = 100
-Projections have already been applied. Setting proj attribute to True.
-Applying baseline correction (mode: mean)
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>No picks, plotting the GFP ...
+Multiple channel types selected, returning one figure per type.
+Combining all planar gradiometers with RMSE.
 </pre></div>
 </div>
-<p>Or another one stored in the same file:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">evoked2</span> <span class="o">=</span> <a href="../../generated/mne.read_evokeds.html#mne.read_evokeds" title="View documentation for mne.read_evokeds"><span class="n">mne</span><span class="o">.</span><span class="n">read_evokeds</span></a><span class="p">(</span>
-    <span class="n">evoked_fname</span><span class="p">,</span> <span class="n">condition</span><span class="o">=</span><span class="s1">&#39;Right Auditory&#39;</span><span class="p">,</span> <span class="n">baseline</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">proj</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<p>We can also get a more detailed view of each <a class="reference internal" href="../../generated/mne.Evoked.html#mne.Evoked" title="mne.Evoked"><code class="xref py py-class docutils literal notranslate"><span class="pre">Evoked</span></code></a> object
+using other plotting methods such as <a class="reference internal" href="../../generated/mne.Evoked.html#mne.Evoked.plot_joint" title="mne.Evoked.plot_joint"><code class="xref py py-meth docutils literal notranslate"><span class="pre">plot_joint()</span></code></a> or
+<a class="reference internal" href="../../generated/mne.Evoked.html#mne.Evoked.plot_topomap" title="mne.Evoked.plot_topomap"><code class="xref py py-meth docutils literal notranslate"><span class="pre">plot_topomap()</span></code></a>. Here we’ll examine just the EEG channels,
+and see the classic auditory evoked N100-P200 pattern over dorso-frontal
+electrodes, then plot scalp topographies at some additional arbitrary times:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># sphinx_gallery_thumbnail_number = 13</span>
+<span class="n">aud_evoked</span><span class="o">.</span><span class="n">plot_joint</span><span class="p">(</span><span class="n">picks</span><span class="o">=</span><span class="s1">&#39;eeg&#39;</span><span class="p">)</span>
+<span class="n">aud_evoked</span><span class="o">.</span><span class="n">plot_topomap</span><span class="p">(</span><span class="n">times</span><span class="o">=</span><span class="p">[</span><span class="mf">0.</span><span class="p">,</span> <span class="mf">0.08</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.12</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">],</span> <span class="n">ch_type</span><span class="o">=</span><span class="s1">&#39;eeg&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Reading /home/circleci/mne_data/MNE-sample-data/MEG/sample/sample_audvis-ave.fif ...
-    Read a total of 4 projection items:
-        PCA-v1 (1 x 102) active
-        PCA-v2 (1 x 102) active
-        PCA-v3 (1 x 102) active
-        Average EEG reference (1 x 60) active
-    Found the data of interest:
-        t =    -199.80 ...     499.49 ms (Right Auditory)
-        0 CTF compensation matrices available
-        nave = 61 - aspect type = 100
-Projections have already been applied. Setting proj attribute to True.
-Applying baseline correction (mode: mean)
+<ul class="sphx-glr-horizontal">
+<li><img alt="../../_images/sphx_glr_plot_introduction_014.png" class="sphx-glr-multi-img" src="../../_images/sphx_glr_plot_introduction_014.png" />
+</li>
+<li><img alt="../../_images/sphx_glr_plot_introduction_015.png" class="sphx-glr-multi-img" src="../../_images/sphx_glr_plot_introduction_015.png" />
+</li>
+</ul>
+<p>Evoked objects can also be combined to show contrasts between conditions,
+using the <a class="reference internal" href="../../generated/mne.combine_evoked.html#mne.combine_evoked" title="mne.combine_evoked"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.combine_evoked()</span></code></a> function. A simple difference can be
+generated by negating one of the <a class="reference internal" href="../../generated/mne.Evoked.html#mne.Evoked" title="mne.Evoked"><code class="xref py py-class docutils literal notranslate"><span class="pre">Evoked</span></code></a> objects passed into the
+function. We’ll then plot the difference wave at each sensor using
+<a class="reference internal" href="../../generated/mne.Evoked.html#mne.Evoked.plot_topo" title="mne.Evoked.plot_topo"><code class="xref py py-meth docutils literal notranslate"><span class="pre">plot_topo()</span></code></a>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">evoked_diff</span> <span class="o">=</span> <a href="../../generated/mne.combine_evoked.html#mne.combine_evoked" title="View documentation for mne.combine_evoked"><span class="n">mne</span><span class="o">.</span><span class="n">combine_evoked</span></a><span class="p">([</span><span class="n">aud_evoked</span><span class="p">,</span> <span class="o">-</span><span class="n">vis_evoked</span><span class="p">],</span> <span class="n">weights</span><span class="o">=</span><span class="s1">&#39;equal&#39;</span><span class="p">)</span>
+<span class="n">evoked_diff</span><span class="o">.</span><span class="n">pick_types</span><span class="p">(</span><span class="s1">&#39;mag&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">plot_topo</span><span class="p">(</span><span class="n">color</span><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">legend</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Two evoked objects can be contrasted using <a class="reference internal" href="../../generated/mne.combine_evoked.html#mne.combine_evoked" title="mne.combine_evoked"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.combine_evoked()</span></code></a>.
-This function can use <code class="docutils literal notranslate"><span class="pre">weights='equal'</span></code>, which provides a simple
-element-by-element subtraction (and sets the
-<code class="docutils literal notranslate"><span class="pre">mne.Evoked.nave</span></code> attribute properly based on the underlying number
-of trials) using:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">contrast_b</span> <span class="o">=</span> <a href="../../generated/mne.combine_evoked.html#mne.combine_evoked" title="View documentation for mne.combine_evoked"><span class="n">mne</span><span class="o">.</span><span class="n">combine_evoked</span></a><span class="p">([</span><span class="n">evoked1</span><span class="p">,</span> <span class="o">-</span><span class="n">evoked2</span><span class="p">],</span> <span class="n">weights</span><span class="o">=</span><span class="s1">&#39;equal&#39;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">contrast_b</span><span class="p">)</span>
-</pre></div>
+<img alt="../../_images/sphx_glr_plot_introduction_016.png" class="sphx-glr-single-img" src="../../_images/sphx_glr_plot_introduction_016.png" />
 </div>
-<p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;Evoked  |  &#39;0.500 * Left Auditory + 0.500 * -Right Auditory&#39; (mean, N=116), [-0.1998, 0.49949] sec, 376 ch, ~4.9 MB&gt;
-</pre></div>
-</div>
-<p>To do a weighted sum based on the number of averages, which will give
-you what you would have gotten from pooling all trials together in
-<a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal notranslate"><span class="pre">mne.Epochs</span></code></a> before creating the <a class="reference internal" href="../../generated/mne.Evoked.html#mne.Evoked" title="mne.Evoked"><code class="xref py py-class docutils literal notranslate"><span class="pre">mne.Evoked</span></code></a> instance,
-you can use <code class="docutils literal notranslate"><span class="pre">weights='nave'</span></code>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">average</span> <span class="o">=</span> <a href="../../generated/mne.combine_evoked.html#mne.combine_evoked" title="View documentation for mne.combine_evoked"><span class="n">mne</span><span class="o">.</span><span class="n">combine_evoked</span></a><span class="p">([</span><span class="n">evoked1</span><span class="p">,</span> <span class="n">evoked2</span><span class="p">],</span> <span class="n">weights</span><span class="o">=</span><span class="s1">&#39;nave&#39;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">average</span><span class="p">)</span>
-</pre></div>
-</div>
-<p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;Evoked  |  &#39;0.474 * Left Auditory + 0.526 * Right Auditory&#39; (mean, N=116), [-0.1998, 0.49949] sec, 376 ch, ~4.9 MB&gt;
-</pre></div>
-</div>
-<p>Instead of dealing with mismatches in the number of averages, we can use
-trial-count equalization before computing a contrast, which can have some
-benefits in inverse imaging (note that here <code class="docutils literal notranslate"><span class="pre">weights='nave'</span></code> will
-give the same result as <code class="docutils literal notranslate"><span class="pre">weights='equal'</span></code>):</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">epochs_eq</span> <span class="o">=</span> <span class="n">epochs</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span><span class="o">.</span><span class="n">equalize_event_counts</span><span class="p">([</span><span class="s1">&#39;aud_l&#39;</span><span class="p">,</span> <span class="s1">&#39;aud_r&#39;</span><span class="p">])[</span><span class="mi">0</span><span class="p">]</span>
-<span class="n">evoked1</span><span class="p">,</span> <span class="n">evoked2</span> <span class="o">=</span> <span class="n">epochs_eq</span><span class="p">[</span><span class="s1">&#39;aud_l&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">average</span><span class="p">(),</span> <span class="n">epochs_eq</span><span class="p">[</span><span class="s1">&#39;aud_r&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">average</span><span class="p">()</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">evoked1</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">evoked2</span><span class="p">)</span>
-<span class="n">contrast</span> <span class="o">=</span> <a href="../../generated/mne.combine_evoked.html#mne.combine_evoked" title="View documentation for mne.combine_evoked"><span class="n">mne</span><span class="o">.</span><span class="n">combine_evoked</span></a><span class="p">([</span><span class="n">evoked1</span><span class="p">,</span> <span class="o">-</span><span class="n">evoked2</span><span class="p">],</span> <span class="n">weights</span><span class="o">=</span><span class="s1">&#39;equal&#39;</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">contrast</span><span class="p">)</span>
-</pre></div>
-</div>
-<p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Dropped 6 epochs
-&lt;Evoked  |  &#39;aud_l&#39; (mean, N=55), [-0.1998, 0.49949] sec, 366 ch, ~3.9 MB&gt;
-&lt;Evoked  |  &#39;aud_r&#39; (mean, N=55), [-0.1998, 0.49949] sec, 366 ch, ~3.9 MB&gt;
-&lt;Evoked  |  &#39;0.500 * aud_l + 0.500 * -aud_r&#39; (mean, N=110), [-0.1998, 0.49949] sec, 366 ch, ~3.9 MB&gt;
-</pre></div>
-</div>
-</div>
-<div class="section" id="time-frequency-induced-power-and-inter-trial-coherence">
-<h3>Time-Frequency: Induced power and inter trial coherence<a class="headerlink" href="#time-frequency-induced-power-and-inter-trial-coherence" title="Permalink to this headline">¶</a></h3>
-<p>Define parameters:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>  <span class="c1"># noqa</span>
-<span class="n">n_cycles</span> <span class="o">=</span> <span class="mi">2</span>  <span class="c1"># number of cycles in Morlet wavelet</span>
-<span class="n">freqs</span> <span class="o">=</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.arange.html#numpy.arange" title="View documentation for numpy.arange"><span class="n">np</span><span class="o">.</span><span class="n">arange</span></a><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>  <span class="c1"># frequencies of interest</span>
-</pre></div>
-</div>
-<p>Compute induced power and phase-locking values and plot gradiometers:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">mne.time_frequency</span> <span class="k">import</span> <a href="../../generated/mne.time_frequency.tfr_morlet.html#mne.time_frequency.tfr_morlet" title="View documentation for mne.time_frequency.tfr_morlet"><span class="n">tfr_morlet</span></a>  <span class="c1"># noqa</span>
-<span class="n">power</span><span class="p">,</span> <span class="n">itc</span> <span class="o">=</span> <a href="../../generated/mne.time_frequency.tfr_morlet.html#mne.time_frequency.tfr_morlet" title="View documentation for mne.time_frequency.tfr_morlet"><span class="n">tfr_morlet</span></a><span class="p">(</span><span class="n">epochs</span><span class="p">,</span> <span class="n">freqs</span><span class="o">=</span><span class="n">freqs</span><span class="p">,</span> <span class="n">n_cycles</span><span class="o">=</span><span class="n">n_cycles</span><span class="p">,</span>
-                        <span class="n">return_itc</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">decim</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
-<span class="n">power</span><span class="o">.</span><span class="n">plot</span><span class="p">([</span><span class="n">power</span><span class="o">.</span><span class="n">ch_names</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="s1">&#39;MEG 1332&#39;</span><span class="p">)])</span>
-</pre></div>
-</div>
-<img alt="../../_images/sphx_glr_plot_introduction_003.png" class="sphx-glr-single-img" src="../../_images/sphx_glr_plot_introduction_003.png" />
-<p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Loading data for 116 events and 106 original time points ...
-No baseline correction applied
-</pre></div>
-</div>
-</div>
-<div class="section" id="inverse-modeling-mne-and-dspm-on-evoked-and-raw-data">
-<h3>Inverse modeling: MNE and dSPM on evoked and raw data<a class="headerlink" href="#inverse-modeling-mne-and-dspm-on-evoked-and-raw-data" title="Permalink to this headline">¶</a></h3>
-<p>Import the required functions:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">mne.minimum_norm</span> <span class="k">import</span> <a href="../../generated/mne.minimum_norm.apply_inverse.html#mne.minimum_norm.apply_inverse" title="View documentation for mne.minimum_norm.apply_inverse"><span class="n">apply_inverse</span></a><span class="p">,</span> <a href="../../generated/mne.minimum_norm.read_inverse_operator.html#mne.minimum_norm.read_inverse_operator" title="View documentation for mne.minimum_norm.read_inverse_operator"><span class="n">read_inverse_operator</span></a>  <span class="c1"># noqa</span>
-</pre></div>
-</div>
-<p>Read the inverse operator:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">fname_inv</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis-meg-oct-6-meg-inv.fif&#39;</span>
-<span class="n">inverse_operator</span> <span class="o">=</span> <a href="../../generated/mne.minimum_norm.read_inverse_operator.html#mne.minimum_norm.read_inverse_operator" title="View documentation for mne.minimum_norm.read_inverse_operator"><span class="n">read_inverse_operator</span></a><span class="p">(</span><span class="n">fname_inv</span><span class="p">)</span>
+<div class="section" id="inverse-modeling">
+<h2><a class="toc-backref" href="#id7">Inverse modeling</a><a class="headerlink" href="#inverse-modeling" title="Permalink to this headline">¶</a></h2>
+<p>Finally, we can estimate the origins of the evoked activity by projecting the
+sensor data into this subject’s <a class="reference internal" href="../../glossary.html#term-source-space"><span class="xref std std-term">source space</span></a> (a set of points either
+on the cortical surface or within the cortical volume of that subject, as
+estimated by structural MRI scans). MNE-Python supports lots of ways of doing
+this (dynamic statistical parametric mapping, dipole fitting, beamformers,
+etc.); here we’ll use minimum-norm estimation (MNE) to generate a continuous
+map of activation constrained to the cortical surface. MNE uses a linear
+<a class="reference internal" href="../../glossary.html#term-inverse-operator"><span class="xref std std-term">inverse operator</span></a> to project EEG+MEG sensor measurements into the
+source space. The inverse operator is computed from the
+<a class="reference internal" href="../../glossary.html#term-forward-solution"><span class="xref std std-term">forward solution</span></a> for this subject and an estimate of <a class="reference internal" href="../source-modeling/plot_compute_covariance.html#tut-compute-covariance"><span class="std std-ref">the
+covariance of sensor measurements</span></a>. For this
+tutorial we’ll skip those computational steps and load a pre-computed inverse
+operator from disk (it’s included with the <a class="reference internal" href="../../manual/datasets_index.html#sample-dataset"><span class="std std-ref">sample data</span></a>). Because this “inverse problem” is underdetermined (there
+is no unique solution), here we further constrain the solution by providing a
+regularization parameter specifying the relative smoothness of the current
+estimates in terms of a signal-to-noise ratio (where “noise” here is akin to
+baseline activity level across all of cortex).</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># load inverse operator</span>
+<span class="n">inverse_operator_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">sample_data_folder</span><span class="p">,</span> <span class="s1">&#39;MEG&#39;</span><span class="p">,</span> <span class="s1">&#39;sample&#39;</span><span class="p">,</span>
+                                     <span class="s1">&#39;sample_audvis-meg-oct-6-meg-inv.fif&#39;</span><span class="p">)</span>
+<span class="n">inv_operator</span> <span class="o">=</span> <a href="../../generated/mne.minimum_norm.read_inverse_operator.html#mne.minimum_norm.read_inverse_operator" title="View documentation for mne.minimum_norm.read_inverse_operator"><span class="n">mne</span><span class="o">.</span><span class="n">minimum_norm</span><span class="o">.</span><span class="n">read_inverse_operator</span></a><span class="p">(</span><span class="n">inverse_operator_file</span><span class="p">)</span>
+<span class="c1"># set signal-to-noise ratio (SNR) to compute regularization parameter (λ²)</span>
+<span class="n">snr</span> <span class="o">=</span> <span class="mf">3.</span>
+<span class="n">lambda2</span> <span class="o">=</span> <span class="mf">1.</span> <span class="o">/</span> <span class="n">snr</span> <span class="o">**</span> <span class="mi">2</span>
+<span class="c1"># generate the source time course (STC)</span>
+<span class="n">stc</span> <span class="o">=</span> <a href="../../generated/mne.minimum_norm.apply_inverse.html#mne.minimum_norm.apply_inverse" title="View documentation for mne.minimum_norm.apply_inverse"><span class="n">mne</span><span class="o">.</span><span class="n">minimum_norm</span><span class="o">.</span><span class="n">apply_inverse</span></a><span class="p">(</span><span class="n">vis_evoked</span><span class="p">,</span> <span class="n">inv_operator</span><span class="p">,</span>
+                                     <span class="n">lambda2</span><span class="o">=</span><span class="n">lambda2</span><span class="p">,</span>
+                                     <span class="n">method</span><span class="o">=</span><span class="s1">&#39;MNE&#39;</span><span class="p">)</span>  <span class="c1"># or dSPM, sLORETA, eLORETA</span>
 </pre></div>
 </div>
 <p class="sphx-glr-script-out">Out:</p>
@@ -759,119 +737,51 @@ No baseline correction applied
         PCA-v3 (1 x 102) active
         Average EEG reference (1 x 60) active
     Source spaces transformed to the inverse solution coordinate frame
-</pre></div>
-</div>
-<p>Define the inverse parameters:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">snr</span> <span class="o">=</span> <span class="mf">3.0</span>
-<span class="n">lambda2</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">snr</span> <span class="o">**</span> <span class="mi">2</span>
-<span class="n">method</span> <span class="o">=</span> <span class="s2">&quot;dSPM&quot;</span>
-</pre></div>
-</div>
-<p>Compute the inverse solution:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">stc</span> <span class="o">=</span> <a href="../../generated/mne.minimum_norm.apply_inverse.html#mne.minimum_norm.apply_inverse" title="View documentation for mne.minimum_norm.apply_inverse"><span class="n">apply_inverse</span></a><span class="p">(</span><span class="n">evoked</span><span class="p">,</span> <span class="n">inverse_operator</span><span class="p">,</span> <span class="n">lambda2</span><span class="p">,</span> <span class="n">method</span><span class="p">)</span>
-</pre></div>
-</div>
-<p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Preparing the inverse operator for use...
-    Scaled noise and source covariance from nave = 1 to nave = 55
+Preparing the inverse operator for use...
+    Scaled noise and source covariance from nave = 1 to nave = 136
     Created the regularized inverter
     Created an SSP operator (subspace dimension = 3)
     Created the whitener using a noise covariance matrix with rank 302 (3 small eigenvalues omitted)
-    Computing noise-normalization factors (dSPM)...
-[done]
-Applying inverse operator to &quot;aud_l&quot;...
+Applying inverse operator to &quot;0.50 * visual/left + 0.50 * visual/right&quot;...
     Picked 305 channels from the data
     Computing inverse...
     Eigenleads need to be weighted ...
     Computing residual...
-    Explained  59.3% variance
+    Explained  70.2% variance
     Combining the current components...
-    dSPM...
 [done]
 </pre></div>
 </div>
-<p>Save the source time courses to disk:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">stc</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;mne_dSPM_inverse&#39;</span><span class="p">)</span>
+<p>Finally, in order to plot the source estimate on the subject’s cortical
+surface we’ll also need the path to the sample subject’s structural MRI files
+(the <code class="docutils literal notranslate"><span class="pre">subjects_dir</span></code>):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># path to subjects&#39; MRI files</span>
+<span class="n">subjects_dir</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">sample_data_folder</span><span class="p">,</span> <span class="s1">&#39;subjects&#39;</span><span class="p">)</span>
+<span class="c1"># plot</span>
+<span class="n">stc</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">initial_time</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">hemi</span><span class="o">=</span><span class="s1">&#39;split&#39;</span><span class="p">,</span> <span class="n">views</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;lat&#39;</span><span class="p">,</span> <span class="s1">&#39;med&#39;</span><span class="p">],</span>
+         <span class="n">subjects_dir</span><span class="o">=</span><span class="n">subjects_dir</span><span class="p">)</span>
 </pre></div>
 </div>
-<p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Writing STC to disk...
-[done]
-</pre></div>
-</div>
-<p>Now, let’s compute dSPM on a raw file within a label:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">fname_label</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/labels/Aud-lh.label&#39;</span>
-<span class="n">label</span> <span class="o">=</span> <a href="../../generated/mne.read_label.html#mne.read_label" title="View documentation for mne.read_label"><span class="n">mne</span><span class="o">.</span><span class="n">read_label</span></a><span class="p">(</span><span class="n">fname_label</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>Compute inverse solution during the first 15s:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">mne.minimum_norm</span> <span class="k">import</span> <a href="../../generated/mne.minimum_norm.apply_inverse_raw.html#mne.minimum_norm.apply_inverse_raw" title="View documentation for mne.minimum_norm.apply_inverse_raw"><span class="n">apply_inverse_raw</span></a>  <span class="c1"># noqa</span>
-<span class="n">start</span><span class="p">,</span> <span class="n">stop</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">time_as_index</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">15</span><span class="p">])</span>  <span class="c1"># read the first 15s of data</span>
-<span class="n">stc</span> <span class="o">=</span> <a href="../../generated/mne.minimum_norm.apply_inverse_raw.html#mne.minimum_norm.apply_inverse_raw" title="View documentation for mne.minimum_norm.apply_inverse_raw"><span class="n">apply_inverse_raw</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">inverse_operator</span><span class="p">,</span> <span class="n">lambda2</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">label</span><span class="p">,</span>
-                        <span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">)</span>
-</pre></div>
-</div>
-<p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Preparing the inverse operator for use...
-    Scaled noise and source covariance from nave = 1 to nave = 1
-    Created the regularized inverter
-    Created an SSP operator (subspace dimension = 3)
-    Created the whitener using a noise covariance matrix with rank 302 (3 small eigenvalues omitted)
-    Computing noise-normalization factors (dSPM)...
-[done]
-Applying inverse to raw...
-    Picked 305 channels from the data
-    Computing inverse...
-    Eigenleads need to be weighted ...
-    combining the current components...
-[done]
-</pre></div>
-</div>
-<p>Save result in stc files:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">stc</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;mne_dSPM_raw_inverse_Aud&#39;</span><span class="p">)</span>
-</pre></div>
-</div>
-<p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Writing STC to disk...
-[done]
-</pre></div>
-</div>
-</div>
-<div class="section" id="what-else-can-you-do">
-<h3>What else can you do?<a class="headerlink" href="#what-else-can-you-do" title="Permalink to this headline">¶</a></h3>
-<blockquote>
-<div><ul class="simple">
-<li><p>detect heart beat QRS component</p></li>
-<li><p>detect eye blinks and EOG artifacts</p></li>
-<li><p>compute SSP projections to remove ECG or EOG artifacts</p></li>
-<li><p>compute Independent Component Analysis (ICA) to remove artifacts or
-select latent sources</p></li>
-<li><p>estimate noise covariance matrix from Raw and Epochs</p></li>
-<li><p>visualize cross-trial response dynamics using epochs images</p></li>
-<li><p>compute forward solutions</p></li>
-<li><p>estimate power in the source space</p></li>
-<li><p>estimate connectivity in sensor and source space</p></li>
-<li><p>morph stc from one brain to another for group studies</p></li>
-<li><p>compute mass univariate statistics base on custom contrasts</p></li>
-<li><p>visualize source estimates</p></li>
-<li><p>export raw, epochs, and evoked data to other python data analysis
-libraries e.g. pandas</p></li>
-<li><p>and many more things …</p></li>
+<ul class="sphx-glr-horizontal">
+<li><img alt="../../_images/sphx_glr_plot_introduction_017.png" class="sphx-glr-multi-img" src="../../_images/sphx_glr_plot_introduction_017.png" />
+</li>
+<li><img alt="../../_images/sphx_glr_plot_introduction_018.png" class="sphx-glr-multi-img" src="../../_images/sphx_glr_plot_introduction_018.png" />
+</li>
+<li><img alt="../../_images/sphx_glr_plot_introduction_019.png" class="sphx-glr-multi-img" src="../../_images/sphx_glr_plot_introduction_019.png" />
+</li>
+<li><img alt="../../_images/sphx_glr_plot_introduction_020.png" class="sphx-glr-multi-img" src="../../_images/sphx_glr_plot_introduction_020.png" />
+</li>
 </ul>
-</div></blockquote>
-</div>
-<div class="section" id="want-to-know-more">
-<h3>Want to know more ?<a class="headerlink" href="#want-to-know-more" title="Permalink to this headline">¶</a></h3>
-<p>Browse <a class="reference internal" href="../../auto_examples/index.html#sphx-glr-auto-examples"><span class="std std-ref">the examples gallery</span></a>.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Done!&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
 <p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Done!
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Using control points [8.61922423e-11 1.06837855e-10 4.49139511e-10]
 </pre></div>
 </div>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  30.576 seconds)</p>
-<p><strong>Estimated memory usage:</strong>  8 MB</p>
+<p>The remaining tutorials have <em>much more detail</em> on each of these topics (as
+well as many other capabilities of MNE-Python not mentioned here:
+connectivity analysis, encoding/decoding models, lots more visualization
+options, etc). Read on to learn more!</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  53.618 seconds)</p>
+<p><strong>Estimated memory usage:</strong>  580 MB</p>
 <div class="sphx-glr-footer class sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-tutorials-intro-plot-introduction-py">
 <div class="sphx-glr-download docutils container">
 <p><a class="reference download internal" download="" href="../../_downloads/67f3916be608e2927a762d39e53acc5c/plot_introduction.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">plot_introduction.py</span></code></a></p>
@@ -881,7 +791,6 @@ libraries e.g. pandas</p></li>
 </div>
 </div>
 <p class="sphx-glr-signature"><a class="reference external" href="https://sphinx-gallery.github.io">Gallery generated by Sphinx-Gallery</a></p>
-</div>
 </div>
 </div>
 
@@ -905,7 +814,7 @@ libraries e.g. pandas</p></li>
       <li><a href="faq.html#cite">Cite MNE</a></li>
       <li class="pull-right"><a href="#">Back to top</a></li>
     </ul>
-    <p>&copy; Copyright 2012-2019, MNE Developers. Last updated on 2019-05-15.</p>
+    <p>&copy; Copyright 2012-2019, MNE Developers. Last updated on 2019-05-16.</p>
   </div>
 </footer>
   </body>
