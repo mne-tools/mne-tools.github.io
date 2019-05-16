@@ -185,7 +185,7 @@ This documentation is for <strong>development version 0.18.dev0</strong>.
 <h1>mne.filter.construct_iir_filter<a class="headerlink" href="#mne-filter-construct-iir-filter" title="Permalink to this headline">¶</a></h1>
 <dl class="function">
 <dt id="mne.filter.construct_iir_filter">
-<code class="descclassname">mne.filter.</code><code class="descname">construct_iir_filter</code><span class="sig-paren">(</span><em>iir_params</em>, <em>f_pass=None</em>, <em>f_stop=None</em>, <em>sfreq=None</em>, <em>btype=None</em>, <em>return_copy=True</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/filter.py#L503-L681"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.filter.construct_iir_filter" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">mne.filter.</code><code class="descname">construct_iir_filter</code><span class="sig-paren">(</span><em>iir_params</em>, <em>f_pass=None</em>, <em>f_stop=None</em>, <em>sfreq=None</em>, <em>btype=None</em>, <em>return_copy=True</em>, <em>verbose=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/filter.py#L512-L720"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.filter.construct_iir_filter" title="Permalink to this definition">¶</a></dt>
 <dd><p>Use IIR parameters to get filtering coefficients.</p>
 <p>This function works like a wrapper for iirdesign and iirfilter in
 scipy.signal to make filter coefficients for IIR filtering. It also
@@ -193,14 +193,6 @@ estimates the number of padding samples based on the filter ringing.
 It creates a new iir_params dict (or updates the one passed to the
 function) with the filter coefficients (‘b’ and ‘a’) and an estimate
 of the padding necessary (‘padlen’) so IIR filtering can be performed.</p>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>As of 0.14, second-order sections will be used in filter
-design by default (replacing <code class="docutils literal notranslate"><span class="pre">output='ba'</span></code> by
-<code class="docutils literal notranslate"><span class="pre">output='sos'</span></code>) to help ensure filter stability and
-reduce numerical error. Second-order sections filtering
-requires SciPy &gt;= 16.0.</p>
-</div>
 <dl class="field-list">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl>
@@ -218,10 +210,12 @@ exist, these will be used as coefficients to perform IIR
 filtering.</p></li>
 <li><p>Otherwise, if <code class="docutils literal notranslate"><span class="pre">iir_params['order']</span></code> and
 <code class="docutils literal notranslate"><span class="pre">iir_params['ftype']</span></code> exist, these will be used with
-<a class="reference external" href="https://scipy.github.io/devdocs/generated/scipy.signal.iirfilter.html#scipy.signal.iirfilter" title="(in SciPy v1.4.0.dev0+5d4d17a)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scipy.signal.iirfilter</span></code></a> to make a filter.</p></li>
+<a class="reference external" href="https://scipy.github.io/devdocs/generated/scipy.signal.iirfilter.html#scipy.signal.iirfilter" title="(in SciPy v1.4.0.dev0+4755a29)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scipy.signal.iirfilter</span></code></a> to make a filter.
+You should also supply <code class="docutils literal notranslate"><span class="pre">iir_params['rs']</span></code> and
+<code class="docutils literal notranslate"><span class="pre">iir_params['rp']</span></code> if using elliptic or Chebychev filters.</p></li>
 <li><p>Otherwise, if <code class="docutils literal notranslate"><span class="pre">iir_params['gpass']</span></code> and
 <code class="docutils literal notranslate"><span class="pre">iir_params['gstop']</span></code> exist, these will be used with
-<a class="reference external" href="https://scipy.github.io/devdocs/generated/scipy.signal.iirdesign.html#scipy.signal.iirdesign" title="(in SciPy v1.4.0.dev0+5d4d17a)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scipy.signal.iirdesign</span></code></a> to design a filter.</p></li>
+<a class="reference external" href="https://scipy.github.io/devdocs/generated/scipy.signal.iirdesign.html#scipy.signal.iirdesign" title="(in SciPy v1.4.0.dev0+4755a29)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scipy.signal.iirdesign</span></code></a> to design a filter.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">iir_params['padlen']</span></code> defines the number of samples to pad
 (and an estimate will be calculated if it is not given).
 See Notes for more details.</p></li>
@@ -241,12 +235,15 @@ specified in iir_params.</p>
 </dd>
 <dt><strong>btype</strong><span class="classifier"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">str</span></code></a></span></dt><dd><p>Type of filter. Should be ‘lowpass’, ‘highpass’, or ‘bandpass’
 (or analogous string representations known to
-<a class="reference external" href="https://scipy.github.io/devdocs/generated/scipy.signal.iirfilter.html#scipy.signal.iirfilter" title="(in SciPy v1.4.0.dev0+5d4d17a)"><code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.signal.iirfilter()</span></code></a>).</p>
+<a class="reference external" href="https://scipy.github.io/devdocs/generated/scipy.signal.iirfilter.html#scipy.signal.iirfilter" title="(in SciPy v1.4.0.dev0+4755a29)"><code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.signal.iirfilter()</span></code></a>).</p>
 </dd>
 <dt><strong>return_copy</strong><span class="classifier"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#bltin-boolean-values" title="(in Python v3.7)"><span class="xref std std-ref">bool</span></a></span></dt><dd><p>If False, the ‘sos’, ‘b’, ‘a’, and ‘padlen’ entries in
 <code class="docutils literal notranslate"><span class="pre">iir_params</span></code> will be set inplace (if they weren’t already).
 Otherwise, a new <code class="docutils literal notranslate"><span class="pre">iir_params</span></code> instance will be created and
 returned with these entries.</p>
+</dd>
+<dt><strong>verbose</strong><span class="classifier"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#bltin-boolean-values" title="(in Python v3.7)"><span class="xref std std-ref">bool</span></a>, <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">int</span></code></a>, or <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">None</span></code></a></span></dt><dd><p>If not None, override default verbose level (see <a class="reference internal" href="mne.verbose.html#mne.verbose" title="mne.verbose"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.verbose()</span></code></a>
+and <a class="reference internal" href="../auto_tutorials/misc/plot_configuration.html#tut-logging"><span class="std std-ref">Logging documentation</span></a> for more).</p>
 </dd>
 </dl>
 </dd>
@@ -267,9 +264,14 @@ IIR filtering.</p>
 </dl>
 </div>
 <p class="rubric">Notes</p>
-<p>This function triages calls to <a class="reference external" href="https://scipy.github.io/devdocs/generated/scipy.signal.iirfilter.html#scipy.signal.iirfilter" title="(in SciPy v1.4.0.dev0+5d4d17a)"><code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.signal.iirfilter()</span></code></a> and
-<a class="reference external" href="https://scipy.github.io/devdocs/generated/scipy.signal.iirdesign.html#scipy.signal.iirdesign" title="(in SciPy v1.4.0.dev0+5d4d17a)"><code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.signal.iirdesign()</span></code></a> based on the input arguments (see
+<p>This function triages calls to <a class="reference external" href="https://scipy.github.io/devdocs/generated/scipy.signal.iirfilter.html#scipy.signal.iirfilter" title="(in SciPy v1.4.0.dev0+4755a29)"><code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.signal.iirfilter()</span></code></a> and
+<a class="reference external" href="https://scipy.github.io/devdocs/generated/scipy.signal.iirdesign.html#scipy.signal.iirdesign" title="(in SciPy v1.4.0.dev0+4755a29)"><code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.signal.iirdesign()</span></code></a> based on the input arguments (see
 linked functions for more details).</p>
+<div class="versionchanged">
+<p><span class="versionmodified changed">Changed in version 0.14: </span>Second-order sections are used in filter design by default (replacing
+<code class="docutils literal notranslate"><span class="pre">output='ba'</span></code> by <code class="docutils literal notranslate"><span class="pre">output='sos'</span></code>) to help ensure filter stability
+and reduce numerical error.</p>
+</div>
 <p class="rubric">Examples</p>
 <p>iir_params can have several forms. Consider constructing a low-pass
 filter at 40 Hz with 1000 Hz sampling rate.</p>
