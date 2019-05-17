@@ -185,23 +185,41 @@ This documentation is for <strong>development version 0.18.dev0</strong>.
 <h1>mne.events_from_annotations<a class="headerlink" href="#mne-events-from-annotations" title="Permalink to this headline">¶</a></h1>
 <dl class="function">
 <dt id="mne.events_from_annotations">
-<code class="descclassname">mne.</code><code class="descname">events_from_annotations</code><span class="sig-paren">(</span><em>raw</em>, <em>event_id=None</em>, <em>regexp=None</em>, <em>use_rounding=True</em>, <em>chunk_duration=None</em>, <em>verbose=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/annotations.py#L815-L892"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.events_from_annotations" title="Permalink to this definition">¶</a></dt>
+<code class="descclassname">mne.</code><code class="descname">events_from_annotations</code><span class="sig-paren">(</span><em>raw</em>, <em>event_id='auto'</em>, <em>regexp='^(?![Bb][Aa][Dd]|[Ee][Dd][Gg][Ee]).*$'</em>, <em>use_rounding=True</em>, <em>chunk_duration=None</em>, <em>verbose=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/annotations.py#L817-L914"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.events_from_annotations" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get events and event_id from an Annotations object.</p>
 <dl class="field-list">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl>
 <dt><strong>raw</strong><span class="classifier">instance of <a class="reference internal" href="mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Raw</span></code></a></span></dt><dd><p>The raw data for which Annotations are defined.</p>
 </dd>
-<dt><strong>event_id</strong><span class="classifier"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">dict</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/functions.html#callable" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">callable()</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">None</span></code></a></span></dt><dd><p>Dictionary of string keys and integer values as used in mne.Epochs
-to map annotation descriptions to integer event codes. Only the
-keys present will be mapped and the annotations with other descriptions
-will be ignored. Otherwise, a callable that provides an integer given
-a string or that returns None for an event to ignore.
-If None, all descriptions of annotations are mapped
-and assigned arbitrary unique integer values.</p>
+<dt><strong>event_id</strong><span class="classifier"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">dict</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/functions.html#callable" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">callable()</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">None</span></code></a> | ‘auto’</span></dt><dd><p>Can be:</p>
+<ul>
+<li><p><strong>dict</strong>: map descriptions (keys) to integer event codes (values).
+Only the descriptions present will be mapped, others will be ignored.</p></li>
+<li><p><strong>callable</strong>: must take a string input and returns an integer event
+code or None to ignore it.</p></li>
+<li><p><strong>None</strong>: Map descriptions to unique integer values based on their
+<code class="docutils literal notranslate"><span class="pre">sorted</span></code> order.</p></li>
+<li><p><strong>‘auto’ (default)</strong>: prefer a raw-format-specific parser:</p>
+<ul class="simple">
+<li><p>Brainvision: map stimulus events to their integer part; response
+events to integer part + 1000; optic events to integer part + 2000;
+‘SyncStatus/Sync On’ to 99998; ‘New Segment/’ to 99999;
+all others like <code class="docutils literal notranslate"><span class="pre">None</span></code> with an offset of 10000.</p></li>
+<li><p>Other raw formats: Behaves like None.</p></li>
+</ul>
+<div class="versionadded">
+<p><span class="versionmodified added">New in version 0.18.</span></p>
+</div>
+</li>
+</ul>
 </dd>
 <dt><strong>regexp</strong><span class="classifier"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">str</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">None</span></code></a></span></dt><dd><p>Regular expression used to filter the annotations whose
-descriptions is a match.</p>
+descriptions is a match. The default ignores descriptions beginning
+<code class="docutils literal notranslate"><span class="pre">'bad'</span></code> or <code class="docutils literal notranslate"><span class="pre">'edge'</span></code> (case-insensitive).</p>
+<div class="versionchanged">
+<p><span class="versionmodified changed">Changed in version 0.18: </span>Default ignores bad and edge descriptions.</p>
+</div>
 </dd>
 <dt><strong>use_rounding</strong><span class="classifier"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#bltin-boolean-values" title="(in Python v3.7)"><span class="xref std std-ref">bool</span></a></span></dt><dd><p>If True, use rounding (instead of truncation) when converting
 times to indices. This can help avoid non-unique indices.</p>
@@ -274,7 +292,7 @@ and <a class="reference internal" href="../auto_tutorials/misc/plot_configuratio
       <li><a href="faq.html#cite">Cite MNE</a></li>
       <li class="pull-right"><a href="#">Back to top</a></li>
     </ul>
-    <p>&copy; Copyright 2012-2019, MNE Developers. Last updated on 2019-05-16.</p>
+    <p>&copy; Copyright 2012-2019, MNE Developers. Last updated on 2019-05-17.</p>
   </div>
 </footer>
   </body>
