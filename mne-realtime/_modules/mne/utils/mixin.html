@@ -1,0 +1,668 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>mne.utils.mixin &mdash; MNE-Realtime 0.0.1 documentation</title>
+  
+
+  
+  
+    <link rel="shortcut icon" href="../../../_static/favicon.ico"/>
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../../" src="../../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../../_static/language_data.js"></script>
+        <script type="text/javascript" src="../../../_static/js/copybutton.js"></script>
+    
+    <script type="text/javascript" src="../../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../../_static/css/project-template.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../../_static/gallery.css" type="text/css" />
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../../index.html" class="icon icon-home"> MNE-Realtime
+          
+
+          
+            
+            <img src="../../../_static/mne_logo_small.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../user_guide.html">User guide: create your own mne project</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../api.html">mne-realtime API</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Tutorial - Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../auto_examples/index.html">Real-time M/EEG Acquisition</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">MNE-Realtime</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../../index.html">Module code</a> &raquo;</li>
+        
+      <li>mne.utils.mixin</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for mne.utils.mixin</h1><div class="highlight"><pre>
+<span></span><span class="c1"># -*- coding: utf-8 -*-</span>
+<span class="sd">&quot;&quot;&quot;Some utility functions.&quot;&quot;&quot;</span>
+<span class="c1"># Authors: Alexandre Gramfort &lt;alexandre.gramfort@inria.fr&gt;</span>
+<span class="c1">#</span>
+<span class="c1"># License: BSD (3-clause)</span>
+
+
+<span class="kn">from</span> <span class="nn">copy</span> <span class="k">import</span> <span class="n">deepcopy</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+<span class="kn">import</span> <span class="nn">json</span>
+<span class="kn">from</span> <span class="nn">collections</span> <span class="k">import</span> <span class="n">OrderedDict</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">.check</span> <span class="k">import</span> <span class="n">_check_pandas_installed</span><span class="p">,</span> <span class="n">_check_preload</span><span class="p">,</span> <span class="n">_validate_type</span>
+<span class="kn">from</span> <span class="nn">._logging</span> <span class="k">import</span> <span class="n">warn</span><span class="p">,</span> <span class="n">verbose</span>
+<span class="kn">from</span> <span class="nn">.numerics</span> <span class="k">import</span> <span class="n">object_size</span><span class="p">,</span> <span class="n">object_hash</span>
+
+
+<span class="n">logger</span> <span class="o">=</span> <span class="n">logging</span><span class="o">.</span><span class="n">getLogger</span><span class="p">(</span><span class="s1">&#39;mne&#39;</span><span class="p">)</span>  <span class="c1"># one selection here used across mne-python</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">propagate</span> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># don&#39;t propagate (in case of multiple imports)</span>
+
+
+<span class="k">class</span> <span class="nc">SizeMixin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Estimate MNE object sizes.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__eq__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">other</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Compare self to other.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        other : object</span>
+<span class="sd">            The object to compare to.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        eq : bool</span>
+<span class="sd">            True if the two objects are equal.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">other</span><span class="p">,</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span> <span class="ow">and</span> <span class="nb">hash</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span> <span class="o">==</span> <span class="nb">hash</span><span class="p">(</span><span class="n">other</span><span class="p">)</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">_size</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Estimate the object size.&quot;&quot;&quot;</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">size</span> <span class="o">=</span> <span class="n">object_size</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="n">warn</span><span class="p">(</span><span class="s1">&#39;Could not get size for self.info&#39;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="o">-</span><span class="mi">1</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;data&#39;</span><span class="p">):</span>
+            <span class="n">size</span> <span class="o">+=</span> <span class="n">object_size</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_data&#39;</span><span class="p">):</span>
+            <span class="n">size</span> <span class="o">+=</span> <span class="n">object_size</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">size</span>
+
+    <span class="k">def</span> <span class="nf">__hash__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Hash the object.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        hash : int</span>
+<span class="sd">            The hash</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span> <span class="nn">..evoked</span> <span class="k">import</span> <span class="n">Evoked</span>
+        <span class="kn">from</span> <span class="nn">..epochs</span> <span class="k">import</span> <span class="n">BaseEpochs</span>
+        <span class="kn">from</span> <span class="nn">..io.base</span> <span class="k">import</span> <span class="n">BaseRaw</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">Evoked</span><span class="p">):</span>
+            <span class="k">return</span> <span class="n">object_hash</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">info</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">data</span><span class="p">))</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">(</span><span class="n">BaseEpochs</span><span class="p">,</span> <span class="n">BaseRaw</span><span class="p">)):</span>
+            <span class="n">_check_preload</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s2">&quot;Hashing &quot;</span><span class="p">)</span>
+            <span class="k">return</span> <span class="n">object_hash</span><span class="p">(</span><span class="nb">dict</span><span class="p">(</span><span class="n">info</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Hashing unknown object type: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="nb">type</span><span class="p">(</span><span class="bp">self</span><span class="p">))</span>
+
+
+<span class="k">class</span> <span class="nc">GetEpochsMixin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Class to add epoch selection and metadata to certain classes.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return an Epochs object with a copied subset of epochs.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        item : slice, array-like, str, or list</span>
+<span class="sd">            See below for use cases.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        epochs : instance of Epochs</span>
+<span class="sd">            See below for use cases.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        Epochs can be accessed as ``epochs[...]`` in several ways:</span>
+
+<span class="sd">            1. ``epochs[idx]``: Return ``Epochs`` object with a subset of</span>
+<span class="sd">               epochs (supports single index and python-style slicing).</span>
+
+<span class="sd">            2. ``epochs[&#39;name&#39;]``: Return ``Epochs`` object with a copy of the</span>
+<span class="sd">               subset of epochs corresponding to an experimental condition as</span>
+<span class="sd">               specified by &#39;name&#39;.</span>
+
+<span class="sd">               If conditions are tagged by names separated by &#39;/&#39; (e.g.</span>
+<span class="sd">               &#39;audio/left&#39;, &#39;audio/right&#39;), and &#39;name&#39; is not in itself an</span>
+<span class="sd">               event key, this selects every event whose condition contains</span>
+<span class="sd">               the &#39;name&#39; tag (e.g., &#39;left&#39; matches &#39;audio/left&#39; and</span>
+<span class="sd">               &#39;visual/left&#39;; but not &#39;audio_left&#39;). Note that tags selection</span>
+<span class="sd">               is insensitive to order: tags like &#39;auditory/left&#39; and</span>
+<span class="sd">               &#39;left/auditory&#39; will be treated the same way when accessed.</span>
+
+<span class="sd">            3. ``epochs[[&#39;name_1&#39;, &#39;name_2&#39;, ... ]]``: Return ``Epochs`` object</span>
+<span class="sd">               with a copy of the subset of epochs corresponding to multiple</span>
+<span class="sd">               experimental conditions as specified by</span>
+<span class="sd">               ``&#39;name_1&#39;, &#39;name_2&#39;, ...`` .</span>
+
+<span class="sd">               If conditions are separated by &#39;/&#39;, selects every item</span>
+<span class="sd">               containing every list tag (e.g. [&#39;audio&#39;, &#39;left&#39;] selects</span>
+<span class="sd">               &#39;audio/left&#39; and &#39;audio/center/left&#39;, but not &#39;audio/right&#39;).</span>
+
+<span class="sd">            4. ``epochs[&#39;pandas query&#39;]``: Return ``Epochs`` object with a</span>
+<span class="sd">               copy of the subset of epochs (and matching metadata) that match</span>
+<span class="sd">               ``pandas query`` called with ``self.metadata.eval``, e.g.::</span>
+
+<span class="sd">                   epochs[&quot;col_a &gt; 2 and col_b == &#39;foo&#39;&quot;]</span>
+
+<span class="sd">               This is only called if Pandas is installed and ``self.metadata``</span>
+<span class="sd">               is a :class:`pandas.DataFrame`.</span>
+
+<span class="sd">               .. versionadded:: 0.16</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_getitem</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_getitem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="n">reason</span><span class="o">=</span><span class="s1">&#39;IGNORED&#39;</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">drop_event_id</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                 <span class="n">select_data</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">return_indices</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Select epochs from current object.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        item: slice, array-like, str, or list</span>
+<span class="sd">            see `__getitem__` for details.</span>
+<span class="sd">        reason: str</span>
+<span class="sd">            entry in `drop_log` for unselected epochs</span>
+<span class="sd">        copy: bool</span>
+<span class="sd">            return a copy of the current object</span>
+<span class="sd">        drop_event_id: bool</span>
+<span class="sd">            remove non-existing event-ids after selection</span>
+<span class="sd">        select_data: bool</span>
+<span class="sd">            apply selection to data</span>
+<span class="sd">            (use `select_data=False` if subclasses do not have a</span>
+<span class="sd">             valid `_data` field, or data has already been subselected)</span>
+<span class="sd">        return_indices: bool</span>
+<span class="sd">            return the indices of selected epochs from the original object</span>
+<span class="sd">            in addition to the new `Epochs` objects</span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        `Epochs` or tuple(Epochs, np.ndarray) if `return_indices` is True</span>
+<span class="sd">            subset of epochs (and optionally array with kept epoch indices)</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span>
+        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span>
+        <span class="n">inst</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span> <span class="k">if</span> <span class="n">copy</span> <span class="k">else</span> <span class="bp">self</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">inst</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">data</span>
+        <span class="k">del</span> <span class="bp">self</span>
+
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">item</span> <span class="o">=</span> <span class="p">[</span><span class="n">item</span><span class="p">]</span>
+
+        <span class="c1"># Convert string to indices</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">))</span> <span class="ow">and</span> <span class="nb">len</span><span class="p">(</span><span class="n">item</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span> <span class="ow">and</span> \
+                <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="n">select</span> <span class="o">=</span> <span class="n">inst</span><span class="o">.</span><span class="n">_keys_to_idx</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">item</span><span class="p">,</span> <span class="nb">slice</span><span class="p">):</span>
+            <span class="n">select</span> <span class="o">=</span> <span class="n">item</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">select</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_1d</span><span class="p">(</span><span class="n">item</span><span class="p">)</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">select</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+                <span class="n">select</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([],</span> <span class="nb">int</span><span class="p">)</span>
+        <span class="n">has_selection</span> <span class="o">=</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">inst</span><span class="p">,</span> <span class="s1">&#39;selection&#39;</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">has_selection</span><span class="p">:</span>
+            <span class="n">key_selection</span> <span class="o">=</span> <span class="n">inst</span><span class="o">.</span><span class="n">selection</span><span class="p">[</span><span class="n">select</span><span class="p">]</span>
+            <span class="k">if</span> <span class="n">reason</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">setdiff1d</span><span class="p">(</span><span class="n">inst</span><span class="o">.</span><span class="n">selection</span><span class="p">,</span> <span class="n">key_selection</span><span class="p">):</span>
+                    <span class="n">inst</span><span class="o">.</span><span class="n">drop_log</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="n">reason</span><span class="p">]</span>
+            <span class="n">inst</span><span class="o">.</span><span class="n">selection</span> <span class="o">=</span> <span class="n">key_selection</span>
+
+        <span class="n">inst</span><span class="o">.</span><span class="n">events</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">inst</span><span class="o">.</span><span class="n">events</span><span class="p">[</span><span class="n">select</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">inst</span><span class="o">.</span><span class="n">metadata</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">pd</span> <span class="o">=</span> <span class="n">_check_pandas_installed</span><span class="p">(</span><span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">pd</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">False</span><span class="p">:</span>
+                <span class="n">metadata</span> <span class="o">=</span> <span class="n">inst</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">iloc</span><span class="p">[</span><span class="n">select</span><span class="p">]</span>
+                <span class="k">if</span> <span class="n">has_selection</span><span class="p">:</span>
+                    <span class="n">metadata</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="n">inst</span><span class="o">.</span><span class="n">selection</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">metadata</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">inst</span><span class="o">.</span><span class="n">metadata</span><span class="p">,</span> <span class="s1">&#39;object&#39;</span><span class="p">)[</span><span class="n">select</span><span class="p">]</span><span class="o">.</span><span class="n">tolist</span><span class="p">()</span>
+
+            <span class="c1"># will reset the index for us</span>
+            <span class="n">GetEpochsMixin</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">fset</span><span class="p">(</span><span class="n">inst</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">inst</span><span class="o">.</span><span class="n">preload</span> <span class="ow">and</span> <span class="n">select_data</span><span class="p">:</span>
+            <span class="c1"># ensure that each Epochs instance owns its own data so we can</span>
+            <span class="c1"># resize later if necessary</span>
+            <span class="n">inst</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">require</span><span class="p">(</span><span class="n">inst</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="n">select</span><span class="p">],</span> <span class="n">requirements</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;O&#39;</span><span class="p">])</span>
+        <span class="k">if</span> <span class="n">drop_event_id</span><span class="p">:</span>
+            <span class="c1"># update event id to reflect new content of inst</span>
+            <span class="n">inst</span><span class="o">.</span><span class="n">event_id</span> <span class="o">=</span> <span class="p">{</span><span class="n">k</span><span class="p">:</span> <span class="n">v</span> <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">inst</span><span class="o">.</span><span class="n">event_id</span><span class="o">.</span><span class="n">items</span><span class="p">()</span>
+                             <span class="k">if</span> <span class="n">v</span> <span class="ow">in</span> <span class="n">inst</span><span class="o">.</span><span class="n">events</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]}</span>
+
+        <span class="k">if</span> <span class="n">return_indices</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">inst</span><span class="p">,</span> <span class="n">select</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">inst</span>
+
+    <span class="k">def</span> <span class="nf">_keys_to_idx</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">keys</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Find entries in event dict.&quot;&quot;&quot;</span>
+        <span class="n">keys</span> <span class="o">=</span> <span class="n">keys</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">keys</span><span class="p">,</span> <span class="p">(</span><span class="nb">list</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">))</span> <span class="k">else</span> <span class="p">[</span><span class="n">keys</span><span class="p">]</span>
+        <span class="k">try</span><span class="p">:</span>
+            <span class="c1"># Assume it&#39;s a condition name</span>
+            <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">any</span><span class="p">(</span>
+                <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="bp">self</span><span class="o">.</span><span class="n">event_id</span><span class="p">[</span><span class="n">k</span><span class="p">]</span>
+                          <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">_hid_match</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">event_id</span><span class="p">,</span> <span class="n">keys</span><span class="p">)]),</span>
+                <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">))[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="k">except</span> <span class="ne">KeyError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+            <span class="c1"># Could we in principle use metadata with these Epochs and keys?</span>
+            <span class="k">if</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">keys</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">1</span> <span class="ow">or</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">):</span>
+                <span class="c1"># If not, raise original error</span>
+                <span class="k">raise</span>
+            <span class="n">msg</span> <span class="o">=</span> <span class="nb">str</span><span class="p">(</span><span class="n">err</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>  <span class="c1"># message for KeyError</span>
+            <span class="n">pd</span> <span class="o">=</span> <span class="n">_check_pandas_installed</span><span class="p">(</span><span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="c1"># See if the query can be done</span>
+            <span class="k">if</span> <span class="n">pd</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">False</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_check_metadata</span><span class="p">()</span>
+                <span class="k">try</span><span class="p">:</span>
+                    <span class="c1"># Try metadata</span>
+                    <span class="n">mask</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span><span class="o">.</span><span class="n">eval</span><span class="p">(</span><span class="n">keys</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">engine</span><span class="o">=</span><span class="s1">&#39;python&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">values</span>
+                <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">exp</span><span class="p">:</span>
+                    <span class="n">msg</span> <span class="o">+=</span> <span class="p">(</span><span class="s1">&#39; The epochs.metadata Pandas query did not &#39;</span>
+                            <span class="s1">&#39;yield any results: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">exp</span><span class="o">.</span><span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">],))</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">mask</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="c1"># If not, warn this might be a problem</span>
+                <span class="n">msg</span> <span class="o">+=</span> <span class="p">(</span><span class="s1">&#39; The epochs.metadata Pandas query could not &#39;</span>
+                        <span class="s1">&#39;be performed, consider installing Pandas.&#39;</span><span class="p">)</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the number of epochs.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        n_epochs : int</span>
+<span class="sd">            The number of remaining epochs.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        This function only works if bad epochs have been dropped.</span>
+
+<span class="sd">        Examples</span>
+<span class="sd">        --------</span>
+<span class="sd">        This can be used as::</span>
+
+<span class="sd">            &gt;&gt;&gt; epochs.drop_bad()  # doctest: +SKIP</span>
+<span class="sd">            &gt;&gt;&gt; len(epochs)  # doctest: +SKIP</span>
+<span class="sd">            43</span>
+<span class="sd">            &gt;&gt;&gt; len(epochs.events)  # doctest: +SKIP</span>
+<span class="sd">            43</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span> <span class="nn">..epochs</span> <span class="k">import</span> <span class="n">BaseEpochs</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">BaseEpochs</span><span class="p">)</span> <span class="ow">and</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_bad_dropped</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Since bad epochs have not been dropped, the &#39;</span>
+                               <span class="s1">&#39;length of the Epochs is not known. Load the &#39;</span>
+                               <span class="s1">&#39;Epochs with preload=True, or call &#39;</span>
+                               <span class="s1">&#39;Epochs.drop_bad(). To find the number &#39;</span>
+                               <span class="s1">&#39;of events in the Epochs, use &#39;</span>
+                               <span class="s1">&#39;len(Epochs.events).&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Facilitate iteration over epochs.</span>
+
+<span class="sd">        This method resets the object iteration state to the first epoch.</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        This enables the use of this Python pattern::</span>
+
+<span class="sd">            &gt;&gt;&gt; for epoch in epochs:  # doctest: +SKIP</span>
+<span class="sd">            &gt;&gt;&gt;     print(epoch)  # doctest: +SKIP</span>
+
+<span class="sd">        Where ``epoch`` is given by successive outputs of</span>
+<span class="sd">        :meth:`mne.Epochs.next`.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_current</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">return</span> <span class="bp">self</span>
+
+    <span class="k">def</span> <span class="nf">__next__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">return_event_id</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Iterate over epoch data.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        return_event_id : bool</span>
+<span class="sd">            If True, return both the epoch data and an event_id.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        epoch : array of shape (n_channels, n_times)</span>
+<span class="sd">            The epoch data.</span>
+<span class="sd">        event_id : int</span>
+<span class="sd">            The event id. Only returned if ``return_event_id`` is ``True``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">preload</span><span class="p">:</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">):</span>
+                <span class="k">raise</span> <span class="ne">StopIteration</span>  <span class="c1"># signal the end</span>
+            <span class="n">epoch</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_current</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_current</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">is_good</span> <span class="o">=</span> <span class="kc">False</span>
+            <span class="k">while</span> <span class="ow">not</span> <span class="n">is_good</span><span class="p">:</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current</span> <span class="o">&gt;=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="ne">StopIteration</span>  <span class="c1"># signal the end properly</span>
+                <span class="n">epoch_noproj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_get_epoch_from_raw</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_current</span><span class="p">)</span>
+                <span class="n">epoch_noproj</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_detrend_offset_decim</span><span class="p">(</span><span class="n">epoch_noproj</span><span class="p">)</span>
+                <span class="n">epoch</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_project_epoch</span><span class="p">(</span><span class="n">epoch_noproj</span><span class="p">)</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_current</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="n">is_good</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_good_epoch</span><span class="p">(</span><span class="n">epoch</span><span class="p">)</span>
+            <span class="c1"># If delayed-ssp mode, pass &#39;virgin&#39; data after rejection decision.</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_do_delayed_proj</span><span class="p">:</span>
+                <span class="n">epoch</span> <span class="o">=</span> <span class="n">epoch_noproj</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">return_event_id</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">epoch</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="n">epoch</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_current</span> <span class="o">-</span> <span class="mi">1</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+
+    <span class="nb">next</span> <span class="o">=</span> <span class="fm">__next__</span>  <span class="c1"># originally for Python2, now b/c public</span>
+
+    <span class="k">def</span> <span class="nf">_check_metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">metadata</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">reset_index</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Check metadata consistency.&quot;&quot;&quot;</span>
+        <span class="c1"># reset_index=False will not copy!</span>
+        <span class="n">metadata</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">metadata</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_metadata&#39;</span><span class="p">)</span> <span class="ow">and</span> \
+            <span class="n">metadata</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">metadata</span>
+        <span class="k">if</span> <span class="n">metadata</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">pd</span> <span class="o">=</span> <span class="n">_check_pandas_installed</span><span class="p">(</span><span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">pd</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">False</span><span class="p">:</span>
+                <span class="n">_validate_type</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">,</span>
+                               <span class="n">item_name</span><span class="o">=</span><span class="s1">&#39;metadata&#39;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">metadata</span><span class="p">)</span> <span class="o">!=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="p">):</span>
+                    <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;metadata must have the same number of &#39;</span>
+                                     <span class="s1">&#39;rows (</span><span class="si">%d</span><span class="s1">) as events (</span><span class="si">%d</span><span class="s1">)&#39;</span>
+                                     <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">metadata</span><span class="p">),</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">events</span><span class="p">)))</span>
+                <span class="k">if</span> <span class="n">reset_index</span><span class="p">:</span>
+                    <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;selection&#39;</span><span class="p">):</span>
+                        <span class="c1"># makes a copy</span>
+                        <span class="n">metadata</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">reset_index</span><span class="p">(</span><span class="n">drop</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+                        <span class="n">metadata</span><span class="o">.</span><span class="n">index</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">selection</span>
+                    <span class="k">else</span><span class="p">:</span>
+                        <span class="n">metadata</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">metadata</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">_validate_type</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="n">types</span><span class="o">=</span><span class="nb">list</span><span class="p">,</span>
+                               <span class="n">item_name</span><span class="o">=</span><span class="s1">&#39;metadata&#39;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">reset_index</span><span class="p">:</span>
+                    <span class="n">metadata</span> <span class="o">=</span> <span class="n">deepcopy</span><span class="p">(</span><span class="n">metadata</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">metadata</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get the metadata.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span>
+
+    <span class="nd">@metadata</span><span class="o">.</span><span class="n">setter</span>
+    <span class="nd">@verbose</span>
+    <span class="k">def</span> <span class="nf">metadata</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">metadata</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="n">metadata</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_check_metadata</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="n">reset_index</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">metadata</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="k">if</span> <span class="n">_check_pandas_installed</span><span class="p">(</span><span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+                <span class="n">n_col</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="n">n_col</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">metadata</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+            <span class="n">n_col</span> <span class="o">=</span> <span class="s1">&#39; with </span><span class="si">%d</span><span class="s1"> columns&#39;</span> <span class="o">%</span> <span class="n">n_col</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">n_col</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span>
+        <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;_metadata&#39;</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">action</span> <span class="o">=</span> <span class="s1">&#39;Removing&#39;</span> <span class="k">if</span> <span class="n">metadata</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="s1">&#39;Replacing&#39;</span>
+            <span class="n">action</span> <span class="o">+=</span> <span class="s1">&#39; existing&#39;</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">action</span> <span class="o">=</span> <span class="s1">&#39;Not setting&#39;</span> <span class="k">if</span> <span class="n">metadata</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="s1">&#39;Adding&#39;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;</span><span class="si">%s</span><span class="s1"> metadata</span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">action</span><span class="p">,</span> <span class="n">n_col</span><span class="p">))</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_metadata</span> <span class="o">=</span> <span class="n">metadata</span>
+
+
+<span class="k">def</span> <span class="nf">_prepare_write_metadata</span><span class="p">(</span><span class="n">metadata</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Convert metadata to JSON for saving.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">metadata</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="n">metadata</span> <span class="o">=</span> <span class="n">metadata</span><span class="o">.</span><span class="n">to_json</span><span class="p">(</span><span class="n">orient</span><span class="o">=</span><span class="s1">&#39;records&#39;</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>  <span class="c1"># Pandas DataFrame</span>
+            <span class="n">metadata</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">dumps</span><span class="p">(</span><span class="n">metadata</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">metadata</span>
+
+
+<span class="k">def</span> <span class="nf">_prepare_read_metadata</span><span class="p">(</span><span class="n">metadata</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Convert saved metadata back from JSON.&quot;&quot;&quot;</span>
+    <span class="k">if</span> <span class="n">metadata</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">pd</span> <span class="o">=</span> <span class="n">_check_pandas_installed</span><span class="p">(</span><span class="n">strict</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+        <span class="c1"># use json.loads because this preserves ordering</span>
+        <span class="c1"># (which is necessary for round-trip equivalence)</span>
+        <span class="n">metadata</span> <span class="o">=</span> <span class="n">json</span><span class="o">.</span><span class="n">loads</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="n">object_pairs_hook</span><span class="o">=</span><span class="n">OrderedDict</span><span class="p">)</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="nb">list</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">pd</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">False</span><span class="p">:</span>
+            <span class="n">metadata</span> <span class="o">=</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="o">.</span><span class="n">from_records</span><span class="p">(</span><span class="n">metadata</span><span class="p">)</span>
+            <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">metadata</span><span class="p">,</span> <span class="n">pd</span><span class="o">.</span><span class="n">DataFrame</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">metadata</span>
+
+
+<span class="k">def</span> <span class="nf">_hid_match</span><span class="p">(</span><span class="n">event_id</span><span class="p">,</span> <span class="n">keys</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Match event IDs using HID selection.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    event_id : dict</span>
+<span class="sd">        The event ID dictionary.</span>
+<span class="sd">    keys : list | str</span>
+<span class="sd">        The event ID or subset (for HID), or list of such items.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    use_keys : list</span>
+<span class="sd">        The full keys that fit the selection criteria.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="c1"># form the hierarchical event ID mapping</span>
+    <span class="n">use_keys</span> <span class="o">=</span> <span class="p">[]</span>
+    <span class="k">for</span> <span class="n">key</span> <span class="ow">in</span> <span class="n">keys</span><span class="p">:</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+            <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s1">&#39;keys must be strings, got </span><span class="si">%s</span><span class="s1"> (</span><span class="si">%s</span><span class="s1">)&#39;</span>
+                           <span class="o">%</span> <span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">key</span><span class="p">),</span> <span class="n">key</span><span class="p">))</span>
+        <span class="n">use_keys</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="n">k</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">event_id</span><span class="o">.</span><span class="n">keys</span><span class="p">()</span>
+                        <span class="k">if</span> <span class="nb">set</span><span class="p">(</span><span class="n">key</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">))</span><span class="o">.</span><span class="n">issubset</span><span class="p">(</span><span class="n">k</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)))</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">use_keys</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">KeyError</span><span class="p">(</span><span class="s1">&#39;Event &quot;</span><span class="si">%s</span><span class="s1">&quot; is not in Epochs.&#39;</span> <span class="o">%</span> <span class="n">key</span><span class="p">)</span>
+    <span class="n">use_keys</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">use_keys</span><span class="p">))</span>  <span class="c1"># deduplicate if necessary</span>
+    <span class="k">return</span> <span class="n">use_keys</span>
+
+
+<span class="k">class</span> <span class="nc">_FakeNoPandas</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>  <span class="c1"># noqa: D101</span>
+    <span class="k">def</span> <span class="nf">__enter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>  <span class="c1"># noqa: D105</span>
+
+        <span class="k">def</span> <span class="nf">_check</span><span class="p">(</span><span class="n">strict</span><span class="o">=</span><span class="kc">True</span><span class="p">):</span>
+            <span class="k">if</span> <span class="n">strict</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Pandas not installed&#39;</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">return</span> <span class="kc">False</span>
+
+        <span class="kn">import</span> <span class="nn">mne</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_old_check</span> <span class="o">=</span> <span class="n">_check_pandas_installed</span>
+        <span class="n">mne</span><span class="o">.</span><span class="n">epochs</span><span class="o">.</span><span class="n">_check_pandas_installed</span> <span class="o">=</span> <span class="n">_check</span>
+        <span class="n">mne</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">mixin</span><span class="o">.</span><span class="n">_check_pandas_installed</span> <span class="o">=</span> <span class="n">_check</span>
+
+    <span class="k">def</span> <span class="nf">__exit__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>  <span class="c1"># noqa: D105</span>
+        <span class="kn">import</span> <span class="nn">mne</span>
+        <span class="n">mne</span><span class="o">.</span><span class="n">epochs</span><span class="o">.</span><span class="n">_check_pandas_installed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_old_check</span>
+        <span class="n">mne</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">mixin</span><span class="o">.</span><span class="n">_check_pandas_installed</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_old_check</span>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2012-2019, MNE Developers. Last updated on 2019-05-21
+
+    </p>
+  </div> 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

@@ -1,0 +1,573 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>mne_realtime.client &mdash; MNE-Realtime 0.0.1 documentation</title>
+  
+
+  
+  
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../_static/language_data.js"></script>
+        <script type="text/javascript" src="../../_static/js/copybutton.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../_static/css/project-template.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/gallery.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> MNE-Realtime
+          
+
+          
+            
+            <img src="../../_static/mne_logo_small.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../user_guide.html">User guide: create your own mne project</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">mne-realtime API</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Tutorial - Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../auto_examples/index.html">Real-time M/EEG Acquisition</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">MNE-Realtime</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>mne_realtime.client</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for mne_realtime.client</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Authors: Christoph Dinh &lt;chdinh@nmr.mgh.harvard.edu&gt;</span>
+<span class="c1">#          Martin Luessi &lt;mluessi@nmr.mgh.harvard.edu&gt;</span>
+<span class="c1">#          Matti Hamalainen &lt;msh@nmr.mgh.harvard.edu&gt;</span>
+<span class="c1">#</span>
+<span class="c1"># License: BSD (3-clause)</span>
+
+<span class="kn">from</span> <span class="nn">io</span> <span class="k">import</span> <span class="n">StringIO</span>
+<span class="kn">import</span> <span class="nn">socket</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">threading</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">mne.utils</span> <span class="k">import</span> <span class="n">logger</span><span class="p">,</span> <span class="n">verbose</span><span class="p">,</span> <span class="n">fill_doc</span>
+<span class="kn">from</span> <span class="nn">mne.io.constants</span> <span class="k">import</span> <span class="n">FIFF</span>
+<span class="kn">from</span> <span class="nn">mne.io.meas_info</span> <span class="k">import</span> <span class="n">read_meas_info</span>
+<span class="kn">from</span> <span class="nn">mne.io.tag</span> <span class="k">import</span> <span class="n">Tag</span><span class="p">,</span> <span class="n">read_tag</span>
+<span class="kn">from</span> <span class="nn">mne.io.tree</span> <span class="k">import</span> <span class="n">make_dir_tree</span>
+
+<span class="c1"># Constants for fiff realtime fiff messages</span>
+<span class="n">MNE_RT_GET_CLIENT_ID</span> <span class="o">=</span> <span class="mi">1</span>
+<span class="n">MNE_RT_SET_CLIENT_ALIAS</span> <span class="o">=</span> <span class="mi">2</span>
+
+
+<span class="k">def</span> <span class="nf">_recv_tag_raw</span><span class="p">(</span><span class="n">sock</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Read a tag and the associated data from a socket.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    sock : socket.socket</span>
+<span class="sd">        The socket from which to read the tag.</span>
+
+<span class="sd">    Returns</span>
+<span class="sd">    -------</span>
+<span class="sd">    tag : instance of Tag</span>
+<span class="sd">        The tag.</span>
+<span class="sd">    buff : str</span>
+<span class="sd">        The raw data of the tag (including header).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="n">s</span> <span class="o">=</span> <span class="n">sock</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="mi">4</span> <span class="o">*</span> <span class="mi">4</span><span class="p">)</span>
+    <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="o">!=</span> <span class="mi">16</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Not enough bytes received, something is wrong. &#39;</span>
+                           <span class="s1">&#39;Make sure the mne_rt_server is running.&#39;</span><span class="p">)</span>
+    <span class="n">tag</span> <span class="o">=</span> <span class="n">Tag</span><span class="p">(</span><span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">frombuffer</span><span class="p">(</span><span class="n">s</span><span class="p">,</span> <span class="s1">&#39;&gt;i4&#39;</span><span class="p">))</span>
+    <span class="n">n_received</span> <span class="o">=</span> <span class="mi">0</span>
+    <span class="n">rec_buff</span> <span class="o">=</span> <span class="p">[</span><span class="n">s</span><span class="p">]</span>
+    <span class="k">while</span> <span class="n">n_received</span> <span class="o">&lt;</span> <span class="n">tag</span><span class="o">.</span><span class="n">size</span><span class="p">:</span>
+        <span class="n">n_buffer</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="mi">4096</span><span class="p">,</span> <span class="n">tag</span><span class="o">.</span><span class="n">size</span> <span class="o">-</span> <span class="n">n_received</span><span class="p">)</span>
+        <span class="n">this_buffer</span> <span class="o">=</span> <span class="n">sock</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="n">n_buffer</span><span class="p">)</span>
+        <span class="n">rec_buff</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">this_buffer</span><span class="p">)</span>
+        <span class="n">n_received</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">this_buffer</span><span class="p">)</span>
+
+    <span class="k">if</span> <span class="n">n_received</span> <span class="o">!=</span> <span class="n">tag</span><span class="o">.</span><span class="n">size</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Not enough bytes received, something is wrong. &#39;</span>
+                           <span class="s1">&#39;Make sure the mne_rt_server is running.&#39;</span><span class="p">)</span>
+
+    <span class="n">buff</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">rec_buff</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">tag</span><span class="p">,</span> <span class="n">buff</span>
+
+
+<span class="k">def</span> <span class="nf">_buffer_recv_worker</span><span class="p">(</span><span class="n">rt_client</span><span class="p">,</span> <span class="n">nchan</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Worker thread that constantly receives buffers.&quot;&quot;&quot;</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="k">for</span> <span class="n">raw_buffer</span> <span class="ow">in</span> <span class="n">rt_client</span><span class="o">.</span><span class="n">raw_buffers</span><span class="p">(</span><span class="n">nchan</span><span class="p">):</span>
+            <span class="n">rt_client</span><span class="o">.</span><span class="n">_push_raw_buffer</span><span class="p">(</span><span class="n">raw_buffer</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">RuntimeError</span> <span class="k">as</span> <span class="n">err</span><span class="p">:</span>
+        <span class="c1"># something is wrong, the server stopped (or something)</span>
+        <span class="n">rt_client</span><span class="o">.</span><span class="n">_recv_thread</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Buffer receive thread stopped: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">err</span><span class="p">)</span>
+
+
+<div class="viewcode-block" id="RtClient"><a class="viewcode-back" href="../../generated/mne_realtime.RtClient.html#mne_realtime.RtClient">[docs]</a><span class="nd">@fill_doc</span>
+<span class="k">class</span> <span class="nc">RtClient</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Realtime Client.</span>
+
+<span class="sd">    Client to communicate with mne_rt_server</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    host : str</span>
+<span class="sd">        Hostname (or IP address) of the host where mne_rt_server is running.</span>
+<span class="sd">    cmd_port : int</span>
+<span class="sd">        Port to use for the command connection.</span>
+<span class="sd">    data_port : int</span>
+<span class="sd">        Port to use for the data connection.</span>
+<span class="sd">    timeout : float</span>
+<span class="sd">        Communication timeout in seconds.</span>
+<span class="sd">    %(verbose)s</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nd">@verbose</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">host</span><span class="p">,</span> <span class="n">cmd_port</span><span class="o">=</span><span class="mi">4217</span><span class="p">,</span> <span class="n">data_port</span><span class="o">=</span><span class="mi">4218</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+                 <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>  <span class="c1"># noqa: D102</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_host</span> <span class="o">=</span> <span class="n">host</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data_port</span> <span class="o">=</span> <span class="n">data_port</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cmd_port</span> <span class="o">=</span> <span class="n">cmd_port</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_timeout</span> <span class="o">=</span> <span class="n">timeout</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cmd_sock</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">AF_INET</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">SOCK_STREAM</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cmd_sock</span><span class="o">.</span><span class="n">settimeout</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cmd_sock</span><span class="o">.</span><span class="n">connect</span><span class="p">((</span><span class="n">host</span><span class="p">,</span> <span class="n">cmd_port</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_cmd_sock</span><span class="o">.</span><span class="n">setblocking</span><span class="p">(</span><span class="mi">0</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Setting up command connection (host: </span><span class="si">%s</span><span class="s1"> &#39;</span>
+                               <span class="s1">&#39;port: </span><span class="si">%d</span><span class="s1">) failed. Make sure mne_rt_server &#39;</span>
+                               <span class="s1">&#39;is running. &#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="n">cmd_port</span><span class="p">))</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_data_sock</span> <span class="o">=</span> <span class="n">socket</span><span class="o">.</span><span class="n">socket</span><span class="p">(</span><span class="n">socket</span><span class="o">.</span><span class="n">AF_INET</span><span class="p">,</span> <span class="n">socket</span><span class="o">.</span><span class="n">SOCK_STREAM</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_data_sock</span><span class="o">.</span><span class="n">settimeout</span><span class="p">(</span><span class="n">timeout</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_data_sock</span><span class="o">.</span><span class="n">connect</span><span class="p">((</span><span class="n">host</span><span class="p">,</span> <span class="n">data_port</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_data_sock</span><span class="o">.</span><span class="n">setblocking</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Setting up data connection (host: </span><span class="si">%s</span><span class="s1"> &#39;</span>
+                               <span class="s1">&#39;port: </span><span class="si">%d</span><span class="s1">) failed. Make sure mne_rt_server &#39;</span>
+                               <span class="s1">&#39;is running.&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="n">host</span><span class="p">,</span> <span class="n">data_port</span><span class="p">))</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">=</span> <span class="n">verbose</span>
+
+        <span class="c1"># get my client ID</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_client_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">get_client_id</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_recv_thread</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_recv_callbacks</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+
+    <span class="k">def</span> <span class="nf">_send_command</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">command</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Send a command to the server.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        command : str</span>
+<span class="sd">            The command to send.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        resp : str</span>
+<span class="sd">            The response from the server.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">logger</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;Sending command: </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="n">command</span><span class="p">)</span>
+        <span class="n">command</span> <span class="o">+=</span> <span class="s1">&#39;</span><span class="se">\n</span><span class="s1">&#39;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cmd_sock</span><span class="o">.</span><span class="n">sendall</span><span class="p">(</span><span class="n">command</span><span class="o">.</span><span class="n">encode</span><span class="p">(</span><span class="s1">&#39;utf-8&#39;</span><span class="p">))</span>
+
+        <span class="n">buf</span><span class="p">,</span> <span class="n">chunk</span><span class="p">,</span> <span class="n">begin</span> <span class="o">=</span> <span class="p">[],</span> <span class="s1">&#39;&#39;</span><span class="p">,</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="c1"># if we got some data, then break after wait sec</span>
+            <span class="k">if</span> <span class="n">buf</span> <span class="ow">and</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">begin</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_timeout</span><span class="p">:</span>
+                <span class="k">break</span>
+            <span class="c1"># if we got no data at all, wait a little longer</span>
+            <span class="k">elif</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span> <span class="o">-</span> <span class="n">begin</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_timeout</span> <span class="o">*</span> <span class="mi">2</span><span class="p">:</span>
+                <span class="k">break</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">chunk</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cmd_sock</span><span class="o">.</span><span class="n">recv</span><span class="p">(</span><span class="mi">8192</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">chunk</span><span class="p">:</span>
+                    <span class="n">buf</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">chunk</span><span class="p">)</span>
+                    <span class="n">begin</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+                <span class="k">else</span><span class="p">:</span>
+                    <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="mf">0.1</span><span class="p">)</span>
+            <span class="k">except</span> <span class="ne">Exception</span><span class="p">:</span>
+                <span class="k">pass</span>
+
+        <span class="k">return</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">buf</span><span class="p">)</span>
+
+    <span class="k">def</span> <span class="nf">_send_fiff_command</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">command</span><span class="p">,</span> <span class="n">data</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Send a command through the data connection as a fiff tag.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        command : int</span>
+<span class="sd">            The command code.</span>
+
+<span class="sd">        data : str</span>
+<span class="sd">            Additional data to send.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">kind</span> <span class="o">=</span> <span class="n">FIFF</span><span class="o">.</span><span class="n">FIFF_MNE_RT_COMMAND</span>
+        <span class="nb">type</span> <span class="o">=</span> <span class="n">FIFF</span><span class="o">.</span><span class="n">FIFFT_VOID</span>
+        <span class="n">size</span> <span class="o">=</span> <span class="mi">4</span>
+        <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">size</span> <span class="o">+=</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>  <span class="c1"># first 4 bytes are the command code</span>
+        <span class="nb">next</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="n">msg</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">kind</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;&gt;i4&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">tostring</span><span class="p">()</span>
+        <span class="n">msg</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">type</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;&gt;i4&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">tostring</span><span class="p">()</span>
+        <span class="n">msg</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">size</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;&gt;i4&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">tostring</span><span class="p">()</span>
+        <span class="n">msg</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="nb">next</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;&gt;i4&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">tostring</span><span class="p">()</span>
+
+        <span class="n">msg</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">command</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;&gt;i4&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">tostring</span><span class="p">()</span>
+        <span class="k">if</span> <span class="n">data</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">msg</span> <span class="o">+=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="s1">&#39;&gt;c&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">tostring</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_data_sock</span><span class="o">.</span><span class="n">sendall</span><span class="p">(</span><span class="n">msg</span><span class="p">)</span>
+
+<div class="viewcode-block" id="RtClient.get_measurement_info"><a class="viewcode-back" href="../../generated/mne_realtime.RtClient.html#mne_realtime.RtClient.get_measurement_info">[docs]</a>    <span class="k">def</span> <span class="nf">get_measurement_info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get the measurement information.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        info : dict</span>
+<span class="sd">            The measurement information.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">cmd</span> <span class="o">=</span> <span class="s1">&#39;measinfo </span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_client_id</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_send_command</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span>
+
+        <span class="n">buff</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">directory</span> <span class="o">=</span> <span class="p">[]</span>
+        <span class="n">pos</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">tag</span><span class="p">,</span> <span class="n">this_buff</span> <span class="o">=</span> <span class="n">_recv_tag_raw</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data_sock</span><span class="p">)</span>
+            <span class="n">tag</span><span class="o">.</span><span class="n">pos</span> <span class="o">=</span> <span class="n">pos</span>
+            <span class="n">pos</span> <span class="o">+=</span> <span class="mi">16</span> <span class="o">+</span> <span class="n">tag</span><span class="o">.</span><span class="n">size</span>
+            <span class="n">directory</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">tag</span><span class="p">)</span>
+            <span class="n">buff</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">this_buff</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">tag</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="n">FIFF</span><span class="o">.</span><span class="n">FIFF_BLOCK_END</span> <span class="ow">and</span> <span class="n">tag</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="n">FIFF</span><span class="o">.</span><span class="n">FIFFT_INT</span><span class="p">:</span>
+                <span class="n">val</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">frombuffer</span><span class="p">(</span><span class="n">this_buff</span><span class="p">[</span><span class="o">-</span><span class="mi">4</span><span class="p">:],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;&gt;i4&quot;</span><span class="p">)</span>
+                <span class="k">if</span> <span class="n">val</span> <span class="o">==</span> <span class="n">FIFF</span><span class="o">.</span><span class="n">FIFFB_MEAS_INFO</span><span class="p">:</span>
+                    <span class="k">break</span>
+
+        <span class="n">buff</span> <span class="o">=</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">buff</span><span class="p">)</span>
+
+        <span class="n">fid</span> <span class="o">=</span> <span class="n">StringIO</span><span class="p">(</span><span class="n">buff</span><span class="p">)</span>
+        <span class="n">tree</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="n">make_dir_tree</span><span class="p">(</span><span class="n">fid</span><span class="p">,</span> <span class="n">directory</span><span class="p">)</span>
+        <span class="n">info</span><span class="p">,</span> <span class="n">meas</span> <span class="o">=</span> <span class="n">read_meas_info</span><span class="p">(</span><span class="n">fid</span><span class="p">,</span> <span class="n">tree</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">info</span></div>
+
+<div class="viewcode-block" id="RtClient.set_client_alias"><a class="viewcode-back" href="../../generated/mne_realtime.RtClient.html#mne_realtime.RtClient.set_client_alias">[docs]</a>    <span class="k">def</span> <span class="nf">set_client_alias</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">alias</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Set client alias.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        alias : str</span>
+<span class="sd">            The client alias.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_send_fiff_command</span><span class="p">(</span><span class="n">MNE_RT_SET_CLIENT_ALIAS</span><span class="p">,</span> <span class="n">alias</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="RtClient.get_client_id"><a class="viewcode-back" href="../../generated/mne_realtime.RtClient.html#mne_realtime.RtClient.get_client_id">[docs]</a>    <span class="k">def</span> <span class="nf">get_client_id</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get the client ID.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        id : int</span>
+<span class="sd">            The client ID.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_send_fiff_command</span><span class="p">(</span><span class="n">MNE_RT_GET_CLIENT_ID</span><span class="p">)</span>
+
+        <span class="c1"># ID is send as answer</span>
+        <span class="n">tag</span><span class="p">,</span> <span class="n">buff</span> <span class="o">=</span> <span class="n">_recv_tag_raw</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data_sock</span><span class="p">)</span>
+        <span class="k">if</span> <span class="p">(</span><span class="n">tag</span><span class="o">.</span><span class="n">kind</span> <span class="o">==</span> <span class="n">FIFF</span><span class="o">.</span><span class="n">FIFF_MNE_RT_CLIENT_ID</span> <span class="ow">and</span>
+                <span class="n">tag</span><span class="o">.</span><span class="n">type</span> <span class="o">==</span> <span class="n">FIFF</span><span class="o">.</span><span class="n">FIFFT_INT</span><span class="p">):</span>
+            <span class="n">client_id</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">frombuffer</span><span class="p">(</span><span class="n">buff</span><span class="p">[</span><span class="o">-</span><span class="mi">4</span><span class="p">:],</span> <span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;&gt;i4&quot;</span><span class="p">))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;wrong tag received&#39;</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">client_id</span></div>
+
+<div class="viewcode-block" id="RtClient.start_measurement"><a class="viewcode-back" href="../../generated/mne_realtime.RtClient.html#mne_realtime.RtClient.start_measurement">[docs]</a>    <span class="k">def</span> <span class="nf">start_measurement</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Start the measurement.&quot;&quot;&quot;</span>
+        <span class="n">cmd</span> <span class="o">=</span> <span class="s1">&#39;start </span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">_client_id</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_send_command</span><span class="p">(</span><span class="n">cmd</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="RtClient.stop_measurement"><a class="viewcode-back" href="../../generated/mne_realtime.RtClient.html#mne_realtime.RtClient.stop_measurement">[docs]</a>    <span class="k">def</span> <span class="nf">stop_measurement</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Stop the measurement.&quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_send_command</span><span class="p">(</span><span class="s1">&#39;stop-all&#39;</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="RtClient.start_receive_thread"><a class="viewcode-back" href="../../generated/mne_realtime.RtClient.html#mne_realtime.RtClient.start_receive_thread">[docs]</a>    <span class="k">def</span> <span class="nf">start_receive_thread</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nchan</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Start the receive thread.</span>
+
+<span class="sd">        If the measurement has not been started, it will also be started.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        nchan : int</span>
+<span class="sd">            The number of channels in the data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recv_thread</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">start_measurement</span><span class="p">()</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_recv_thread</span> <span class="o">=</span> <span class="n">threading</span><span class="o">.</span><span class="n">Thread</span><span class="p">(</span><span class="n">target</span><span class="o">=</span><span class="n">_buffer_recv_worker</span><span class="p">,</span>
+                                                 <span class="n">args</span><span class="o">=</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nchan</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_recv_thread</span><span class="o">.</span><span class="n">start</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="RtClient.stop_receive_thread"><a class="viewcode-back" href="../../generated/mne_realtime.RtClient.html#mne_realtime.RtClient.stop_receive_thread">[docs]</a>    <span class="k">def</span> <span class="nf">stop_receive_thread</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stop_measurement</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Stop the receive thread.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        stop_measurement : bool</span>
+<span class="sd">            Also stop the measurement.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_recv_thread</span> <span class="o">=</span> <span class="kc">None</span>
+
+        <span class="k">if</span> <span class="n">stop_measurement</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">stop_measurement</span><span class="p">()</span></div>
+
+<div class="viewcode-block" id="RtClient.register_receive_callback"><a class="viewcode-back" href="../../generated/mne_realtime.RtClient.html#mne_realtime.RtClient.register_receive_callback">[docs]</a>    <span class="k">def</span> <span class="nf">register_receive_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">callback</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Register a raw buffer receive callback.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        callback : callable</span>
+<span class="sd">            The callback. The raw buffer is passed as the first parameter</span>
+<span class="sd">            to callback.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">callback</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recv_callbacks</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_recv_callbacks</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">callback</span><span class="p">)</span></div>
+
+<div class="viewcode-block" id="RtClient.unregister_receive_callback"><a class="viewcode-back" href="../../generated/mne_realtime.RtClient.html#mne_realtime.RtClient.unregister_receive_callback">[docs]</a>    <span class="k">def</span> <span class="nf">unregister_receive_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">callback</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Unregister a raw buffer receive callback.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        callback : callable</span>
+<span class="sd">            The callback to unregister.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">callback</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recv_callbacks</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_recv_callbacks</span><span class="o">.</span><span class="n">remove</span><span class="p">(</span><span class="n">callback</span><span class="p">)</span></div>
+
+    <span class="k">def</span> <span class="nf">_push_raw_buffer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">raw_buffer</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Push raw buffer to clients using callbacks.&quot;&quot;&quot;</span>
+        <span class="k">for</span> <span class="n">callback</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recv_callbacks</span><span class="p">:</span>
+            <span class="n">callback</span><span class="p">(</span><span class="n">raw_buffer</span><span class="p">)</span>
+
+<div class="viewcode-block" id="RtClient.read_raw_buffer"><a class="viewcode-back" href="../../generated/mne_realtime.RtClient.html#mne_realtime.RtClient.read_raw_buffer">[docs]</a>    <span class="k">def</span> <span class="nf">read_raw_buffer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nchan</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Read a single buffer with raw data.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        nchan : int</span>
+<span class="sd">            The number of channels (info[&#39;nchan&#39;]).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        raw_buffer : float array, shape=(nchan, n_times)</span>
+<span class="sd">            The raw data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">tag</span><span class="p">,</span> <span class="n">this_buff</span> <span class="o">=</span> <span class="n">_recv_tag_raw</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data_sock</span><span class="p">)</span>
+
+        <span class="c1"># skip tags until we get a data buffer</span>
+        <span class="k">while</span> <span class="n">tag</span><span class="o">.</span><span class="n">kind</span> <span class="o">!=</span> <span class="n">FIFF</span><span class="o">.</span><span class="n">FIFF_DATA_BUFFER</span><span class="p">:</span>
+            <span class="n">tag</span><span class="p">,</span> <span class="n">this_buff</span> <span class="o">=</span> <span class="n">_recv_tag_raw</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data_sock</span><span class="p">)</span>
+
+        <span class="n">buff</span> <span class="o">=</span> <span class="n">StringIO</span><span class="p">(</span><span class="n">this_buff</span><span class="p">)</span>
+        <span class="n">tag</span> <span class="o">=</span> <span class="n">read_tag</span><span class="p">(</span><span class="n">buff</span><span class="p">)</span>
+        <span class="n">raw_buffer</span> <span class="o">=</span> <span class="n">tag</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="n">nchan</span><span class="p">)</span><span class="o">.</span><span class="n">T</span>
+
+        <span class="k">return</span> <span class="n">raw_buffer</span></div>
+
+<div class="viewcode-block" id="RtClient.raw_buffers"><a class="viewcode-back" href="../../generated/mne_realtime.RtClient.html#mne_realtime.RtClient.raw_buffers">[docs]</a>    <span class="k">def</span> <span class="nf">raw_buffers</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nchan</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return an iterator over raw buffers.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        nchan : int</span>
+<span class="sd">            The number of channels (info[&#39;nchan&#39;]).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        raw_buffer : generator</span>
+<span class="sd">            Generator for iteration over raw buffers.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># stops the loop if stop_receive_thread has been called</span>
+        <span class="k">while</span> <span class="bp">self</span><span class="o">.</span><span class="n">_recv_thread</span> <span class="o">==</span> <span class="n">threading</span><span class="o">.</span><span class="n">current_thread</span><span class="p">():</span>
+            <span class="n">raw_buffer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">read_raw_buffer</span><span class="p">(</span><span class="n">nchan</span><span class="p">)</span>
+            <span class="k">if</span> <span class="n">raw_buffer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="k">yield</span> <span class="n">raw_buffer</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">break</span></div></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2012-2019, MNE Developers. Last updated on 2019-05-21
+
+    </p>
+  </div> 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>

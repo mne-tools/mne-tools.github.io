@@ -1,0 +1,785 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>mne_realtime.epochs &mdash; MNE-Realtime 0.0.1 documentation</title>
+  
+
+  
+  
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../_static/language_data.js"></script>
+        <script type="text/javascript" src="../../_static/js/copybutton.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../_static/css/project-template.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/gallery.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> MNE-Realtime
+          
+
+          
+            
+            <img src="../../_static/mne_logo_small.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../user_guide.html">User guide: create your own mne project</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">mne-realtime API</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Tutorial - Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../auto_examples/index.html">Real-time M/EEG Acquisition</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">MNE-Realtime</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>mne_realtime.epochs</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for mne_realtime.epochs</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Authors: Christoph Dinh &lt;chdinh@nmr.mgh.harvard.edu&gt;</span>
+<span class="c1">#          Martin Luessi &lt;mluessi@nmr.mgh.harvard.edu&gt;</span>
+<span class="c1">#          Matti Hamalainen &lt;msh@nmr.mgh.harvard.edu&gt;</span>
+<span class="c1">#          Alexandre Gramfort &lt;alexandre.gramfort@telecom-paristech.fr&gt;</span>
+<span class="c1">#          Denis Engemann &lt;denis.engemann@gmail.com&gt;</span>
+<span class="c1">#</span>
+<span class="c1"># License: BSD (3-clause)</span>
+<span class="kn">import</span> <span class="nn">time</span>
+<span class="kn">import</span> <span class="nn">copy</span>
+
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">mne</span> <span class="k">import</span> <span class="n">pick_channels</span>
+<span class="kn">from</span> <span class="nn">mne.utils</span> <span class="k">import</span> <span class="n">logger</span><span class="p">,</span> <span class="n">verbose</span><span class="p">,</span> <span class="n">fill_doc</span>
+<span class="kn">from</span> <span class="nn">mne.epochs</span> <span class="k">import</span> <span class="n">BaseEpochs</span>
+<span class="kn">from</span> <span class="nn">mne.event</span> <span class="k">import</span> <span class="n">_find_events</span>
+
+
+<div class="viewcode-block" id="RtEpochs"><a class="viewcode-back" href="../../generated/mne_realtime.RtEpochs.html#mne_realtime.RtEpochs">[docs]</a><span class="nd">@fill_doc</span>
+<span class="k">class</span> <span class="nc">RtEpochs</span><span class="p">(</span><span class="n">BaseEpochs</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Realtime Epochs.</span>
+
+<span class="sd">    Can receive epochs in real time from an RtClient.</span>
+
+<span class="sd">    For example, to get some epochs from a running mne_rt_server on</span>
+<span class="sd">    &#39;localhost&#39;, you could use::</span>
+
+<span class="sd">        client = mne_realtime.RtClient(&#39;localhost&#39;)</span>
+<span class="sd">        event_id, tmin, tmax = 1, -0.2, 0.5</span>
+
+<span class="sd">        epochs = mne_realtime.RtEpochs(client, event_id, tmin, tmax)</span>
+<span class="sd">        epochs.start()  # start the measurement and start receiving epochs</span>
+
+<span class="sd">        evoked_1 = epochs.average()  # computed over all epochs</span>
+<span class="sd">        evoked_2 = epochs[-5:].average()  # computed over the last 5 epochs</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    client : instance of mne_realtime.RtClient</span>
+<span class="sd">        The realtime client.</span>
+<span class="sd">    event_id : int | list of int</span>
+<span class="sd">        The id of the event to consider. If int, only events with the</span>
+<span class="sd">        ID specified by event_id are considered. Multiple event ID&#39;s</span>
+<span class="sd">        can be specified using a list.</span>
+<span class="sd">    tmin : float</span>
+<span class="sd">        Start time before event.</span>
+<span class="sd">    tmax : float</span>
+<span class="sd">        End time after event.</span>
+<span class="sd">    stim_channel : string or list of string</span>
+<span class="sd">        Name of the stim channel or all the stim channels affected by</span>
+<span class="sd">        the trigger.</span>
+<span class="sd">    sleep_time : float</span>
+<span class="sd">        Time in seconds to wait between checking for new epochs when epochs</span>
+<span class="sd">        are requested and the receive queue is empty.</span>
+<span class="sd">    baseline : None (default) or tuple of length 2</span>
+<span class="sd">        The time interval to apply baseline correction.</span>
+<span class="sd">        If None do not apply it. If baseline is (a, b)</span>
+<span class="sd">        the interval is between &quot;a (s)&quot; and &quot;b (s)&quot;.</span>
+<span class="sd">        If a is None the beginning of the data is used</span>
+<span class="sd">        and if b is None then b is set to the end of the interval.</span>
+<span class="sd">        If baseline is equal to (None, None) all the time</span>
+<span class="sd">        interval is used.</span>
+<span class="sd">    %(picks_all)s</span>
+<span class="sd">    reject : dict | None</span>
+<span class="sd">        Rejection parameters based on peak-to-peak amplitude.</span>
+<span class="sd">        Valid keys are &#39;grad&#39; | &#39;mag&#39; | &#39;eeg&#39; | &#39;eog&#39; | &#39;ecg&#39;.</span>
+<span class="sd">        If reject is None then no rejection is done. Example::</span>
+
+<span class="sd">            reject = dict(grad=4000e-13, # T / m (gradiometers)</span>
+<span class="sd">                          mag=4e-12, # T (magnetometers)</span>
+<span class="sd">                          eeg=40e-6, # V (EEG channels)</span>
+<span class="sd">                          eog=250e-6 # V (EOG channels))</span>
+
+<span class="sd">    flat : dict | None</span>
+<span class="sd">        Rejection parameters based on flatness of signal.</span>
+<span class="sd">        Valid keys are &#39;grad&#39; | &#39;mag&#39; | &#39;eeg&#39; | &#39;eog&#39; | &#39;ecg&#39;, and values</span>
+<span class="sd">        are floats that set the minimum acceptable peak-to-peak amplitude.</span>
+<span class="sd">        If flat is None then no rejection is done.</span>
+<span class="sd">    proj : bool, optional</span>
+<span class="sd">        Apply SSP projection vectors</span>
+<span class="sd">    decim : int</span>
+<span class="sd">        Factor by which to downsample the data from the raw file upon import.</span>
+<span class="sd">        Warning: This simply selects every nth sample, data is not filtered</span>
+<span class="sd">        here. If data is not properly filtered, aliasing artifacts may occur.</span>
+<span class="sd">    reject_tmin : scalar | None</span>
+<span class="sd">        Start of the time window used to reject epochs (with the default None,</span>
+<span class="sd">        the window will start with tmin).</span>
+<span class="sd">    reject_tmax : scalar | None</span>
+<span class="sd">        End of the time window used to reject epochs (with the default None,</span>
+<span class="sd">        the window will end with tmax).</span>
+<span class="sd">    detrend : int | None</span>
+<span class="sd">        If 0 or 1, the data channels (MEG and EEG) will be detrended when</span>
+<span class="sd">        loaded. 0 is a constant (DC) detrend, 1 is a linear detrend. None</span>
+<span class="sd">        is no detrending. Note that detrending is performed before baseline</span>
+<span class="sd">        correction. If no DC offset is preferred (zeroth order detrending),</span>
+<span class="sd">        either turn off baseline correction, as this may introduce a DC</span>
+<span class="sd">        shift, or set baseline correction to use the entire time interval</span>
+<span class="sd">        (will yield equivalent results but be slower).</span>
+<span class="sd">    isi_max : float</span>
+<span class="sd">        The maximum time in seconds between epochs. If no epoch</span>
+<span class="sd">        arrives in the next isi_max seconds the RtEpochs stops.</span>
+<span class="sd">    find_events : dict</span>
+<span class="sd">        The arguments to the real-time `find_events` method as a dictionary.</span>
+<span class="sd">        If `find_events` is None, then default values are used.</span>
+<span class="sd">        Example (also default values)::</span>
+
+<span class="sd">            find_events = dict(output=&#39;onset&#39;, consecutive=&#39;increasing&#39;,</span>
+<span class="sd">                               min_duration=0, mask=0, mask_type=&#39;not_and&#39;,</span>
+<span class="sd">                               verbose=&#39;ERROR&#39;)</span>
+
+<span class="sd">        See :func:`mne.find_events` for detailed explanation of these options.</span>
+<span class="sd">    %(verbose)s Defaults to client.verbose.</span>
+
+<span class="sd">    Attributes</span>
+<span class="sd">    ----------</span>
+<span class="sd">    info : dict</span>
+<span class="sd">        Measurement info.</span>
+<span class="sd">    event_id : dict</span>
+<span class="sd">        Names of  of conditions corresponding to event_ids.</span>
+<span class="sd">    ch_names : list of string</span>
+<span class="sd">        List of channels&#39; names.</span>
+<span class="sd">    events : array, shape (n_events, 3)</span>
+<span class="sd">        The events associated with the epochs currently in the queue.</span>
+<span class="sd">    %(verbose)s</span>
+
+<span class="sd">    Notes</span>
+<span class="sd">    -----</span>
+<span class="sd">    - Calling `next()` on an `RtEpochs` object (as internally done when</span>
+<span class="sd">      iterating over the object) is blocking, i.e., waits for at most `isi_max`</span>
+<span class="sd">      seconds for a new epoch to be received.</span>
+<span class="sd">    - Calling `get_data()` on an `RtEpochs` object immediately returns the</span>
+<span class="sd">      epochs received so far (without waiting for new epochs).</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="nd">@verbose</span>
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">client</span><span class="p">,</span> <span class="n">event_id</span><span class="p">,</span> <span class="n">tmin</span><span class="p">,</span> <span class="n">tmax</span><span class="p">,</span> <span class="n">stim_channel</span><span class="o">=</span><span class="s1">&#39;STI 014&#39;</span><span class="p">,</span>
+                 <span class="n">sleep_time</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">baseline</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">picks</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">reject</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">proj</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                 <span class="n">decim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">reject_tmin</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">reject_tmax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">detrend</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                 <span class="n">isi_max</span><span class="o">=</span><span class="mf">2.</span><span class="p">,</span> <span class="n">find_events</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>  <span class="c1"># noqa: D102</span>
+        <span class="n">info</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">get_measurement_info</span><span class="p">()</span>
+
+        <span class="c1"># the measurement info of the data as we receive it</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_client_info</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="n">info</span><span class="p">)</span>
+
+        <span class="n">verbose</span> <span class="o">=</span> <span class="n">client</span><span class="o">.</span><span class="n">verbose</span> <span class="k">if</span> <span class="n">verbose</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">verbose</span>
+
+        <span class="c1"># FIFO queues for received epochs and events</span>
+        <span class="c1"># need to be initialized to validate invariants in base constructor</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_epoch_queue</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_events</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_selection</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+
+        <span class="c1"># call BaseEpochs constructor</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">RtEpochs</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span>
+            <span class="n">info</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">event_id</span><span class="p">,</span> <span class="n">tmin</span><span class="p">,</span> <span class="n">tmax</span><span class="p">,</span> <span class="n">baseline</span><span class="p">,</span> <span class="n">picks</span><span class="o">=</span><span class="n">picks</span><span class="p">,</span>
+            <span class="n">reject</span><span class="o">=</span><span class="n">reject</span><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><span class="n">flat</span><span class="p">,</span> <span class="n">decim</span><span class="o">=</span><span class="n">decim</span><span class="p">,</span>
+            <span class="n">reject_tmin</span><span class="o">=</span><span class="n">reject_tmin</span><span class="p">,</span> <span class="n">reject_tmax</span><span class="o">=</span><span class="n">reject_tmax</span><span class="p">,</span> <span class="n">detrend</span><span class="o">=</span><span class="n">detrend</span><span class="p">,</span>
+            <span class="n">verbose</span><span class="o">=</span><span class="n">verbose</span><span class="p">,</span> <span class="n">proj</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_bad_dropped</span> <span class="o">=</span> <span class="kc">True</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_client</span> <span class="o">=</span> <span class="n">client</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">stim_channel</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
+            <span class="n">stim_channel</span> <span class="o">=</span> <span class="p">[</span><span class="n">stim_channel</span><span class="p">]</span>
+
+        <span class="n">stim_picks</span> <span class="o">=</span> <span class="n">pick_channels</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_client_info</span><span class="p">[</span><span class="s1">&#39;ch_names&#39;</span><span class="p">],</span>
+                                   <span class="n">include</span><span class="o">=</span><span class="n">stim_channel</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="p">[])</span>
+
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">stim_picks</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;No stim channel found to extract event &#39;</span>
+                             <span class="s1">&#39;triggers.&#39;</span><span class="p">)</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_stim_picks</span> <span class="o">=</span> <span class="n">stim_picks</span>
+
+        <span class="c1"># find_events default options</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_find_events_kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">output</span><span class="o">=</span><span class="s1">&#39;onset&#39;</span><span class="p">,</span>
+                                        <span class="n">consecutive</span><span class="o">=</span><span class="s1">&#39;increasing&#39;</span><span class="p">,</span>
+                                        <span class="n">min_duration</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">mask</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+                                        <span class="n">mask_type</span><span class="o">=</span><span class="s1">&#39;not_and&#39;</span><span class="p">,</span>
+                                        <span class="n">verbose</span><span class="o">=</span><span class="s1">&#39;ERROR&#39;</span><span class="p">)</span>
+        <span class="c1"># update default options if dictionary is provided</span>
+        <span class="k">if</span> <span class="n">find_events</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_find_events_kwargs</span><span class="o">.</span><span class="n">update</span><span class="p">(</span><span class="n">find_events</span><span class="p">)</span>
+        <span class="n">min_samples</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_find_events_kwargs</span><span class="p">[</span><span class="s1">&#39;min_duration&#39;</span><span class="p">]</span> <span class="o">*</span>
+                       <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;sfreq&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_find_events_kwargs</span><span class="o">.</span><span class="n">pop</span><span class="p">(</span><span class="s1">&#39;min_duration&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_find_events_kwargs</span><span class="p">[</span><span class="s1">&#39;min_samples&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">min_samples</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_sleep_time</span> <span class="o">=</span> <span class="n">sleep_time</span>
+
+        <span class="c1"># add calibration factors</span>
+        <span class="n">cals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">zeros</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_client_info</span><span class="p">[</span><span class="s1">&#39;nchan&#39;</span><span class="p">])</span>
+        <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_client_info</span><span class="p">[</span><span class="s1">&#39;nchan&#39;</span><span class="p">]):</span>
+            <span class="n">cals</span><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="o">=</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_client_info</span><span class="p">[</span><span class="s1">&#39;chs&#39;</span><span class="p">][</span><span class="n">k</span><span class="p">][</span><span class="s1">&#39;range&#39;</span><span class="p">]</span> <span class="o">*</span>
+                       <span class="bp">self</span><span class="o">.</span><span class="n">_client_info</span><span class="p">[</span><span class="s1">&#39;chs&#39;</span><span class="p">][</span><span class="n">k</span><span class="p">][</span><span class="s1">&#39;cal&#39;</span><span class="p">])</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_cals</span> <span class="o">=</span> <span class="n">cals</span><span class="p">[:,</span> <span class="kc">None</span><span class="p">]</span>
+
+        <span class="c1"># variables needed for receiving raw buffers</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_last_buffer</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_first_samp</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_event_backlog</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+
+        <span class="c1"># Number of good and bad epochs received</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_n_good</span> <span class="o">=</span> <span class="mi">0</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_n_bad</span> <span class="o">=</span> <span class="mi">0</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_started</span> <span class="o">=</span> <span class="kc">False</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_last_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">isi_max</span> <span class="o">=</span> <span class="n">isi_max</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">events</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;The events associated with the epochs currently in the queue.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_events</span><span class="p">)</span>
+
+    <span class="nd">@events</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">events</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_events</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Update the internal event list.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        new_events : array of int, shape (n_events, 3)</span>
+<span class="sd">            new events</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_events</span> <span class="o">=</span> <span class="p">[</span><span class="nb">tuple</span><span class="p">(</span><span class="n">new_events</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="p">:])</span>
+                        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">new_events</span><span class="p">))]</span>
+
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">selection</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Array of integers of the current selection.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">np</span><span class="o">.</span><span class="n">asarray</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_selection</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)</span>
+
+    <span class="nd">@selection</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">selection</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">new_selection</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Update the internal selection list.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        new_selection : iterable of epoch indices</span>
+
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_selection</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">new_selection</span><span class="p">)</span>
+
+<div class="viewcode-block" id="RtEpochs.copy"><a class="viewcode-back" href="../../generated/mne_realtime.RtEpochs.html#mne_realtime.RtEpochs.copy">[docs]</a>    <span class="k">def</span> <span class="nf">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return copy of Epochs instance.&quot;&quot;&quot;</span>
+        <span class="n">client</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_client</span>
+        <span class="k">del</span> <span class="bp">self</span><span class="o">.</span><span class="n">_client</span>
+        <span class="n">new</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">RtEpochs</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_client</span> <span class="o">=</span> <span class="n">client</span>
+        <span class="n">new</span><span class="o">.</span><span class="n">_client</span> <span class="o">=</span> <span class="n">client</span>
+        <span class="k">return</span> <span class="n">new</span></div>
+
+    <span class="k">def</span> <span class="nf">_getitem</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">item</span><span class="p">,</span> <span class="n">reason</span><span class="o">=</span><span class="s1">&#39;IGNORED&#39;</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">drop_event_id</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                 <span class="n">select_data</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">return_indices</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+
+        <span class="n">epochs</span><span class="p">,</span> <span class="n">select</span> <span class="o">=</span> <span class="nb">super</span><span class="p">(</span><span class="n">RtEpochs</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">_getitem</span><span class="p">(</span>
+            <span class="n">item</span><span class="o">=</span><span class="n">item</span><span class="p">,</span> <span class="n">reason</span><span class="o">=</span><span class="n">reason</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="n">copy</span><span class="p">,</span> <span class="n">drop_event_id</span><span class="o">=</span><span class="n">drop_event_id</span><span class="p">,</span>
+            <span class="n">select_data</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">return_indices</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+        <span class="c1"># try to be compatible with numpy indexing</span>
+        <span class="n">new_queue</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">kept_idx</span> <span class="ow">in</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">epochs</span><span class="o">.</span><span class="n">_epoch_queue</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="nb">int</span><span class="p">)[</span><span class="n">select</span><span class="p">]:</span>
+            <span class="n">new_queue</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">epochs</span><span class="o">.</span><span class="n">_epoch_queue</span><span class="p">[</span><span class="n">kept_idx</span><span class="p">])</span>
+        <span class="n">epochs</span><span class="o">.</span><span class="n">_epoch_queue</span> <span class="o">=</span> <span class="n">new_queue</span>
+
+        <span class="n">epochs</span><span class="o">.</span><span class="n">_n_good</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">epochs</span><span class="o">.</span><span class="n">_epoch_queue</span><span class="p">)</span>
+
+        <span class="k">return</span> <span class="n">epochs</span>
+
+<div class="viewcode-block" id="RtEpochs.start"><a class="viewcode-back" href="../../generated/mne_realtime.RtEpochs.html#mne_realtime.RtEpochs.start">[docs]</a>    <span class="k">def</span> <span class="nf">start</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Start receiving epochs.</span>
+
+<span class="sd">        The measurement will be started if it has not already been started.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_started</span><span class="p">:</span>
+            <span class="c1"># register the callback</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="o">.</span><span class="n">register_receive_callback</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_process_raw_buffer</span><span class="p">)</span>
+
+            <span class="c1"># start the measurement and the receive thread</span>
+            <span class="n">nchan</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_client_info</span><span class="p">[</span><span class="s1">&#39;nchan&#39;</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="o">.</span><span class="n">start_receive_thread</span><span class="p">(</span><span class="n">nchan</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_started</span> <span class="o">=</span> <span class="kc">True</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_last_time</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span>  <span class="c1"># init delay counter. Will stop iters</span></div>
+
+<div class="viewcode-block" id="RtEpochs.stop"><a class="viewcode-back" href="../../generated/mne_realtime.RtEpochs.html#mne_realtime.RtEpochs.stop">[docs]</a>    <span class="k">def</span> <span class="nf">stop</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">stop_receive_thread</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">stop_measurement</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Stop receiving epochs.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        stop_receive_thread : bool</span>
+<span class="sd">            Stop the receive thread. Note: Other RtEpochs instances will also</span>
+<span class="sd">            stop receiving epochs when the receive thread is stopped. The</span>
+<span class="sd">            receive thread will always be stopped if stop_measurement is True.</span>
+
+<span class="sd">        stop_measurement : bool</span>
+<span class="sd">            Also stop the measurement. Note: Other clients attached to the</span>
+<span class="sd">            server will also stop receiving data.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_started</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="o">.</span><span class="n">unregister_receive_callback</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_process_raw_buffer</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_started</span> <span class="o">=</span> <span class="kc">False</span>
+
+        <span class="k">if</span> <span class="n">stop_receive_thread</span> <span class="ow">or</span> <span class="n">stop_measurement</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_client</span><span class="o">.</span><span class="n">stop_receive_thread</span><span class="p">(</span><span class="n">stop_measurement</span><span class="o">=</span><span class="n">stop_measurement</span><span class="p">)</span></div>
+
+    <span class="nd">@verbose</span>
+    <span class="k">def</span> <span class="nf">__next__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">return_event_id</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Make iteration over epochs easy.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        return_event_id : bool</span>
+<span class="sd">            If True, return both an epoch and and event_id.</span>
+<span class="sd">        verbose: bool, str, int, or None</span>
+<span class="sd">            If not None, override default verbose level (see</span>
+<span class="sd">            :func:`mne.verbose`. Defaults to self.verbose.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        epoch : instance of Epochs</span>
+<span class="sd">            The epoch.</span>
+<span class="sd">        event_id : int</span>
+<span class="sd">            The event id. Only returned if ``return_event_id`` is ``True``.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">first</span> <span class="o">=</span> <span class="kc">True</span>
+        <span class="k">while</span> <span class="kc">True</span><span class="p">:</span>
+            <span class="n">current_time</span> <span class="o">=</span> <span class="n">time</span><span class="o">.</span><span class="n">time</span><span class="p">()</span>
+            <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_epoch_queue</span><span class="p">)</span> <span class="o">&gt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current</span><span class="p">:</span>
+                <span class="n">epoch</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_epoch_queue</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_current</span><span class="p">]</span>
+                <span class="n">event_id</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_events</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_current</span><span class="p">][</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_current</span> <span class="o">+=</span> <span class="mi">1</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_last_time</span> <span class="o">=</span> <span class="n">current_time</span>
+                <span class="k">return</span> <span class="p">(</span><span class="n">epoch</span><span class="p">,</span> <span class="n">event_id</span><span class="p">)</span> <span class="k">if</span> <span class="n">return_event_id</span> <span class="k">else</span> <span class="n">epoch</span>
+            <span class="k">if</span> <span class="n">current_time</span> <span class="o">&gt;</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_last_time</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">isi_max</span><span class="p">):</span>
+                <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Time of </span><span class="si">%s</span><span class="s1"> seconds exceeded.&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">isi_max</span><span class="p">)</span>
+                <span class="k">raise</span> <span class="ne">StopIteration</span>  <span class="c1"># signal the end properly</span>
+            <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_started</span><span class="p">:</span>
+                <span class="k">if</span> <span class="n">first</span><span class="p">:</span>
+                    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Waiting for epoch </span><span class="si">%d</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_current</span> <span class="o">+</span> <span class="mi">1</span><span class="p">))</span>
+                    <span class="n">first</span> <span class="o">=</span> <span class="kc">False</span>
+                <span class="n">time</span><span class="o">.</span><span class="n">sleep</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_sleep_time</span><span class="p">)</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Not enough epochs in queue and currently &#39;</span>
+                                   <span class="s1">&#39;not receiving epochs, cannot get epochs!&#39;</span><span class="p">)</span>
+
+    <span class="nb">next</span> <span class="o">=</span> <span class="fm">__next__</span>
+
+    <span class="nd">@verbose</span>
+    <span class="k">def</span> <span class="nf">_get_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">out</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">picks</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>  <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Return all data as numpy array.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        out : bool</span>
+<span class="sd">            Return the data.</span>
+<span class="sd">        %(picks_all)s</span>
+<span class="sd">        verbose: bool, str, int, or None</span>
+<span class="sd">            If not None, override default verbose level (see</span>
+<span class="sd">            :func:`mne.verbose`. Defaults to self.verbose.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        np.ndarray or None</span>
+<span class="sd">        epochs data</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        Rejection in RtEpochs already happens at epoch creation,</span>
+<span class="sd">        not on data loading.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="n">out</span><span class="p">:</span>
+            <span class="n">epochs</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+            <span class="k">for</span> <span class="n">epoch</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_epoch_queue</span><span class="p">:</span>
+                <span class="n">epochs</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">epoch</span><span class="p">)</span>
+
+            <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">epochs</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">picks</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="n">picks</span> <span class="o">=</span> <span class="n">_picks_to_idx</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">picks</span><span class="p">)</span>
+                <span class="n">data</span> <span class="o">=</span> <span class="n">data</span><span class="p">[:,</span> <span class="n">picks</span><span class="p">]</span>
+            <span class="k">return</span> <span class="n">data</span>
+
+    <span class="k">def</span> <span class="nf">_process_raw_buffer</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">raw_buffer</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Process raw buffer (callback from RtClient).</span>
+
+<span class="sd">        Note: Do not print log messages during regular use. It will be printed</span>
+<span class="sd">        asynchronously which is annoying when working in an interactive shell.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        raw_buffer : array of float, shape=(nchan, n_times)</span>
+<span class="sd">            The raw buffer.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">sfreq</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;sfreq&#39;</span><span class="p">]</span>
+        <span class="n">n_samp</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_raw_times</span><span class="p">)</span>
+
+        <span class="c1"># relative start and stop positions in samples</span>
+        <span class="n">tmin_samp</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">sfreq</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">tmin</span><span class="p">))</span>
+        <span class="n">tmax_samp</span> <span class="o">=</span> <span class="n">tmin_samp</span> <span class="o">+</span> <span class="n">n_samp</span>
+
+        <span class="n">last_samp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_first_samp</span> <span class="o">+</span> <span class="n">raw_buffer</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span>
+
+        <span class="c1"># apply calibration without inplace modification</span>
+        <span class="n">raw_buffer</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_cals</span> <span class="o">*</span> <span class="n">raw_buffer</span>
+
+        <span class="c1"># detect events</span>
+        <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">raw_buffer</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_stim_picks</span><span class="p">])</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int</span><span class="p">)</span>
+        <span class="c1"># if there is a previous buffer check the last samples from it too</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last_buffer</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">prev_data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last_buffer</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_stim_picks</span><span class="p">,</span>
+                                          <span class="o">-</span><span class="n">raw_buffer</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]:]</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">int</span><span class="p">)</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">concatenate</span><span class="p">((</span><span class="n">prev_data</span><span class="p">,</span> <span class="n">data</span><span class="p">),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+            <span class="n">buff_events</span> <span class="o">=</span> <span class="n">_find_events</span><span class="p">(</span><span class="n">data</span><span class="p">,</span>
+                                       <span class="bp">self</span><span class="o">.</span><span class="n">_first_samp</span> <span class="o">-</span> <span class="n">raw_buffer</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">],</span>
+                                       <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_find_events_kwargs</span><span class="p">)</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">data</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">atleast_2d</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+            <span class="n">buff_events</span> <span class="o">=</span> <span class="n">_find_events</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_first_samp</span><span class="p">,</span>
+                                       <span class="o">**</span><span class="bp">self</span><span class="o">.</span><span class="n">_find_events_kwargs</span><span class="p">)</span>
+
+        <span class="n">events</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_event_backlog</span>
+
+        <span class="c1"># remove events before the last epoch processed</span>
+        <span class="n">min_event_samp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_first_samp</span> <span class="o">-</span> \
+            <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_find_events_kwargs</span><span class="p">[</span><span class="s1">&#39;min_samples&#39;</span><span class="p">])</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_event_backlog</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">backlog_samps</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_event_backlog</span><span class="p">)[:,</span> <span class="mi">0</span><span class="p">]</span>
+            <span class="n">min_event_samp</span> <span class="o">=</span> <span class="n">backlog_samps</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">+</span> <span class="mi">1</span>
+
+        <span class="k">if</span> <span class="n">buff_events</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">valid_events_idx</span> <span class="o">=</span> <span class="n">buff_events</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">&gt;=</span> <span class="n">min_event_samp</span>
+            <span class="n">buff_events</span> <span class="o">=</span> <span class="n">buff_events</span><span class="p">[</span><span class="n">valid_events_idx</span><span class="p">]</span>
+
+        <span class="c1"># add events from this buffer to the list of events</span>
+        <span class="c1"># processed so far</span>
+        <span class="k">for</span> <span class="n">event_id</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">event_id</span><span class="o">.</span><span class="n">values</span><span class="p">():</span>
+            <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">buff_events</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">event_id</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="n">events</span><span class="o">.</span><span class="n">extend</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="n">buff_events</span><span class="p">[</span><span class="n">idx</span><span class="p">,</span> <span class="mi">0</span><span class="p">]),</span>
+                              <span class="nb">list</span><span class="p">(</span><span class="n">buff_events</span><span class="p">[</span><span class="n">idx</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">])))</span>
+
+        <span class="n">events</span><span class="o">.</span><span class="n">sort</span><span class="p">()</span>
+
+        <span class="n">event_backlog</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">event_samp</span><span class="p">,</span> <span class="n">event_id</span> <span class="ow">in</span> <span class="n">events</span><span class="p">:</span>
+            <span class="n">epoch</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="k">if</span> <span class="p">(</span><span class="n">event_samp</span> <span class="o">+</span> <span class="n">tmin_samp</span> <span class="o">&gt;=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_first_samp</span> <span class="ow">and</span>
+                    <span class="n">event_samp</span> <span class="o">+</span> <span class="n">tmax_samp</span> <span class="o">&lt;=</span> <span class="n">last_samp</span><span class="p">):</span>
+                <span class="c1"># easy case: whole epoch is in this buffer</span>
+                <span class="n">start</span> <span class="o">=</span> <span class="n">event_samp</span> <span class="o">+</span> <span class="n">tmin_samp</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_first_samp</span>
+                <span class="n">stop</span> <span class="o">=</span> <span class="n">event_samp</span> <span class="o">+</span> <span class="n">tmax_samp</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">_first_samp</span>
+                <span class="n">epoch</span> <span class="o">=</span> <span class="n">raw_buffer</span><span class="p">[:,</span> <span class="n">start</span><span class="p">:</span><span class="n">stop</span><span class="p">]</span>
+            <span class="k">elif</span> <span class="p">(</span><span class="n">event_samp</span> <span class="o">+</span> <span class="n">tmin_samp</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_first_samp</span> <span class="ow">and</span>
+                    <span class="n">event_samp</span> <span class="o">+</span> <span class="n">tmax_samp</span> <span class="o">&lt;=</span> <span class="n">last_samp</span><span class="p">):</span>
+                <span class="c1"># have to use some samples from previous buffer</span>
+                <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last_buffer</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+                    <span class="k">continue</span>
+                <span class="n">n_last</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_first_samp</span> <span class="o">-</span> <span class="p">(</span><span class="n">event_samp</span> <span class="o">+</span> <span class="n">tmin_samp</span><span class="p">)</span>
+                <span class="n">n_this</span> <span class="o">=</span> <span class="n">n_samp</span> <span class="o">-</span> <span class="n">n_last</span>
+                <span class="n">epoch</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">c_</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_last_buffer</span><span class="p">[:,</span> <span class="o">-</span><span class="n">n_last</span><span class="p">:],</span>
+                              <span class="n">raw_buffer</span><span class="p">[:,</span> <span class="p">:</span><span class="n">n_this</span><span class="p">]]</span>
+            <span class="k">elif</span> <span class="n">event_samp</span> <span class="o">+</span> <span class="n">tmax_samp</span> <span class="o">&gt;</span> <span class="n">last_samp</span><span class="p">:</span>
+                <span class="c1"># we need samples from the future</span>
+                <span class="c1"># we will process this epoch with the next buffer</span>
+                <span class="n">event_backlog</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">event_samp</span><span class="p">,</span> <span class="n">event_id</span><span class="p">))</span>
+            <span class="k">else</span><span class="p">:</span>
+                <span class="k">raise</span> <span class="ne">RuntimeError</span><span class="p">(</span><span class="s1">&#39;Unhandled case..&#39;</span><span class="p">)</span>
+
+            <span class="k">if</span> <span class="n">epoch</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_append_epoch_to_queue</span><span class="p">(</span><span class="n">epoch</span><span class="p">,</span> <span class="n">event_samp</span><span class="p">,</span> <span class="n">event_id</span><span class="p">)</span>
+
+        <span class="c1"># set things up for processing of next buffer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_event_backlog</span> <span class="o">=</span> <span class="n">event_backlog</span>
+        <span class="n">n_buffer</span> <span class="o">=</span> <span class="n">raw_buffer</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last_buffer</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_last_buffer</span> <span class="o">=</span> <span class="n">raw_buffer</span>
+        <span class="k">elif</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last_buffer</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="o">&lt;=</span> <span class="n">n_samp</span> <span class="o">+</span> <span class="n">n_buffer</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_last_buffer</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">c_</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_last_buffer</span><span class="p">,</span> <span class="n">raw_buffer</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="c1"># do not increase size of _last_buffer any further</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_last_buffer</span><span class="p">[:,</span> <span class="p">:</span><span class="o">-</span><span class="n">n_buffer</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last_buffer</span><span class="p">[:,</span> <span class="n">n_buffer</span><span class="p">:]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_last_buffer</span><span class="p">[:,</span> <span class="o">-</span><span class="n">n_buffer</span><span class="p">:]</span> <span class="o">=</span> <span class="n">raw_buffer</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_first_samp</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_first_samp</span> <span class="o">+</span> <span class="n">n_buffer</span>
+
+    <span class="k">def</span> <span class="nf">_append_epoch_to_queue</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">epoch</span><span class="p">,</span> <span class="n">event_samp</span><span class="p">,</span> <span class="n">event_id</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Append a (raw) epoch to queue.</span>
+
+<span class="sd">        Note: Do not print log messages during regular use. It will be printed</span>
+<span class="sd">        asynchronously which is annyoing when working in an interactive shell.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        epoch : array of float, shape=(nchan, n_times)</span>
+<span class="sd">            The raw epoch (only calibration has been applied) over all</span>
+<span class="sd">            channels.</span>
+<span class="sd">        event_samp : int</span>
+<span class="sd">            The time in samples when the epoch occurred.</span>
+<span class="sd">        event_id : int</span>
+<span class="sd">            The event ID of the epoch.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># select the channels</span>
+        <span class="n">epoch</span> <span class="o">=</span> <span class="n">epoch</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">picks</span><span class="p">,</span> <span class="p">:]</span>
+
+        <span class="c1"># Detrend, baseline correct, decimate</span>
+        <span class="n">epoch</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_detrend_offset_decim</span><span class="p">(</span><span class="n">epoch</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="s1">&#39;ERROR&#39;</span><span class="p">)</span>
+
+        <span class="c1"># apply SSP</span>
+        <span class="n">epoch</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_project_epoch</span><span class="p">(</span><span class="n">epoch</span><span class="p">)</span>
+
+        <span class="c1"># Decide if this is a good epoch</span>
+        <span class="n">is_good</span><span class="p">,</span> <span class="n">offending_reasons</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_is_good_epoch</span><span class="p">(</span><span class="n">epoch</span><span class="p">,</span>
+                                                         <span class="n">verbose</span><span class="o">=</span><span class="s1">&#39;ERROR&#39;</span><span class="p">)</span>
+
+        <span class="k">if</span> <span class="n">is_good</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_epoch_queue</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">epoch</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_events</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">event_samp</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="n">event_id</span><span class="p">))</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">drop_log</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">list</span><span class="p">())</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_selection</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">drop_log</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_n_good</span> <span class="o">+=</span> <span class="mi">1</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">drop_log</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">offending_reasons</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_n_bad</span> <span class="o">+=</span> <span class="mi">1</span>
+
+<div class="viewcode-block" id="RtEpochs.decimate"><a class="viewcode-back" href="../../generated/mne_realtime.RtEpochs.html#mne_realtime.RtEpochs.decimate">[docs]</a>    <span class="nd">@verbose</span>
+    <span class="k">def</span> <span class="nf">decimate</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">decim</span><span class="p">,</span> <span class="n">offset</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Decimate the epochs.</span>
+
+<span class="sd">        .. note:: No filtering is performed. To avoid aliasing, ensure</span>
+<span class="sd">                  your data are properly lowpassed.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        decim : int</span>
+<span class="sd">            The amount to decimate data.</span>
+<span class="sd">        offset : int</span>
+<span class="sd">            Apply an offset to where the decimation starts relative to the</span>
+<span class="sd">            sample corresponding to t=0. The offset is in samples at the</span>
+<span class="sd">            current sampling rate.</span>
+
+<span class="sd">            .. versionadded:: 0.12</span>
+
+<span class="sd">        %(verbose_meth)s</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        epochs : instance of Epochs</span>
+<span class="sd">            The decimated Epochs object.</span>
+
+<span class="sd">        See Also</span>
+<span class="sd">        --------</span>
+<span class="sd">        mne.Evoked.decimate</span>
+<span class="sd">        mne.Epochs.resample</span>
+<span class="sd">        mne.io.Raw.resample</span>
+
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        Decimation can be done multiple times. For example,</span>
+<span class="sd">        ``epochs.decimate(2).decimate(2)`` will be the same as</span>
+<span class="sd">        ``epochs.decimate(4)``.</span>
+<span class="sd">        If `decim` is 1, this method does not copy the underlying data.</span>
+
+<span class="sd">        .. versionadded:: 0.10.0</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="nb">super</span><span class="p">(</span><span class="n">RtEpochs</span><span class="p">,</span> <span class="bp">self</span><span class="p">)</span><span class="o">.</span><span class="n">decimate</span><span class="p">(</span><span class="n">decim</span><span class="p">,</span> <span class="n">offset</span><span class="p">,</span> <span class="n">verbose</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_epoch_queue</span><span class="p">)):</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_epoch_queue</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_epoch_queue</span><span class="p">[</span><span class="n">i</span><span class="p">][:,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_decim_slice</span><span class="p">]</span>
+        <span class="k">return</span> <span class="bp">self</span></div>
+
+    <span class="k">def</span> <span class="nf">__repr__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>  <span class="c1"># noqa: D105</span>
+        <span class="n">s</span> <span class="o">=</span> <span class="s1">&#39;good / bad epochs received: </span><span class="si">%d</span><span class="s1"> / </span><span class="si">%d</span><span class="s1">, epochs in queue: </span><span class="si">%d</span><span class="s1">, &#39;</span>\
+            <span class="o">%</span> <span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_n_good</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">_n_bad</span><span class="p">,</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_epoch_queue</span><span class="p">))</span>
+        <span class="n">s</span> <span class="o">+=</span> <span class="s1">&#39;, tmin : </span><span class="si">%s</span><span class="s1"> (s)&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">tmin</span>
+        <span class="n">s</span> <span class="o">+=</span> <span class="s1">&#39;, tmax : </span><span class="si">%s</span><span class="s1"> (s)&#39;</span> <span class="o">%</span> <span class="bp">self</span><span class="o">.</span><span class="n">tmax</span>
+        <span class="n">s</span> <span class="o">+=</span> <span class="s1">&#39;, baseline : </span><span class="si">%s</span><span class="s1">&#39;</span> <span class="o">%</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">baseline</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s1">&#39;&lt;RtEpochs  |  </span><span class="si">%s</span><span class="s1">&gt;&#39;</span> <span class="o">%</span> <span class="n">s</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2012-2019, MNE Developers. Last updated on 2019-05-21
+
+    </p>
+  </div> 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
