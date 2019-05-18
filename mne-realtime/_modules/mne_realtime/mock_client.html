@@ -1,0 +1,404 @@
+
+
+<!DOCTYPE html>
+<!--[if IE 8]><html class="no-js lt-ie9" lang="en" > <![endif]-->
+<!--[if gt IE 8]><!--> <html class="no-js" lang="en" > <!--<![endif]-->
+<head>
+  <meta charset="utf-8">
+  
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <title>mne_realtime.mock_client &mdash; MNE-Realtime 0.0.1 documentation</title>
+  
+
+  
+  
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+  
+  
+  
+
+  
+  <script type="text/javascript" src="../../_static/js/modernizr.min.js"></script>
+  
+    
+      <script type="text/javascript" id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+        <script type="text/javascript" src="../../_static/jquery.js"></script>
+        <script type="text/javascript" src="../../_static/underscore.js"></script>
+        <script type="text/javascript" src="../../_static/doctools.js"></script>
+        <script type="text/javascript" src="../../_static/language_data.js"></script>
+        <script type="text/javascript" src="../../_static/js/copybutton.js"></script>
+    
+    <script type="text/javascript" src="../../_static/js/theme.js"></script>
+
+    
+
+  
+  <link rel="stylesheet" href="../../_static/css/project-template.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+  <link rel="stylesheet" href="../../_static/gallery.css" type="text/css" />
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav">
+
+   
+  <div class="wy-grid-for-nav">
+    
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+          
+
+          
+            <a href="../../index.html" class="icon icon-home"> MNE-Realtime
+          
+
+          
+            
+            <img src="../../_static/mne_logo_small.png" class="logo" alt="Logo"/>
+          
+          </a>
+
+          
+            
+            
+              <div class="version">
+                0.0.1
+              </div>
+            
+          
+
+          
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+
+          
+        </div>
+
+        
+        <div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="main navigation">
+          
+            
+            
+              
+            
+            
+              <p class="caption"><span class="caption-text">Documentation</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../user_guide.html">User guide: create your own mne project</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../api.html">mne-realtime API</a></li>
+</ul>
+<p class="caption"><span class="caption-text">Tutorial - Examples</span></p>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="../../auto_examples/index.html">Real-time M/EEG Acquisition</a></li>
+</ul>
+
+            
+          
+        </div>
+        
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap">
+
+      
+      <nav class="wy-nav-top" aria-label="top navigation">
+        
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">MNE-Realtime</a>
+        
+      </nav>
+
+
+      <div class="wy-nav-content">
+        
+        <div class="rst-content">
+        
+          
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div role="navigation" aria-label="breadcrumbs navigation">
+
+  <ul class="wy-breadcrumbs">
+    
+      <li><a href="../../index.html">Docs</a> &raquo;</li>
+        
+          <li><a href="../index.html">Module code</a> &raquo;</li>
+        
+      <li>mne_realtime.mock_client</li>
+    
+    
+      <li class="wy-breadcrumbs-aside">
+        
+      </li>
+    
+  </ul>
+
+  
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+            
+  <h1>Source code for mne_realtime.mock_client</h1><div class="highlight"><pre>
+<span></span><span class="c1"># Authors: Mainak Jas &lt;mainakjas@gmail.com&gt;</span>
+<span class="c1">#          Denis Engemann &lt;denis.engemann@gmail.com&gt;</span>
+<span class="c1">#          Alexandre Gramfort &lt;alexandre.gramfort@telecom-paristech.fr&gt;</span>
+<span class="c1">#</span>
+<span class="c1"># License: BSD (3-clause)</span>
+
+<span class="kn">import</span> <span class="nn">copy</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">from</span> <span class="nn">mne.event</span> <span class="k">import</span> <span class="n">find_events</span>
+<span class="kn">from</span> <span class="nn">mne.io.pick</span> <span class="k">import</span> <span class="n">_picks_to_idx</span>
+<span class="kn">from</span> <span class="nn">mne.utils</span> <span class="k">import</span> <span class="n">fill_doc</span>
+
+
+<div class="viewcode-block" id="MockRtClient"><a class="viewcode-back" href="../../generated/mne_realtime.MockRtClient.html#mne_realtime.MockRtClient">[docs]</a><span class="nd">@fill_doc</span>
+<span class="k">class</span> <span class="nc">MockRtClient</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Mock Realtime Client.</span>
+
+<span class="sd">    Parameters</span>
+<span class="sd">    ----------</span>
+<span class="sd">    raw : instance of Raw object</span>
+<span class="sd">        The raw object which simulates the RtClient</span>
+<span class="sd">    %(verbose)s</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+
+    <span class="k">def</span> <span class="nf">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">raw</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>  <span class="c1"># noqa: D102</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">raw</span> <span class="o">=</span> <span class="n">raw</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">info</span> <span class="o">=</span> <span class="n">copy</span><span class="o">.</span><span class="n">deepcopy</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">verbose</span> <span class="o">=</span> <span class="n">verbose</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">_current</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>  <span class="c1"># pointer to current index for the event</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_last</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">()</span>  <span class="c1"># Last index for the event</span>
+
+<div class="viewcode-block" id="MockRtClient.get_measurement_info"><a class="viewcode-back" href="../../generated/mne_realtime.MockRtClient.html#mne_realtime.MockRtClient.get_measurement_info">[docs]</a>    <span class="k">def</span> <span class="nf">get_measurement_info</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Return the measurement info.</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        self.info : dict</span>
+<span class="sd">            The measurement info.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">info</span></div>
+
+<div class="viewcode-block" id="MockRtClient.send_data"><a class="viewcode-back" href="../../generated/mne_realtime.MockRtClient.html#mne_realtime.MockRtClient.send_data">[docs]</a>    <span class="nd">@fill_doc</span>
+    <span class="k">def</span> <span class="nf">send_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">epochs</span><span class="p">,</span> <span class="n">picks</span><span class="p">,</span> <span class="n">tmin</span><span class="p">,</span> <span class="n">tmax</span><span class="p">,</span> <span class="n">buffer_size</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Read from raw object and send them to RtEpochs for processing.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        epochs : instance of RtEpochs</span>
+<span class="sd">            The epochs object.</span>
+<span class="sd">        %(picks_all)s</span>
+<span class="sd">        tmin : float</span>
+<span class="sd">            Time instant to start receiving buffers.</span>
+<span class="sd">        tmax : float</span>
+<span class="sd">            Time instant to stop receiving buffers.</span>
+<span class="sd">        buffer_size : int</span>
+<span class="sd">            Size of each buffer in terms of number of samples.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># this is important to emulate a thread, instead of automatically</span>
+        <span class="c1"># or constantly sending data, we will invoke this explicitly to send</span>
+        <span class="c1"># the next buffer</span>
+
+        <span class="n">picks</span> <span class="o">=</span> <span class="n">_picks_to_idx</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">picks</span><span class="p">,</span> <span class="s1">&#39;all&#39;</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="p">())</span>
+        <span class="n">sfreq</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;sfreq&#39;</span><span class="p">]</span>
+        <span class="n">tmin_samp</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">sfreq</span> <span class="o">*</span> <span class="n">tmin</span><span class="p">))</span>
+        <span class="n">tmax_samp</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="n">sfreq</span> <span class="o">*</span> <span class="n">tmax</span><span class="p">))</span>
+
+        <span class="n">iter_times</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span>
+            <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">tmin_samp</span><span class="p">,</span> <span class="n">tmax_samp</span><span class="p">,</span> <span class="n">buffer_size</span><span class="p">)),</span>
+            <span class="nb">list</span><span class="p">(</span><span class="nb">range</span><span class="p">(</span><span class="n">buffer_size</span><span class="p">,</span> <span class="n">tmax_samp</span> <span class="o">+</span> <span class="mi">1</span><span class="p">,</span> <span class="n">buffer_size</span><span class="p">))))</span>
+        <span class="n">last_iter_sample</span> <span class="o">=</span> <span class="n">iter_times</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span> <span class="k">if</span> <span class="n">iter_times</span> <span class="k">else</span> <span class="mi">0</span>
+        <span class="k">if</span> <span class="n">last_iter_sample</span> <span class="o">&lt;</span> <span class="n">tmax_samp</span><span class="p">:</span>
+            <span class="n">iter_times</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">last_iter_sample</span><span class="p">,</span> <span class="n">tmax_samp</span><span class="p">))</span>
+
+        <span class="k">for</span> <span class="n">ii</span><span class="p">,</span> <span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">iter_times</span><span class="p">):</span>
+            <span class="c1"># channels are picked in _append_epoch_to_queue. No need to pick</span>
+            <span class="c1"># here</span>
+            <span class="n">data</span><span class="p">,</span> <span class="n">times</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw</span><span class="p">[:,</span> <span class="n">start</span><span class="p">:</span><span class="n">stop</span><span class="p">]</span>
+
+            <span class="c1"># to undo the calibration done in _process_raw_buffer</span>
+            <span class="n">cals</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([[</span><span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;chs&#39;</span><span class="p">][</span><span class="n">k</span><span class="p">][</span><span class="s1">&#39;range&#39;</span><span class="p">]</span> <span class="o">*</span>
+                              <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;chs&#39;</span><span class="p">][</span><span class="n">k</span><span class="p">][</span><span class="s1">&#39;cal&#39;</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">picks</span><span class="p">]])</span><span class="o">.</span><span class="n">T</span>
+
+            <span class="n">data</span><span class="p">[</span><span class="n">picks</span><span class="p">,</span> <span class="p">:]</span> <span class="o">=</span> <span class="n">data</span><span class="p">[</span><span class="n">picks</span><span class="p">,</span> <span class="p">:]</span> <span class="o">/</span> <span class="n">cals</span>
+
+            <span class="n">epochs</span><span class="o">.</span><span class="n">_process_raw_buffer</span><span class="p">(</span><span class="n">data</span><span class="p">)</span></div>
+
+    <span class="c1"># The following methods do not seem to be important for this use case,</span>
+    <span class="c1"># but they need to be present for the emulation to work because</span>
+    <span class="c1"># RtEpochs expects them to be there.</span>
+
+<div class="viewcode-block" id="MockRtClient.get_event_data"><a class="viewcode-back" href="../../generated/mne_realtime.MockRtClient.html#mne_realtime.MockRtClient.get_event_data">[docs]</a>    <span class="nd">@fill_doc</span>
+    <span class="k">def</span> <span class="nf">get_event_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">event_id</span><span class="p">,</span> <span class="n">tmin</span><span class="p">,</span> <span class="n">tmax</span><span class="p">,</span> <span class="n">picks</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                       <span class="n">stim_channel</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">min_duration</span><span class="o">=</span><span class="mi">0</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Simulate the data for a particular event-id.</span>
+
+<span class="sd">        The epochs corresponding to a particular event-id are returned. The</span>
+<span class="sd">        method remembers the epoch that was returned in the previous call and</span>
+<span class="sd">        returns the next epoch in sequence. Once all epochs corresponding to</span>
+<span class="sd">        an event-id have been exhausted, the method returns None.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        event_id : int</span>
+<span class="sd">            The id of the event to consider.</span>
+<span class="sd">        tmin : float</span>
+<span class="sd">            Start time before event.</span>
+<span class="sd">        tmax : float</span>
+<span class="sd">            End time after event.</span>
+<span class="sd">        %(picks_all)s</span>
+<span class="sd">        stim_channel : None | string | list of string</span>
+<span class="sd">            Name of the stim channel or all the stim channels</span>
+<span class="sd">            affected by the trigger. If None, the config variables</span>
+<span class="sd">            &#39;MNE_STIM_CHANNEL&#39;, &#39;MNE_STIM_CHANNEL_1&#39;, &#39;MNE_STIM_CHANNEL_2&#39;,</span>
+<span class="sd">            etc. are read. If these are not found, it will default to</span>
+<span class="sd">            &#39;STI 014&#39;.</span>
+<span class="sd">        min_duration : float</span>
+<span class="sd">            The minimum duration of a change in the events channel required</span>
+<span class="sd">            to consider it as an event (in seconds).</span>
+
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        data : 2D array with shape [n_channels, n_times]</span>
+<span class="sd">            The epochs that are being simulated</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># Get the list of all events</span>
+        <span class="n">picks</span> <span class="o">=</span> <span class="n">_picks_to_idx</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">picks</span><span class="p">,</span> <span class="s1">&#39;all&#39;</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="p">())</span>
+        <span class="n">events</span> <span class="o">=</span> <span class="n">find_events</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">raw</span><span class="p">,</span> <span class="n">stim_channel</span><span class="o">=</span><span class="n">stim_channel</span><span class="p">,</span>
+                             <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">output</span><span class="o">=</span><span class="s1">&#39;onset&#39;</span><span class="p">,</span>
+                             <span class="n">consecutive</span><span class="o">=</span><span class="s1">&#39;increasing&#39;</span><span class="p">,</span>
+                             <span class="n">min_duration</span><span class="o">=</span><span class="n">min_duration</span><span class="p">)</span>
+
+        <span class="c1"># Get the list of only the specified event</span>
+        <span class="n">idx</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">where</span><span class="p">(</span><span class="n">events</span><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="n">event_id</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+        <span class="n">event_samp</span> <span class="o">=</span> <span class="n">events</span><span class="p">[</span><span class="n">idx</span><span class="p">,</span> <span class="mi">0</span><span class="p">]</span>
+
+        <span class="c1"># Only do this the first time for each event type</span>
+        <span class="k">if</span> <span class="n">event_id</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current</span><span class="p">:</span>
+
+            <span class="c1"># Initialize pointer for the event to 0</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_current</span><span class="p">[</span><span class="n">event_id</span><span class="p">]</span> <span class="o">=</span> <span class="mi">0</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_last</span><span class="p">[</span><span class="n">event_id</span><span class="p">]</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">event_samp</span><span class="p">)</span>
+
+        <span class="c1"># relative start and stop positions in samples</span>
+        <span class="n">tmin_samp</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;sfreq&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">tmin</span><span class="p">))</span>
+        <span class="n">tmax_samp</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="nb">round</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;sfreq&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">tmax</span><span class="p">))</span> <span class="o">+</span> <span class="mi">1</span>
+
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_current</span><span class="p">[</span><span class="n">event_id</span><span class="p">]</span> <span class="o">&lt;</span> <span class="bp">self</span><span class="o">.</span><span class="n">_last</span><span class="p">[</span><span class="n">event_id</span><span class="p">]:</span>
+
+            <span class="c1"># Select the current event from the events list</span>
+            <span class="n">ev_samp</span> <span class="o">=</span> <span class="n">event_samp</span><span class="p">[</span><span class="bp">self</span><span class="o">.</span><span class="n">_current</span><span class="p">[</span><span class="n">event_id</span><span class="p">]]</span>
+
+            <span class="c1"># absolute start and stop positions in samples</span>
+            <span class="n">start</span> <span class="o">=</span> <span class="n">ev_samp</span> <span class="o">+</span> <span class="n">tmin_samp</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw</span><span class="o">.</span><span class="n">first_samp</span>
+            <span class="n">stop</span> <span class="o">=</span> <span class="n">ev_samp</span> <span class="o">+</span> <span class="n">tmax_samp</span> <span class="o">-</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw</span><span class="o">.</span><span class="n">first_samp</span>
+
+            <span class="bp">self</span><span class="o">.</span><span class="n">_current</span><span class="p">[</span><span class="n">event_id</span><span class="p">]</span> <span class="o">+=</span> <span class="mi">1</span>  <span class="c1"># increment pointer</span>
+
+            <span class="n">data</span><span class="p">,</span> <span class="n">_</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">raw</span><span class="p">[</span><span class="n">picks</span><span class="p">,</span> <span class="n">start</span><span class="p">:</span><span class="n">stop</span><span class="p">]</span>
+
+            <span class="k">return</span> <span class="n">data</span>
+
+        <span class="k">else</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span></div>
+
+<div class="viewcode-block" id="MockRtClient.register_receive_callback"><a class="viewcode-back" href="../../generated/mne_realtime.MockRtClient.html#mne_realtime.MockRtClient.register_receive_callback">[docs]</a>    <span class="k">def</span> <span class="nf">register_receive_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Fake API boilerplate.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        x : None</span>
+<span class="sd">            Not used.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="MockRtClient.start_receive_thread"><a class="viewcode-back" href="../../generated/mne_realtime.MockRtClient.html#mne_realtime.MockRtClient.start_receive_thread">[docs]</a>    <span class="k">def</span> <span class="nf">start_receive_thread</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Fake API boilerplate.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        x : None</span>
+<span class="sd">            Not used.</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+
+<div class="viewcode-block" id="MockRtClient.unregister_receive_callback"><a class="viewcode-back" href="../../generated/mne_realtime.MockRtClient.html#mne_realtime.MockRtClient.unregister_receive_callback">[docs]</a>    <span class="k">def</span> <span class="nf">unregister_receive_callback</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">x</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Fake API boilerplate.</span>
+
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        x : None</span>
+<span class="sd">            Not used.</span>
+<span class="sd">        &quot;&quot;&quot;</span>  <span class="c1"># noqa: D401</span>
+        <span class="k">pass</span></div>
+
+    <span class="k">def</span> <span class="nf">_stop_receive_thread</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Fake API boilerplate.&quot;&quot;&quot;</span>
+        <span class="k">pass</span></div>
+</pre></div>
+
+           </div>
+           
+          </div>
+          <footer>
+  
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>
+        &copy; Copyright 2012-2019, MNE Developers. Last updated on 2019-05-21
+
+    </p>
+  </div> 
+
+</footer>
+
+        </div>
+      </div>
+
+    </section>
+
+  </div>
+  
+
+
+  <script type="text/javascript">
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script>
+
+  
+  
+    
+   
+
+</body>
+</html>
