@@ -1,0 +1,525 @@
+.. note::
+    :class: sphx-glr-download-link-note
+
+    Click :ref:`here <sphx_glr_download_auto_tutorials_plot_phantom_4DBTi.py>` to download the full example code
+.. rst-class:: sphx-glr-example-title
+
+.. _sphx_glr_auto_tutorials_plot_phantom_4DBTi.py:
+
+
+============================================
+4D Neuroimaging/BTi phantom dataset tutorial
+============================================
+
+Here we read 4DBTi epochs data obtained with a spherical phantom
+using four different dipole locations. For each condition we
+compute evoked data and compute dipole fits.
+
+Data are provided by Jean-Michel Badier from MEG center in Marseille, France.
+
+
+.. code-block:: python
+
+
+    # Authors: Alex Gramfort <alexandre.gramfort@inria.fr>
+    #
+    # License: BSD (3-clause)
+
+    import os.path as op
+    import numpy as np
+    from mayavi import mlab
+    from mne.datasets import phantom_4dbti
+    import mne
+
+
+
+
+
+
+
+Read data and compute a dipole fit at the peak of the evoked response
+
+
+.. code-block:: python
+
+
+    data_path = phantom_4dbti.data_path()
+    raw_fname = op.join(data_path, '%d/e,rfhp1.0Hz')
+
+    dipoles = list()
+    sphere = mne.make_sphere_model(r0=(0., 0., 0.), head_radius=0.080)
+
+    t0 = 0.07  # peak of the response
+
+    pos = np.empty((4, 3))
+
+    for ii in range(4):
+        raw = mne.io.read_raw_bti(raw_fname % (ii + 1,),
+                                  rename_channels=False, preload=True)
+        raw.info['bads'] = ['A173', 'A213', 'A232']
+        events = mne.find_events(raw, 'TRIGGER', mask=4350, mask_type='not_and')
+        epochs = mne.Epochs(raw, events=events, event_id=8192, tmin=-0.2, tmax=0.4,
+                            preload=True)
+        evoked = epochs.average()
+        evoked.plot(time_unit='s')
+        cov = mne.compute_covariance(epochs, tmax=0.)
+        dip = mne.fit_dipole(evoked.copy().crop(t0, t0), cov, sphere)[0]
+        pos[ii] = dip.pos[0]
+
+
+
+
+.. rst-class:: sphx-glr-horizontal
+
+
+    *
+
+      .. image:: /auto_tutorials/images/sphx_glr_plot_phantom_4DBTi_001.png
+            :class: sphx-glr-multi-img
+
+    *
+
+      .. image:: /auto_tutorials/images/sphx_glr_plot_phantom_4DBTi_002.png
+            :class: sphx-glr-multi-img
+
+    *
+
+      .. image:: /auto_tutorials/images/sphx_glr_plot_phantom_4DBTi_003.png
+            :class: sphx-glr-multi-img
+
+    *
+
+      .. image:: /auto_tutorials/images/sphx_glr_plot_phantom_4DBTi_004.png
+            :class: sphx-glr-multi-img
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    Equiv. model fitting -> RV = 0.00347649 %
+    mu1 = 0.94483    lambda1 = 0.136877
+    mu2 = 0.667752    lambda2 = 0.683647
+    mu3 = -0.295407    lambda3 = -0.0101536
+    Set up EEG sphere model with scalp radius    80.0 mm
+
+    Reading 4D PDF file /home/circleci/mne_data/MNE-phantom-4DBTi/1/e,rfhp1.0Hz...
+    Creating Neuromag info structure ...
+    ... Setting channel info structure.
+    ... putting coil transforms in Neuromag coordinates
+    ... Reading digitization points from /home/circleci/mne_data/MNE-phantom-4DBTi/1/hs_file
+    ... putting digitization points in Neuromag coordinates
+    ... Computing new device to head transform.
+    Done.
+    Currently direct inclusion of 4D weight tables is not supported. For critical use cases please take into account the MNE command "mne_create_comp_data" to include weights as printed out by the 4D "print_table" routine.
+    Current compensation grade : 0
+    Reading 0 ... 13599  =      0.000 ...    20.052 secs...
+    Trigger channel has a non-zero initial value of 4350 (consider using initial_event=True to detect this event)
+    50 events found
+    Event IDs: [8192]
+    50 matching events found
+    Applying baseline correction (mode: mean)
+    Not setting metadata
+    0 projection items activated
+    Loading data for 50 events and 408 original time points ...
+    2 bad epochs dropped
+    Estimating covariance using EMPIRICAL
+    Done.
+    Number of samples used : 6576
+    [done]
+    BEM               : <ConductorModel  |  Sphere (3 layers): r0=[0.0, 0.0, 0.0] R=80 mm>
+    MRI transform     : identity
+    Sphere model      : origin at (   0.00    0.00    0.00) mm, rad =    0.1 mm
+    Guess grid        :   20.0 mm
+    Guess mindist     :    5.0 mm
+    Guess exclude     :   20.0 mm
+    Using standard MEG coil definitions.
+
+    Coordinate transformation: MRI (surface RAS) -> head
+         1.000000  0.000000  0.000000       0.00 mm
+         0.000000  1.000000  0.000000       0.00 mm
+         0.000000  0.000000  1.000000       0.00 mm
+         0.000000  0.000000  0.000000       1.00
+    Coordinate transformation: MEG device -> head
+         0.975564 -0.033891 -0.217085      -1.50 mm
+         0.044586  0.998011  0.044560     -34.72 mm
+         0.215143 -0.053150  0.975135      -6.31 mm
+         0.000000  0.000000  0.000000       1.00
+    3 bad channels total
+    Read 245 MEG channels from info
+    Read  23 MEG compensation channels from info
+    84 coil definitions read
+    Coordinate transformation: MEG device -> head
+         0.975564 -0.033891 -0.217085      -1.50 mm
+         0.044586  0.998011  0.044560     -34.72 mm
+         0.215143 -0.053150  0.975135      -6.31 mm
+         0.000000  0.000000  0.000000       1.00
+    0 compensation data sets in info
+    MEG coil definitions created in head coordinates.
+    Decomposing the sensor noise covariance matrix...
+    estimated rank (mag): 245
+    Setting small MAG eigenvalues to zero.
+    Not doing PCA for MAG.
+        Created the whitener using a noise covariance matrix with rank 245 (0 small eigenvalues omitted)
+
+    ---- Computing the forward solution for the guesses...
+    Making a spherical guess space with radius    72.0 mm...
+    Filtering (grid =     20 mm)...
+    Surface CM = (   0.0    0.0    0.0) mm
+    Surface fits inside a sphere with radius   72.0 mm
+    Surface extent:
+        x =  -72.0 ...   72.0 mm
+        y =  -72.0 ...   72.0 mm
+        z =  -72.0 ...   72.0 mm
+    Grid extent:
+        x =  -80.0 ...   80.0 mm
+        y =  -80.0 ...   80.0 mm
+        z =  -80.0 ...   80.0 mm
+    729 sources before omitting any.
+    178 sources after omitting infeasible sources.
+    170 sources remaining after excluding the sources outside the surface and less than    5.0 mm inside.
+    Go through all guess source locations...
+    [done 170 sources]
+    ---- Fitted :    69.3 ms
+    No projector specified for this dataset. Please consider the method self.add_proj.
+    1 time points fitted
+    Reading 4D PDF file /home/circleci/mne_data/MNE-phantom-4DBTi/2/e,rfhp1.0Hz...
+    Creating Neuromag info structure ...
+    ... Setting channel info structure.
+    ... putting coil transforms in Neuromag coordinates
+    ... Reading digitization points from /home/circleci/mne_data/MNE-phantom-4DBTi/2/hs_file
+    ... putting digitization points in Neuromag coordinates
+    ... Computing new device to head transform.
+    Done.
+    Currently direct inclusion of 4D weight tables is not supported. For critical use cases please take into account the MNE command "mne_create_comp_data" to include weights as printed out by the 4D "print_table" routine.
+    Current compensation grade : 0
+    Reading 0 ... 13599  =      0.000 ...    20.052 secs...
+    Trigger channel has a non-zero initial value of 4350 (consider using initial_event=True to detect this event)
+    50 events found
+    Event IDs: [8192]
+    50 matching events found
+    Applying baseline correction (mode: mean)
+    Not setting metadata
+    0 projection items activated
+    Loading data for 50 events and 408 original time points ...
+    2 bad epochs dropped
+    Estimating covariance using EMPIRICAL
+    Done.
+    Number of samples used : 6576
+    [done]
+    BEM               : <ConductorModel  |  Sphere (3 layers): r0=[0.0, 0.0, 0.0] R=80 mm>
+    MRI transform     : identity
+    Sphere model      : origin at (   0.00    0.00    0.00) mm, rad =    0.1 mm
+    Guess grid        :   20.0 mm
+    Guess mindist     :    5.0 mm
+    Guess exclude     :   20.0 mm
+    Using standard MEG coil definitions.
+
+    Coordinate transformation: MRI (surface RAS) -> head
+         1.000000  0.000000  0.000000       0.00 mm
+         0.000000  1.000000  0.000000       0.00 mm
+         0.000000  0.000000  1.000000       0.00 mm
+         0.000000  0.000000  0.000000       1.00
+    Coordinate transformation: MEG device -> head
+         0.975554 -0.034041 -0.217109      -1.51 mm
+         0.044503  0.998063  0.043482     -34.64 mm
+         0.215208 -0.052081  0.975178      -6.31 mm
+         0.000000  0.000000  0.000000       1.00
+    3 bad channels total
+    Read 245 MEG channels from info
+    Read  23 MEG compensation channels from info
+    84 coil definitions read
+    Coordinate transformation: MEG device -> head
+         0.975554 -0.034041 -0.217109      -1.51 mm
+         0.044503  0.998063  0.043482     -34.64 mm
+         0.215208 -0.052081  0.975178      -6.31 mm
+         0.000000  0.000000  0.000000       1.00
+    0 compensation data sets in info
+    MEG coil definitions created in head coordinates.
+    Decomposing the sensor noise covariance matrix...
+    estimated rank (mag): 245
+    Setting small MAG eigenvalues to zero.
+    Not doing PCA for MAG.
+        Created the whitener using a noise covariance matrix with rank 245 (0 small eigenvalues omitted)
+
+    ---- Computing the forward solution for the guesses...
+    Making a spherical guess space with radius    72.0 mm...
+    Filtering (grid =     20 mm)...
+    Surface CM = (   0.0    0.0    0.0) mm
+    Surface fits inside a sphere with radius   72.0 mm
+    Surface extent:
+        x =  -72.0 ...   72.0 mm
+        y =  -72.0 ...   72.0 mm
+        z =  -72.0 ...   72.0 mm
+    Grid extent:
+        x =  -80.0 ...   80.0 mm
+        y =  -80.0 ...   80.0 mm
+        z =  -80.0 ...   80.0 mm
+    729 sources before omitting any.
+    178 sources after omitting infeasible sources.
+    170 sources remaining after excluding the sources outside the surface and less than    5.0 mm inside.
+    Go through all guess source locations...
+    [done 170 sources]
+    ---- Fitted :    69.3 ms
+    No projector specified for this dataset. Please consider the method self.add_proj.
+    1 time points fitted
+    Reading 4D PDF file /home/circleci/mne_data/MNE-phantom-4DBTi/3/e,rfhp1.0Hz...
+    Creating Neuromag info structure ...
+    ... Setting channel info structure.
+    ... putting coil transforms in Neuromag coordinates
+    ... Reading digitization points from /home/circleci/mne_data/MNE-phantom-4DBTi/3/hs_file
+    ... putting digitization points in Neuromag coordinates
+    ... Computing new device to head transform.
+    Done.
+    Currently direct inclusion of 4D weight tables is not supported. For critical use cases please take into account the MNE command "mne_create_comp_data" to include weights as printed out by the 4D "print_table" routine.
+    Current compensation grade : 0
+    Reading 0 ... 13599  =      0.000 ...    20.052 secs...
+    Trigger channel has a non-zero initial value of 4350 (consider using initial_event=True to detect this event)
+    50 events found
+    Event IDs: [8192]
+    50 matching events found
+    Applying baseline correction (mode: mean)
+    Not setting metadata
+    0 projection items activated
+    Loading data for 50 events and 408 original time points ...
+    2 bad epochs dropped
+    Estimating covariance using EMPIRICAL
+    Done.
+    Number of samples used : 6576
+    [done]
+    BEM               : <ConductorModel  |  Sphere (3 layers): r0=[0.0, 0.0, 0.0] R=80 mm>
+    MRI transform     : identity
+    Sphere model      : origin at (   0.00    0.00    0.00) mm, rad =    0.1 mm
+    Guess grid        :   20.0 mm
+    Guess mindist     :    5.0 mm
+    Guess exclude     :   20.0 mm
+    Using standard MEG coil definitions.
+
+    Coordinate transformation: MRI (surface RAS) -> head
+         1.000000  0.000000  0.000000       0.00 mm
+         0.000000  1.000000  0.000000       0.00 mm
+         0.000000  0.000000  1.000000       0.00 mm
+         0.000000  0.000000  0.000000       1.00
+    Coordinate transformation: MEG device -> head
+         0.975577 -0.033678 -0.217061      -1.49 mm
+         0.044611  0.997960  0.045666     -34.78 mm
+         0.215080 -0.054233  0.975089      -6.31 mm
+         0.000000  0.000000  0.000000       1.00
+    3 bad channels total
+    Read 245 MEG channels from info
+    Read  23 MEG compensation channels from info
+    84 coil definitions read
+    Coordinate transformation: MEG device -> head
+         0.975577 -0.033678 -0.217061      -1.49 mm
+         0.044611  0.997960  0.045666     -34.78 mm
+         0.215080 -0.054233  0.975089      -6.31 mm
+         0.000000  0.000000  0.000000       1.00
+    0 compensation data sets in info
+    MEG coil definitions created in head coordinates.
+    Decomposing the sensor noise covariance matrix...
+    estimated rank (mag): 245
+    Setting small MAG eigenvalues to zero.
+    Not doing PCA for MAG.
+        Created the whitener using a noise covariance matrix with rank 245 (0 small eigenvalues omitted)
+
+    ---- Computing the forward solution for the guesses...
+    Making a spherical guess space with radius    72.0 mm...
+    Filtering (grid =     20 mm)...
+    Surface CM = (   0.0    0.0    0.0) mm
+    Surface fits inside a sphere with radius   72.0 mm
+    Surface extent:
+        x =  -72.0 ...   72.0 mm
+        y =  -72.0 ...   72.0 mm
+        z =  -72.0 ...   72.0 mm
+    Grid extent:
+        x =  -80.0 ...   80.0 mm
+        y =  -80.0 ...   80.0 mm
+        z =  -80.0 ...   80.0 mm
+    729 sources before omitting any.
+    178 sources after omitting infeasible sources.
+    170 sources remaining after excluding the sources outside the surface and less than    5.0 mm inside.
+    Go through all guess source locations...
+    [done 170 sources]
+    ---- Fitted :    69.3 ms
+    No projector specified for this dataset. Please consider the method self.add_proj.
+    1 time points fitted
+    Reading 4D PDF file /home/circleci/mne_data/MNE-phantom-4DBTi/4/e,rfhp1.0Hz...
+    Creating Neuromag info structure ...
+    ... Setting channel info structure.
+    ... putting coil transforms in Neuromag coordinates
+    ... Reading digitization points from /home/circleci/mne_data/MNE-phantom-4DBTi/4/hs_file
+    ... putting digitization points in Neuromag coordinates
+    ... Computing new device to head transform.
+    Done.
+    Currently direct inclusion of 4D weight tables is not supported. For critical use cases please take into account the MNE command "mne_create_comp_data" to include weights as printed out by the 4D "print_table" routine.
+    Current compensation grade : 0
+    Reading 0 ... 13599  =      0.000 ...    20.052 secs...
+    Trigger channel has a non-zero initial value of 4350 (consider using initial_event=True to detect this event)
+    50 events found
+    Event IDs: [8192]
+    50 matching events found
+    Applying baseline correction (mode: mean)
+    Not setting metadata
+    0 projection items activated
+    Loading data for 50 events and 408 original time points ...
+    2 bad epochs dropped
+    Estimating covariance using EMPIRICAL
+    Done.
+    Number of samples used : 6576
+    [done]
+    BEM               : <ConductorModel  |  Sphere (3 layers): r0=[0.0, 0.0, 0.0] R=80 mm>
+    MRI transform     : identity
+    Sphere model      : origin at (   0.00    0.00    0.00) mm, rad =    0.1 mm
+    Guess grid        :   20.0 mm
+    Guess mindist     :    5.0 mm
+    Guess exclude     :   20.0 mm
+    Using standard MEG coil definitions.
+
+    Coordinate transformation: MRI (surface RAS) -> head
+         1.000000  0.000000  0.000000       0.00 mm
+         0.000000  1.000000  0.000000       0.00 mm
+         0.000000  0.000000  1.000000       0.00 mm
+         0.000000  0.000000  0.000000       1.00
+    Coordinate transformation: MEG device -> head
+         0.975557 -0.033946 -0.217110      -1.50 mm
+         0.044391  0.998071  0.043409     -34.60 mm
+         0.215218 -0.051986  0.975181      -6.32 mm
+         0.000000  0.000000  0.000000       1.00
+    3 bad channels total
+    Read 245 MEG channels from info
+    Read  23 MEG compensation channels from info
+    84 coil definitions read
+    Coordinate transformation: MEG device -> head
+         0.975557 -0.033946 -0.217110      -1.50 mm
+         0.044391  0.998071  0.043409     -34.60 mm
+         0.215218 -0.051986  0.975181      -6.32 mm
+         0.000000  0.000000  0.000000       1.00
+    0 compensation data sets in info
+    MEG coil definitions created in head coordinates.
+    Decomposing the sensor noise covariance matrix...
+    estimated rank (mag): 245
+    Setting small MAG eigenvalues to zero.
+    Not doing PCA for MAG.
+        Created the whitener using a noise covariance matrix with rank 245 (0 small eigenvalues omitted)
+
+    ---- Computing the forward solution for the guesses...
+    Making a spherical guess space with radius    72.0 mm...
+    Filtering (grid =     20 mm)...
+    Surface CM = (   0.0    0.0    0.0) mm
+    Surface fits inside a sphere with radius   72.0 mm
+    Surface extent:
+        x =  -72.0 ...   72.0 mm
+        y =  -72.0 ...   72.0 mm
+        z =  -72.0 ...   72.0 mm
+    Grid extent:
+        x =  -80.0 ...   80.0 mm
+        y =  -80.0 ...   80.0 mm
+        z =  -80.0 ...   80.0 mm
+    729 sources before omitting any.
+    178 sources after omitting infeasible sources.
+    170 sources remaining after excluding the sources outside the surface and less than    5.0 mm inside.
+    Go through all guess source locations...
+    [done 170 sources]
+    ---- Fitted :    69.3 ms
+    No projector specified for this dataset. Please consider the method self.add_proj.
+    1 time points fitted
+
+
+Compute localisation errors
+
+
+.. code-block:: python
+
+
+
+    actual_pos = 0.01 * np.array([[0.16, 1.61, 5.13],
+                                  [0.17, 1.35, 4.15],
+                                  [0.16, 1.05, 3.19],
+                                  [0.13, 0.80, 2.26]])
+    actual_pos = np.dot(actual_pos, [[0, 1, 0], [-1, 0, 0], [0, 0, 1]])
+
+    errors = 1e3 * np.linalg.norm(actual_pos - pos, axis=1)
+    print("errors (mm) : %s" % errors)
+
+
+
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    errors (mm) : [1.444095 1.376289 1.234352 1.172658]
+
+
+Plot the dipoles in 3D
+
+
+.. code-block:: python
+
+
+
+    def plot_pos(pos, color=(0., 0., 0.)):
+        mlab.points3d(pos[:, 0], pos[:, 1], pos[:, 2], scale_factor=0.005,
+                      color=color)
+
+
+    mne.viz.plot_alignment(evoked.info, bem=sphere, surfaces=[])
+    # Plot the position of the actual dipole
+    plot_pos(actual_pos, color=(1., 0., 0.))
+    # Plot the position of the estimated dipole
+    plot_pos(pos, color=(1., 1., 0.))
+
+
+
+.. image:: /auto_tutorials/images/sphx_glr_plot_phantom_4DBTi_005.png
+    :class: sphx-glr-single-img
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    Getting helmet for system Magnes_3600wh
+
+
+
+.. rst-class:: sphx-glr-timing
+
+   **Total running time of the script:** ( 0 minutes  10.459 seconds)
+
+**Estimated memory usage:**  11 MB
+
+
+.. _sphx_glr_download_auto_tutorials_plot_phantom_4DBTi.py:
+
+
+.. only :: html
+
+ .. container:: sphx-glr-footer
+    :class: sphx-glr-footer-example
+
+
+
+  .. container:: sphx-glr-download
+
+     :download:`Download Python source code: plot_phantom_4DBTi.py <plot_phantom_4DBTi.py>`
+
+
+
+  .. container:: sphx-glr-download
+
+     :download:`Download Jupyter notebook: plot_phantom_4DBTi.ipynb <plot_phantom_4DBTi.ipynb>`
+
+
+.. only:: html
+
+ .. rst-class:: sphx-glr-signature
+
+    `Gallery generated by Sphinx-Gallery <https://sphinx-gallery.readthedocs.io>`_

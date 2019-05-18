@@ -1,0 +1,538 @@
+.. note::
+    :class: sphx-glr-download-link-note
+
+    Click :ref:`here <sphx_glr_download_auto_examples_inverse_plot_mixed_source_space_inverse.py>` to download the full example code
+.. rst-class:: sphx-glr-example-title
+
+.. _sphx_glr_auto_examples_inverse_plot_mixed_source_space_inverse.py:
+
+
+=======================================================================
+Compute MNE inverse solution on evoked data in a mixed source space
+=======================================================================
+
+Create a mixed source space and compute MNE inverse solution on evoked dataset.
+
+
+.. code-block:: python
+
+    # Author: Annalisa Pascarella <a.pascarella@iac.cnr.it>
+    #
+    # License: BSD (3-clause)
+
+    import os.path as op
+    import matplotlib.pyplot as plt
+
+    from nilearn import plotting
+
+    import mne
+    from mne.minimum_norm import make_inverse_operator, apply_inverse
+
+    # Set dir
+    data_path = mne.datasets.sample.data_path()
+    subject = 'sample'
+    data_dir = op.join(data_path, 'MEG', subject)
+    subjects_dir = op.join(data_path, 'subjects')
+    bem_dir = op.join(subjects_dir, subject, 'bem')
+
+    # Set file names
+    fname_mixed_src = op.join(bem_dir, '%s-oct-6-mixed-src.fif' % subject)
+    fname_aseg = op.join(subjects_dir, subject, 'mri', 'aseg.mgz')
+
+    fname_model = op.join(bem_dir, '%s-5120-bem.fif' % subject)
+    fname_bem = op.join(bem_dir, '%s-5120-bem-sol.fif' % subject)
+
+    fname_evoked = data_dir + '/sample_audvis-ave.fif'
+    fname_trans = data_dir + '/sample_audvis_raw-trans.fif'
+    fname_fwd = data_dir + '/sample_audvis-meg-oct-6-mixed-fwd.fif'
+    fname_cov = data_dir + '/sample_audvis-shrunk-cov.fif'
+
+
+
+
+
+
+
+Set up our source space.
+
+
+.. code-block:: python
+
+
+    # List substructures we are interested in. We select only the
+    # sub structures we want to include in the source space
+    labels_vol = ['Left-Amygdala',
+                  'Left-Thalamus-Proper',
+                  'Left-Cerebellum-Cortex',
+                  'Brain-Stem',
+                  'Right-Amygdala',
+                  'Right-Thalamus-Proper',
+                  'Right-Cerebellum-Cortex']
+
+    # Get a surface-based source space, here with few source points for speed
+    # in this demonstration, in general you should use oct6 spacing!
+    src = mne.setup_source_space(subject, spacing='oct5',
+                                 add_dist=False, subjects_dir=subjects_dir)
+
+    # Now we create a mixed src space by adding the volume regions specified in the
+    # list labels_vol. First, read the aseg file and the source space bounds
+    # using the inner skull surface (here using 10mm spacing to save time,
+    # we recommend something smaller like 5.0 in actual analyses):
+
+    vol_src = mne.setup_volume_source_space(
+        subject, mri=fname_aseg, pos=10.0, bem=fname_model,
+        volume_label=labels_vol, subjects_dir=subjects_dir,
+        add_interpolator=False,  # just for speed, usually this should be True
+        verbose=True)
+
+    # Generate the mixed source space
+    src += vol_src
+
+    # Visualize the source space.
+    src.plot(subjects_dir=subjects_dir)
+
+    n = sum(src[i]['nuse'] for i in range(len(src)))
+    print('the src space contains %d spaces and %d points' % (len(src), n))
+
+
+
+
+.. image:: /auto_examples/inverse/images/sphx_glr_plot_mixed_source_space_inverse_001.png
+    :class: sphx-glr-single-img
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    Setting up the source space with the following parameters:
+
+    SUBJECTS_DIR = /home/circleci/mne_data/MNE-sample-data/subjects
+    Subject      = sample
+    Surface      = white
+    Octahedron subdivision grade 5
+
+    >>> 1. Creating the source space...
+
+    Doing the octahedral vertex picking...
+    Loading /home/circleci/mne_data/MNE-sample-data/subjects/sample/surf/lh.white...
+    Mapping lh sample -> oct (5) ...
+        Triangle neighbors and vertex normals...
+    Loading geometry from /home/circleci/mne_data/MNE-sample-data/subjects/sample/surf/lh.sphere...
+    Setting up the triangulation for the decimated surface...
+    loaded lh.white 1026/155407 selected to source space (oct = 5)
+
+    Loading /home/circleci/mne_data/MNE-sample-data/subjects/sample/surf/rh.white...
+    Mapping rh sample -> oct (5) ...
+        Triangle neighbors and vertex normals...
+    Loading geometry from /home/circleci/mne_data/MNE-sample-data/subjects/sample/surf/rh.sphere...
+    Setting up the triangulation for the decimated surface...
+    loaded rh.white 1026/156866 selected to source space (oct = 5)
+
+    You are now one step closer to computing the gain matrix
+    BEM file              : /home/circleci/mne_data/MNE-sample-data/subjects/sample/bem/sample-5120-bem.fif
+    grid                  : 10.0 mm
+    mindist               : 5.0 mm
+    MRI volume            : /home/circleci/mne_data/MNE-sample-data/subjects/sample/mri/aseg.mgz
+
+    Loaded inner skull from /home/circleci/mne_data/MNE-sample-data/subjects/sample/bem/sample-5120-bem.fif (2562 nodes)
+    Surface CM = (   0.7  -10.0   44.3) mm
+    Surface fits inside a sphere with radius   91.8 mm
+    Surface extent:
+        x =  -66.7 ...   68.8 mm
+        y =  -88.0 ...   79.0 mm
+        z =  -44.5 ...  105.8 mm
+    Grid extent:
+        x =  -70.0 ...   70.0 mm
+        y =  -90.0 ...   80.0 mm
+        z =  -50.0 ...  110.0 mm
+    4590 sources before omitting any.
+    2961 sources after omitting infeasible sources.
+    Source spaces are in MRI coordinates.
+    Checking that the sources are inside the bounding surface and at least    5.0 mm away (will take a few...)
+    1372 source space points omitted because they are outside the inner skull surface.
+    283 source space points omitted because of the    5.0-mm distance limit.
+    Thank you for waiting.
+    1306 sources remaining after excluding the sources outside the surface and less than    5.0 mm inside.
+    Selecting voxels from Left-Amygdala
+    2 sources remaining after excluding sources too far from VOI voxels
+    Adjusting the neighborhood info...
+    Surface CM = (   0.7  -10.0   44.3) mm
+    Surface fits inside a sphere with radius   91.8 mm
+    Surface extent:
+        x =  -66.7 ...   68.8 mm
+        y =  -88.0 ...   79.0 mm
+        z =  -44.5 ...  105.8 mm
+    Grid extent:
+        x =  -70.0 ...   70.0 mm
+        y =  -90.0 ...   80.0 mm
+        z =  -50.0 ...  110.0 mm
+    4590 sources before omitting any.
+    2961 sources after omitting infeasible sources.
+    Source spaces are in MRI coordinates.
+    Checking that the sources are inside the bounding surface and at least    5.0 mm away (will take a few...)
+    1372 source space points omitted because they are outside the inner skull surface.
+    283 source space points omitted because of the    5.0-mm distance limit.
+    Thank you for waiting.
+    1306 sources remaining after excluding the sources outside the surface and less than    5.0 mm inside.
+    Selecting voxels from Left-Thalamus-Proper
+    9 sources remaining after excluding sources too far from VOI voxels
+    Adjusting the neighborhood info...
+    Surface CM = (   0.7  -10.0   44.3) mm
+    Surface fits inside a sphere with radius   91.8 mm
+    Surface extent:
+        x =  -66.7 ...   68.8 mm
+        y =  -88.0 ...   79.0 mm
+        z =  -44.5 ...  105.8 mm
+    Grid extent:
+        x =  -70.0 ...   70.0 mm
+        y =  -90.0 ...   80.0 mm
+        z =  -50.0 ...  110.0 mm
+    4590 sources before omitting any.
+    2961 sources after omitting infeasible sources.
+    Source spaces are in MRI coordinates.
+    Checking that the sources are inside the bounding surface and at least    5.0 mm away (will take a few...)
+    1372 source space points omitted because they are outside the inner skull surface.
+    283 source space points omitted because of the    5.0-mm distance limit.
+    Thank you for waiting.
+    1306 sources remaining after excluding the sources outside the surface and less than    5.0 mm inside.
+    Selecting voxels from Left-Cerebellum-Cortex
+    33 sources remaining after excluding sources too far from VOI voxels
+    Adjusting the neighborhood info...
+    Surface CM = (   0.7  -10.0   44.3) mm
+    Surface fits inside a sphere with radius   91.8 mm
+    Surface extent:
+        x =  -66.7 ...   68.8 mm
+        y =  -88.0 ...   79.0 mm
+        z =  -44.5 ...  105.8 mm
+    Grid extent:
+        x =  -70.0 ...   70.0 mm
+        y =  -90.0 ...   80.0 mm
+        z =  -50.0 ...  110.0 mm
+    4590 sources before omitting any.
+    2961 sources after omitting infeasible sources.
+    Source spaces are in MRI coordinates.
+    Checking that the sources are inside the bounding surface and at least    5.0 mm away (will take a few...)
+    1372 source space points omitted because they are outside the inner skull surface.
+    283 source space points omitted because of the    5.0-mm distance limit.
+    Thank you for waiting.
+    1306 sources remaining after excluding the sources outside the surface and less than    5.0 mm inside.
+    Selecting voxels from Brain-Stem
+    21 sources remaining after excluding sources too far from VOI voxels
+    Adjusting the neighborhood info...
+    Surface CM = (   0.7  -10.0   44.3) mm
+    Surface fits inside a sphere with radius   91.8 mm
+    Surface extent:
+        x =  -66.7 ...   68.8 mm
+        y =  -88.0 ...   79.0 mm
+        z =  -44.5 ...  105.8 mm
+    Grid extent:
+        x =  -70.0 ...   70.0 mm
+        y =  -90.0 ...   80.0 mm
+        z =  -50.0 ...  110.0 mm
+    4590 sources before omitting any.
+    2961 sources after omitting infeasible sources.
+    Source spaces are in MRI coordinates.
+    Checking that the sources are inside the bounding surface and at least    5.0 mm away (will take a few...)
+    1372 source space points omitted because they are outside the inner skull surface.
+    283 source space points omitted because of the    5.0-mm distance limit.
+    Thank you for waiting.
+    1306 sources remaining after excluding the sources outside the surface and less than    5.0 mm inside.
+    Selecting voxels from Right-Amygdala
+    1 sources remaining after excluding sources too far from VOI voxels
+    Adjusting the neighborhood info...
+    Surface CM = (   0.7  -10.0   44.3) mm
+    Surface fits inside a sphere with radius   91.8 mm
+    Surface extent:
+        x =  -66.7 ...   68.8 mm
+        y =  -88.0 ...   79.0 mm
+        z =  -44.5 ...  105.8 mm
+    Grid extent:
+        x =  -70.0 ...   70.0 mm
+        y =  -90.0 ...   80.0 mm
+        z =  -50.0 ...  110.0 mm
+    4590 sources before omitting any.
+    2961 sources after omitting infeasible sources.
+    Source spaces are in MRI coordinates.
+    Checking that the sources are inside the bounding surface and at least    5.0 mm away (will take a few...)
+    1372 source space points omitted because they are outside the inner skull surface.
+    283 source space points omitted because of the    5.0-mm distance limit.
+    Thank you for waiting.
+    1306 sources remaining after excluding the sources outside the surface and less than    5.0 mm inside.
+    Selecting voxels from Right-Thalamus-Proper
+    7 sources remaining after excluding sources too far from VOI voxels
+    Adjusting the neighborhood info...
+    Surface CM = (   0.7  -10.0   44.3) mm
+    Surface fits inside a sphere with radius   91.8 mm
+    Surface extent:
+        x =  -66.7 ...   68.8 mm
+        y =  -88.0 ...   79.0 mm
+        z =  -44.5 ...  105.8 mm
+    Grid extent:
+        x =  -70.0 ...   70.0 mm
+        y =  -90.0 ...   80.0 mm
+        z =  -50.0 ...  110.0 mm
+    4590 sources before omitting any.
+    2961 sources after omitting infeasible sources.
+    Source spaces are in MRI coordinates.
+    Checking that the sources are inside the bounding surface and at least    5.0 mm away (will take a few...)
+    1372 source space points omitted because they are outside the inner skull surface.
+    283 source space points omitted because of the    5.0-mm distance limit.
+    Thank you for waiting.
+    1306 sources remaining after excluding the sources outside the surface and less than    5.0 mm inside.
+    Selecting voxels from Right-Cerebellum-Cortex
+    44 sources remaining after excluding sources too far from VOI voxels
+    Adjusting the neighborhood info...
+    Reading /home/circleci/mne_data/MNE-sample-data/subjects/sample/mri/aseg.mgz...
+    Reading /home/circleci/mne_data/MNE-sample-data/subjects/sample/mri/aseg.mgz...
+    Reading /home/circleci/mne_data/MNE-sample-data/subjects/sample/mri/aseg.mgz...
+    Reading /home/circleci/mne_data/MNE-sample-data/subjects/sample/mri/aseg.mgz...
+    Reading /home/circleci/mne_data/MNE-sample-data/subjects/sample/mri/aseg.mgz...
+    Reading /home/circleci/mne_data/MNE-sample-data/subjects/sample/mri/aseg.mgz...
+    Reading /home/circleci/mne_data/MNE-sample-data/subjects/sample/mri/aseg.mgz...
+    the src space contains 9 spaces and 2169 points
+
+
+We could write the mixed source space with::
+
+   >>> write_source_spaces(fname_mixed_src, src, overwrite=True)
+
+We can also export source positions to nift file and visualize it again:
+
+
+.. code-block:: python
+
+
+    nii_fname = op.join(bem_dir, '%s-mixed-src.nii' % subject)
+    src.export_volume(nii_fname, mri_resolution=True)
+
+    plotting.plot_img(nii_fname, cmap='nipy_spectral')
+
+    # Compute the fwd matrix
+    fwd = mne.make_forward_solution(
+        fname_evoked, fname_trans, src, fname_bem,
+        mindist=5.0,  # ignore sources<=5mm from innerskull
+        meg=True, eeg=False, n_jobs=1)
+
+    leadfield = fwd['sol']['data']
+    print("Leadfield size : %d sensors x %d dipoles" % leadfield.shape)
+
+    src_fwd = fwd['src']
+    n = sum(src_fwd[i]['nuse'] for i in range(len(src_fwd)))
+    print('the fwd src space contains %d spaces and %d points' % (len(src_fwd), n))
+
+    # Load data
+    condition = 'Left Auditory'
+    evoked = mne.read_evokeds(fname_evoked, condition=condition,
+                              baseline=(None, 0))
+    noise_cov = mne.read_cov(fname_cov)
+
+    # Compute inverse solution and for each epoch
+    snr = 3.0            # use smaller SNR for raw data
+    inv_method = 'dSPM'  # sLORETA, MNE, dSPM
+    parc = 'aparc'       # the parcellation to use, e.g., 'aparc' 'aparc.a2009s'
+
+    lambda2 = 1.0 / snr ** 2
+
+    # Compute inverse operator
+    inverse_operator = make_inverse_operator(evoked.info, fwd, noise_cov,
+                                             depth=None, fixed=False)
+
+    stc = apply_inverse(evoked, inverse_operator, lambda2, inv_method,
+                        pick_ori=None)
+
+    # Get labels for FreeSurfer 'aparc' cortical parcellation with 34 labels/hemi
+    labels_parc = mne.read_labels_from_annot(
+        subject, parc=parc, subjects_dir=subjects_dir)
+
+
+
+
+.. image:: /auto_examples/inverse/images/sphx_glr_plot_mixed_source_space_inverse_002.png
+    :class: sphx-glr-single-img
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    Reading FreeSurfer lookup table
+    Source space          : <SourceSpaces: [<surface (lh), n_vertices=155407, n_used=1026, coordinate_frame=MRI (surface RAS)>, <surface (rh), n_vertices=156866, n_used=1026, coordinate_frame=MRI (surface RAS)>, <volume (Left-Amygdala), n_used=2, coordinate_frame=MRI (surface RAS)>, <volume (Left-Thalamus-Proper), n_used=9, coordinate_frame=MRI (surface RAS)>, <volume (Left-Cerebellum-Cortex), n_used=33, coordinate_frame=MRI (surface RAS)>, <volume (Brain-Stem), n_used=21, coordinate_frame=MRI (surface RAS)>, <volume (Right-Amygdala), n_used=1, coordinate_frame=MRI (surface RAS)>, <volume (Right-Thalamus-Proper), n_used=7, coordinate_frame=MRI (surface RAS)>, <volume (Right-Cerebellum-Cortex), n_used=44, coordinate_frame=MRI (surface RAS)>]>
+    MRI -> head transform : /home/circleci/mne_data/MNE-sample-data/MEG/sample/sample_audvis_raw-trans.fif
+    Measurement data      : sample_audvis-ave.fif
+    Conductor model   : /home/circleci/mne_data/MNE-sample-data/subjects/sample/bem/sample-5120-bem-sol.fif
+    Accurate field computations
+    Do computations in head coordinates
+    Free source orientations
+
+    Read 9 source spaces a total of 2169 active source locations
+
+    Coordinate transformation: MRI (surface RAS) -> head
+         0.999310  0.009985 -0.035787      -3.17 mm
+         0.012759  0.812405  0.582954       6.86 mm
+         0.034894 -0.583008  0.811716      28.88 mm
+         0.000000  0.000000  0.000000       1.00
+
+    Read 306 MEG channels from info
+    84 coil definitions read
+    Coordinate transformation: MEG device -> head
+         0.991420 -0.039936 -0.124467      -6.13 mm
+         0.060661  0.984012  0.167456       0.06 mm
+         0.115790 -0.173570  0.977991      64.74 mm
+         0.000000  0.000000  0.000000       1.00
+    MEG coil definitions created in head coordinates.
+    Source spaces are now in head coordinates.
+
+    Setting up the BEM model using /home/circleci/mne_data/MNE-sample-data/subjects/sample/bem/sample-5120-bem-sol.fif...
+
+    Loading surfaces...
+    Homogeneous model surface loaded.
+
+    Loading the solution matrix...
+
+    Loaded linear_collocation BEM solution from /home/circleci/mne_data/MNE-sample-data/subjects/sample/bem/sample-5120-bem-sol.fif
+    Employing the head->MRI coordinate transform with the BEM model.
+    BEM model sample-5120-bem-sol.fif is now set up
+
+    Source spaces are in head coordinates.
+    Checking that the sources are inside the bounding surface and at least    5.0 mm away (will take a few...)
+    84 source space point omitted because of the    5.0-mm distance limit.
+    84 source space point omitted because of the    5.0-mm distance limit.
+    Thank you for waiting.
+
+    Setting up compensation data...
+        No compensation set. Nothing more to do.
+
+    Composing the field computation matrix...
+    Computing MEG at 2001 source locations (free orientations)...
+
+    Finished.
+    Leadfield size : 306 sensors x 6003 dipoles
+    the fwd src space contains 9 spaces and 2001 points
+    Reading /home/circleci/mne_data/MNE-sample-data/MEG/sample/sample_audvis-ave.fif ...
+        Read a total of 4 projection items:
+            PCA-v1 (1 x 102) active
+            PCA-v2 (1 x 102) active
+            PCA-v3 (1 x 102) active
+            Average EEG reference (1 x 60) active
+        Found the data of interest:
+            t =    -199.80 ...     499.49 ms (Left Auditory)
+            0 CTF compensation matrices available
+            nave = 55 - aspect type = 100
+    Projections have already been applied. Setting proj attribute to True.
+    Applying baseline correction (mode: mean)
+        365 x 365 full covariance (kind = 1) found.
+        Read a total of 4 projection items:
+            PCA-v1 (1 x 102) active
+            PCA-v2 (1 x 102) active
+            PCA-v3 (1 x 102) active
+            Average EEG reference (1 x 59) active
+    info["bads"] and noise_cov["bads"] do not match, excluding bad channels from both
+    Computing inverse operator with 305 channels.
+        Created an SSP operator (subspace dimension = 3)
+    estimated rank (mag + grad): 302
+    Setting small MEG eigenvalues to zero.
+    Not doing PCA for MEG.
+        Created the whitener using a noise covariance matrix with rank 302 (3 small eigenvalues omitted)
+    Computing inverse operator with 305 channels.
+    Creating the source covariance matrix
+    Whitening the forward solution.
+    Adjusting source covariance matrix.
+    Computing SVD of whitened and weighted lead field matrix.
+        largest singular value = 4.45582
+        scaling factor to adjust the trace = 5.72916e+19
+    Preparing the inverse operator for use...
+        Scaled noise and source covariance from nave = 1 to nave = 55
+        Created the regularized inverter
+        Created an SSP operator (subspace dimension = 3)
+        Created the whitener using a noise covariance matrix with rank 302 (3 small eigenvalues omitted)
+        Computing noise-normalization factors (dSPM)...
+    [done]
+    Applying inverse operator to "Left Auditory"...
+        Picked 305 channels from the data
+        Computing inverse...
+        Eigenleads need to be weighted ...
+        Computing residual...
+        Explained  59.0% variance
+        Combining the current components...
+        dSPM...
+    [done]
+    Reading labels from parcellation...
+       read 34 labels from /home/circleci/mne_data/MNE-sample-data/subjects/sample/label/lh.aparc.annot
+       read 34 labels from /home/circleci/mne_data/MNE-sample-data/subjects/sample/label/rh.aparc.annot
+
+
+Average the source estimates within each label of the cortical parcellation
+and each sub structure contained in the src space
+
+
+.. code-block:: python
+
+
+    src = inverse_operator['src']
+
+    label_ts = mne.extract_label_time_course(
+        [stc], labels_parc, src, mode='mean', allow_empty=True)
+
+    # plot the times series of 2 labels
+    fig, axes = plt.subplots(1)
+    axes.plot(1e3 * stc.times, label_ts[0][0, :], 'k', label='bankssts-lh')
+    axes.plot(1e3 * stc.times, label_ts[0][71, :].T, 'r',
+              label='Brain-stem')
+    axes.set(xlabel='Time (ms)', ylabel='MNE current (nAm)')
+    axes.legend()
+    mne.viz.tight_layout()
+
+
+
+.. image:: /auto_examples/inverse/images/sphx_glr_plot_mixed_source_space_inverse_003.png
+    :class: sphx-glr-single-img
+
+
+.. rst-class:: sphx-glr-script-out
+
+ Out:
+
+ .. code-block:: none
+
+    Extracting time courses for 75 labels (mode: mean)
+
+
+
+.. rst-class:: sphx-glr-timing
+
+   **Total running time of the script:** ( 1 minutes  23.948 seconds)
+
+**Estimated memory usage:**  1340 MB
+
+
+.. _sphx_glr_download_auto_examples_inverse_plot_mixed_source_space_inverse.py:
+
+
+.. only :: html
+
+ .. container:: sphx-glr-footer
+    :class: sphx-glr-footer-example
+
+
+
+  .. container:: sphx-glr-download
+
+     :download:`Download Python source code: plot_mixed_source_space_inverse.py <plot_mixed_source_space_inverse.py>`
+
+
+
+  .. container:: sphx-glr-download
+
+     :download:`Download Jupyter notebook: plot_mixed_source_space_inverse.ipynb <plot_mixed_source_space_inverse.ipynb>`
+
+
+.. only:: html
+
+ .. rst-class:: sphx-glr-signature
+
+    `Gallery generated by Sphinx-Gallery <https://sphinx-gallery.readthedocs.io>`_
