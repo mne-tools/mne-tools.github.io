@@ -171,6 +171,7 @@ This documentation is for <strong>development version 0.19.dev0</strong>.
 <li><a class="reference internal" href="#">Simulate raw data using subject anatomy</a><ul>
 <li><a class="reference internal" href="#create-simulated-source-activity">Create simulated source activity</a></li>
 <li><a class="reference internal" href="#simulate-raw-data">Simulate raw data</a></li>
+<li><a class="reference internal" href="#extract-epochs-and-compute-evoked-responsses">Extract epochs and compute evoked responsses</a></li>
 <li><a class="reference internal" href="#reconstruct-simulated-source-time-courses-using-dspm-inverse-operator">Reconstruct simulated source time courses using dSPM inverse operator</a></li>
 <li><a class="reference internal" href="#references">References</a></li>
 </ul>
@@ -214,9 +215,10 @@ using dynamic statistical parametric mapping (dSPM) inverse operator.</p>
 
 <span class="nb">print</span><span class="p">(</span><span class="vm">__doc__</span><span class="p">)</span>
 
-<span class="c1"># To simulate the sample dataset, information of the sample subject needs to be</span>
-<span class="c1"># loaded. This step will download the data if it not already on your machine.</span>
-<span class="c1"># Subjects directory is also set so it doesn&#39;t need to be given to functions.</span>
+<span class="c1"># In this example, raw data will be simulated for the sample subject, so its</span>
+<span class="c1"># information needs to be loaded. This step will download the data if it not</span>
+<span class="c1"># already on your machine. Subjects directory is also set so it doesn&#39;t need</span>
+<span class="c1"># to be given to functions.</span>
 <span class="n">data_path</span> <span class="o">=</span> <a href="../../generated/mne.datasets.sample.data_path.html#mne.datasets.sample.data_path" title="View documentation for mne.datasets.sample.data_path"><span class="n">sample</span><span class="o">.</span><span class="n">data_path</span></a><span class="p">()</span>
 <span class="n">subjects_dir</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_path</span><span class="p">,</span> <span class="s1">&#39;subjects&#39;</span><span class="p">)</span>
 <span class="n">subject</span> <span class="o">=</span> <span class="s1">&#39;sample&#39;</span>
@@ -249,6 +251,10 @@ using dynamic statistical parametric mapping (dSPM) inverse operator.</p>
 <span class="c1"># in the events matrix.</span>
 <span class="n">event_id</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;auditory/left&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;auditory/right&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;visual/left&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
             <span class="s1">&#39;visual/right&#39;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span> <span class="s1">&#39;smiley&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span> <span class="s1">&#39;button&#39;</span><span class="p">:</span> <span class="mi">32</span><span class="p">}</span>
+
+
+<span class="c1"># Take only a few events for speed</span>
+<span class="n">events</span> <span class="o">=</span> <span class="n">events</span><span class="p">[:</span><span class="mi">80</span><span class="p">]</span>
 </pre></div>
 </div>
 <p class="sphx-glr-script-out">Out:</p>
@@ -297,17 +303,17 @@ Moreover, for each condition, contralateral region is more active (here, 2
 times more) than the ipsilateral.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">activations</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s1">&#39;auditory/left&#39;</span><span class="p">:</span>
-        <span class="p">[(</span><span class="s1">&#39;G_temp_sup-G_T_transv-lh&#39;</span><span class="p">,</span> <span class="mi">100</span><span class="p">),</span>          <span class="c1"># label, activation (nAm)</span>
-         <span class="p">(</span><span class="s1">&#39;G_temp_sup-G_T_transv-rh&#39;</span><span class="p">,</span> <span class="mi">200</span><span class="p">)],</span>
+        <span class="p">[(</span><span class="s1">&#39;G_temp_sup-G_T_transv-lh&#39;</span><span class="p">,</span> <span class="mi">30</span><span class="p">),</span>          <span class="c1"># label, activation (nAm)</span>
+         <span class="p">(</span><span class="s1">&#39;G_temp_sup-G_T_transv-rh&#39;</span><span class="p">,</span> <span class="mi">60</span><span class="p">)],</span>
     <span class="s1">&#39;auditory/right&#39;</span><span class="p">:</span>
-        <span class="p">[(</span><span class="s1">&#39;G_temp_sup-G_T_transv-lh&#39;</span><span class="p">,</span> <span class="mi">200</span><span class="p">),</span>
-         <span class="p">(</span><span class="s1">&#39;G_temp_sup-G_T_transv-rh&#39;</span><span class="p">,</span> <span class="mi">100</span><span class="p">)],</span>
+        <span class="p">[(</span><span class="s1">&#39;G_temp_sup-G_T_transv-lh&#39;</span><span class="p">,</span> <span class="mi">60</span><span class="p">),</span>
+         <span class="p">(</span><span class="s1">&#39;G_temp_sup-G_T_transv-rh&#39;</span><span class="p">,</span> <span class="mi">30</span><span class="p">)],</span>
     <span class="s1">&#39;visual/left&#39;</span><span class="p">:</span>
-        <span class="p">[(</span><span class="s1">&#39;S_calcarine-lh&#39;</span><span class="p">,</span> <span class="mi">100</span><span class="p">),</span>
-         <span class="p">(</span><span class="s1">&#39;S_calcarine-rh&#39;</span><span class="p">,</span> <span class="mi">200</span><span class="p">)],</span>
+        <span class="p">[(</span><span class="s1">&#39;S_calcarine-lh&#39;</span><span class="p">,</span> <span class="mi">30</span><span class="p">),</span>
+         <span class="p">(</span><span class="s1">&#39;S_calcarine-rh&#39;</span><span class="p">,</span> <span class="mi">60</span><span class="p">)],</span>
     <span class="s1">&#39;visual/right&#39;</span><span class="p">:</span>
-        <span class="p">[(</span><span class="s1">&#39;S_calcarine-lh&#39;</span><span class="p">,</span> <span class="mi">200</span><span class="p">),</span>
-         <span class="p">(</span><span class="s1">&#39;S_calcarine-rh&#39;</span><span class="p">,</span> <span class="mi">100</span><span class="p">)],</span>
+        <span class="p">[(</span><span class="s1">&#39;S_calcarine-lh&#39;</span><span class="p">,</span> <span class="mi">60</span><span class="p">),</span>
+         <span class="p">(</span><span class="s1">&#39;S_calcarine-rh&#39;</span><span class="p">,</span> <span class="mi">30</span><span class="p">)],</span>
 <span class="p">}</span>
 
 <span class="n">annot</span> <span class="o">=</span> <span class="s1">&#39;aparc.a2009s&#39;</span>
@@ -317,26 +323,43 @@ times more) than the ipsilateral.</p>
                          <span class="k">for</span> <span class="n">activation_list</span> <span class="ow">in</span> <span class="n">activations</span><span class="o">.</span><span class="n">values</span><span class="p">()</span>
                          <span class="k">for</span> <span class="n">activation</span> <span class="ow">in</span> <span class="n">activation_list</span><span class="p">))</span>
 <span class="n">region_names</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="n">activations</span><span class="o">.</span><span class="n">keys</span><span class="p">())</span>
-
-<span class="c1">#  Define the time course of the activity for each region to activate. We use a</span>
-<span class="c1">#  sine wave and it will be the same for all 4 regions.</span>
-<span class="n">source_time_series</span> <span class="o">=</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.sin.html#numpy.sin" title="View documentation for numpy.sin"><span class="n">np</span><span class="o">.</span><span class="n">sin</span></a><span class="p">(</span><a href="https://www.numpy.org/devdocs/reference/generated/numpy.linspace.html#numpy.linspace" title="View documentation for numpy.linspace"><span class="n">np</span><span class="o">.</span><span class="n">linspace</span></a><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">4</span> <span class="o">*</span> <a href="https://www.numpy.org/devdocs/reference/constants.html#numpy.pi" title="View documentation for numpy.pi"><span class="n">np</span><span class="o">.</span><span class="n">pi</span></a><span class="p">,</span> <span class="mi">100</span><span class="p">))</span> <span class="o">*</span> <span class="mf">10e-9</span>
 </pre></div>
 </div>
 <div class="section" id="create-simulated-source-activity">
 <h2>Create simulated source activity<a class="headerlink" href="#create-simulated-source-activity" title="Permalink to this headline">¶</a></h2>
+<p>Generate source time courses for each region. In this example, we want to
+simulate source activity for a single condition at a time. Therefore, each
+evoked response will be parametrized by latency and duration.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">data_fun</span><span class="p">(</span><span class="n">times</span><span class="p">,</span> <span class="n">latency</span><span class="p">,</span> <span class="n">duration</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;Function to generate source time courses for evoked responses,</span>
+<span class="sd">    parametrized by latency and duration.&quot;&quot;&quot;</span>
+    <span class="n">f</span> <span class="o">=</span> <span class="mi">15</span>  <span class="c1"># oscillating frequency, beta band [Hz]</span>
+    <span class="n">sigma</span> <span class="o">=</span> <span class="mf">0.375</span> <span class="o">*</span> <span class="n">duration</span>
+    <span class="n">sinusoid</span> <span class="o">=</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.sin.html#numpy.sin" title="View documentation for numpy.sin"><span class="n">np</span><span class="o">.</span><span class="n">sin</span></a><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <a href="https://www.numpy.org/devdocs/reference/constants.html#numpy.pi" title="View documentation for numpy.pi"><span class="n">np</span><span class="o">.</span><span class="n">pi</span></a> <span class="o">*</span> <span class="n">f</span> <span class="o">*</span> <span class="p">(</span><span class="n">times</span> <span class="o">-</span> <span class="n">latency</span><span class="p">))</span>
+    <span class="n">gf</span> <span class="o">=</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.exp.html#numpy.exp" title="View documentation for numpy.exp"><span class="n">np</span><span class="o">.</span><span class="n">exp</span></a><span class="p">(</span><span class="o">-</span> <span class="p">(</span><span class="n">times</span> <span class="o">-</span> <span class="n">latency</span> <span class="o">-</span> <span class="p">(</span><span class="n">sigma</span> <span class="o">/</span> <span class="mf">4.</span><span class="p">)</span> <span class="o">*</span> <span class="n">rng</span><span class="o">.</span><span class="n">rand</span><span class="p">(</span><span class="mi">1</span><span class="p">))</span> <span class="o">**</span> <span class="mi">2</span> <span class="o">/</span>
+                <span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="p">(</span><span class="n">sigma</span> <span class="o">**</span> <span class="mi">2</span><span class="p">)))</span>
+    <span class="k">return</span> <span class="mf">1e-9</span> <span class="o">*</span> <span class="n">sinusoid</span> <span class="o">*</span> <span class="n">gf</span>
+</pre></div>
+</div>
 <p>Here, <a class="reference internal" href="../../generated/mne.simulation.SourceSimulator.html#mne.simulation.SourceSimulator" title="mne.simulation.SourceSimulator"><code class="xref py py-class docutils literal notranslate"><span class="pre">SourceSimulator</span></code></a> is used, which allows to
 specify where (label), what (source_time_series), and when (events) event
 type will occur.</p>
 <p>We will add data for 4 areas, each of which contains 2 labels. Since add_data
-method accepts 1 label per call, it will be called 2 times per area.
-All activations will contain the same waveform, but the amplitude will be 2
-times higher in the contralateral label, as explained before.</p>
+method accepts 1 label per call, it will be called 2 times per area.</p>
+<p>Evoked responses are generated such that the main component peaks at 100ms
+with a duration of around 30ms, which first appears in the contralateral
+cortex. This is followed by a response in the ipsilateral cortex with a peak
+about 15ms after. The amplitude of the activations will be 2 times higher in
+the contralateral region, as explained before.</p>
 <p>When the activity occurs is defined using events. In this case, they are
 taken from the original raw data. The first column is the sample of the
 event, the second is not used. The third one is the event id, which is
 different for each of the 4 areas.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">source_simulator</span> <span class="o">=</span> <a href="../../generated/mne.simulation.SourceSimulator.html#mne.simulation.SourceSimulator" title="View documentation for mne.simulation.SourceSimulator"><span class="n">mne</span><span class="o">.</span><span class="n">simulation</span><span class="o">.</span><span class="n">SourceSimulator</span></a><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">tstep</span><span class="o">=</span><span class="n">tstep</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">times</span> <span class="o">=</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.arange.html#numpy.arange" title="View documentation for numpy.arange"><span class="n">np</span><span class="o">.</span><span class="n">arange</span></a><span class="p">(</span><span class="mi">150</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">)</span> <span class="o">/</span> <span class="n">info</span><span class="p">[</span><span class="s1">&#39;sfreq&#39;</span><span class="p">]</span>
+<span class="n">duration</span> <span class="o">=</span> <span class="mf">0.03</span>
+<span class="n">rng</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">RandomState</span><span class="p">(</span><span class="mi">7</span><span class="p">)</span>
+<span class="n">source_simulator</span> <span class="o">=</span> <a href="../../generated/mne.simulation.SourceSimulator.html#mne.simulation.SourceSimulator" title="View documentation for mne.simulation.SourceSimulator"><span class="n">mne</span><span class="o">.</span><span class="n">simulation</span><span class="o">.</span><span class="n">SourceSimulator</span></a><span class="p">(</span><span class="n">src</span><span class="p">,</span> <span class="n">tstep</span><span class="o">=</span><span class="n">tstep</span><span class="p">)</span>
+
 <span class="k">for</span> <span class="n">region_id</span><span class="p">,</span> <span class="n">region_name</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">region_names</span><span class="p">,</span> <span class="mi">1</span><span class="p">):</span>
     <span class="n">events_tmp</span> <span class="o">=</span> <span class="n">events</span><span class="p">[</span><a href="https://www.numpy.org/devdocs/reference/generated/numpy.where.html#numpy.where" title="View documentation for numpy.where"><span class="n">np</span><span class="o">.</span><span class="n">where</span></a><span class="p">(</span><span class="n">events</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]</span> <span class="o">==</span> <span class="n">region_id</span><span class="p">)[</span><span class="mi">0</span><span class="p">],</span> <span class="p">:]</span>
     <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">2</span><span class="p">):</span>
@@ -347,8 +370,13 @@ different for each of the 4 areas.</p>
                                                <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
         <span class="n">label_tmp</span> <span class="o">=</span> <span class="n">label_tmp</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
         <span class="n">amplitude_tmp</span> <span class="o">=</span> <span class="n">activations</span><span class="p">[</span><span class="n">region_name</span><span class="p">][</span><span class="n">i</span><span class="p">][</span><span class="mi">1</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">region_name</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s1">&#39;/&#39;</span><span class="p">)[</span><span class="mi">1</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span> <span class="o">==</span> <span class="n">label_tmp</span><span class="o">.</span><span class="n">hemi</span><span class="p">[</span><span class="mi">0</span><span class="p">]:</span>
+            <span class="n">latency_tmp</span> <span class="o">=</span> <span class="mf">0.115</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">latency_tmp</span> <span class="o">=</span> <span class="mf">0.1</span>
+        <span class="n">wf_tmp</span> <span class="o">=</span> <span class="n">data_fun</span><span class="p">(</span><span class="n">times</span><span class="p">,</span> <span class="n">latency_tmp</span><span class="p">,</span> <span class="n">duration</span><span class="p">)</span>
         <span class="n">source_simulator</span><span class="o">.</span><span class="n">add_data</span><span class="p">(</span><span class="n">label_tmp</span><span class="p">,</span>
-                                  <span class="n">amplitude_tmp</span> <span class="o">*</span> <span class="n">source_time_series</span><span class="p">,</span>
+                                  <span class="n">amplitude_tmp</span> <span class="o">*</span> <span class="n">wf_tmp</span><span class="p">,</span>
                                   <span class="n">events_tmp</span><span class="p">)</span>
 
 <span class="c1"># To obtain a SourceEstimate object, we need to use `get_stc()` method of</span>
@@ -371,7 +399,7 @@ sample data</p></li>
 <a class="reference internal" href="../../generated/mne.simulation.simulate_raw.html#mne.simulation.simulate_raw" title="mne.simulation.simulate_raw"><code class="xref py py-func docutils literal notranslate"><span class="pre">simulate_raw()</span></code></a> function.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">raw_sim</span> <span class="o">=</span> <a href="../../generated/mne.simulation.simulate_raw.html#mne.simulation.simulate_raw" title="View documentation for mne.simulation.simulate_raw"><span class="n">mne</span><span class="o">.</span><span class="n">simulation</span><span class="o">.</span><span class="n">simulate_raw</span></a><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="n">source_simulator</span><span class="p">,</span> <span class="n">forward</span><span class="o">=</span><span class="n">fwd</span><span class="p">,</span>
                                       <span class="n">cov</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
-<span class="n">raw_sim</span><span class="o">.</span><span class="n">set_eeg_reference</span><span class="p">(</span><span class="n">projection</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">crop</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">60</span><span class="p">)</span>  <span class="c1"># for speed</span>
+<span class="n">raw_sim</span><span class="o">.</span><span class="n">set_eeg_reference</span><span class="p">(</span><span class="n">projection</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 <a href="../../generated/mne.simulation.add_noise.html#mne.simulation.add_noise" title="View documentation for mne.simulation.add_noise"><span class="n">mne</span><span class="o">.</span><span class="n">simulation</span><span class="o">.</span><span class="n">add_noise</span></a><span class="p">(</span><span class="n">raw_sim</span><span class="p">,</span> <span class="n">cov</span><span class="o">=</span><span class="n">noise_cov</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 <a href="../../generated/mne.simulation.add_eog.html#mne.simulation.add_eog" title="View documentation for mne.simulation.add_eog"><span class="n">mne</span><span class="o">.</span><span class="n">simulation</span><span class="o">.</span><span class="n">add_eog</span></a><span class="p">(</span><span class="n">raw_sim</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
@@ -447,103 +475,8 @@ Computing gain matrix for transform #1/1
    Interval 93.238-94.903 sec
    Interval 94.903-96.568 sec
    Interval 96.568-98.233 sec
-   Interval 98.233-99.898 sec
-   Interval 99.898-101.563 sec
-   Interval 101.563-103.228 sec
-   Interval 103.228-104.892 sec
-   Interval 104.892-106.557 sec
-   Interval 106.557-108.222 sec
-   Interval 108.222-109.887 sec
-   Interval 109.887-111.552 sec
-   Interval 111.552-113.217 sec
-   Interval 113.217-114.882 sec
-   Interval 114.882-116.547 sec
-   Interval 116.547-118.212 sec
-   Interval 118.212-119.877 sec
-   Interval 119.877-121.542 sec
-   Interval 121.542-123.207 sec
-   Interval 123.207-124.872 sec
-   Interval 124.872-126.537 sec
-   Interval 126.537-128.202 sec
-   Interval 128.202-129.867 sec
-   Interval 129.867-131.532 sec
-   Interval 131.532-133.197 sec
-   Interval 133.197-134.862 sec
-   Interval 134.862-136.527 sec
-   Interval 136.527-138.192 sec
-   Interval 138.192-139.857 sec
-   Interval 139.857-141.522 sec
-   Interval 141.522-143.187 sec
-   Interval 143.187-144.852 sec
-   Interval 144.852-146.516 sec
-   Interval 146.516-148.181 sec
-   Interval 148.181-149.846 sec
-   Interval 149.846-151.511 sec
-   Interval 151.511-153.176 sec
-   Interval 153.176-154.841 sec
-   Interval 154.841-156.506 sec
-   Interval 156.506-158.171 sec
-   Interval 158.171-159.836 sec
-   Interval 159.836-161.501 sec
-   Interval 161.501-163.166 sec
-   Interval 163.166-164.831 sec
-   Interval 164.831-166.496 sec
-   Interval 166.496-168.161 sec
-   Interval 168.161-169.826 sec
-   Interval 169.826-171.491 sec
-   Interval 171.491-173.156 sec
-   Interval 173.156-174.821 sec
-   Interval 174.821-176.486 sec
-   Interval 176.486-178.151 sec
-   Interval 178.151-179.816 sec
-   Interval 179.816-181.481 sec
-   Interval 181.481-183.146 sec
-   Interval 183.146-184.811 sec
-   Interval 184.811-186.476 sec
-   Interval 186.476-188.140 sec
-   Interval 188.140-189.805 sec
-   Interval 189.805-191.470 sec
-   Interval 191.470-193.135 sec
-   Interval 193.135-194.800 sec
-   Interval 194.800-196.465 sec
-   Interval 196.465-198.130 sec
-   Interval 198.130-199.795 sec
-   Interval 199.795-201.460 sec
-   Interval 201.460-203.125 sec
-   Interval 203.125-204.790 sec
-   Interval 204.790-206.455 sec
-   Interval 206.455-208.120 sec
-   Interval 208.120-209.785 sec
-   Interval 209.785-211.450 sec
-   Interval 211.450-213.115 sec
-   Interval 213.115-214.780 sec
-   Interval 214.780-216.445 sec
-   Interval 216.445-218.110 sec
-   Interval 218.110-219.775 sec
-   Interval 219.775-221.440 sec
-   Interval 221.440-223.105 sec
-   Interval 223.105-224.770 sec
-   Interval 224.770-226.435 sec
-   Interval 226.435-228.100 sec
-   Interval 228.100-229.764 sec
-   Interval 229.764-231.429 sec
-   Interval 231.429-233.094 sec
-   Interval 233.094-234.759 sec
-   Interval 234.759-236.424 sec
-   Interval 236.424-238.089 sec
-   Interval 238.089-239.754 sec
-   Interval 239.754-241.419 sec
-   Interval 241.419-243.084 sec
-   Interval 243.084-244.749 sec
-   Interval 244.749-246.414 sec
-   Interval 246.414-248.079 sec
-   Interval 248.079-249.744 sec
-   Interval 249.744-251.409 sec
-   Interval 251.409-253.074 sec
-   Interval 253.074-254.739 sec
-   Interval 254.739-256.404 sec
-   Interval 256.404-257.378 sec
-    155 STC iterations provided
+   Interval 98.233-98.338 sec
+    60 STC iterations provided
 Done
 Adding average EEG reference projection.
 1 projection items deactivated
@@ -574,6 +507,33 @@ Computing gain matrix for transform #1/1
 </pre></div>
 </div>
 </div>
+<div class="section" id="extract-epochs-and-compute-evoked-responsses">
+<h2>Extract epochs and compute evoked responsses<a class="headerlink" href="#extract-epochs-and-compute-evoked-responsses" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">epochs</span> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs" title="View documentation for mne.Epochs"><span class="n">mne</span><span class="o">.</span><span class="n">Epochs</span></a><span class="p">(</span><span class="n">raw_sim</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">event_id</span><span class="p">,</span> <span class="n">tmin</span><span class="o">=-</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">tmax</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span>
+                    <span class="n">baseline</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+<span class="n">evoked_aud_left</span> <span class="o">=</span> <span class="n">epochs</span><span class="p">[</span><span class="s1">&#39;auditory/left&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">average</span><span class="p">()</span>
+<span class="n">evoked_vis_right</span> <span class="o">=</span> <span class="n">epochs</span><span class="p">[</span><span class="s1">&#39;visual/right&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">average</span><span class="p">()</span>
+
+<span class="c1"># Visualize the evoked data</span>
+<span class="n">evoked_aud_left</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">spatial_colors</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">evoked_vis_right</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">spatial_colors</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<ul class="sphx-glr-horizontal">
+<li><img alt="../../_images/sphx_glr_plot_simulated_raw_data_using_subject_anatomy_002.png" class="sphx-glr-multi-img" src="../../_images/sphx_glr_plot_simulated_raw_data_using_subject_anatomy_002.png" />
+</li>
+<li><img alt="../../_images/sphx_glr_plot_simulated_raw_data_using_subject_anatomy_003.png" class="sphx-glr-multi-img" src="../../_images/sphx_glr_plot_simulated_raw_data_using_subject_anatomy_003.png" />
+</li>
+</ul>
+<p class="sphx-glr-script-out">Out:</p>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>80 matching events found
+Applying baseline correction (mode: mean)
+Not setting metadata
+Created an SSP operator (subspace dimension = 4)
+4 projection items activated
+</pre></div>
+</div>
+</div>
 <div class="section" id="reconstruct-simulated-source-time-courses-using-dspm-inverse-operator">
 <h2>Reconstruct simulated source time courses using dSPM inverse operator<a class="headerlink" href="#reconstruct-simulated-source-time-courses-using-dspm-inverse-operator" title="Permalink to this headline">¶</a></h2>
 <p>Here, source time courses for auditory and visual areas are reconstructed
@@ -582,12 +542,11 @@ visual representation of source reconstruction.
 As expected, when high activations appear in primary auditory areas, primary
 visual areas will have low activations and vice versa.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">method</span><span class="p">,</span> <span class="n">lambda2</span> <span class="o">=</span> <span class="s1">&#39;dSPM&#39;</span><span class="p">,</span> <span class="mf">1.</span> <span class="o">/</span> <span class="mf">9.</span>
-<span class="n">epochs</span> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs" title="View documentation for mne.Epochs"><span class="n">mne</span><span class="o">.</span><span class="n">Epochs</span></a><span class="p">(</span><span class="n">raw_sim</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">event_id</span><span class="p">)</span>
 <span class="n">inv</span> <span class="o">=</span> <a href="../../generated/mne.minimum_norm.make_inverse_operator.html#mne.minimum_norm.make_inverse_operator" title="View documentation for mne.minimum_norm.make_inverse_operator"><span class="n">mne</span><span class="o">.</span><span class="n">minimum_norm</span><span class="o">.</span><span class="n">make_inverse_operator</span></a><span class="p">(</span><span class="n">epochs</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">fwd</span><span class="p">,</span> <span class="n">noise_cov</span><span class="p">)</span>
 <span class="n">stc_aud</span> <span class="o">=</span> <a href="../../generated/mne.minimum_norm.apply_inverse.html#mne.minimum_norm.apply_inverse" title="View documentation for mne.minimum_norm.apply_inverse"><span class="n">mne</span><span class="o">.</span><span class="n">minimum_norm</span><span class="o">.</span><span class="n">apply_inverse</span></a><span class="p">(</span>
-    <span class="n">epochs</span><span class="p">[</span><span class="s1">&#39;auditory/left&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">average</span><span class="p">(),</span> <span class="n">inv</span><span class="p">,</span> <span class="n">lambda2</span><span class="p">,</span> <span class="n">method</span><span class="p">)</span>
+    <span class="n">evoked_aud_left</span><span class="p">,</span> <span class="n">inv</span><span class="p">,</span> <span class="n">lambda2</span><span class="p">,</span> <span class="n">method</span><span class="p">)</span>
 <span class="n">stc_vis</span> <span class="o">=</span> <a href="../../generated/mne.minimum_norm.apply_inverse.html#mne.minimum_norm.apply_inverse" title="View documentation for mne.minimum_norm.apply_inverse"><span class="n">mne</span><span class="o">.</span><span class="n">minimum_norm</span><span class="o">.</span><span class="n">apply_inverse</span></a><span class="p">(</span>
-    <span class="n">epochs</span><span class="p">[</span><span class="s1">&#39;visual/right&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">average</span><span class="p">(),</span> <span class="n">inv</span><span class="p">,</span> <span class="n">lambda2</span><span class="p">,</span> <span class="n">method</span><span class="p">)</span>
+    <span class="n">evoked_vis_right</span><span class="p">,</span> <span class="n">inv</span><span class="p">,</span> <span class="n">lambda2</span><span class="p">,</span> <span class="n">method</span><span class="p">)</span>
 <span class="n">stc_diff</span> <span class="o">=</span> <span class="n">stc_aud</span> <span class="o">-</span> <span class="n">stc_vis</span>
 
 <span class="n">brain</span> <span class="o">=</span> <span class="n">stc_diff</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">subjects_dir</span><span class="o">=</span><span class="n">subjects_dir</span><span class="p">,</span> <span class="n">initial_time</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
@@ -595,22 +554,17 @@ visual areas will have low activations and vice versa.</p>
 </pre></div>
 </div>
 <ul class="sphx-glr-horizontal">
-<li><img alt="../../_images/sphx_glr_plot_simulated_raw_data_using_subject_anatomy_002.png" class="sphx-glr-multi-img" src="../../_images/sphx_glr_plot_simulated_raw_data_using_subject_anatomy_002.png" />
-</li>
-<li><img alt="../../_images/sphx_glr_plot_simulated_raw_data_using_subject_anatomy_003.png" class="sphx-glr-multi-img" src="../../_images/sphx_glr_plot_simulated_raw_data_using_subject_anatomy_003.png" />
-</li>
 <li><img alt="../../_images/sphx_glr_plot_simulated_raw_data_using_subject_anatomy_004.png" class="sphx-glr-multi-img" src="../../_images/sphx_glr_plot_simulated_raw_data_using_subject_anatomy_004.png" />
 </li>
 <li><img alt="../../_images/sphx_glr_plot_simulated_raw_data_using_subject_anatomy_005.png" class="sphx-glr-multi-img" src="../../_images/sphx_glr_plot_simulated_raw_data_using_subject_anatomy_005.png" />
 </li>
+<li><img alt="../../_images/sphx_glr_plot_simulated_raw_data_using_subject_anatomy_006.png" class="sphx-glr-multi-img" src="../../_images/sphx_glr_plot_simulated_raw_data_using_subject_anatomy_006.png" />
+</li>
+<li><img alt="../../_images/sphx_glr_plot_simulated_raw_data_using_subject_anatomy_007.png" class="sphx-glr-multi-img" src="../../_images/sphx_glr_plot_simulated_raw_data_using_subject_anatomy_007.png" />
+</li>
 </ul>
 <p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>320 matching events found
-Applying baseline correction (mode: mean)
-Not setting metadata
-Created an SSP operator (subspace dimension = 4)
-4 projection items activated
-Converting forward solution to surface orientation
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Converting forward solution to surface orientation
     Average patch normals will be employed in the rotation to the local surface coordinates....
     Converting to surface-based source orientations...
     [done]
@@ -639,7 +593,7 @@ Computing SVD of whitened and weighted lead field matrix.
     largest singular value = 5.49264
     scaling factor to adjust the trace = 1.64e+19
 Preparing the inverse operator for use...
-    Scaled noise and source covariance from nave = 1 to nave = 5
+    Scaled noise and source covariance from nave = 1 to nave = 19
     Created the regularized inverter
     Created an SSP operator (subspace dimension = 4)
     Created the whitener using a noise covariance matrix with rank 360 (4 small eigenvalues omitted)
@@ -650,12 +604,12 @@ Applying inverse operator to &quot;auditory/left&quot;...
     Computing inverse...
     Eigenleads need to be weighted ...
     Computing residual...
-    Explained  99.4% variance
+    Explained  87.9% variance
     Combining the current components...
     dSPM...
 [done]
 Preparing the inverse operator for use...
-    Scaled noise and source covariance from nave = 1 to nave = 3
+    Scaled noise and source covariance from nave = 1 to nave = 16
     Created the regularized inverter
     Created an SSP operator (subspace dimension = 4)
     Created the whitener using a noise covariance matrix with rank 360 (4 small eigenvalues omitted)
@@ -666,11 +620,11 @@ Applying inverse operator to &quot;visual/right&quot;...
     Computing inverse...
     Eigenleads need to be weighted ...
     Computing residual...
-    Explained  99.5% variance
+    Explained  90.7% variance
     Combining the current components...
     dSPM...
 [done]
-Using control points [ 204.9476386   323.62258808 1588.3393872 ]
+Using control points [ 3.36909486  4.92240617 48.55265853]
 </pre></div>
 </div>
 </div>
@@ -683,8 +637,8 @@ parcellation of human cortical gyri and sulci using standard
 anatomical nomenclature, vol. 53(1), 1-15, NeuroImage.</p>
 </dd>
 </dl>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 1 minutes  52.400 seconds)</p>
-<p><strong>Estimated memory usage:</strong>  1191 MB</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  41.446 seconds)</p>
+<p><strong>Estimated memory usage:</strong>  736 MB</p>
 <div class="sphx-glr-footer class sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-simulation-plot-simulated-raw-data-using-subject-anatomy-py">
 <div class="sphx-glr-download docutils container">
 <p><a class="reference download internal" download="" href="../../_downloads/8bfc303385201518aa01301bf16c11e2/plot_simulated_raw_data_using_subject_anatomy.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">plot_simulated_raw_data_using_subject_anatomy.py</span></code></a></p>
@@ -717,7 +671,7 @@ anatomical nomenclature, vol. 53(1), 1-15, NeuroImage.</p>
       <li><a href="faq.html#cite">Cite MNE</a></li>
       <li class="pull-right"><a href="#">Back to top</a></li>
     </ul>
-    <p>&copy; Copyright 2012-2019, MNE Developers. Last updated on 2019-05-27.</p>
+    <p>&copy; Copyright 2012-2019, MNE Developers. Last updated on 2019-05-29.</p>
   </div>
 </footer>
   </body>

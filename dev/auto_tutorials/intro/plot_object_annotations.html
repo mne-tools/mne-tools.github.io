@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>The Events and Annotations data structures &#8212; MNE 0.19.dev0 documentation</title>
+    <title>Parsing events from raw data &#8212; MNE 0.19.dev0 documentation</title>
     <link rel="stylesheet" href="../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../../_static/gallery.css" />
@@ -168,15 +168,13 @@ This documentation is for <strong>development version 0.19.dev0</strong>.
             <p class="logo"><a href="../../index.html">
               <img class="logo" src="../../_static/mne_logo_small.png" alt="Logo"/>
             </a></p><ul>
-<li><a class="reference internal" href="#">The <span class="xref std std-term">Events</span> and <code class="xref py py-class docutils literal notranslate"><span class="pre">Annotations</span></code> data structures</a><ul>
-<li><a class="reference internal" href="#an-example-of-events-and-annotations">An example of events and annotations</a></li>
-<li><a class="reference internal" href="#add-annotations-to-raw-objects">Add <span class="xref std std-term">annotations</span> to <span class="xref std std-term">raw</span> objects</a></li>
-<li><a class="reference internal" href="#valid-operations-in-mne-annotations">Valid operations in <code class="xref py py-class docutils literal notranslate"><span class="pre">mne.Annotations</span></code></a><ul>
-<li><a class="reference internal" href="#concatenate">Concatenate</a></li>
-<li><a class="reference internal" href="#iterating-indexing-and-slicing-mne-annotations">Iterating, Indexing and Slicing <code class="xref py py-class docutils literal notranslate"><span class="pre">mne.Annotations</span></code></a></li>
-<li><a class="reference internal" href="#save">Save</a></li>
-</ul>
-</li>
+<li><a class="reference internal" href="#">Parsing events from raw data</a><ul>
+<li><a class="reference internal" href="#the-events-and-annotations-data-structures">The Events and Annotations data structures</a></li>
+<li><a class="reference internal" href="#what-is-a-stim-channel">What is a STIM channel?</a></li>
+<li><a class="reference internal" href="#converting-a-stim-channel-signal-to-an-events-array">Converting a STIM channel signal to an Events array</a></li>
+<li><a class="reference internal" href="#reading-embedded-events-as-annotations">Reading embedded events as Annotations</a></li>
+<li><a class="reference internal" href="#converting-between-events-arrays-and-annotations-objects">Converting between Events arrays and Annotations objects</a></li>
+<li><a class="reference internal" href="#making-multiple-events-per-annotation">Making multiple events per annotation</a></li>
 </ul>
 </li>
 </ul>
@@ -196,47 +194,43 @@ This documentation is for <strong>development version 0.19.dev0</strong>.
 <p class="admonition-title">Note</p>
 <p>Click <a class="reference internal" href="#sphx-glr-download-auto-tutorials-intro-plot-object-annotations-py"><span class="std std-ref">here</span></a> to download the full example code</p>
 </div>
-<div class="sphx-glr-example-title section" id="the-events-and-annotations-data-structures">
-<span id="tut-annotations"></span><span id="sphx-glr-auto-tutorials-intro-plot-object-annotations-py"></span><h1>The <a class="reference internal" href="../../glossary.html#term-events"><span class="xref std std-term">Events</span></a> and <a class="reference internal" href="../../generated/mne.Annotations.html#mne.Annotations" title="mne.Annotations"><code class="xref py py-class docutils literal notranslate"><span class="pre">Annotations</span></code></a> data structures<a class="headerlink" href="#the-events-and-annotations-data-structures" title="Permalink to this headline">¶</a></h1>
-<p><a class="reference internal" href="../../glossary.html#term-events"><span class="xref std std-term">Events</span></a> and <a class="reference internal" href="../../glossary.html#term-annotations"><span class="xref std std-term">annotations</span></a> are quite similar.
-This tutorial highlights their differences and similarities, and tries to shed
-some light on which one is preferred to use in different situations when using
-MNE.</p>
-<p>Both events and <a class="reference internal" href="../../generated/mne.Annotations.html#mne.Annotations" title="mne.Annotations"><code class="xref py py-class docutils literal notranslate"><span class="pre">Annotations</span></code></a> can be seen as triplets
-where the first element answers to <strong>when</strong> something happens and the last
-element refers to <strong>what</strong> it is.
-The main difference is that events represent the onset in samples taking into
-account the first sample value
-(<a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw.first_samp" title="mne.io.Raw.first_samp"><code class="xref py py-attr docutils literal notranslate"><span class="pre">raw.first_samp</span></code></a>), and the description is
-an integer value.
-In contrast, <a class="reference internal" href="../../generated/mne.Annotations.html#mne.Annotations" title="mne.Annotations"><code class="xref py py-class docutils literal notranslate"><span class="pre">Annotations</span></code></a> represents the
-<code class="docutils literal notranslate"><span class="pre">onset</span></code> in seconds (relative to the reference <code class="docutils literal notranslate"><span class="pre">orig_time</span></code>),
-and the <code class="docutils literal notranslate"><span class="pre">description</span></code> is an arbitrary string.
-There is no correspondence between the second element of events and
-<a class="reference internal" href="../../generated/mne.Annotations.html#mne.Annotations" title="mne.Annotations"><code class="xref py py-class docutils literal notranslate"><span class="pre">Annotations</span></code></a>.
-For events, the second element corresponds to the previous value on the
-stimulus channel from which events are extracted. In practice, the second
-element is therefore in most cases zero.
-The second element of <a class="reference internal" href="../../generated/mne.Annotations.html#mne.Annotations" title="mne.Annotations"><code class="xref py py-class docutils literal notranslate"><span class="pre">Annotations</span></code></a> is a float
-indicating its duration in seconds.</p>
-<p>See <a class="reference internal" href="../../auto_examples/io/plot_read_events.html#ex-read-events"><span class="std std-ref">Reading an event file</span></a>
-for a complete example of how to read, select, and visualize <strong>events</strong>;
-and <a class="reference internal" href="../preprocessing/plot_artifacts_correction_rejection.html#tut-artifact-rejection"><span class="std std-ref">Rejecting bad data (channels and segments)</span></a> to
-learn how <a class="reference internal" href="../../generated/mne.Annotations.html#mne.Annotations" title="mne.Annotations"><code class="xref py py-class docutils literal notranslate"><span class="pre">Annotations</span></code></a> are used to mark bad segments
-of data.</p>
-<div class="section" id="an-example-of-events-and-annotations">
-<h2>An example of events and annotations<a class="headerlink" href="#an-example-of-events-and-annotations" title="Permalink to this headline">¶</a></h2>
-<p>The following example shows the recorded events in <em class="xref py py-obj">sample_audvis_raw.fif</em> and
-marks bad segments due to eye blinks.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os.path</span> <span class="k">as</span> <span class="nn">op</span>
+<div class="sphx-glr-example-title section" id="parsing-events-from-raw-data">
+<span id="sphx-glr-auto-tutorials-intro-plot-object-annotations-py"></span><h1>Parsing events from raw data<a class="headerlink" href="#parsing-events-from-raw-data" title="Permalink to this headline">¶</a></h1>
+<p>This tutorial describes how to read experimental events from raw recordings,
+and how to convert between the two different representations of events within
+MNE-Python (Events arrays and Annotations objects).</p>
+<div class="contents local topic" id="page-contents">
+<p class="topic-title first">Page contents</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#the-events-and-annotations-data-structures" id="id1">The Events and Annotations data structures</a></p></li>
+<li><p><a class="reference internal" href="#what-is-a-stim-channel" id="id2">What is a STIM channel?</a></p></li>
+<li><p><a class="reference internal" href="#converting-a-stim-channel-signal-to-an-events-array" id="id3">Converting a STIM channel signal to an Events array</a></p></li>
+<li><p><a class="reference internal" href="#reading-embedded-events-as-annotations" id="id4">Reading embedded events as Annotations</a></p></li>
+<li><p><a class="reference internal" href="#converting-between-events-arrays-and-annotations-objects" id="id5">Converting between Events arrays and Annotations objects</a></p></li>
+<li><p><a class="reference internal" href="#making-multiple-events-per-annotation" id="id6">Making multiple events per annotation</a></p></li>
+</ul>
+</div>
+<p>In the <a class="reference internal" href="plot_introduction.html#overview-tut-events-section"><span class="std std-ref">introductory tutorial</span></a> we saw an
+example of reading experimental events from a <a class="reference internal" href="../../glossary.html#term-stim-channel"><span class="xref std std-term">“STIM” channel</span></a>; here we’ll discuss <a class="reference internal" href="../../glossary.html#term-events"><span class="xref std std-term">events</span></a> and <a class="reference internal" href="../../glossary.html#term-annotations"><span class="xref std std-term">annotations</span></a> more
+broadly, give more detailed information about reading from STIM channels, and
+give an example of reading events that are in a marker file or included in the
+data file as an embedded array. The tutorials <a class="reference internal" href="../raw/plot_events.html"><span class="doc">Working with events</span></a> and
+<a class="reference internal" href="../raw/plot_annotating_raw.html"><span class="doc">Annotating continuous data</span></a> discuss how to plot, combine, load, save, and
+export <a class="reference internal" href="../../glossary.html#term-events"><span class="xref std std-term">events</span></a> and <a class="reference internal" href="../../generated/mne.Annotations.html#mne.Annotations" title="mne.Annotations"><code class="xref py py-class docutils literal notranslate"><span class="pre">Annotations</span></code></a> (respectively), and the
+latter tutorial also covers interactive annotation of <a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-class docutils literal notranslate"><span class="pre">Raw</span></code></a>
+objects.</p>
+<p>We’ll begin by loading the Python modules we need, and loading the same
+<a class="reference internal" href="../../manual/datasets_index.html#sample-dataset"><span class="std std-ref">example data</span></a> we used in the <a class="reference internal" href="plot_introduction.html"><span class="doc">introductory tutorial</span></a>, but to save memory we’ll crop the <a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-class docutils literal notranslate"><span class="pre">Raw</span></code></a>
+object to just 60 seconds before loading it into RAM:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-
 <span class="kn">import</span> <span class="nn">mne</span>
 
-<span class="c1"># Load the data</span>
-<span class="n">data_path</span> <span class="o">=</span> <a href="../../generated/mne.datasets.sample.data_path.html#mne.datasets.sample.data_path" title="View documentation for mne.datasets.sample.data_path"><span class="n">mne</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">sample</span><span class="o">.</span><span class="n">data_path</span></a><span class="p">()</span>
-<span class="n">fname</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_path</span><span class="p">,</span> <span class="s1">&#39;MEG&#39;</span><span class="p">,</span> <span class="s1">&#39;sample&#39;</span><span class="p">,</span> <span class="s1">&#39;sample_audvis_raw.fif&#39;</span><span class="p">)</span>
-<span class="n">raw</span> <span class="o">=</span> <a href="../../generated/mne.io.read_raw_fif.html#mne.io.read_raw_fif" title="View documentation for mne.io.read_raw_fif"><span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read_raw_fif</span></a><span class="p">(</span><span class="n">fname</span><span class="p">)</span>
+<span class="n">sample_data_folder</span> <span class="o">=</span> <a href="../../generated/mne.datasets.sample.data_path.html#mne.datasets.sample.data_path" title="View documentation for mne.datasets.sample.data_path"><span class="n">mne</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">sample</span><span class="o">.</span><span class="n">data_path</span></a><span class="p">()</span>
+<span class="n">sample_data_raw_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">sample_data_folder</span><span class="p">,</span> <span class="s1">&#39;MEG&#39;</span><span class="p">,</span> <span class="s1">&#39;sample&#39;</span><span class="p">,</span>
+                                    <span class="s1">&#39;sample_audvis_raw.fif&#39;</span><span class="p">)</span>
+<span class="n">raw</span> <span class="o">=</span> <a href="../../generated/mne.io.read_raw_fif.html#mne.io.read_raw_fif" title="View documentation for mne.io.read_raw_fif"><span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read_raw_fif</span></a><span class="p">(</span><span class="n">sample_data_raw_file</span><span class="p">)</span>
+<span class="n">raw</span><span class="o">.</span><span class="n">crop</span><span class="p">(</span><span class="n">tmax</span><span class="o">=</span><span class="mi">60</span><span class="p">)</span><span class="o">.</span><span class="n">load_data</span><span class="p">()</span>
 </pre></div>
 </div>
 <p class="sphx-glr-script-out">Out:</p>
@@ -248,290 +242,283 @@ marks bad segments due to eye blinks.</p>
     Range : 25800 ... 192599 =     42.956 ...   320.670 secs
 Ready.
 Current compensation grade : 0
+Reading 0 ... 36037  =      0.000 ...    60.000 secs...
 </pre></div>
 </div>
-<p>First we’ll create and plot events associated with the experimental paradigm:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># extract the events array from the stim channel</span>
-<span class="n">events</span> <span class="o">=</span> <a href="../../generated/mne.find_events.html#mne.find_events" title="View documentation for mne.find_events"><span class="n">mne</span><span class="o">.</span><span class="n">find_events</span></a><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
-
-<span class="c1"># Specify event_id dictionary based on the meaning of experimental triggers</span>
-<span class="n">event_id</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Auditory/Left&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;Auditory/Right&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
-            <span class="s1">&#39;Visual/Left&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s1">&#39;Visual/Right&#39;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
-            <span class="s1">&#39;smiley&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span> <span class="s1">&#39;button&#39;</span><span class="p">:</span> <span class="mi">32</span><span class="p">}</span>
-<span class="n">color</span> <span class="o">=</span> <span class="p">{</span><span class="mi">1</span><span class="p">:</span> <span class="s1">&#39;green&#39;</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="s1">&#39;yellow&#39;</span><span class="p">,</span> <span class="mi">3</span><span class="p">:</span> <span class="s1">&#39;red&#39;</span><span class="p">,</span> <span class="mi">4</span><span class="p">:</span> <span class="s1">&#39;c&#39;</span><span class="p">,</span> <span class="mi">5</span><span class="p">:</span> <span class="s1">&#39;black&#39;</span><span class="p">,</span> <span class="mi">32</span><span class="p">:</span> <span class="s1">&#39;blue&#39;</span><span class="p">}</span>
-
-<a href="../../generated/mne.viz.plot_events.html#mne.viz.plot_events" title="View documentation for mne.viz.plot_events"><span class="n">mne</span><span class="o">.</span><span class="n">viz</span><span class="o">.</span><span class="n">plot_events</span></a><span class="p">(</span><span class="n">events</span><span class="p">,</span> <span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;sfreq&#39;</span><span class="p">],</span> <span class="n">raw</span><span class="o">.</span><span class="n">first_samp</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="n">color</span><span class="p">,</span>
-                    <span class="n">event_id</span><span class="o">=</span><span class="n">event_id</span><span class="p">)</span>
+<div class="section" id="the-events-and-annotations-data-structures">
+<h2><a class="toc-backref" href="#id1">The Events and Annotations data structures</a><a class="headerlink" href="#the-events-and-annotations-data-structures" title="Permalink to this headline">¶</a></h2>
+<p>Generally speaking, both the Events and <a class="reference internal" href="../../generated/mne.Annotations.html#mne.Annotations" title="mne.Annotations"><code class="xref py py-class docutils literal notranslate"><span class="pre">Annotations</span></code></a> data
+structures serve the same purpose: they provide a mapping between times
+during an EEG/MEG recording and a description of what happened at those
+times. In other words, they associate a <em>when</em> with a <em>what</em>. The main
+differences are:</p>
+<ol class="arabic simple">
+<li><p><strong>Units</strong>: the Events data structure represents the <em>when</em> in terms of
+samples, whereas the <a class="reference internal" href="../../generated/mne.Annotations.html#mne.Annotations" title="mne.Annotations"><code class="xref py py-class docutils literal notranslate"><span class="pre">Annotations</span></code></a> data structure represents
+the <em>when</em> in seconds.</p></li>
+<li><p><strong>Limits on the description</strong>: the Events data structure represents the
+<em>what</em> as an integer “Event ID” code, whereas the
+<a class="reference internal" href="../../generated/mne.Annotations.html#mne.Annotations" title="mne.Annotations"><code class="xref py py-class docutils literal notranslate"><span class="pre">Annotations</span></code></a> data structure represents the <em>what</em> as a
+string.</p></li>
+<li><p><strong>How duration is encoded</strong>: Events in an Event array do not have a
+duration (though it is possible to represent duration with pairs of
+onset/offset events within an Events array), whereas each element of an
+<a class="reference internal" href="../../generated/mne.Annotations.html#mne.Annotations" title="mne.Annotations"><code class="xref py py-class docutils literal notranslate"><span class="pre">Annotations</span></code></a> object necessarily includes a duration (though
+the duration can be zero if an instantaneous event is desired).</p></li>
+<li><p><strong>Internal representation</strong>: Events are stored as an ordinary
+<a class="reference external" href="https://www.numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17.dev0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">NumPy</span> <span class="pre">array</span></code></a>, whereas <a class="reference internal" href="../../generated/mne.Annotations.html#mne.Annotations" title="mne.Annotations"><code class="xref py py-class docutils literal notranslate"><span class="pre">Annotations</span></code></a> is
+a <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#list" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">list</span></code></a>-like class defined in MNE-Python.</p></li>
+</ol>
+</div>
+<div class="section" id="what-is-a-stim-channel">
+<span id="stim-channel-defined"></span><h2><a class="toc-backref" href="#id2">What is a STIM channel?</a><a class="headerlink" href="#what-is-a-stim-channel" title="Permalink to this headline">¶</a></h2>
+<p>A <a class="reference internal" href="../../glossary.html#term-stim-channel"><span class="xref std std-term">STIM channel</span></a> (short for “stimulus channel”) is a channel that does
+not receive signals from an EEG, MEG, or other sensor. Instead, STIM channels
+record voltages (usually short, rectangular DC pulses of fixed magnitudes
+sent from the experiment-controlling computer) that are time-locked to
+experimental events, such as the onset of a stimulus or a button-press
+response by the subject (those pulses are sometimes called <a class="reference external" href="https://en.wikipedia.org/wiki/Transistor%E2%80%93transistor_logic">TTL</a> pulses,
+event pulses, trigger signals, or just “triggers”). In other cases, these
+pulses may not be strictly time-locked to an experimental event, but instead
+may occur in between trials to indicate the type of stimulus (or experimental
+condition) that is about to occur on the upcoming trial.</p>
+<p>The DC pulses may be all on one STIM channel (in which case different
+experimental events or trial types are encoded as different voltage
+magnitudes), or they may be spread across several channels, in which case the
+channel(s) on which the pulse(s) occur can be used to encode different events
+or conditions. Even on systems with multiple STIM channels, there is often
+one channel that records a weighted sum of the other STIM channels, in such a
+way that voltage levels on that channel can be unambiguously decoded as
+particular event types. On older Neuromag systems (such as that used to
+record the sample data) this “summation channel” was typically <code class="docutils literal notranslate"><span class="pre">STI</span> <span class="pre">014</span></code>;
+on newer systems it is more commonly <code class="docutils literal notranslate"><span class="pre">STI101</span></code>. You can see the STIM
+channels in the raw data file here:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">raw</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span><span class="o">.</span><span class="n">pick_types</span><span class="p">(</span><span class="n">meg</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">stim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">start</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
 </pre></div>
 </div>
 <img alt="../../_images/sphx_glr_plot_object_annotations_001.png" class="sphx-glr-single-img" src="../../_images/sphx_glr_plot_object_annotations_001.png" />
-<p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>320 events found
-Event IDs: [ 1  2  3  4  5 32]
+<p>You can see that <code class="docutils literal notranslate"><span class="pre">STI</span> <span class="pre">014</span></code> (the summation channel) contains pulses of
+different magnitudes whereas pulses on other channels have consistent
+magnitudes. You can also see that every time there is a pulse on one of the
+other STIM channels, there is a corresponding pulse on <code class="docutils literal notranslate"><span class="pre">STI</span> <span class="pre">014</span></code>.</p>
+</div>
+<div class="section" id="converting-a-stim-channel-signal-to-an-events-array">
+<h2><a class="toc-backref" href="#id3">Converting a STIM channel signal to an Events array</a><a class="headerlink" href="#converting-a-stim-channel-signal-to-an-events-array" title="Permalink to this headline">¶</a></h2>
+<p>If your data has events recorded on a STIM channel, you can convert them into
+an events array using <a class="reference internal" href="../../generated/mne.find_events.html#mne.find_events" title="mne.find_events"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.find_events()</span></code></a>. The sample number of the onset
+(or offset) of each pulse is recorded as the event time, the pulse magnitudes
+are converted into integers, and these pairs of sample numbers plus integer
+codes are stored in <a class="reference external" href="https://www.numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.17.dev0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">NumPy</span> <span class="pre">arrays</span></code></a> (usually called
+“the events array” or just “the events”). In its simplest form, the function
+requires only the <a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-class docutils literal notranslate"><span class="pre">Raw</span></code></a> object, and the name of the channel(s)
+from which to read events:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">events</span> <span class="o">=</span> <a href="../../generated/mne.find_events.html#mne.find_events" title="View documentation for mne.find_events"><span class="n">mne</span><span class="o">.</span><span class="n">find_events</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">stim_channel</span><span class="o">=</span><span class="s1">&#39;STI 014&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">events</span><span class="p">[:</span><span class="mi">5</span><span class="p">])</span>  <span class="c1"># show the first 5</span>
 </pre></div>
 </div>
-<p>Next, we’re going to detect eye blinks and turn them into
-<a class="reference internal" href="../../generated/mne.Annotations.html#mne.Annotations" title="mne.Annotations"><code class="xref py py-class docutils literal notranslate"><span class="pre">Annotations</span></code></a>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># find blinks</span>
-<span class="n">annotated_blink_raw</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
-<span class="n">eog_events</span> <span class="o">=</span> <a href="../../generated/mne.preprocessing.find_eog_events.html#mne.preprocessing.find_eog_events" title="View documentation for mne.preprocessing.find_eog_events"><span class="n">mne</span><span class="o">.</span><span class="n">preprocessing</span><span class="o">.</span><span class="n">find_eog_events</span></a><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
-<span class="n">n_blinks</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">eog_events</span><span class="p">)</span>
-
-<span class="c1"># Turn blink events into Annotations of 0.5 seconds duration,</span>
-<span class="c1"># each centered on the blink event:</span>
-<span class="n">onset</span> <span class="o">=</span> <span class="n">eog_events</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;sfreq&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="mf">0.25</span>
-<span class="n">duration</span> <span class="o">=</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.repeat.html#numpy.repeat" title="View documentation for numpy.repeat"><span class="n">np</span><span class="o">.</span><span class="n">repeat</span></a><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">n_blinks</span><span class="p">)</span>
-<span class="n">description</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;bad blink&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="n">n_blinks</span>
-<span class="n">annot</span> <span class="o">=</span> <a href="../../generated/mne.Annotations.html#mne.Annotations" title="View documentation for mne.Annotations"><span class="n">mne</span><span class="o">.</span><span class="n">Annotations</span></a><span class="p">(</span><span class="n">onset</span><span class="p">,</span> <span class="n">duration</span><span class="p">,</span> <span class="n">description</span><span class="p">,</span>
-                        <span class="n">orig_time</span><span class="o">=</span><span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;meas_date&#39;</span><span class="p">])</span>
-<span class="n">annotated_blink_raw</span><span class="o">.</span><span class="n">set_annotations</span><span class="p">(</span><span class="n">annot</span><span class="p">)</span>
-
-<span class="c1"># plot the annotated raw</span>
-<span class="n">annotated_blink_raw</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
+<p class="sphx-glr-script-out">Out:</p>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>86 events found
+Event IDs: [ 1  2  3  4  5 32]
+[[27977     0     2]
+ [28345     0     3]
+ [28771     0     1]
+ [29219     0     4]
+ [29652     0     2]]
+</pre></div>
+</div>
+<div class="sidebar">
+<p class="sidebar-title">The middle column of the Events array</p>
+<p>MNE-Python events are actually <em>three</em> values: in between the sample
+number and the integer event code is a value indicating what the event
+code was on the immediately preceding sample. In practice, that value is
+almost always <em class="xref py py-obj">0</em>, but it can be used to detect the <em>endpoint</em> of an
+event whose duration is longer than one sample. See the documentation of
+<a class="reference internal" href="../../generated/mne.find_events.html#mne.find_events" title="mne.find_events"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.find_events()</span></code></a> for more details.</p>
+</div>
+<p>If you don’t provide the name of a STIM channel, <a class="reference internal" href="../../generated/mne.find_events.html#mne.find_events" title="mne.find_events"><code class="xref py py-func docutils literal notranslate"><span class="pre">find_events()</span></code></a>
+will first look for MNE-Python <a class="reference internal" href="plot_configuration.html"><span class="doc">config variables</span></a>
+for variables <code class="docutils literal notranslate"><span class="pre">MNE_STIM_CHANNEL</span></code>, <code class="docutils literal notranslate"><span class="pre">MNE_STIM_CHANNEL_1</span></code>, etc. If those are
+not found, channels <code class="docutils literal notranslate"><span class="pre">STI</span> <span class="pre">014</span></code> and <code class="docutils literal notranslate"><span class="pre">STI101</span></code> are tried, followed by the
+first channel with type “STIM” present in <code class="docutils literal notranslate"><span class="pre">raw.ch_names</span></code>. If you regularly
+work with data from several different MEG systems with different STIM channel
+names, setting the <code class="docutils literal notranslate"><span class="pre">MNE_STIM_CHANNEL</span></code> config variable may not be very
+useful, but for researchers whose data is all from a single system it can be
+a time-saver to configure that variable once and then forget about it.</p>
+<p><a class="reference internal" href="../../generated/mne.find_events.html#mne.find_events" title="mne.find_events"><code class="xref py py-func docutils literal notranslate"><span class="pre">find_events()</span></code></a> has several options, including options for aligning
+events to the onset or offset of the STIM channel pulses, setting the minimum
+pulse duration, and handling of consecutive pulses (with no return to zero
+between them). For example, you can effectively encode event duration by
+passing <code class="docutils literal notranslate"><span class="pre">output='step'</span></code> to <a class="reference internal" href="../../generated/mne.find_events.html#mne.find_events" title="mne.find_events"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.find_events()</span></code></a>; see the documentation
+of <a class="reference internal" href="../../generated/mne.find_events.html#mne.find_events" title="mne.find_events"><code class="xref py py-func docutils literal notranslate"><span class="pre">find_events()</span></code></a> for details. More information on working with
+events arrays (including how to plot, combine, load, and save event arrays)
+can be found in the tutorial <a class="reference internal" href="../raw/plot_events.html"><span class="doc">Working with events</span></a>.</p>
+</div>
+<div class="section" id="reading-embedded-events-as-annotations">
+<h2><a class="toc-backref" href="#id4">Reading embedded events as Annotations</a><a class="headerlink" href="#reading-embedded-events-as-annotations" title="Permalink to this headline">¶</a></h2>
+<p>Some EEG/MEG systems generate files where events are stored in a separate
+data array rather than as pulses on one or more STIM channels. For example,
+the EEGLAB format stores events as a collection of arrays in the <code class="file docutils literal notranslate"><span class="pre">.set</span></code>
+file. When reading those files, MNE-Python will automatically convert the
+stored events into an <a class="reference internal" href="../../generated/mne.Annotations.html#mne.Annotations" title="mne.Annotations"><code class="xref py py-class docutils literal notranslate"><span class="pre">Annotations</span></code></a> object and store it as the
+<a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw.annotations" title="mne.io.Raw.annotations"><code class="xref py py-attr docutils literal notranslate"><span class="pre">annotations</span></code></a> attribute of the <a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-class docutils literal notranslate"><span class="pre">Raw</span></code></a> object:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">testing_data_folder</span> <span class="o">=</span> <span class="n">mne</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">data_path</span><span class="p">()</span>
+<span class="n">eeglab_raw_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">testing_data_folder</span><span class="p">,</span> <span class="s1">&#39;EEGLAB&#39;</span><span class="p">,</span> <span class="s1">&#39;test_raw.set&#39;</span><span class="p">)</span>
+<span class="n">eeglab_raw</span> <span class="o">=</span> <a href="../../generated/mne.io.read_raw_eeglab.html#mne.io.read_raw_eeglab" title="View documentation for mne.io.read_raw_eeglab"><span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read_raw_eeglab</span></a><span class="p">(</span><span class="n">eeglab_raw_file</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">eeglab_raw</span><span class="o">.</span><span class="n">annotations</span><span class="p">)</span>
+</pre></div>
+</div>
+<p class="sphx-glr-script-out">Out:</p>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Reading /home/circleci/mne_data/MNE-testing-data/EEGLAB/test_raw.fdt
+&lt;Annotations  |  154 segments : square (80), rt (74), orig_time : None&gt;
+</pre></div>
+</div>
+<p>The core data within an <a class="reference internal" href="../../generated/mne.Annotations.html#mne.Annotations" title="mne.Annotations"><code class="xref py py-class docutils literal notranslate"><span class="pre">Annotations</span></code></a> object is accessible
+through three of its attributes: <code class="docutils literal notranslate"><span class="pre">onset</span></code>, <code class="docutils literal notranslate"><span class="pre">duration</span></code>, and
+<code class="docutils literal notranslate"><span class="pre">description</span></code>. Here we can see that there were 154 events stored in the
+EEGLAB file, they all had a duration of zero seconds, there were two
+different types of events, and the first event occurred about 1 second after
+the recording began:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">eeglab_raw</span><span class="o">.</span><span class="n">annotations</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">eeglab_raw</span><span class="o">.</span><span class="n">annotations</span><span class="o">.</span><span class="n">duration</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">set</span><span class="p">(</span><span class="n">eeglab_raw</span><span class="o">.</span><span class="n">annotations</span><span class="o">.</span><span class="n">description</span><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">eeglab_raw</span><span class="o">.</span><span class="n">annotations</span><span class="o">.</span><span class="n">onset</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
+</pre></div>
+</div>
+<p class="sphx-glr-script-out">Out:</p>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>154
+{0.0}
+{&#39;rt&#39;, &#39;square&#39;}
+1.000068359375
+</pre></div>
+</div>
+<p>More information on working with <a class="reference internal" href="../../generated/mne.Annotations.html#mne.Annotations" title="mne.Annotations"><code class="xref py py-class docutils literal notranslate"><span class="pre">Annotations</span></code></a> objects, including
+how to add annotations to <a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-class docutils literal notranslate"><span class="pre">Raw</span></code></a> objects interactively, and how
+to plot, concatenate, load, save, and export <a class="reference internal" href="../../generated/mne.Annotations.html#mne.Annotations" title="mne.Annotations"><code class="xref py py-class docutils literal notranslate"><span class="pre">Annotations</span></code></a>
+objects can be found in the tutorial <a class="reference internal" href="../raw/plot_annotating_raw.html"><span class="doc">Annotating continuous data</span></a>.</p>
+</div>
+<div class="section" id="converting-between-events-arrays-and-annotations-objects">
+<h2><a class="toc-backref" href="#id5">Converting between Events arrays and Annotations objects</a><a class="headerlink" href="#converting-between-events-arrays-and-annotations-objects" title="Permalink to this headline">¶</a></h2>
+<p>Once your experimental events are read into MNE-Python (as either an Events
+array or an <a class="reference internal" href="../../generated/mne.Annotations.html#mne.Annotations" title="mne.Annotations"><code class="xref py py-class docutils literal notranslate"><span class="pre">Annotations</span></code></a> object), you can easily convert between
+the two formats as needed. You might do this because, e.g., an Events array
+is needed for epoching continuous data, or because you want to take advantage
+of the “annotation-aware” capability of some functions, which automatically
+omit spans of data if they overlap with certain annotations.</p>
+<p>To convert an <a class="reference internal" href="../../generated/mne.Annotations.html#mne.Annotations" title="mne.Annotations"><code class="xref py py-class docutils literal notranslate"><span class="pre">Annotations</span></code></a> object to an Events array, use the
+function <a class="reference internal" href="../../generated/mne.events_from_annotations.html#mne.events_from_annotations" title="mne.events_from_annotations"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.events_from_annotations()</span></code></a> on the <a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-class docutils literal notranslate"><span class="pre">Raw</span></code></a> file
+containing the annotations. This function will assign an integer Event ID to
+each unique element of <code class="docutils literal notranslate"><span class="pre">raw.annotations.description</span></code>, and will return the
+mapping of descriptions to integer Event IDs along with the derived Event
+array. By default, one event will be created at the onset of each annotation;
+this can be modified via the <code class="docutils literal notranslate"><span class="pre">chunk_duration</span></code> parameter of
+<a class="reference internal" href="../../generated/mne.events_from_annotations.html#mne.events_from_annotations" title="mne.events_from_annotations"><code class="xref py py-func docutils literal notranslate"><span class="pre">events_from_annotations()</span></code></a> to create equally spaced events within
+each annotation span (see <a class="reference internal" href="#chunk-duration"><span class="std std-ref">Making multiple events per annotation</span></a>, below, or see
+<a class="reference internal" href="../raw/plot_events.html#fixed-length-events"><span class="std std-ref">Making equally-spaced Events arrays</span></a> for direct creation of an Events array of
+equally-spaced events).</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">events_from_annot</span><span class="p">,</span> <span class="n">event_dict</span> <span class="o">=</span> <a href="../../generated/mne.events_from_annotations.html#mne.events_from_annotations" title="View documentation for mne.events_from_annotations"><span class="n">mne</span><span class="o">.</span><span class="n">events_from_annotations</span></a><span class="p">(</span><span class="n">eeglab_raw</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">event_dict</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">events_from_annot</span><span class="p">[:</span><span class="mi">5</span><span class="p">])</span>
+</pre></div>
+</div>
+<p class="sphx-glr-script-out">Out:</p>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Used Annotations descriptions: [&#39;rt&#39;, &#39;square&#39;]
+{&#39;rt&#39;: 1, &#39;square&#39;: 2}
+[[128   0   2]
+ [217   0   2]
+ [267   0   1]
+ [602   0   2]
+ [659   0   1]]
+</pre></div>
+</div>
+<p>If you want to control which integers are mapped to each unique description
+value, you can pass a <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a> specifying the mapping as the
+<code class="docutils literal notranslate"><span class="pre">event_id</span></code> parameter of <a class="reference internal" href="../../generated/mne.events_from_annotations.html#mne.events_from_annotations" title="mne.events_from_annotations"><code class="xref py py-func docutils literal notranslate"><span class="pre">events_from_annotations()</span></code></a>; this
+<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dict</span></code></a> will be returned unmodified as the <code class="docutils literal notranslate"><span class="pre">event_dict</span></code>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">custom_mapping</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;rt&#39;</span><span class="p">:</span> <span class="mi">77</span><span class="p">,</span> <span class="s1">&#39;square&#39;</span><span class="p">:</span> <span class="mi">42</span><span class="p">}</span>
+<span class="p">(</span><span class="n">events_from_annot</span><span class="p">,</span>
+ <span class="n">event_dict</span><span class="p">)</span> <span class="o">=</span> <a href="../../generated/mne.events_from_annotations.html#mne.events_from_annotations" title="View documentation for mne.events_from_annotations"><span class="n">mne</span><span class="o">.</span><span class="n">events_from_annotations</span></a><span class="p">(</span><span class="n">eeglab_raw</span><span class="p">,</span> <span class="n">event_id</span><span class="o">=</span><span class="n">custom_mapping</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">event_dict</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">events_from_annot</span><span class="p">[:</span><span class="mi">5</span><span class="p">])</span>
+</pre></div>
+</div>
+<p class="sphx-glr-script-out">Out:</p>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Used Annotations descriptions: [&#39;rt&#39;, &#39;square&#39;]
+{&#39;rt&#39;: 77, &#39;square&#39;: 42}
+[[128   0  42]
+ [217   0  42]
+ [267   0  77]
+ [602   0  42]
+ [659   0  77]]
+</pre></div>
+</div>
+<p>To make the opposite conversion (from Events array to
+<a class="reference internal" href="../../generated/mne.Annotations.html#mne.Annotations" title="mne.Annotations"><code class="xref py py-class docutils literal notranslate"><span class="pre">Annotations</span></code></a> object), you can create a mapping from integer
+Event ID to string descriptions, and use the <a class="reference internal" href="../../generated/mne.Annotations.html#mne.Annotations" title="mne.Annotations"><code class="xref py py-class docutils literal notranslate"><span class="pre">Annotations</span></code></a>
+constructor to create the <a class="reference internal" href="../../generated/mne.Annotations.html#mne.Annotations" title="mne.Annotations"><code class="xref py py-class docutils literal notranslate"><span class="pre">Annotations</span></code></a> object, and use the
+<a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw.set_annotations" title="mne.io.Raw.set_annotations"><code class="xref py py-meth docutils literal notranslate"><span class="pre">set_annotations()</span></code></a> method to add the annotations to the
+<a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-class docutils literal notranslate"><span class="pre">Raw</span></code></a> object. Because the <a class="reference internal" href="../../manual/datasets_index.html#sample-dataset"><span class="std std-ref">sample data</span></a>
+was recorded on a Neuromag system (where sample numbering starts when the
+acquisition system is initiated, not when the <em>recording</em> is initiated), we
+also need to pass in the <code class="docutils literal notranslate"><span class="pre">orig_time</span></code> parameter so that the onsets are
+properly aligned relative to the start of recording:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">mapping</span> <span class="o">=</span> <span class="p">{</span><span class="mi">1</span><span class="p">:</span> <span class="s1">&#39;auditory/left&#39;</span><span class="p">,</span> <span class="mi">2</span><span class="p">:</span> <span class="s1">&#39;auditory/right&#39;</span><span class="p">,</span> <span class="mi">3</span><span class="p">:</span> <span class="s1">&#39;visual/left&#39;</span><span class="p">,</span>
+           <span class="mi">4</span><span class="p">:</span> <span class="s1">&#39;visual/right&#39;</span><span class="p">,</span> <span class="mi">5</span><span class="p">:</span> <span class="s1">&#39;smiley&#39;</span><span class="p">,</span> <span class="mi">32</span><span class="p">:</span> <span class="s1">&#39;buttonpress&#39;</span><span class="p">}</span>
+<span class="n">onsets</span> <span class="o">=</span> <span class="n">events</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;sfreq&#39;</span><span class="p">]</span>
+<span class="n">durations</span> <span class="o">=</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.zeros_like.html#numpy.zeros_like" title="View documentation for numpy.zeros_like"><span class="n">np</span><span class="o">.</span><span class="n">zeros_like</span></a><span class="p">(</span><span class="n">onsets</span><span class="p">)</span>  <span class="c1"># assumes instantaneous events</span>
+<span class="n">descriptions</span> <span class="o">=</span> <span class="p">[</span><span class="n">mapping</span><span class="p">[</span><span class="n">event_id</span><span class="p">]</span> <span class="k">for</span> <span class="n">event_id</span> <span class="ow">in</span> <span class="n">events</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">]]</span>
+<span class="n">annot_from_events</span> <span class="o">=</span> <a href="../../generated/mne.Annotations.html#mne.Annotations" title="View documentation for mne.Annotations"><span class="n">mne</span><span class="o">.</span><span class="n">Annotations</span></a><span class="p">(</span><span class="n">onset</span><span class="o">=</span><span class="n">onsets</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="n">durations</span><span class="p">,</span>
+                                    <span class="n">description</span><span class="o">=</span><span class="n">descriptions</span><span class="p">,</span>
+                                    <span class="n">orig_time</span><span class="o">=</span><span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;meas_date&#39;</span><span class="p">])</span>
+<span class="n">raw</span><span class="o">.</span><span class="n">set_annotations</span><span class="p">(</span><span class="n">annot_from_events</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Now, the annotations will appear automatically when plotting the raw data,
+and will be color-coded by their label value:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">raw</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">start</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">duration</span><span class="o">=</span><span class="mi">5</span><span class="p">)</span>
 </pre></div>
 </div>
 <img alt="../../_images/sphx_glr_plot_object_annotations_002.png" class="sphx-glr-single-img" src="../../_images/sphx_glr_plot_object_annotations_002.png" />
-<p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>EOG channel index for this subject is: [375]
-Filtering the data to remove DC offset to help distinguish blinks from saccades
-Setting up band-pass filter from 2 - 45 Hz
-
-FIR filter parameters
----------------------
-Designing a two-pass forward and reverse, zero-phase, non-causal bandpass filter:
-- Windowed frequency-domain design (firwin2) method
-- Hann window
-- Lower passband edge: 2.00
-- Lower transition bandwidth: 0.50 Hz (-12 dB cutoff frequency: 1.75 Hz)
-- Upper passband edge: 45.00 Hz
-- Upper transition bandwidth: 0.50 Hz (-12 dB cutoff frequency: 45.25 Hz)
-- Filter length: 8192 samples (13.639 sec)
-
-Setting up band-pass filter from 1 - 10 Hz
-
-FIR filter parameters
----------------------
-Designing a two-pass forward and reverse, zero-phase, non-causal bandpass filter:
-- Windowed frequency-domain design (firwin2) method
-- Hann window
-- Lower passband edge: 1.00
-- Lower transition bandwidth: 0.50 Hz (-12 dB cutoff frequency: 0.75 Hz)
-- Upper passband edge: 10.00 Hz
-- Upper transition bandwidth: 0.50 Hz (-12 dB cutoff frequency: 10.25 Hz)
-- Filter length: 8192 samples (13.639 sec)
-
-Now detecting blinks and generating corresponding events
-Number of EOG events detected : 46
-</pre></div>
 </div>
-</div>
-<div class="section" id="add-annotations-to-raw-objects">
-<h2>Add <a class="reference internal" href="../../glossary.html#term-annotations"><span class="xref std std-term">annotations</span></a> to <a class="reference internal" href="../../glossary.html#term-raw"><span class="xref std std-term">raw</span></a> objects<a class="headerlink" href="#add-annotations-to-raw-objects" title="Permalink to this headline">¶</a></h2>
-<p>An important element of <a class="reference internal" href="../../generated/mne.Annotations.html#mne.Annotations" title="mne.Annotations"><code class="xref py py-class docutils literal notranslate"><span class="pre">Annotations</span></code></a> is
-<code class="docutils literal notranslate"><span class="pre">orig_time</span></code> which is the time reference for the <code class="docutils literal notranslate"><span class="pre">onset</span></code>.
-It is key to understand that when calling
-<a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw.set_annotations" title="mne.io.Raw.set_annotations"><code class="xref py py-func docutils literal notranslate"><span class="pre">raw.set_annotations</span></code></a>, given
-annotations are copied and transformed so that
-<a class="reference internal" href="../../generated/mne.Annotations.html#mne.Annotations" title="mne.Annotations"><code class="xref py py-class docutils literal notranslate"><span class="pre">raw.annotations.orig_time</span></code></a>
-matches the recording time of the raw object.
-Refer to the documentation of <a class="reference internal" href="../../generated/mne.Annotations.html#mne.Annotations" title="mne.Annotations"><code class="xref py py-class docutils literal notranslate"><span class="pre">Annotations</span></code></a> to see
-the expected behavior depending on <code class="docutils literal notranslate"><span class="pre">meas_date</span></code> and <code class="docutils literal notranslate"><span class="pre">orig_time</span></code>.
-Where <code class="docutils literal notranslate"><span class="pre">meas_date</span></code> is the recording time stored in
-<a class="reference internal" href="../../generated/mne.Info.html#mne.Info" title="mne.Info"><code class="xref py py-class docutils literal notranslate"><span class="pre">Info</span></code></a>.
-You can find more information about <a class="reference internal" href="../../generated/mne.Info.html#mne.Info" title="mne.Info"><code class="xref py py-class docutils literal notranslate"><span class="pre">Info</span></code></a> in
-<a class="reference internal" href="plot_info.html#tut-info-class"><span class="std std-ref">The Info data structure</span></a>.</p>
-<p>We’ll now manipulate some simulated annotations.
-The first annotations has <code class="docutils literal notranslate"><span class="pre">orig_time</span></code> set to <code class="docutils literal notranslate"><span class="pre">None</span></code> while the
-second is set to a chosen POSIX timestamp for illustration purposes.
-Note that both annotations have different <code class="docutils literal notranslate"><span class="pre">onset</span></code> values.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create an annotation object with orig_time undefined (default)</span>
-<span class="n">annot_none</span> <span class="o">=</span> <a href="../../generated/mne.Annotations.html#mne.Annotations" title="View documentation for mne.Annotations"><span class="n">mne</span><span class="o">.</span><span class="n">Annotations</span></a><span class="p">(</span><span class="n">onset</span><span class="o">=</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">9</span><span class="p">],</span> <span class="n">duration</span><span class="o">=</span><span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
-                             <span class="n">description</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;foo&#39;</span><span class="p">,</span> <span class="s1">&#39;bar&#39;</span><span class="p">,</span> <span class="s1">&#39;foo&#39;</span><span class="p">],</span>
-                             <span class="n">orig_time</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">annot_none</span><span class="p">)</span>
-
-<span class="c1"># Create an annotation object with orig_time</span>
-<span class="n">orig_time</span> <span class="o">=</span> <span class="s1">&#39;2002-12-03 19:01:31.676071&#39;</span>
-<span class="n">annot_orig</span> <span class="o">=</span> <a href="../../generated/mne.Annotations.html#mne.Annotations" title="View documentation for mne.Annotations"><span class="n">mne</span><span class="o">.</span><span class="n">Annotations</span></a><span class="p">(</span><span class="n">onset</span><span class="o">=</span><span class="p">[</span><span class="mi">22</span><span class="p">,</span> <span class="mi">24</span><span class="p">,</span> <span class="mi">31</span><span class="p">],</span> <span class="n">duration</span><span class="o">=</span><span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mi">4</span><span class="p">,</span> <span class="mi">0</span><span class="p">],</span>
-                             <span class="n">description</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;foo&#39;</span><span class="p">,</span> <span class="s1">&#39;bar&#39;</span><span class="p">,</span> <span class="s1">&#39;foo&#39;</span><span class="p">],</span>
-                             <span class="n">orig_time</span><span class="o">=</span><span class="n">orig_time</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">annot_orig</span><span class="p">)</span>
+<div class="section" id="making-multiple-events-per-annotation">
+<span id="chunk-duration"></span><h2><a class="toc-backref" href="#id6">Making multiple events per annotation</a><a class="headerlink" href="#making-multiple-events-per-annotation" title="Permalink to this headline">¶</a></h2>
+<p>As mentioned above, you can generate equally-spaced events from an
+<a class="reference internal" href="../../generated/mne.Annotations.html#mne.Annotations" title="mne.Annotations"><code class="xref py py-class docutils literal notranslate"><span class="pre">Annotations</span></code></a> object using the <code class="docutils literal notranslate"><span class="pre">chunk_duration</span></code> parameter of
+<a class="reference internal" href="../../generated/mne.events_from_annotations.html#mne.events_from_annotations" title="mne.events_from_annotations"><code class="xref py py-func docutils literal notranslate"><span class="pre">events_from_annotations()</span></code></a>. For example, suppose we have an
+annotation in our <a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-class docutils literal notranslate"><span class="pre">Raw</span></code></a> object indicating when the subject was
+in REM sleep, and we want to perform a resting-state analysis on those spans
+of data. We can create an Events array with a series of equally-spaced events
+within each “REM” span, and then use those events to generate (potentially
+overlapping) epochs that we can analyze further.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># create the REM annotations</span>
+<span class="n">rem_annot</span> <span class="o">=</span> <a href="../../generated/mne.Annotations.html#mne.Annotations" title="View documentation for mne.Annotations"><span class="n">mne</span><span class="o">.</span><span class="n">Annotations</span></a><span class="p">(</span><span class="n">onset</span><span class="o">=</span><span class="p">[</span><span class="mi">5</span><span class="p">,</span> <span class="mi">41</span><span class="p">],</span>
+                            <span class="n">duration</span><span class="o">=</span><span class="p">[</span><span class="mi">16</span><span class="p">,</span> <span class="mi">11</span><span class="p">],</span>
+                            <span class="n">description</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;REM&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="mi">2</span><span class="p">)</span>
+<span class="n">raw</span><span class="o">.</span><span class="n">set_annotations</span><span class="p">(</span><span class="n">rem_annot</span><span class="p">)</span>
+<span class="p">(</span><span class="n">rem_events</span><span class="p">,</span>
+ <span class="n">rem_event_dict</span><span class="p">)</span> <span class="o">=</span> <a href="../../generated/mne.events_from_annotations.html#mne.events_from_annotations" title="View documentation for mne.events_from_annotations"><span class="n">mne</span><span class="o">.</span><span class="n">events_from_annotations</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">chunk_duration</span><span class="o">=</span><span class="mf">1.5</span><span class="p">)</span>
 </pre></div>
 </div>
 <p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;Annotations  |  3 segments : foo (2), bar (1), orig_time : None&gt;
-&lt;Annotations  |  3 segments : foo (2), bar (1), orig_time : 2002-12-03 19:01:31.676071&gt;
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Used Annotations descriptions: [&#39;REM&#39;]
 </pre></div>
 </div>
-<p>Now we create two raw objects and set each with different annotations.
-Then we plot both raw objects to compare the annotations.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Create two cropped copies of raw with the two previous annotations</span>
-<span class="n">raw_a</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span><span class="o">.</span><span class="n">crop</span><span class="p">(</span><span class="n">tmax</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span><span class="o">.</span><span class="n">set_annotations</span><span class="p">(</span><span class="n">annot_none</span><span class="p">)</span>
-<span class="n">raw_b</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span><span class="o">.</span><span class="n">crop</span><span class="p">(</span><span class="n">tmax</span><span class="o">=</span><span class="mi">12</span><span class="p">)</span><span class="o">.</span><span class="n">set_annotations</span><span class="p">(</span><span class="n">annot_orig</span><span class="p">)</span>
-
-<span class="c1"># Plot the raw objects</span>
-<span class="n">raw_a</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
-<span class="n">raw_b</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
-</pre></div>
-</div>
-<ul class="sphx-glr-horizontal">
-<li><img alt="../../_images/sphx_glr_plot_object_annotations_003.png" class="sphx-glr-multi-img" src="../../_images/sphx_glr_plot_object_annotations_003.png" />
-</li>
-<li><img alt="../../_images/sphx_glr_plot_object_annotations_004.png" class="sphx-glr-multi-img" src="../../_images/sphx_glr_plot_object_annotations_004.png" />
-</li>
-</ul>
-<p>Note that although the <code class="docutils literal notranslate"><span class="pre">onset</span></code> values of both annotations were different,
-due to complementary <code class="docutils literal notranslate"><span class="pre">orig_time</span></code> they are now identical. This is because
-the first one (<code class="docutils literal notranslate"><span class="pre">annot_none</span></code>), once set in raw, adopted its <code class="docutils literal notranslate"><span class="pre">orig_time</span></code>.
-The second one (<code class="docutils literal notranslate"><span class="pre">annot_orig</span></code>) already had an <code class="docutils literal notranslate"><span class="pre">orig_time</span></code>, so its
-<code class="docutils literal notranslate"><span class="pre">orig_time</span></code> was changed to match the onset time of the raw. Changing an
-already defined <code class="docutils literal notranslate"><span class="pre">orig_time</span></code> of annotations caused its <code class="docutils literal notranslate"><span class="pre">onset</span></code> to be
-recalibrated with respect to the new <code class="docutils literal notranslate"><span class="pre">orig_time</span></code>. As a result both
-annotations have now identical <code class="docutils literal notranslate"><span class="pre">onset</span></code> and identical <code class="docutils literal notranslate"><span class="pre">orig_time</span></code>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Show the annotations in the raw objects</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">raw_a</span><span class="o">.</span><span class="n">annotations</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">raw_b</span><span class="o">.</span><span class="n">annotations</span><span class="p">)</span>
-
-<span class="c1"># Show that the onsets are the same</span>
-<a href="https://www.numpy.org/devdocs/reference/generated/numpy.set_printoptions.html#numpy.set_printoptions" title="View documentation for numpy.set_printoptions"><span class="n">np</span><span class="o">.</span><span class="n">set_printoptions</span></a><span class="p">(</span><span class="n">precision</span><span class="o">=</span><span class="mi">6</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">raw_a</span><span class="o">.</span><span class="n">annotations</span><span class="o">.</span><span class="n">onset</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">raw_b</span><span class="o">.</span><span class="n">annotations</span><span class="o">.</span><span class="n">onset</span><span class="p">)</span>
+<p>Now we can check that our events indeed fall in the ranges 5-21 seconds and
+41-52 seconds, and are ~1.5 seconds apart (modulo some jitter due to the
+sampling frequency). Here are the event times rounded to the nearest
+millisecond:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">((</span><span class="n">rem_events</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">-</span> <span class="n">raw</span><span class="o">.</span><span class="n">first_samp</span><span class="p">)</span> <span class="o">/</span> <span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;sfreq&#39;</span><span class="p">],</span> <span class="mi">3</span><span class="p">))</span>
 </pre></div>
 </div>
 <p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;Annotations  |  3 segments : foo (2), bar (1), orig_time : 2002-12-03 19:01:10.720100&gt;
-&lt;Annotations  |  3 segments : foo (2), bar (1), orig_time : 2002-12-03 19:01:10.720100&gt;
-[42.955971 44.955971 51.955971]
-[42.955971 44.955971 51.955971]
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>[ 5.     6.5    8.     9.5   11.    12.501 14.001 15.501 16.999 18.499
+ 41.    42.5   44.    45.5   47.    48.5   50.   ]
 </pre></div>
 </div>
-<p>Notice again that for the case where <code class="docutils literal notranslate"><span class="pre">orig_time</span></code> is <code class="docutils literal notranslate"><span class="pre">None</span></code>,
-it is assumed that the <code class="docutils literal notranslate"><span class="pre">orig_time</span></code> is the time of the first sample of data.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">raw_delta</span> <span class="o">=</span> <span class="p">(</span><span class="mi">1</span> <span class="o">/</span> <span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;sfreq&#39;</span><span class="p">])</span>
-<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;raw.first_sample is </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">first_samp</span> <span class="o">*</span> <span class="n">raw_delta</span><span class="p">))</span>
-<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;annot_none.onset[0] is </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">annot_none</span><span class="o">.</span><span class="n">onset</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
-<span class="nb">print</span><span class="p">(</span><span class="s1">&#39;raw_a.annotations.onset[0] is </span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">raw_a</span><span class="o">.</span><span class="n">annotations</span><span class="o">.</span><span class="n">onset</span><span class="p">[</span><span class="mi">0</span><span class="p">]))</span>
-</pre></div>
-</div>
-<p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>raw.first_sample is 42.95597082905339
-annot_none.onset[0] is 0.0
-raw_a.annotations.onset[0] is 42.955970883369446
-</pre></div>
-</div>
-</div>
-<div class="section" id="valid-operations-in-mne-annotations">
-<h2>Valid operations in <a class="reference internal" href="../../generated/mne.Annotations.html#mne.Annotations" title="mne.Annotations"><code class="xref py py-class docutils literal notranslate"><span class="pre">mne.Annotations</span></code></a><a class="headerlink" href="#valid-operations-in-mne-annotations" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="concatenate">
-<h3>Concatenate<a class="headerlink" href="#concatenate" title="Permalink to this headline">¶</a></h3>
-<p>It is possible to concatenate two annotations with the + operator (just like
-lists) if both share the same <code class="docutils literal notranslate"><span class="pre">orig_time</span></code></p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">annot</span> <span class="o">=</span> <a href="../../generated/mne.Annotations.html#mne.Annotations" title="View documentation for mne.Annotations"><span class="n">mne</span><span class="o">.</span><span class="n">Annotations</span></a><span class="p">(</span><span class="n">onset</span><span class="o">=</span><span class="p">[</span><span class="mi">10</span><span class="p">],</span> <span class="n">duration</span><span class="o">=</span><span class="p">[</span><span class="mf">0.5</span><span class="p">],</span>
-                        <span class="n">description</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;foobar&#39;</span><span class="p">],</span>
-                        <span class="n">orig_time</span><span class="o">=</span><span class="n">orig_time</span><span class="p">)</span>
-<span class="n">annot</span> <span class="o">=</span> <span class="n">annot_orig</span> <span class="o">+</span> <span class="n">annot</span>  <span class="c1"># concatenation</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">annot</span><span class="p">)</span>
-</pre></div>
-</div>
-<p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;Annotations  |  4 segments : foobar (1), foo (2), bar (1), orig_time : 2002-12-03 19:01:31.676071&gt;
-</pre></div>
-</div>
-</div>
-<div class="section" id="iterating-indexing-and-slicing-mne-annotations">
-<h3>Iterating, Indexing and Slicing <a class="reference internal" href="../../generated/mne.Annotations.html#mne.Annotations" title="mne.Annotations"><code class="xref py py-class docutils literal notranslate"><span class="pre">mne.Annotations</span></code></a><a class="headerlink" href="#iterating-indexing-and-slicing-mne-annotations" title="Permalink to this headline">¶</a></h3>
-<p><a class="reference internal" href="../../generated/mne.Annotations.html#mne.Annotations" title="mne.Annotations"><code class="xref py py-class docutils literal notranslate"><span class="pre">Annotations</span></code></a> supports iterating, indexing and slicing.
-Iterating over <a class="reference internal" href="../../generated/mne.Annotations.html#mne.Annotations" title="mne.Annotations"><code class="xref py py-class docutils literal notranslate"><span class="pre">Annotations</span></code></a> and indexing with an integer returns
-a dictionary. While slicing returns a new <a class="reference internal" href="../../generated/mne.Annotations.html#mne.Annotations" title="mne.Annotations"><code class="xref py py-class docutils literal notranslate"><span class="pre">Annotations</span></code></a> instance.</p>
-<p>See the following examples and usages:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># difference between indexing and slicing a single element</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">annot</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>  <span class="c1"># indexing</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">annot</span><span class="p">[:</span><span class="mi">1</span><span class="p">])</span>  <span class="c1"># slicing</span>
-</pre></div>
-</div>
-<p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>OrderedDict([(&#39;onset&#39;, 10.0), (&#39;duration&#39;, 0.5), (&#39;description&#39;, &#39;foobar&#39;), (&#39;orig_time&#39;, 1038942091.676071)])
-&lt;Annotations  |  1 segment : foobar (1), orig_time : 2002-12-03 19:01:31.676071&gt;
-</pre></div>
-</div>
-<p>How about iterations?</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">annot</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>  <span class="c1"># iterate on one element which is dictionary</span>
-    <span class="nb">print</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">)</span>
-</pre></div>
-</div>
-<p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>onset 10.0
-duration 0.5
-description foobar
-orig_time 1038942091.676071
-</pre></div>
-</div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">my_annot</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">annot</span><span class="p">):</span>  <span class="c1"># iterate on the Annotations object</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;annot #</span><span class="si">{0}</span><span class="s1">: onset=</span><span class="si">{1}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">my_annot</span><span class="p">[</span><span class="s1">&#39;onset&#39;</span><span class="p">]))</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;annot #</span><span class="si">{0}</span><span class="s1">: duration=</span><span class="si">{1}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">my_annot</span><span class="p">[</span><span class="s1">&#39;duration&#39;</span><span class="p">]))</span>
-    <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;annot #</span><span class="si">{0}</span><span class="s1">: description=</span><span class="si">{1}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">my_annot</span><span class="p">[</span><span class="s1">&#39;description&#39;</span><span class="p">]))</span>
-</pre></div>
-</div>
-<p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>annot #0: onset=10.0
-annot #0: duration=0.5
-annot #0: description=foobar
-annot #1: onset=22.0
-annot #1: duration=0.5
-annot #1: description=foo
-annot #2: onset=24.0
-annot #2: duration=4.0
-annot #2: description=bar
-annot #3: onset=31.0
-annot #3: duration=0.0
-annot #3: description=foo
-</pre></div>
-</div>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <span class="n">idx</span><span class="p">,</span> <span class="n">my_annot</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">annot</span><span class="p">[:</span><span class="mi">1</span><span class="p">]):</span>
-    <span class="k">for</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span> <span class="ow">in</span> <span class="n">my_annot</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;annot #</span><span class="si">{0}</span><span class="s1">: </span><span class="si">{1}</span><span class="s1"> = </span><span class="si">{2}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">idx</span><span class="p">,</span> <span class="n">key</span><span class="p">,</span> <span class="n">val</span><span class="p">))</span>
-</pre></div>
-</div>
-<p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>annot #0: onset = 10.0
-annot #0: duration = 0.5
-annot #0: description = foobar
-annot #0: orig_time = 1038942091.676071
-</pre></div>
-</div>
-<p>Iterating, indexing and slicing return a copy. This has implications like the
-fact that changes are not kept.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># this change is not kept</span>
-<span class="n">annot</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;onset&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="mi">42</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">annot</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-
-<span class="c1"># this change is kept</span>
-<span class="n">annot</span><span class="o">.</span><span class="n">onset</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">=</span> <span class="mi">42</span>
-<span class="nb">print</span><span class="p">(</span><span class="n">annot</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
-</pre></div>
-</div>
-<p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>OrderedDict([(&#39;onset&#39;, 10.0), (&#39;duration&#39;, 0.5), (&#39;description&#39;, &#39;foobar&#39;), (&#39;orig_time&#39;, 1038942091.676071)])
-OrderedDict([(&#39;onset&#39;, 42.0), (&#39;duration&#39;, 0.5), (&#39;description&#39;, &#39;foobar&#39;), (&#39;orig_time&#39;, 1038942091.676071)])
-</pre></div>
-</div>
-</div>
-<div class="section" id="save">
-<h3>Save<a class="headerlink" href="#save" title="Permalink to this headline">¶</a></h3>
-<p>Note that you can also save annotations to disk in FIF format:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">annot</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;my-annot.fif&#39;</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>Or as CSV with onsets in (absolute) ISO timestamps:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">annot</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;my-annot.csv&#39;</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>Or in plain text with onsets relative to <code class="docutils literal notranslate"><span class="pre">orig_time</span></code>:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="gp">&gt;&gt;&gt; </span><span class="n">annot</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s1">&#39;my-annot.txt&#39;</span><span class="p">)</span>
-</pre></div>
-</div>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  9.122 seconds)</p>
-<p><strong>Estimated memory usage:</strong>  9 MB</p>
+<p>Other examples of resting-state analysis can be found in the online
+documentation for <a class="reference internal" href="../../generated/mne.make_fixed_length_events.html#mne.make_fixed_length_events" title="mne.make_fixed_length_events"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.make_fixed_length_events()</span></code></a>, such as
+<a class="reference internal" href="../../auto_examples/connectivity/plot_mne_inverse_envelope_correlation.html"><span class="doc">Compute envelope correlations in source space</span></a>.</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  5.432 seconds)</p>
+<p><strong>Estimated memory usage:</strong>  8 MB</p>
 <div class="sphx-glr-footer class sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-tutorials-intro-plot-object-annotations-py">
 <div class="sphx-glr-download docutils container">
 <p><a class="reference download internal" download="" href="../../_downloads/b8b303cfb8e97a910e96ef74a51abfb4/plot_object_annotations.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">plot_object_annotations.py</span></code></a></p>
@@ -541,7 +528,6 @@ OrderedDict([(&#39;onset&#39;, 42.0), (&#39;duration&#39;, 0.5), (&#39;descripti
 </div>
 </div>
 <p class="sphx-glr-signature"><a class="reference external" href="https://sphinx-gallery.github.io">Gallery generated by Sphinx-Gallery</a></p>
-</div>
 </div>
 </div>
 
@@ -565,7 +551,7 @@ OrderedDict([(&#39;onset&#39;, 42.0), (&#39;duration&#39;, 0.5), (&#39;descripti
       <li><a href="faq.html#cite">Cite MNE</a></li>
       <li class="pull-right"><a href="#">Back to top</a></li>
     </ul>
-    <p>&copy; Copyright 2012-2019, MNE Developers. Last updated on 2019-05-27.</p>
+    <p>&copy; Copyright 2012-2019, MNE Developers. Last updated on 2019-05-29.</p>
   </div>
 </footer>
   </body>
