@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>Visualize Raw data &#8212; MNE 0.19.dev0 documentation</title>
+    <title>Built-in plotting methods for Raw objects &#8212; MNE 0.19.dev0 documentation</title>
     <link rel="stylesheet" href="../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../../_static/gallery.css" />
@@ -168,8 +168,11 @@ This documentation is for <strong>development version 0.19.dev0</strong>.
             <p class="logo"><a href="../../index.html">
               <img class="logo" src="../../_static/mne_logo_small.png" alt="Logo"/>
             </a></p><ul>
-<li><a class="reference internal" href="#">Visualize Raw data</a><ul>
-<li><a class="reference internal" href="#drawing-annotations">Drawing annotations</a></li>
+<li><a class="reference internal" href="#">Built-in plotting methods for Raw objects</a><ul>
+<li><a class="reference internal" href="#interactive-data-browsing-with-raw-plot">Interactive data browsing with <code class="docutils literal notranslate"><span class="pre">Raw.plot()</span></code></a></li>
+<li><a class="reference internal" href="#plotting-spectral-density-of-continuous-data">Plotting spectral density of continuous data</a></li>
+<li><a class="reference internal" href="#plotting-sensor-locations-from-raw-objects">Plotting sensor locations from <code class="docutils literal notranslate"><span class="pre">Raw</span></code> objects</a></li>
+<li><a class="reference internal" href="#plotting-projectors-from-raw-objects">Plotting projectors from <code class="docutils literal notranslate"><span class="pre">Raw</span></code> objects</a></li>
 </ul>
 </li>
 </ul>
@@ -189,17 +192,29 @@ This documentation is for <strong>development version 0.19.dev0</strong>.
 <p class="admonition-title">Note</p>
 <p>Click <a class="reference internal" href="#sphx-glr-download-auto-tutorials-raw-plot-visualize-raw-py"><span class="std std-ref">here</span></a> to download the full example code</p>
 </div>
-<div class="sphx-glr-example-title section" id="visualize-raw-data">
-<span id="tut-viz-raw"></span><span id="sphx-glr-auto-tutorials-raw-plot-visualize-raw-py"></span><h1>Visualize Raw data<a class="headerlink" href="#visualize-raw-data" title="Permalink to this headline">¶</a></h1>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os.path</span> <span class="k">as</span> <span class="nn">op</span>
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-
+<div class="sphx-glr-example-title section" id="built-in-plotting-methods-for-raw-objects">
+<span id="sphx-glr-auto-tutorials-raw-plot-visualize-raw-py"></span><h1>Built-in plotting methods for Raw objects<a class="headerlink" href="#built-in-plotting-methods-for-raw-objects" title="Permalink to this headline">¶</a></h1>
+<p>This tutorial shows how to plot continuous data as a time series, how to plot
+the spectral density of continuous data, and how to plot the sensor locations
+and projectors stored in Raw objects.</p>
+<div class="contents local topic" id="page-contents">
+<p class="topic-title first">Page contents</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#interactive-data-browsing-with-raw-plot" id="id1">Interactive data browsing with <code class="docutils literal notranslate"><span class="pre">Raw.plot()</span></code></a></p></li>
+<li><p><a class="reference internal" href="#plotting-spectral-density-of-continuous-data" id="id2">Plotting spectral density of continuous data</a></p></li>
+<li><p><a class="reference internal" href="#plotting-sensor-locations-from-raw-objects" id="id3">Plotting sensor locations from <code class="docutils literal notranslate"><span class="pre">Raw</span></code> objects</a></p></li>
+<li><p><a class="reference internal" href="#plotting-projectors-from-raw-objects" id="id4">Plotting projectors from <code class="docutils literal notranslate"><span class="pre">Raw</span></code> objects</a></p></li>
+</ul>
+</div>
+<p>As usual we’ll start by importing the modules we need and loading some
+<a class="reference internal" href="../../manual/datasets_index.html#sample-dataset"><span class="std std-ref">example data</span></a>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
 <span class="kn">import</span> <span class="nn">mne</span>
 
-<span class="n">data_path</span> <span class="o">=</span> <span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><a href="../../generated/mne.datasets.sample.data_path.html#mne.datasets.sample.data_path" title="View documentation for mne.datasets.sample.data_path"><span class="n">mne</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">sample</span><span class="o">.</span><span class="n">data_path</span></a><span class="p">(),</span> <span class="s1">&#39;MEG&#39;</span><span class="p">,</span> <span class="s1">&#39;sample&#39;</span><span class="p">)</span>
-<span class="n">raw</span> <span class="o">=</span> <a href="../../generated/mne.io.read_raw_fif.html#mne.io.read_raw_fif" title="View documentation for mne.io.read_raw_fif"><span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read_raw_fif</span></a><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_path</span><span class="p">,</span> <span class="s1">&#39;sample_audvis_raw.fif&#39;</span><span class="p">),</span>
-                          <span class="n">preload</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="n">raw</span><span class="o">.</span><span class="n">set_eeg_reference</span><span class="p">(</span><span class="s1">&#39;average&#39;</span><span class="p">,</span> <span class="n">projection</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># set EEG average reference</span>
+<span class="n">sample_data_folder</span> <span class="o">=</span> <a href="../../generated/mne.datasets.sample.data_path.html#mne.datasets.sample.data_path" title="View documentation for mne.datasets.sample.data_path"><span class="n">mne</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">sample</span><span class="o">.</span><span class="n">data_path</span></a><span class="p">()</span>
+<span class="n">sample_data_raw_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">sample_data_folder</span><span class="p">,</span> <span class="s1">&#39;MEG&#39;</span><span class="p">,</span> <span class="s1">&#39;sample&#39;</span><span class="p">,</span>
+                                    <span class="s1">&#39;sample_audvis_raw.fif&#39;</span><span class="p">)</span>
+<span class="n">raw</span> <span class="o">=</span> <a href="../../generated/mne.io.read_raw_fif.html#mne.io.read_raw_fif" title="View documentation for mne.io.read_raw_fif"><span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read_raw_fif</span></a><span class="p">(</span><span class="n">sample_data_raw_file</span><span class="p">,</span> <span class="n">preload</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
 <p class="sphx-glr-script-out">Out:</p>
@@ -212,182 +227,181 @@ This documentation is for <strong>development version 0.19.dev0</strong>.
 Ready.
 Current compensation grade : 0
 Reading 0 ... 166799  =      0.000 ...   277.714 secs...
-Adding average EEG reference projection.
-1 projection items deactivated
-Average reference projection was added, but has not been applied yet. Use the apply_proj method to apply it.
 </pre></div>
 </div>
-<p>The visualization module (<a class="reference internal" href="../../python_reference.html#module-mne.viz" title="mne.viz"><code class="xref py py-mod docutils literal notranslate"><span class="pre">mne.viz</span></code></a>) contains all the plotting functions
-that work in combination with MNE data structures. Usually the easiest way to
-use them is to call a method of the data container. All of the plotting
-method names start with <code class="docutils literal notranslate"><span class="pre">plot</span></code>. If you’re using Ipython console, you can
-just write <code class="docutils literal notranslate"><span class="pre">raw.plot</span></code> and ask the interpreter for suggestions with a
-<code class="docutils literal notranslate"><span class="pre">tab</span></code> key.</p>
-<p>To visually inspect your raw data, you can use the python equivalent of
-<code class="docutils literal notranslate"><span class="pre">mne_browse_raw</span></code>.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">raw</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">block</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">lowpass</span><span class="o">=</span><span class="mi">40</span><span class="p">)</span>
-</pre></div>
-</div>
-<img alt="../../_images/sphx_glr_plot_visualize_raw_001.png" class="sphx-glr-single-img" src="../../_images/sphx_glr_plot_visualize_raw_001.png" />
-<p>The channels are color coded by channel type. Generally MEG channels are
-colored in different shades of blue, whereas EEG channels are black. The
-scrollbar on right side of the browser window also tells us that two of the
-channels are marked as <code class="docutils literal notranslate"><span class="pre">bad</span></code>. Bad channels are color coded gray. By
-clicking the lines or channel names on the left, you can mark or unmark a bad
-channel interactively. You can use +/- keys to adjust the scale (also = works
-for magnifying the data). Note that the initial scaling factors can be set
-with parameter <code class="docutils literal notranslate"><span class="pre">scalings</span></code>. If you don’t know the scaling factor for
-channels, you can automatically set them by passing scalings=’auto’. With
-<code class="docutils literal notranslate"><span class="pre">pageup/pagedown</span></code> and <code class="docutils literal notranslate"><span class="pre">home/end</span></code> keys you can adjust the amount of data
-viewed at once.</p>
-<div class="section" id="drawing-annotations">
-<h2>Drawing annotations<a class="headerlink" href="#drawing-annotations" title="Permalink to this headline">¶</a></h2>
-<p>You can enter annotation mode by pressing <code class="docutils literal notranslate"><span class="pre">a</span></code> key. In annotation mode you
-can mark segments of data (and modify existing annotations) with the left
-mouse button. You can use the description of any existing annotation or
-create a new description by typing when the annotation dialog is active.
-Notice that the description starting with the keyword <code class="docutils literal notranslate"><span class="pre">'bad'</span></code> means that
-the segment will be discarded when epoching the data. Existing annotations
-can be deleted with the right mouse button.  Annotation mode is exited by
-pressing <code class="docutils literal notranslate"><span class="pre">a</span></code> again or closing the annotation window. See also
-<a class="reference internal" href="../../generated/mne.Annotations.html#mne.Annotations" title="mne.Annotations"><code class="xref py py-class docutils literal notranslate"><span class="pre">mne.Annotations</span></code></a> and <a class="reference internal" href="../preprocessing/plot_artifacts_correction_rejection.html#marking-bad-segments"><span class="std std-ref">Marking bad raw segments with annotations</span></a>. To see all the
-interactive features, hit <code class="docutils literal notranslate"><span class="pre">?</span></code> key or click <code class="docutils literal notranslate"><span class="pre">help</span></code> in the lower left
-corner of the browser window.</p>
-<div class="admonition warning">
-<p class="admonition-title">Warning</p>
-<p>Annotations are modified in-place immediately at run-time.
-Deleted annotations cannot be retrieved after deletion.</p>
-</div>
-<p>The channels are sorted by channel type by default. You can use the
-<code class="docutils literal notranslate"><span class="pre">group_by</span></code> parameter of <a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw.plot" title="mne.io.Raw.plot"><code class="xref py py-func docutils literal notranslate"><span class="pre">raw.plot</span></code></a> to group the
-channels in a different way. <code class="docutils literal notranslate"><span class="pre">group_by='selection'</span></code> uses the same channel
-groups as MNE-C’s mne_browse_raw (see <a class="reference internal" href="../../manual/gui/browse.html#caccjejd"><span class="std std-ref">Selection</span></a>). The selections are
-defined in <code class="docutils literal notranslate"><span class="pre">mne-python/mne/data/mne_analyze.sel</span></code> and by modifying the
-channels there, you can define your own selection groups. Notice that this
-also affects the selections returned by <a class="reference internal" href="../../generated/mne.read_selection.html#mne.read_selection" title="mne.read_selection"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.read_selection()</span></code></a>. By
-default the selections only work for Neuromag data, but
-<code class="docutils literal notranslate"><span class="pre">group_by='position'</span></code> tries to mimic this behavior for any data with sensor
-positions available. The channels are grouped by sensor positions to 8 evenly
-sized regions. Notice that for this to work effectively, all the data
-channels in the channel array must be present. The <code class="docutils literal notranslate"><span class="pre">order</span></code> parameter allows
-to customize the order and select a subset of channels for plotting (picks).
-Here we use the butterfly mode and group the channels by position. To toggle
-between regular and butterfly modes, press ‘b’ key when the plotter window is
-active. Notice that <code class="docutils literal notranslate"><span class="pre">group_by</span></code> also affects the channel groupings in
-butterfly mode.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">raw</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">butterfly</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">group_by</span><span class="o">=</span><span class="s1">&#39;position&#39;</span><span class="p">)</span>
-</pre></div>
-</div>
-<ul class="sphx-glr-horizontal">
-<li><img alt="../../_images/sphx_glr_plot_visualize_raw_002.png" class="sphx-glr-multi-img" src="../../_images/sphx_glr_plot_visualize_raw_002.png" />
-</li>
-<li><img alt="../../_images/sphx_glr_plot_visualize_raw_003.png" class="sphx-glr-multi-img" src="../../_images/sphx_glr_plot_visualize_raw_003.png" />
-</li>
+<p>We’ve seen in <a class="reference internal" href="plot_object_raw.html#tut-raw-class"><span class="std std-ref">a previous tutorial</span></a> how to plot data
+from a <a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-class docutils literal notranslate"><span class="pre">Raw</span></code></a> object using <a class="reference external" href="https://matplotlib.org/index.html" title="(in Matplotlib v3.1.0)"><span class="xref std std-doc">matplotlib</span></a>, but <a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-class docutils literal notranslate"><span class="pre">Raw</span></code></a> objects also have several
+built-in plotting methods:</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw.plot" title="mne.io.Raw.plot"><code class="xref py py-meth docutils literal notranslate"><span class="pre">plot()</span></code></a></p></li>
+<li><p><a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw.plot_psd" title="mne.io.Raw.plot_psd"><code class="xref py py-meth docutils literal notranslate"><span class="pre">plot_psd()</span></code></a></p></li>
+<li><p><a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw.plot_psd_topo" title="mne.io.Raw.plot_psd_topo"><code class="xref py py-meth docutils literal notranslate"><span class="pre">plot_psd_topo()</span></code></a></p></li>
+<li><p><a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw.plot_sensors" title="mne.io.Raw.plot_sensors"><code class="xref py py-meth docutils literal notranslate"><span class="pre">plot_sensors()</span></code></a></p></li>
+<li><p><a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw.plot_projs_topomap" title="mne.io.Raw.plot_projs_topomap"><code class="xref py py-meth docutils literal notranslate"><span class="pre">plot_projs_topomap()</span></code></a></p></li>
 </ul>
-<p>We can read events from a file (or extract them from the trigger channel)
-and pass them as a parameter when calling the method. The events are plotted
-as vertical lines so you can see how they align with the raw data.</p>
-<p>We can also pass a corresponding “event_id” to transform the event
-trigger integers to strings.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">events</span> <span class="o">=</span> <a href="../../generated/mne.read_events.html#mne.read_events" title="View documentation for mne.read_events"><span class="n">mne</span><span class="o">.</span><span class="n">read_events</span></a><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_path</span><span class="p">,</span> <span class="s1">&#39;sample_audvis_raw-eve.fif&#39;</span><span class="p">))</span>
-<span class="n">event_id</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;A/L&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;A/R&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;V/L&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s1">&#39;V/R&#39;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span> <span class="s1">&#39;S&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span> <span class="s1">&#39;B&#39;</span><span class="p">:</span> <span class="mi">32</span><span class="p">}</span>
-<span class="n">raw</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">butterfly</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">events</span><span class="o">=</span><span class="n">events</span><span class="p">,</span> <span class="n">event_id</span><span class="o">=</span><span class="n">event_id</span><span class="p">)</span>
-</pre></div>
-</div>
-<img alt="../../_images/sphx_glr_plot_visualize_raw_004.png" class="sphx-glr-single-img" src="../../_images/sphx_glr_plot_visualize_raw_004.png" />
-<p>We can check where the channels reside with <code class="docutils literal notranslate"><span class="pre">plot_sensors</span></code>. Notice that
-this method (along with many other MNE plotting functions) is callable using
-any MNE data container where the channel information is available.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">raw</span><span class="o">.</span><span class="n">plot_sensors</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="s1">&#39;3d&#39;</span><span class="p">,</span> <span class="n">ch_type</span><span class="o">=</span><span class="s1">&#39;mag&#39;</span><span class="p">,</span> <span class="n">ch_groups</span><span class="o">=</span><span class="s1">&#39;position&#39;</span><span class="p">)</span>
-</pre></div>
-</div>
-<img alt="../../_images/sphx_glr_plot_visualize_raw_005.png" class="sphx-glr-single-img" src="../../_images/sphx_glr_plot_visualize_raw_005.png" />
-<p>We used <code class="docutils literal notranslate"><span class="pre">ch_groups='position'</span></code> to color code the different regions. It uses
-the same algorithm for dividing the regions as <code class="docutils literal notranslate"><span class="pre">order='position'</span></code> of
-<a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw.plot" title="mne.io.Raw.plot"><code class="xref py py-func docutils literal notranslate"><span class="pre">raw.plot</span></code></a>. You can also pass a list of picks to
-color any channel group with different colors.</p>
-<p>Now let’s add some ssp projectors to the raw data. Here we read them from a
-file and plot them.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">projs</span> <span class="o">=</span> <a href="../../generated/mne.read_proj.html#mne.read_proj" title="View documentation for mne.read_proj"><span class="n">mne</span><span class="o">.</span><span class="n">read_proj</span></a><span class="p">(</span><span class="n">op</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">data_path</span><span class="p">,</span> <span class="s1">&#39;sample_audvis_eog-proj.fif&#39;</span><span class="p">))</span>
-<span class="n">raw</span><span class="o">.</span><span class="n">add_proj</span><span class="p">(</span><span class="n">projs</span><span class="p">)</span>
-<span class="n">raw</span><span class="o">.</span><span class="n">plot_projs_topomap</span><span class="p">()</span>
-</pre></div>
-</div>
-<img alt="../../_images/sphx_glr_plot_visualize_raw_006.png" class="sphx-glr-single-img" src="../../_images/sphx_glr_plot_visualize_raw_006.png" />
-<p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>    Read a total of 6 projection items:
-        EOG-planar-998--0.200-0.200-PCA-01 (1 x 203)  idle
-        EOG-planar-998--0.200-0.200-PCA-02 (1 x 203)  idle
-        EOG-axial-998--0.200-0.200-PCA-01 (1 x 102)  idle
-        EOG-axial-998--0.200-0.200-PCA-02 (1 x 102)  idle
-        EOG-eeg-998--0.200-0.200-PCA-01 (1 x 59)  idle
-        EOG-eeg-998--0.200-0.200-PCA-02 (1 x 59)  idle
-6 projection items deactivated
-</pre></div>
-</div>
-<p>Note that the projections in <code class="docutils literal notranslate"><span class="pre">raw.info['projs']</span></code> can be visualized using
-<a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw.plot_projs_topomap" title="mne.io.Raw.plot_projs_topomap"><code class="xref py py-meth docutils literal notranslate"><span class="pre">raw.plot_projs_topomap</span></code></a> or calling
-<a class="reference internal" href="../../generated/mne.Projection.html#mne.Projection.plot_topomap" title="mne.Projection.plot_topomap"><code class="xref py py-func docutils literal notranslate"><span class="pre">proj.plot_topomap</span></code></a></p>
-<p>more examples can be found in
-<a class="reference internal" href="../../auto_examples/io/plot_read_proj.html#sphx-glr-auto-examples-io-plot-read-proj-py"><span class="std std-ref">Read and visualize projections (SSP and other)</span></a></p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">projs</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot_topomap</span><span class="p">()</span>
-</pre></div>
-</div>
-<img alt="../../_images/sphx_glr_plot_visualize_raw_007.png" class="sphx-glr-single-img" src="../../_images/sphx_glr_plot_visualize_raw_007.png" />
-<p>The first three projectors that we see are the SSP vectors from empty room
-measurements to compensate for the noise. The fourth one is the average EEG
-reference. These are already applied to the data and can no longer be
-removed. The next six are the EOG projections that we added. Every data
-channel type has two projection vectors each. Let’s try the raw browser
-again.</p>
+<p>The first three are discussed here in detail; the last two are shown briefly
+and covered in-depth in other tutorials.</p>
+<div class="section" id="interactive-data-browsing-with-raw-plot">
+<h2><a class="toc-backref" href="#id1">Interactive data browsing with <code class="docutils literal notranslate"><span class="pre">Raw.plot()</span></code></a><a class="headerlink" href="#interactive-data-browsing-with-raw-plot" title="Permalink to this headline">¶</a></h2>
+<p>The <a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw.plot" title="mne.io.Raw.plot"><code class="xref py py-meth docutils literal notranslate"><span class="pre">plot()</span></code></a> method of <a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-class docutils literal notranslate"><span class="pre">Raw</span></code></a> objects provides
+a versatile interface for exploring continuous data. For interactive viewing
+and data quality checking, it can be called with no additional parameters:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">raw</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
 </pre></div>
 </div>
-<img alt="../../_images/sphx_glr_plot_visualize_raw_008.png" class="sphx-glr-single-img" src="../../_images/sphx_glr_plot_visualize_raw_008.png" />
-<p>Now click the <code class="docutils literal notranslate"><span class="pre">proj</span></code> button at the lower right corner of the browser
-window. A selection dialog should appear, where you can toggle the projectors
-on and off. Notice that the first four are already applied to the data and
-toggling them does not change the data. However the newly added projectors
-modify the data to get rid of the EOG artifacts. Note that toggling the
-projectors here doesn’t actually modify the data. This is purely for visually
-inspecting the effect. See <a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw.del_proj" title="mne.io.Raw.del_proj"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.io.Raw.del_proj()</span></code></a> to actually remove the
-projectors.</p>
-<p>Raw container also lets us easily plot the power spectra over the raw data.
-Here we plot the data using <code class="docutils literal notranslate"><span class="pre">spatial_colors</span></code> to map the line colors to
-channel locations (default in versions &gt;= 0.15.0). Other option is to use the
-<code class="docutils literal notranslate"><span class="pre">average</span></code> (default in &lt; 0.15.0). See the API documentation for more info.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">raw</span><span class="o">.</span><span class="n">plot_psd</span><span class="p">(</span><span class="n">tmax</span><span class="o">=</span><a href="https://www.numpy.org/devdocs/reference/constants.html#numpy.inf" title="View documentation for numpy.inf"><span class="n">np</span><span class="o">.</span><span class="n">inf</span></a><span class="p">,</span> <span class="n">average</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<img alt="../../_images/sphx_glr_plot_visualize_raw_001.png" class="sphx-glr-single-img" src="../../_images/sphx_glr_plot_visualize_raw_001.png" />
+<p>It may not be obvious when viewing this tutorial online, but by default, the
+<a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw.plot" title="mne.io.Raw.plot"><code class="xref py py-meth docutils literal notranslate"><span class="pre">plot()</span></code></a> method generates an <em>interactive</em> plot window with
+several useful features:</p>
+<ul class="simple">
+<li><p>It spaces the channels equally along the y-axis.</p>
+<ul>
+<li><p>20 channels are shown by default; you can scroll through the channels
+using the <kbd class="kbd docutils literal notranslate">↑</kbd> and <kbd class="kbd docutils literal notranslate">↓</kbd> arrow keys, or by clicking on the
+colored scroll bar on the right edge of the plot.</p></li>
+<li><p>The number of visible channels can be adjusted by the <code class="docutils literal notranslate"><span class="pre">n_channels</span></code>
+parameter, or changed interactively using <kbd class="kbd docutils literal notranslate">page up</kbd> and <kbd class="kbd docutils literal notranslate">page
+down</kbd> keys.</p></li>
+<li><p>You can toggle the display to “butterfly” mode (superimposing all
+channels of the same type on top of one another) by pressing <kbd class="kbd docutils literal notranslate">b</kbd>,
+or start in butterfly mode by passing the <code class="docutils literal notranslate"><span class="pre">butterfly=True</span></code> parameter.</p></li>
+</ul>
+</li>
+<li><p>It shows the first 10 seconds of the <a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-class docutils literal notranslate"><span class="pre">Raw</span></code></a> object.</p>
+<ul>
+<li><p>You can shorten or lengthen the window length using <kbd class="kbd docutils literal notranslate">home</kbd> and
+<kbd class="kbd docutils literal notranslate">end</kbd> keys, or start with a specific window duration by passing the
+<code class="docutils literal notranslate"><span class="pre">duration</span></code> parameter.</p></li>
+<li><p>You can scroll in the time domain using the <kbd class="kbd docutils literal notranslate">←</kbd> and
+<kbd class="kbd docutils literal notranslate">→</kbd> arrow keys, or start at a specific point by passing the
+<code class="docutils literal notranslate"><span class="pre">start</span></code> parameter. Scrolling using <kbd class="kbd docutils literal notranslate">shift</kbd><kbd class="kbd docutils literal notranslate">→</kbd> or
+<kbd class="kbd docutils literal notranslate">shift</kbd><kbd class="kbd docutils literal notranslate">←</kbd> scrolls a full window width at a time.</p></li>
+</ul>
+</li>
+<li><p>It allows clicking on channels to mark/unmark as “bad”.</p>
+<ul>
+<li><p>When the plot window is closed, the <a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-class docutils literal notranslate"><span class="pre">Raw</span></code></a> object’s
+<code class="docutils literal notranslate"><span class="pre">info</span></code> attribute will be updated, adding or removing the newly
+(un)marked channels to/from the <a class="reference internal" href="../../generated/mne.Info.html#mne.Info" title="mne.Info"><code class="xref py py-class docutils literal notranslate"><span class="pre">Info</span></code></a> object’s <code class="docutils literal notranslate"><span class="pre">bads</span></code>
+field (AKA <code class="docutils literal notranslate"><span class="pre">raw.info['bads']</span></code>).</p></li>
+</ul>
+</li>
+</ul>
+<ul class="simple">
+<li><p>It allows interactive <a class="reference internal" href="../../glossary.html#term-annotations"><span class="xref std std-term">annotation</span></a> of the raw data.</p>
+<ul>
+<li><p>This allows you to mark time spans that should be excluded from future
+computations due to large movement artifacts, line noise, or other
+distortions of the signal. Annotation mode is entered by pressing
+<kbd class="kbd docutils literal notranslate">a</kbd>. See <a class="reference external" href="https://matplotlib.org/tutorials/text/annotations.html#annotations-tutorial" title="(in Matplotlib v3.1.0)"><span>Basic annotation</span></a> for details.</p></li>
+</ul>
+</li>
+<li><p>It automatically applies any <a class="reference internal" href="../../glossary.html#term-projector"><span class="xref std std-term">projectors</span></a> before plotting
+the data.</p>
+<ul>
+<li><p>These can be enabled/disabled interactively by clicking the <code class="docutils literal notranslate"><span class="pre">Proj</span></code>
+button at the lower right corner of the plot window, or disabled by
+default by passing the <code class="docutils literal notranslate"><span class="pre">proj=False</span></code> parameter.</p></li>
+</ul>
+</li>
+</ul>
+<p>These and other keyboard shortcuts are listed in the Help window, accessed
+through the <code class="docutils literal notranslate"><span class="pre">Help</span></code> button at the lower left corner of the plot window.
+Other plot properties (such as color of the channel traces, channel order and
+grouping, simultaneous plotting of <a class="reference internal" href="../../glossary.html#term-events"><span class="xref std std-term">events</span></a>, scaling, clipping,
+filtering, etc.) can also be adjusted through parameters passed to the
+<a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw.plot" title="mne.io.Raw.plot"><code class="xref py py-meth docutils literal notranslate"><span class="pre">plot()</span></code></a> method; see the docstring for details.</p>
+</div>
+<div class="section" id="plotting-spectral-density-of-continuous-data">
+<h2><a class="toc-backref" href="#id2">Plotting spectral density of continuous data</a><a class="headerlink" href="#plotting-spectral-density-of-continuous-data" title="Permalink to this headline">¶</a></h2>
+<p>To visualize the frequency content of continuous data, the
+<a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-class docutils literal notranslate"><span class="pre">Raw</span></code></a> object provides a <a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw.plot_psd" title="mne.io.Raw.plot_psd"><code class="xref py py-meth docutils literal notranslate"><span class="pre">plot_psd()</span></code></a> to plot
+the <a class="reference external" href="https://en.wikipedia.org/wiki/Spectral_density">spectral density</a> of the data.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">raw</span><span class="o">.</span><span class="n">plot_psd</span><span class="p">(</span><span class="n">average</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
-<img alt="../../_images/sphx_glr_plot_visualize_raw_009.png" class="sphx-glr-single-img" src="../../_images/sphx_glr_plot_visualize_raw_009.png" />
+<img alt="../../_images/sphx_glr_plot_visualize_raw_002.png" class="sphx-glr-single-img" src="../../_images/sphx_glr_plot_visualize_raw_002.png" />
 <p class="sphx-glr-script-out">Out:</p>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Effective window size : 3.410 (s)
 Effective window size : 3.410 (s)
 Effective window size : 3.410 (s)
 </pre></div>
 </div>
-<p>Plotting channel-wise power spectra is just as easy. The layout is inferred
-from the data by default when plotting topo plots. This works for most data,
-but it is also possible to define the layouts by hand. Here we select a
-layout with only magnetometer channels and plot it. Then we plot the channel
-wise spectra of first 30 seconds of the data.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">layout</span> <span class="o">=</span> <a href="../../generated/mne.channels.read_layout.html#mne.channels.read_layout" title="View documentation for mne.channels.read_layout"><span class="n">mne</span><span class="o">.</span><span class="n">channels</span><span class="o">.</span><span class="n">read_layout</span></a><span class="p">(</span><span class="s1">&#39;Vectorview-mag&#39;</span><span class="p">)</span>
-<span class="n">layout</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
-<span class="n">raw</span><span class="o">.</span><span class="n">plot_psd_topo</span><span class="p">(</span><span class="n">tmax</span><span class="o">=</span><span class="mf">30.</span><span class="p">,</span> <span class="n">fmin</span><span class="o">=</span><span class="mf">5.</span><span class="p">,</span> <span class="n">fmax</span><span class="o">=</span><span class="mf">60.</span><span class="p">,</span> <span class="n">n_fft</span><span class="o">=</span><span class="mi">1024</span><span class="p">,</span> <span class="n">layout</span><span class="o">=</span><span class="n">layout</span><span class="p">)</span>
+<p>If the data have been filtered, vertical dashed lines will automatically
+indicate filter boundaries. The spectrum for each channel type is drawn in
+its own subplot; here we’ve passed the <code class="docutils literal notranslate"><span class="pre">average=True</span></code> parameter to get a
+summary for each channel type, but it is also possible to plot each channel
+individually, with options for how the spectrum should be computed,
+color-coding the channels by location, and more. For example, here is a plot
+of just a few sensors (specified with the <code class="docutils literal notranslate"><span class="pre">picks</span></code> parameter), color-coded
+by spatial location (via the <code class="docutils literal notranslate"><span class="pre">spatial_colors</span></code> parameter, see the
+documentation of <a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw.plot_psd" title="mne.io.Raw.plot_psd"><code class="xref py py-meth docutils literal notranslate"><span class="pre">plot_psd()</span></code></a> for full details):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">midline</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;EEG 002&#39;</span><span class="p">,</span> <span class="s1">&#39;EEG 012&#39;</span><span class="p">,</span> <span class="s1">&#39;EEG 030&#39;</span><span class="p">,</span> <span class="s1">&#39;EEG 048&#39;</span><span class="p">,</span> <span class="s1">&#39;EEG 058&#39;</span><span class="p">,</span> <span class="s1">&#39;EEG 060&#39;</span><span class="p">]</span>
+<span class="n">raw</span><span class="o">.</span><span class="n">plot_psd</span><span class="p">(</span><span class="n">picks</span><span class="o">=</span><span class="n">midline</span><span class="p">)</span>
 </pre></div>
 </div>
-<ul class="sphx-glr-horizontal">
-<li><img alt="../../_images/sphx_glr_plot_visualize_raw_010.png" class="sphx-glr-multi-img" src="../../_images/sphx_glr_plot_visualize_raw_010.png" />
-</li>
-<li><img alt="../../_images/sphx_glr_plot_visualize_raw_011.png" class="sphx-glr-multi-img" src="../../_images/sphx_glr_plot_visualize_raw_011.png" />
-</li>
-</ul>
+<img alt="../../_images/sphx_glr_plot_visualize_raw_003.png" class="sphx-glr-single-img" src="../../_images/sphx_glr_plot_visualize_raw_003.png" />
 <p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Effective window size : 1.705 (s)
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Effective window size : 3.410 (s)
 </pre></div>
 </div>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  18.451 seconds)</p>
-<p><strong>Estimated memory usage:</strong>  1479 MB</p>
+<p>Alternatively, you can plot the PSD for every sensor on its own axes, with
+the axes arranged spatially to correspond to sensor locations in space, using
+<a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw.plot_psd_topo" title="mne.io.Raw.plot_psd_topo"><code class="xref py py-meth docutils literal notranslate"><span class="pre">plot_psd_topo()</span></code></a>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">raw</span><span class="o">.</span><span class="n">plot_psd_topo</span><span class="p">()</span>
+</pre></div>
+</div>
+<img alt="../../_images/sphx_glr_plot_visualize_raw_004.png" class="sphx-glr-single-img" src="../../_images/sphx_glr_plot_visualize_raw_004.png" />
+<p class="sphx-glr-script-out">Out:</p>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Effective window size : 3.410 (s)
+</pre></div>
+</div>
+<p>This plot is also interactive; hovering over each “thumbnail” plot will
+display the channel name in the bottom left of the plot window, and clicking
+on a thumbnail plot will create a second figure showing a larger version of
+the selected channel’s spectral density (as if you had called
+<a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw.plot_psd" title="mne.io.Raw.plot_psd"><code class="xref py py-meth docutils literal notranslate"><span class="pre">plot_psd()</span></code></a> on that channel).</p>
+<p>By default, <a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw.plot_psd_topo" title="mne.io.Raw.plot_psd_topo"><code class="xref py py-meth docutils literal notranslate"><span class="pre">plot_psd_topo()</span></code></a> will show only the MEG
+channels if MEG channels are present; if only EEG channels are found, they
+will be plotted instead:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">raw</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span><span class="o">.</span><span class="n">pick_types</span><span class="p">(</span><span class="n">meg</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">eeg</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">plot_psd_topo</span><span class="p">()</span>
+</pre></div>
+</div>
+<img alt="../../_images/sphx_glr_plot_visualize_raw_005.png" class="sphx-glr-single-img" src="../../_images/sphx_glr_plot_visualize_raw_005.png" />
+<p class="sphx-glr-script-out">Out:</p>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Effective window size : 3.410 (s)
+</pre></div>
+</div>
+</div>
+<div class="section" id="plotting-sensor-locations-from-raw-objects">
+<h2><a class="toc-backref" href="#id3">Plotting sensor locations from <code class="docutils literal notranslate"><span class="pre">Raw</span></code> objects</a><a class="headerlink" href="#plotting-sensor-locations-from-raw-objects" title="Permalink to this headline">¶</a></h2>
+<p>The channel locations in a <a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-class docutils literal notranslate"><span class="pre">Raw</span></code></a> object can be easily plotted
+with the <a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw.plot_sensors" title="mne.io.Raw.plot_sensors"><code class="xref py py-meth docutils literal notranslate"><span class="pre">plot_sensors()</span></code></a> method. A brief example is shown
+here; notice that channels in <code class="docutils literal notranslate"><span class="pre">raw.info['bads']</span></code> are plotted in red. More
+details and additional examples are given in the tutorial
+<a class="reference internal" href="../misc/plot_sensor_locations.html"><span class="doc">Working with sensor locations</span></a>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">raw</span><span class="o">.</span><span class="n">plot_sensors</span><span class="p">(</span><span class="n">ch_type</span><span class="o">=</span><span class="s1">&#39;eeg&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="../../_images/sphx_glr_plot_visualize_raw_006.png" class="sphx-glr-single-img" src="../../_images/sphx_glr_plot_visualize_raw_006.png" />
+</div>
+<div class="section" id="plotting-projectors-from-raw-objects">
+<h2><a class="toc-backref" href="#id4">Plotting projectors from <code class="docutils literal notranslate"><span class="pre">Raw</span></code> objects</a><a class="headerlink" href="#plotting-projectors-from-raw-objects" title="Permalink to this headline">¶</a></h2>
+<p>As seen in the output of <a class="reference internal" href="../../generated/mne.io.read_raw_fif.html#mne.io.read_raw_fif" title="mne.io.read_raw_fif"><code class="xref py py-meth docutils literal notranslate"><span class="pre">mne.io.read_raw_fif()</span></code></a> above, there are
+<a class="reference internal" href="../../glossary.html#term-projector"><span class="xref std std-term">projectors</span></a> included in the example <a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-class docutils literal notranslate"><span class="pre">Raw</span></code></a>
+file (representing environmental noise in the signal, so it can later be
+“projected out” during preprocessing). You can visualize these projectors
+using the <a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw.plot_projs_topomap" title="mne.io.Raw.plot_projs_topomap"><code class="xref py py-meth docutils literal notranslate"><span class="pre">plot_projs_topomap()</span></code></a> method. By default it will
+show one figure per channel type for which projectors are present, and each
+figure will have one subplot per projector. The three projectors in this file
+were only computed for magnetometers, so one figure with three subplots is
+generated.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">raw</span><span class="o">.</span><span class="n">plot_projs_topomap</span><span class="p">()</span>
+</pre></div>
+</div>
+<img alt="../../_images/sphx_glr_plot_visualize_raw_007.png" class="sphx-glr-single-img" src="../../_images/sphx_glr_plot_visualize_raw_007.png" />
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  15.594 seconds)</p>
+<p><strong>Estimated memory usage:</strong>  2313 MB</p>
 <div class="sphx-glr-footer class sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-tutorials-raw-plot-visualize-raw-py">
 <div class="sphx-glr-download docutils container">
 <p><a class="reference download internal" download="" href="../../_downloads/50203810e96faf6188376ec79a1d7301/plot_visualize_raw.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">plot_visualize_raw.py</span></code></a></p>
@@ -439,7 +453,7 @@ wise spectra of first 30 seconds of the data.</p>
       <li><a href="faq.html#cite">Cite MNE</a></li>
       <li class="pull-right"><a href="#">Back to top</a></li>
     </ul>
-    <p>&copy; Copyright 2012-2019, MNE Developers. Last updated on 2019-06-11.</p>
+    <p>&copy; Copyright 2012-2019, MNE Developers. Last updated on 2019-06-19.</p>
   </div>
 </footer>
   </body>
