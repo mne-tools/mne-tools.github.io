@@ -195,13 +195,11 @@ are used which produces strong connectvitiy in the right occipital sensors.</p>
 <span class="c1">#</span>
 <span class="c1"># License: BSD (3-clause)</span>
 
-<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">scipy</span> <span class="k">import</span> <span class="n">linalg</span>
-
 <span class="kn">import</span> <span class="nn">mne</span>
 <span class="kn">from</span> <span class="nn">mne</span> <span class="k">import</span> <span class="n">io</span>
 <span class="kn">from</span> <span class="nn">mne.connectivity</span> <span class="k">import</span> <a href="../../generated/mne.connectivity.spectral_connectivity.html#mne.connectivity.spectral_connectivity" title="View documentation for mne.connectivity.spectral_connectivity"><span class="n">spectral_connectivity</span></a>
 <span class="kn">from</span> <span class="nn">mne.datasets</span> <span class="k">import</span> <span class="n">sample</span>
+<span class="kn">from</span> <span class="nn">mne.viz</span> <span class="k">import</span> <a href="../../generated/mne.viz.plot_sensors_connectivity.html#mne.viz.plot_sensors_connectivity" title="View documentation for mne.viz.plot_sensors_connectivity"><span class="n">plot_sensors_connectivity</span></a>
 
 <span class="nb">print</span><span class="p">(</span><span class="vm">__doc__</span><span class="p">)</span>
 </pre></div>
@@ -236,72 +234,13 @@ are used which produces strong connectvitiy in the right occipital sensors.</p>
 <span class="n">fmin</span><span class="p">,</span> <span class="n">fmax</span> <span class="o">=</span> <span class="mf">3.</span><span class="p">,</span> <span class="mf">9.</span>
 <span class="n">sfreq</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;sfreq&#39;</span><span class="p">]</span>  <span class="c1"># the sampling frequency</span>
 <span class="n">tmin</span> <span class="o">=</span> <span class="mf">0.0</span>  <span class="c1"># exclude the baseline period</span>
+<span class="n">epochs</span><span class="o">.</span><span class="n">load_data</span><span class="p">()</span><span class="o">.</span><span class="n">pick_types</span><span class="p">(</span><span class="n">meg</span><span class="o">=</span><span class="s1">&#39;grad&#39;</span><span class="p">)</span>  <span class="c1"># just keep MEG and no EOG now</span>
 <span class="n">con</span><span class="p">,</span> <span class="n">freqs</span><span class="p">,</span> <span class="n">times</span><span class="p">,</span> <span class="n">n_epochs</span><span class="p">,</span> <span class="n">n_tapers</span> <span class="o">=</span> <a href="../../generated/mne.connectivity.spectral_connectivity.html#mne.connectivity.spectral_connectivity" title="View documentation for mne.connectivity.spectral_connectivity"><span class="n">spectral_connectivity</span></a><span class="p">(</span>
     <span class="n">epochs</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;pli&#39;</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;multitaper&#39;</span><span class="p">,</span> <span class="n">sfreq</span><span class="o">=</span><span class="n">sfreq</span><span class="p">,</span> <span class="n">fmin</span><span class="o">=</span><span class="n">fmin</span><span class="p">,</span> <span class="n">fmax</span><span class="o">=</span><span class="n">fmax</span><span class="p">,</span>
     <span class="n">faverage</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">tmin</span><span class="o">=</span><span class="n">tmin</span><span class="p">,</span> <span class="n">mt_adaptive</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 
-<span class="c1"># the epochs contain an EOG channel, which we remove now</span>
-<span class="n">ch_names</span> <span class="o">=</span> <span class="n">epochs</span><span class="o">.</span><span class="n">ch_names</span>
-<span class="n">idx</span> <span class="o">=</span> <span class="p">[</span><span class="n">ch_names</span><span class="o">.</span><span class="n">index</span><span class="p">(</span><span class="n">name</span><span class="p">)</span> <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <span class="n">ch_names</span> <span class="k">if</span> <span class="n">name</span><span class="o">.</span><span class="n">startswith</span><span class="p">(</span><span class="s1">&#39;MEG&#39;</span><span class="p">)]</span>
-<span class="n">con</span> <span class="o">=</span> <span class="n">con</span><span class="p">[</span><span class="n">idx</span><span class="p">][:,</span> <span class="n">idx</span><span class="p">]</span>
-
-<span class="c1"># con is a 3D array where the last dimension is size one since we averaged</span>
-<span class="c1"># over frequencies in a single band. Here we make it 2D</span>
-<span class="n">con</span> <span class="o">=</span> <span class="n">con</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">]</span>
-
 <span class="c1"># Now, visualize the connectivity in 3D</span>
-<span class="kn">from</span> <span class="nn">mayavi</span> <span class="k">import</span> <span class="n">mlab</span>  <span class="c1"># noqa</span>
-
-<a href="http://docs.enthought.com/mayavi/mayavi/auto/mlab_figure.html#mayavi.mlab.figure" title="View documentation for mayavi.mlab.figure"><span class="n">mlab</span><span class="o">.</span><span class="n">figure</span></a><span class="p">(</span><span class="n">size</span><span class="o">=</span><span class="p">(</span><span class="mi">600</span><span class="p">,</span> <span class="mi">600</span><span class="p">),</span> <span class="n">bgcolor</span><span class="o">=</span><span class="p">(</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">))</span>
-
-<span class="c1"># Plot the sensor locations</span>
-<span class="n">sens_loc</span> <span class="o">=</span> <span class="p">[</span><span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;chs&#39;</span><span class="p">][</span><span class="n">picks</span><span class="p">[</span><span class="n">i</span><span class="p">]][</span><span class="s1">&#39;loc&#39;</span><span class="p">][:</span><span class="mi">3</span><span class="p">]</span> <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="n">idx</span><span class="p">]</span>
-<span class="n">sens_loc</span> <span class="o">=</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.array.html#numpy.array" title="View documentation for numpy.array"><span class="n">np</span><span class="o">.</span><span class="n">array</span></a><span class="p">(</span><span class="n">sens_loc</span><span class="p">)</span>
-
-<span class="n">pts</span> <span class="o">=</span> <a href="http://docs.enthought.com/mayavi/mayavi/auto/mlab_helper_functions.html#mayavi.mlab.points3d" title="View documentation for mayavi.mlab.points3d"><span class="n">mlab</span><span class="o">.</span><span class="n">points3d</span></a><span class="p">(</span><span class="n">sens_loc</span><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">sens_loc</span><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">sens_loc</span><span class="p">[:,</span> <span class="mi">2</span><span class="p">],</span>
-                    <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">opacity</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">scale_factor</span><span class="o">=</span><span class="mf">0.005</span><span class="p">)</span>
-
-<span class="c1"># Get the strongest connections</span>
-<span class="n">n_con</span> <span class="o">=</span> <span class="mi">20</span>  <span class="c1"># show up to 20 connections</span>
-<span class="n">min_dist</span> <span class="o">=</span> <span class="mf">0.05</span>  <span class="c1"># exclude sensors that are less than 5cm apart</span>
-<span class="n">threshold</span> <span class="o">=</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.sort.html#numpy.sort" title="View documentation for numpy.sort"><span class="n">np</span><span class="o">.</span><span class="n">sort</span></a><span class="p">(</span><span class="n">con</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="kc">None</span><span class="p">)[</span><span class="o">-</span><span class="n">n_con</span><span class="p">]</span>
-<span class="n">ii</span><span class="p">,</span> <span class="n">jj</span> <span class="o">=</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.where.html#numpy.where" title="View documentation for numpy.where"><span class="n">np</span><span class="o">.</span><span class="n">where</span></a><span class="p">(</span><span class="n">con</span> <span class="o">&gt;=</span> <span class="n">threshold</span><span class="p">)</span>
-
-<span class="c1"># Remove close connections</span>
-<span class="n">con_nodes</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
-<span class="n">con_val</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
-<span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">j</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">ii</span><span class="p">,</span> <span class="n">jj</span><span class="p">):</span>
-    <span class="k">if</span> <a href="https://scipy.github.io/devdocs/generated/scipy.linalg.norm.html#scipy.linalg.norm" title="View documentation for scipy.linalg.norm"><span class="n">linalg</span><span class="o">.</span><span class="n">norm</span></a><span class="p">(</span><span class="n">sens_loc</span><span class="p">[</span><span class="n">i</span><span class="p">]</span> <span class="o">-</span> <span class="n">sens_loc</span><span class="p">[</span><span class="n">j</span><span class="p">])</span> <span class="o">&gt;</span> <span class="n">min_dist</span><span class="p">:</span>
-        <span class="n">con_nodes</span><span class="o">.</span><span class="n">append</span><span class="p">((</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">))</span>
-        <span class="n">con_val</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">con</span><span class="p">[</span><span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">])</span>
-
-<span class="n">con_val</span> <span class="o">=</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.array.html#numpy.array" title="View documentation for numpy.array"><span class="n">np</span><span class="o">.</span><span class="n">array</span></a><span class="p">(</span><span class="n">con_val</span><span class="p">)</span>
-
-<span class="c1"># Show the connections as tubes between sensors</span>
-<span class="n">vmax</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">con_val</span><span class="p">)</span>
-<span class="n">vmin</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">con_val</span><span class="p">)</span>
-<span class="k">for</span> <span class="n">val</span><span class="p">,</span> <span class="n">nodes</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><span class="n">con_val</span><span class="p">,</span> <span class="n">con_nodes</span><span class="p">):</span>
-    <span class="n">x1</span><span class="p">,</span> <span class="n">y1</span><span class="p">,</span> <span class="n">z1</span> <span class="o">=</span> <span class="n">sens_loc</span><span class="p">[</span><span class="n">nodes</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span>
-    <span class="n">x2</span><span class="p">,</span> <span class="n">y2</span><span class="p">,</span> <span class="n">z2</span> <span class="o">=</span> <span class="n">sens_loc</span><span class="p">[</span><span class="n">nodes</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span>
-    <span class="n">points</span> <span class="o">=</span> <a href="http://docs.enthought.com/mayavi/mayavi/auto/mlab_helper_functions.html#mayavi.mlab.plot3d" title="View documentation for mayavi.mlab.plot3d"><span class="n">mlab</span><span class="o">.</span><span class="n">plot3d</span></a><span class="p">([</span><span class="n">x1</span><span class="p">,</span> <span class="n">x2</span><span class="p">],</span> <span class="p">[</span><span class="n">y1</span><span class="p">,</span> <span class="n">y2</span><span class="p">],</span> <span class="p">[</span><span class="n">z1</span><span class="p">,</span> <span class="n">z2</span><span class="p">],</span> <span class="p">[</span><span class="n">val</span><span class="p">,</span> <span class="n">val</span><span class="p">],</span>
-                         <span class="n">vmin</span><span class="o">=</span><span class="n">vmin</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="n">vmax</span><span class="p">,</span> <span class="n">tube_radius</span><span class="o">=</span><span class="mf">0.001</span><span class="p">,</span>
-                         <span class="n">colormap</span><span class="o">=</span><span class="s1">&#39;RdBu&#39;</span><span class="p">)</span>
-    <span class="n">points</span><span class="o">.</span><span class="n">module_manager</span><span class="o">.</span><span class="n">scalar_lut_manager</span><span class="o">.</span><span class="n">reverse_lut</span> <span class="o">=</span> <span class="kc">True</span>
-
-
-<a href="http://docs.enthought.com/mayavi/mayavi/auto/mlab_decorations.html#mayavi.mlab.scalarbar" title="View documentation for mayavi.mlab.scalarbar"><span class="n">mlab</span><span class="o">.</span><span class="n">scalarbar</span></a><span class="p">(</span><span class="n">points</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s1">&#39;Phase Lag Index (PLI)&#39;</span><span class="p">,</span> <span class="n">nb_labels</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
-
-<span class="c1"># Add the sensor names for the connections shown</span>
-<span class="n">nodes_shown</span> <span class="o">=</span> <span class="nb">list</span><span class="p">(</span><span class="nb">set</span><span class="p">([</span><span class="n">n</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">con_nodes</span><span class="p">]</span> <span class="o">+</span>
-                       <span class="p">[</span><span class="n">n</span><span class="p">[</span><span class="mi">1</span><span class="p">]</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="n">con_nodes</span><span class="p">]))</span>
-
-<span class="k">for</span> <span class="n">node</span> <span class="ow">in</span> <span class="n">nodes_shown</span><span class="p">:</span>
-    <span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span> <span class="o">=</span> <span class="n">sens_loc</span><span class="p">[</span><span class="n">node</span><span class="p">]</span>
-    <a href="http://docs.enthought.com/mayavi/mayavi/auto/mlab_other_functions.html#mayavi.mlab.text3d" title="View documentation for mayavi.mlab.text3d"><span class="n">mlab</span><span class="o">.</span><span class="n">text3d</span></a><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">y</span><span class="p">,</span> <span class="n">z</span><span class="p">,</span> <span class="n">raw</span><span class="o">.</span><span class="n">ch_names</span><span class="p">[</span><span class="n">picks</span><span class="p">[</span><span class="n">node</span><span class="p">]],</span> <span class="n">scale</span><span class="o">=</span><span class="mf">0.005</span><span class="p">,</span>
-                <span class="n">color</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
-
-<span class="n">view</span> <span class="o">=</span> <span class="p">(</span><span class="o">-</span><span class="mf">88.7</span><span class="p">,</span> <span class="mf">40.8</span><span class="p">,</span> <span class="mf">0.76</span><span class="p">,</span> <a href="https://www.numpy.org/devdocs/reference/generated/numpy.array.html#numpy.array" title="View documentation for numpy.array"><span class="n">np</span><span class="o">.</span><span class="n">array</span></a><span class="p">([</span><span class="o">-</span><span class="mf">3.9e-4</span><span class="p">,</span> <span class="o">-</span><span class="mf">8.5e-3</span><span class="p">,</span> <span class="o">-</span><span class="mf">1e-2</span><span class="p">]))</span>
-<a href="http://docs.enthought.com/mayavi/mayavi/auto/mlab_camera.html#mayavi.mlab.view" title="View documentation for mayavi.mlab.view"><span class="n">mlab</span><span class="o">.</span><span class="n">view</span></a><span class="p">(</span><span class="o">*</span><span class="n">view</span><span class="p">)</span>
+<a href="../../generated/mne.viz.plot_sensors_connectivity.html#mne.viz.plot_sensors_connectivity" title="View documentation for mne.viz.plot_sensors_connectivity"><span class="n">plot_sensors_connectivity</span></a><span class="p">(</span><span class="n">epochs</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">con</span><span class="p">[:,</span> <span class="p">:,</span> <span class="mi">0</span><span class="p">])</span>
 </pre></div>
 </div>
 <img alt="../../_images/sphx_glr_plot_sensor_connectivity_001.png" class="sphx-glr-single-img" src="../../_images/sphx_glr_plot_sensor_connectivity_001.png" />
@@ -319,9 +258,35 @@ Current compensation grade : 0
 Applying baseline correction (mode: mean)
 Not setting metadata
 4 projection items activated
+Loading data for 73 events and 256 original time points ...
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+24 bad epochs dropped
 Connectivity computation...
 only using indices for lower-triangular matrix
-    computing connectivity for 20706 connections
+    computing connectivity for 20503 connections
     using t=0.000s..1.698s for estimation (256 points)
     frequencies: 3.5Hz..8.8Hz (10 points)
     connectivity scores will be averaged for each band
@@ -336,22 +301,14 @@ only using indices for lower-triangular matrix
     computing connectivity for epoch 7
     computing connectivity for epoch 8
     computing connectivity for epoch 9
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
     computing connectivity for epoch 10
     computing connectivity for epoch 11
     computing connectivity for epoch 12
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
     computing connectivity for epoch 13
     computing connectivity for epoch 14
     computing connectivity for epoch 15
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
     computing connectivity for epoch 16
     computing connectivity for epoch 17
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
     computing connectivity for epoch 18
     computing connectivity for epoch 19
     computing connectivity for epoch 20
@@ -360,39 +317,23 @@ only using indices for lower-triangular matrix
     computing connectivity for epoch 23
     computing connectivity for epoch 24
     computing connectivity for epoch 25
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
     computing connectivity for epoch 26
     computing connectivity for epoch 27
     computing connectivity for epoch 28
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
     computing connectivity for epoch 29
     computing connectivity for epoch 30
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
     computing connectivity for epoch 31
     computing connectivity for epoch 32
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
     computing connectivity for epoch 33
     computing connectivity for epoch 34
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
     computing connectivity for epoch 35
     computing connectivity for epoch 36
     computing connectivity for epoch 37
     computing connectivity for epoch 38
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
     computing connectivity for epoch 39
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
     computing connectivity for epoch 40
     computing connectivity for epoch 41
     computing connectivity for epoch 42
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
     computing connectivity for epoch 43
     computing connectivity for epoch 44
     computing connectivity for epoch 45
@@ -404,8 +345,8 @@ only using indices for lower-triangular matrix
 [Connectivity computation done]
 </pre></div>
 </div>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  7.365 seconds)</p>
-<p><strong>Estimated memory usage:</strong>  9 MB</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  5.334 seconds)</p>
+<p><strong>Estimated memory usage:</strong>  12 MB</p>
 <div class="sphx-glr-footer class sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-connectivity-plot-sensor-connectivity-py">
 <div class="sphx-glr-download docutils container">
 <p><a class="reference download internal" download="" href="../../_downloads/d4bd7fa3747d66361b17dea63931797a/plot_sensor_connectivity.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">plot_sensor_connectivity.py</span></code></a></p>
