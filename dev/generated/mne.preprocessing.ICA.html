@@ -6,6 +6,7 @@
     <title>mne.preprocessing.ICA &#8212; MNE 0.19.dev0 documentation</title>
     <link rel="stylesheet" href="../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../_static/graphviz.css" />
     <link rel="stylesheet" type="text/css" href="../_static/gallery.css" />
     <link rel="stylesheet" type="text/css" href="../_static/bootstrap_divs.css" />
     <link rel="stylesheet" href="../_static/reset-syntax.css" type="text/css" />
@@ -191,11 +192,11 @@ This documentation is for <strong>development version 0.19.dev0</strong>.
 <h1>mne.preprocessing.ICA<a class="headerlink" href="#mne-preprocessing-ica" title="Permalink to this headline">¶</a></h1>
 <dl class="class">
 <dt id="mne.preprocessing.ICA">
-<em class="property">class </em><code class="sig-prename descclassname">mne.preprocessing.</code><code class="sig-name descname">ICA</code><span class="sig-paren">(</span><em class="sig-param">n_components=None</em>, <em class="sig-param">max_pca_components=None</em>, <em class="sig-param">n_pca_components=None</em>, <em class="sig-param">noise_cov=None</em>, <em class="sig-param">random_state=None</em>, <em class="sig-param">method='fastica'</em>, <em class="sig-param">fit_params=None</em>, <em class="sig-param">max_iter=200</em>, <em class="sig-param">allow_ref_meg=False</em>, <em class="sig-param">verbose=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L118-L1735"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA" title="Permalink to this definition">¶</a></dt>
+<em class="property">class </em><code class="sig-prename descclassname">mne.preprocessing.</code><code class="sig-name descname">ICA</code><span class="sig-paren">(</span><em class="sig-param">n_components=None</em>, <em class="sig-param">max_pca_components=None</em>, <em class="sig-param">n_pca_components=None</em>, <em class="sig-param">noise_cov=None</em>, <em class="sig-param">random_state=None</em>, <em class="sig-param">method='fastica'</em>, <em class="sig-param">fit_params=None</em>, <em class="sig-param">max_iter=200</em>, <em class="sig-param">allow_ref_meg=False</em>, <em class="sig-param">verbose=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L118-L1739"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA" title="Permalink to this definition">¶</a></dt>
 <dd><p>M/EEG signal decomposition using Independent Component Analysis (ICA).</p>
-<p>This object can be used to estimate ICA components and then remove some
-from <a class="reference internal" href="mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-class docutils literal notranslate"><span class="pre">mne.io.Raw</span></code></a>, <a class="reference internal" href="mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal notranslate"><span class="pre">mne.Epochs</span></code></a>, or <a class="reference internal" href="mne.Evoked.html#mne.Evoked" title="mne.Evoked"><code class="xref py py-class docutils literal notranslate"><span class="pre">mne.Evoked</span></code></a>
-for data exploration or artifact correction.</p>
+<p>This object estimates independent components from <a class="reference internal" href="mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-class docutils literal notranslate"><span class="pre">mne.io.Raw</span></code></a>,
+<a class="reference internal" href="mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal notranslate"><span class="pre">mne.Epochs</span></code></a>, or <a class="reference internal" href="mne.Evoked.html#mne.Evoked" title="mne.Evoked"><code class="xref py py-class docutils literal notranslate"><span class="pre">mne.Evoked</span></code></a> objects. Components can
+optionally be removed (for artifact repair) prior to signal reconstruction.</p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
 <p>ICA is sensitive to low-frequency drifts and therefore
@@ -205,39 +206,33 @@ Typically, a cutoff frequency of 1 Hz is recommended.</p>
 <dl class="field-list">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl>
-<dt><strong>n_components</strong><span class="classifier"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">int</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">float</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">None</span></code></a></span></dt><dd><p>Controls the number of PCA components from the pre-ICA PCA entering the
-ICA decomposition in the <a class="reference internal" href="#mne.preprocessing.ICA.fit" title="mne.preprocessing.ICA.fit"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ICA.fit()</span></code></a> method.
-If None (default), all PCA components will be used
-(== <em class="xref py py-obj">max_pca_components</em>).
-If int, must be &lt;= <em class="xref py py-obj">max_pca_components</em>.
-If float between 0 and 1, the number of components selected matches the
-number of components with a cumulative explained variance below
-<em class="xref py py-obj">n_components</em> (a value of 1. resulting in <em class="xref py py-obj">max_pca_components</em>).
-The actual number of components resulting from evaluating this
-parameter in the <a class="reference internal" href="#mne.preprocessing.ICA.fit" title="mne.preprocessing.ICA.fit"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ICA.fit()</span></code></a> method is stored in the attribute
-<em class="xref py py-obj">n_components_</em> after fitting.</p>
+<dt><strong>n_components</strong><span class="classifier"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">int</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">float</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">None</span></code></a></span></dt><dd><p>Number of principal components (from the pre-whitening PCA step) that
+are passed to the ICA algorithm during fitting. If <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a>, must
+not be larger than <code class="docutils literal notranslate"><span class="pre">max_pca_components</span></code>. If <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a> between 0
+and 1, the number of components with cumulative explained variance less
+than <code class="docutils literal notranslate"><span class="pre">n_components</span></code> will be used. If <code class="docutils literal notranslate"><span class="pre">None</span></code>, <code class="docutils literal notranslate"><span class="pre">max_pca_components</span></code>
+will be used. Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>; the actual number used when
+executing the <a class="reference internal" href="#mne.preprocessing.ICA.fit" title="mne.preprocessing.ICA.fit"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ICA.fit()</span></code></a> method will be stored in the attribute
+<code class="docutils literal notranslate"><span class="pre">n_components_</span></code> (note the trailing underscore).</p>
 </dd>
-<dt><strong>max_pca_components</strong><span class="classifier"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">int</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">None</span></code></a></span></dt><dd><p>The number of components returned by the PCA decomposition in the
-<a class="reference internal" href="#mne.preprocessing.ICA.fit" title="mne.preprocessing.ICA.fit"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ICA.fit()</span></code></a> method.
-If None (default), no dimensionality reduction will be applied and
-<em class="xref py py-obj">max_pca_components</em> will equal the number of channels supplied for
-decomposing the data.
-If &gt; <em class="xref py py-obj">n_components_</em>, the additional PCA-only-components can later be
-used for re-projecting the data into sensor space, additionally
-controllable by the <em class="xref py py-obj">n_pca_components</em> parameter.</p>
+<dt><strong>max_pca_components</strong><span class="classifier"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">int</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">None</span></code></a></span></dt><dd><p>Number of principal components (from the pre-whitening PCA step) that
+are retained for later use (i.e., for signal reconstruction in
+<a class="reference internal" href="#mne.preprocessing.ICA.apply" title="mne.preprocessing.ICA.apply"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ICA.apply()</span></code></a>; see the <code class="docutils literal notranslate"><span class="pre">n_pca_components</span></code> parameter). If
+<code class="docutils literal notranslate"><span class="pre">None</span></code>, no dimensionality reduction occurs and <code class="docutils literal notranslate"><span class="pre">max_pca_components</span></code>
+will equal the number of channels in the <a class="reference internal" href="mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-class docutils literal notranslate"><span class="pre">mne.io.Raw</span></code></a>,
+<a class="reference internal" href="mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal notranslate"><span class="pre">mne.Epochs</span></code></a>, or <a class="reference internal" href="mne.Evoked.html#mne.Evoked" title="mne.Evoked"><code class="xref py py-class docutils literal notranslate"><span class="pre">mne.Evoked</span></code></a> object passed to
+<a class="reference internal" href="#mne.preprocessing.ICA.fit" title="mne.preprocessing.ICA.fit"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ICA.fit()</span></code></a>.</p>
 </dd>
-<dt><strong>n_pca_components</strong><span class="classifier"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">int</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">float</span></code></a></span></dt><dd><p>The number of PCA components used by the <a class="reference internal" href="#mne.preprocessing.ICA.apply" title="mne.preprocessing.ICA.apply"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ICA.apply()</span></code></a> method for
-re-projecting the decomposed data into sensor space. Has to be
-&gt;= <em class="xref py py-obj">n_components(_)</em> and &lt;= <em class="xref py py-obj">max_pca_components</em>.
-If greater than <em class="xref py py-obj">n_components_</em>, the next <em class="xref py py-obj">n_pca_components</em> minus
-<em class="xref py py-obj">n_components</em> PCA components will be added before restoring the sensor
-space data.
-If None (default), all PCA components will be used.
-If float between 0 and 1, the number of components selected matches the
-number of components with a cumulative explained variance below
-<em class="xref py py-obj">n_pca_components</em>. This attribute allows to balance noise reduction
-against potential loss of features due to dimensionality reduction,
-independently of the number of ICA components.</p>
+<dt><strong>n_pca_components</strong><span class="classifier"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">int</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">float</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">None</span></code></a></span></dt><dd><p>Total number of components (ICA + PCA) used for signal reconstruction
+in <a class="reference internal" href="#mne.preprocessing.ICA.apply" title="mne.preprocessing.ICA.apply"><code class="xref py py-meth docutils literal notranslate"><span class="pre">ICA.apply()</span></code></a>. At minimum, at least <code class="docutils literal notranslate"><span class="pre">n_components</span></code> will be
+used (unless modified by <code class="docutils literal notranslate"><span class="pre">ICA.include</span></code> or <code class="docutils literal notranslate"><span class="pre">ICA.exclude</span></code>). If
+<code class="docutils literal notranslate"><span class="pre">n_pca_components</span> <span class="pre">&gt;</span> <span class="pre">n_components</span></code>, additional PCA components will be
+incorporated. If <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a> between 0 and 1, the number is chosen
+as the number of <em>PCA</em> components with cumulative explained variance
+less than <code class="docutils literal notranslate"><span class="pre">n_components</span></code> (without accounting for <code class="docutils literal notranslate"><span class="pre">ICA.include</span></code> or
+<code class="docutils literal notranslate"><span class="pre">ICA.exclude</span></code>). If <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">int</span></code></a> or <a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.7)"><code class="xref py py-class docutils literal notranslate"><span class="pre">float</span></code></a>, <code class="docutils literal notranslate"><span class="pre">n_components_</span> <span class="pre">≤</span>
+<span class="pre">n_pca_components</span> <span class="pre">≤</span> <span class="pre">max_pca_components</span></code> must hold. If <code class="docutils literal notranslate"><span class="pre">None</span></code>,
+<code class="docutils literal notranslate"><span class="pre">max_pca_components</span></code> will be used. Defaults to <code class="docutils literal notranslate"><span class="pre">None</span></code>.</p>
 </dd>
 <dt><strong>noise_cov</strong><span class="classifier"><a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">None</span></code></a> | instance of <a class="reference internal" href="mne.Covariance.html#mne.Covariance" title="mne.Covariance"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Covariance</span></code></a></span></dt><dd><p>Noise covariance used for pre-whitening. If None (default), channels
 are scaled to unit variance (“z-standardized”) prior to the whitening
@@ -281,9 +276,15 @@ practice.</p>
 scaled to unit variance, also called sphering transformation) by means of
 a Principle Component Analysis (PCA). In addition to the whitening, this
 step introduces the option to reduce the dimensionality of the data, both
-prior to fitting the ICA and prior to reverting to sensor space.
-This is controllable by the two parameters <em class="xref py py-obj">max_pca_components</em> and
-<em class="xref py py-obj">n_pca_components</em>, respectively.</p>
+prior to fitting the ICA (with the <code class="docutils literal notranslate"><span class="pre">max_pca_components</span></code> parameter) and
+prior to reconstructing the sensor signals (with the <code class="docutils literal notranslate"><span class="pre">n_pca_components</span></code>
+parameter). In this way, we separate the question of how many ICA
+components to estimate from the question of how much to reduce the
+dimensionality of the signal. For example: by setting high values for
+<code class="docutils literal notranslate"><span class="pre">max_pca_components</span></code> and <code class="docutils literal notranslate"><span class="pre">n_pca_components</span></code>, relatively little
+dimensionality reduction will occur when the signal is reconstructed,
+regardless of the value of <code class="docutils literal notranslate"><span class="pre">n_components</span></code> (the number of ICA components
+estimated).</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>Commonly used for reasons of i) computational efficiency and
@@ -311,7 +312,11 @@ temporally removed before fitting ICA, for example:</p>
 <p>Methods currently implemented are FastICA (default), Infomax, and Picard.
 Standard Infomax can be quite sensitive to differences in floating point
 arithmetic. Extended Infomax seems to be more stable in this respect,
-enhancing reproducibility and stability of results.</p>
+enhancing reproducibility and stability of results; use Extended Infomax
+via <code class="docutils literal notranslate"><span class="pre">method='infomax',</span> <span class="pre">fit_params=dict(extended=True)</span></code>. Allowed entries
+in <code class="docutils literal notranslate"><span class="pre">fit_params</span></code> are determined by the various algorithm implementations:
+see <a class="reference external" href="https://scikit-learn.org/stable/modules/generated/sklearn.decomposition.FastICA.html#sklearn.decomposition.FastICA" title="(in scikit-learn v0.21.3)"><code class="xref py py-class docutils literal notranslate"><span class="pre">FastICA</span></code></a>, <a class="reference external" href="https://pierreablin.github.io/picard/generated/picard.picard.html#picard.picard" title="(in picard v0.4.dev0)"><code class="xref py py-func docutils literal notranslate"><span class="pre">picard()</span></code></a>,
+<a class="reference internal" href="mne.preprocessing.infomax.html#mne.preprocessing.infomax" title="mne.preprocessing.infomax"><code class="xref py py-func docutils literal notranslate"><span class="pre">infomax()</span></code></a>.</p>
 <p>Reducing the tolerance (set in <em class="xref py py-obj">fit_params</em>) speeds up estimation at the
 cost of consistency of the obtained results. It is difficult to directly
 compare tolerance levels between Infomax and Picard, but for Picard and
@@ -499,7 +504,7 @@ LVA-ICA International Conference, Feb 2017, Grenoble, France.
 
 <dl class="method">
 <dt id="mne.preprocessing.ICA.apply">
-<code class="sig-name descname">apply</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">inst</em>, <em class="sig-param">include=None</em>, <em class="sig-param">exclude=None</em>, <em class="sig-param">n_pca_components=None</em>, <em class="sig-param">start=None</em>, <em class="sig-param">stop=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L1326-L1377"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.apply" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">apply</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">inst</em>, <em class="sig-param">include=None</em>, <em class="sig-param">exclude=None</em>, <em class="sig-param">n_pca_components=None</em>, <em class="sig-param">start=None</em>, <em class="sig-param">stop=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L1330-L1381"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.apply" title="Permalink to this definition">¶</a></dt>
 <dd><p>Remove selected components from the signal.</p>
 <p>Given the unmixing matrix, transform data,
 zero out components, and inverse transform the data.
@@ -546,7 +551,7 @@ time in seconds. If None, data will be used to the last sample.</p>
 
 <dl class="method">
 <dt id="mne.preprocessing.ICA.copy">
-<code class="sig-name descname">copy</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L1544-L1552"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.copy" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">copy</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L1548-L1556"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.copy" title="Permalink to this definition">¶</a></dt>
 <dd><p>Copy the ICA object.</p>
 <dl class="field-list">
 <dt class="field-odd">Returns</dt>
@@ -560,7 +565,7 @@ time in seconds. If None, data will be used to the last sample.</p>
 
 <dl class="method">
 <dt id="mne.preprocessing.ICA.detect_artifacts">
-<code class="sig-name descname">detect_artifacts</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">raw</em>, <em class="sig-param">start_find=None</em>, <em class="sig-param">stop_find=None</em>, <em class="sig-param">ecg_ch=None</em>, <em class="sig-param">ecg_score_func='pearsonr'</em>, <em class="sig-param">ecg_criterion=0.1</em>, <em class="sig-param">eog_ch=None</em>, <em class="sig-param">eog_score_func='pearsonr'</em>, <em class="sig-param">eog_criterion=0.1</em>, <em class="sig-param">skew_criterion=0</em>, <em class="sig-param">kurt_criterion=0</em>, <em class="sig-param">var_criterion=-1</em>, <em class="sig-param">add_nodes=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L1605-L1719"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.detect_artifacts" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">detect_artifacts</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">raw</em>, <em class="sig-param">start_find=None</em>, <em class="sig-param">stop_find=None</em>, <em class="sig-param">ecg_ch=None</em>, <em class="sig-param">ecg_score_func='pearsonr'</em>, <em class="sig-param">ecg_criterion=0.1</em>, <em class="sig-param">eog_ch=None</em>, <em class="sig-param">eog_score_func='pearsonr'</em>, <em class="sig-param">eog_criterion=0.1</em>, <em class="sig-param">skew_criterion=0</em>, <em class="sig-param">kurt_criterion=0</em>, <em class="sig-param">var_criterion=-1</em>, <em class="sig-param">add_nodes=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L1609-L1723"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.detect_artifacts" title="Permalink to this definition">¶</a></dt>
 <dd><p>Run ICA artifacts detection workflow.</p>
 <p>Note. This is still experimental and will most likely change over
 the next releases. For maximum control use the workflow exposed in
@@ -661,7 +666,7 @@ exclusion</p>
 
 <dl class="method">
 <dt id="mne.preprocessing.ICA.find_bads_ecg">
-<code class="sig-name descname">find_bads_ecg</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">inst</em>, <em class="sig-param">ch_name=None</em>, <em class="sig-param">threshold=None</em>, <em class="sig-param">start=None</em>, <em class="sig-param">stop=None</em>, <em class="sig-param">l_freq=8</em>, <em class="sig-param">h_freq=16</em>, <em class="sig-param">method='ctps'</em>, <em class="sig-param">reject_by_annotation=True</em>, <em class="sig-param">verbose=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L1080-L1191"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.find_bads_ecg" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">find_bads_ecg</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">inst</em>, <em class="sig-param">ch_name=None</em>, <em class="sig-param">threshold=None</em>, <em class="sig-param">start=None</em>, <em class="sig-param">stop=None</em>, <em class="sig-param">l_freq=8</em>, <em class="sig-param">h_freq=16</em>, <em class="sig-param">method='ctps'</em>, <em class="sig-param">reject_by_annotation=True</em>, <em class="sig-param">verbose=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L1084-L1195"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.find_bads_ecg" title="Permalink to this definition">¶</a></dt>
 <dd><p>Detect ECG related components using correlation.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
@@ -738,7 +743,7 @@ Engineering, IEEE Transactions on 55 (10), 2353-2362.</p>
 
 <dl class="method">
 <dt id="mne.preprocessing.ICA.find_bads_eog">
-<code class="sig-name descname">find_bads_eog</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">inst</em>, <em class="sig-param">ch_name=None</em>, <em class="sig-param">threshold=3.0</em>, <em class="sig-param">start=None</em>, <em class="sig-param">stop=None</em>, <em class="sig-param">l_freq=1</em>, <em class="sig-param">h_freq=10</em>, <em class="sig-param">reject_by_annotation=True</em>, <em class="sig-param">verbose=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L1264-L1324"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.find_bads_eog" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">find_bads_eog</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">inst</em>, <em class="sig-param">ch_name=None</em>, <em class="sig-param">threshold=3.0</em>, <em class="sig-param">start=None</em>, <em class="sig-param">stop=None</em>, <em class="sig-param">l_freq=1</em>, <em class="sig-param">h_freq=10</em>, <em class="sig-param">reject_by_annotation=True</em>, <em class="sig-param">verbose=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L1268-L1328"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.find_bads_eog" title="Permalink to this definition">¶</a></dt>
 <dd><p>Detect EOG related components using correlation.</p>
 <p>Detection is based on Pearson correlation between the
 filtered data and the filtered EOG channel.
@@ -795,7 +800,7 @@ and <a class="reference internal" href="../auto_tutorials/intro/plot_50_configur
 
 <dl class="method">
 <dt id="mne.preprocessing.ICA.find_bads_ref">
-<code class="sig-name descname">find_bads_ref</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">inst</em>, <em class="sig-param">ch_name=None</em>, <em class="sig-param">threshold=3.0</em>, <em class="sig-param">start=None</em>, <em class="sig-param">stop=None</em>, <em class="sig-param">l_freq=None</em>, <em class="sig-param">h_freq=None</em>, <em class="sig-param">reject_by_annotation=True</em>, <em class="sig-param">verbose=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L1193-L1262"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.find_bads_ref" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">find_bads_ref</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">inst</em>, <em class="sig-param">ch_name=None</em>, <em class="sig-param">threshold=3.0</em>, <em class="sig-param">start=None</em>, <em class="sig-param">stop=None</em>, <em class="sig-param">l_freq=None</em>, <em class="sig-param">h_freq=None</em>, <em class="sig-param">reject_by_annotation=True</em>, <em class="sig-param">verbose=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L1197-L1266"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.find_bads_ref" title="Permalink to this definition">¶</a></dt>
 <dd><p>Detect MEG reference related components using correlation.</p>
 <dl class="field-list">
 <dt class="field-odd">Parameters</dt>
@@ -857,7 +862,7 @@ that they can be automatically detected.</p>
 
 <dl class="method">
 <dt id="mne.preprocessing.ICA.fit">
-<code class="sig-name descname">fit</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">inst</em>, <em class="sig-param">picks=None</em>, <em class="sig-param">start=None</em>, <em class="sig-param">stop=None</em>, <em class="sig-param">decim=None</em>, <em class="sig-param">reject=None</em>, <em class="sig-param">flat=None</em>, <em class="sig-param">tstep=2.0</em>, <em class="sig-param">reject_by_annotation=True</em>, <em class="sig-param">verbose=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L399-L482"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.fit" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">fit</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">inst</em>, <em class="sig-param">picks=None</em>, <em class="sig-param">start=None</em>, <em class="sig-param">stop=None</em>, <em class="sig-param">decim=None</em>, <em class="sig-param">reject=None</em>, <em class="sig-param">flat=None</em>, <em class="sig-param">tstep=2.0</em>, <em class="sig-param">reject_by_annotation=True</em>, <em class="sig-param">verbose=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L403-L486"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.fit" title="Permalink to this definition">¶</a></dt>
 <dd><p>Run the ICA decomposition on raw data.</p>
 <p>Caveat! If supplying a noise covariance keep track of the projections
 available in the cov, the raw or the epochs object. For example,
@@ -933,7 +938,7 @@ and <a class="reference internal" href="../auto_tutorials/intro/plot_50_configur
 
 <dl class="method">
 <dt id="mne.preprocessing.ICA.get_components">
-<code class="sig-name descname">get_components</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L762-L771"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.get_components" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">get_components</code><span class="sig-paren">(</span><em class="sig-param">self</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L766-L775"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.get_components" title="Permalink to this definition">¶</a></dt>
 <dd><p>Get ICA topomap for components as numpy arrays.</p>
 <dl class="field-list">
 <dt class="field-odd">Returns</dt>
@@ -947,7 +952,7 @@ and <a class="reference internal" href="../auto_tutorials/intro/plot_50_configur
 
 <dl class="method">
 <dt id="mne.preprocessing.ICA.get_sources">
-<code class="sig-name descname">get_sources</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">inst</em>, <em class="sig-param">add_channels=None</em>, <em class="sig-param">start=None</em>, <em class="sig-param">stop=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L773-L817"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.get_sources" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">get_sources</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">inst</em>, <em class="sig-param">add_channels=None</em>, <em class="sig-param">start=None</em>, <em class="sig-param">stop=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L777-L821"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.get_sources" title="Permalink to this definition">¶</a></dt>
 <dd><p>Estimate sources given the unmixing matrix.</p>
 <p>This method will return the sources in the container format passed.
 Typical usecases:</p>
@@ -983,7 +988,7 @@ time in seconds. If None, the entire data will be used.</p>
 
 <dl class="method">
 <dt id="mne.preprocessing.ICA.plot_components">
-<code class="sig-name descname">plot_components</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">picks=None</em>, <em class="sig-param">ch_type=None</em>, <em class="sig-param">res=64</em>, <em class="sig-param">layout=None</em>, <em class="sig-param">vmin=None</em>, <em class="sig-param">vmax=None</em>, <em class="sig-param">cmap='RdBu_r'</em>, <em class="sig-param">sensors=True</em>, <em class="sig-param">colorbar=False</em>, <em class="sig-param">title=None</em>, <em class="sig-param">show=True</em>, <em class="sig-param">outlines='head'</em>, <em class="sig-param">contours=6</em>, <em class="sig-param">image_interp='bilinear'</em>, <em class="sig-param">head_pos=None</em>, <em class="sig-param">inst=None</em>, <em class="sig-param">plot_std=True</em>, <em class="sig-param">topomap_args=None</em>, <em class="sig-param">image_args=None</em>, <em class="sig-param">psd_args=None</em>, <em class="sig-param">reject='auto'</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L1554-L1571"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.plot_components" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">plot_components</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">picks=None</em>, <em class="sig-param">ch_type=None</em>, <em class="sig-param">res=64</em>, <em class="sig-param">layout=None</em>, <em class="sig-param">vmin=None</em>, <em class="sig-param">vmax=None</em>, <em class="sig-param">cmap='RdBu_r'</em>, <em class="sig-param">sensors=True</em>, <em class="sig-param">colorbar=False</em>, <em class="sig-param">title=None</em>, <em class="sig-param">show=True</em>, <em class="sig-param">outlines='head'</em>, <em class="sig-param">contours=6</em>, <em class="sig-param">image_interp='bilinear'</em>, <em class="sig-param">head_pos=None</em>, <em class="sig-param">inst=None</em>, <em class="sig-param">plot_std=True</em>, <em class="sig-param">topomap_args=None</em>, <em class="sig-param">image_args=None</em>, <em class="sig-param">psd_args=None</em>, <em class="sig-param">reject='auto'</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L1558-L1575"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.plot_components" title="Permalink to this definition">¶</a></dt>
 <dd><p>Project unmixing matrix on interpolated sensor topography.</p>
 <dl class="field-list">
 <dt class="field-odd">Parameters</dt>
@@ -1110,7 +1115,7 @@ supplied).</p>
 
 <dl class="method">
 <dt id="mne.preprocessing.ICA.plot_overlay">
-<code class="sig-name descname">plot_overlay</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">inst</em>, <em class="sig-param">exclude=None</em>, <em class="sig-param">picks=None</em>, <em class="sig-param">start=None</em>, <em class="sig-param">stop=None</em>, <em class="sig-param">title=None</em>, <em class="sig-param">show=True</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L1599-L1603"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.plot_overlay" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">plot_overlay</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">inst</em>, <em class="sig-param">exclude=None</em>, <em class="sig-param">picks=None</em>, <em class="sig-param">start=None</em>, <em class="sig-param">stop=None</em>, <em class="sig-param">title=None</em>, <em class="sig-param">show=True</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L1603-L1607"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.plot_overlay" title="Permalink to this definition">¶</a></dt>
 <dd><p>Overlay of raw and cleaned signals given the unmixing matrix.</p>
 <p>This method helps visualizing signal quality and artifact rejection.</p>
 <dl class="field-list">
@@ -1155,7 +1160,7 @@ None (default) will pick  all channels that were included during fitting.</p>
 
 <dl class="method">
 <dt id="mne.preprocessing.ICA.plot_properties">
-<code class="sig-name descname">plot_properties</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">inst</em>, <em class="sig-param">picks=None</em>, <em class="sig-param">axes=None</em>, <em class="sig-param">dB=True</em>, <em class="sig-param">plot_std=True</em>, <em class="sig-param">topomap_args=None</em>, <em class="sig-param">image_args=None</em>, <em class="sig-param">psd_args=None</em>, <em class="sig-param">figsize=None</em>, <em class="sig-param">show=True</em>, <em class="sig-param">reject='auto'</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L1573-L1581"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.plot_properties" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">plot_properties</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">inst</em>, <em class="sig-param">picks=None</em>, <em class="sig-param">axes=None</em>, <em class="sig-param">dB=True</em>, <em class="sig-param">plot_std=True</em>, <em class="sig-param">topomap_args=None</em>, <em class="sig-param">image_args=None</em>, <em class="sig-param">psd_args=None</em>, <em class="sig-param">figsize=None</em>, <em class="sig-param">show=True</em>, <em class="sig-param">reject='auto'</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L1577-L1585"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.plot_properties" title="Permalink to this definition">¶</a></dt>
 <dd><p>Display component properties.</p>
 <p>Properties include the topography, epochs image, ERP/ERF, power
 spectrum, and epoch variance.</p>
@@ -1227,7 +1232,7 @@ the ICA object.</p>
 
 <dl class="method">
 <dt id="mne.preprocessing.ICA.plot_scores">
-<code class="sig-name descname">plot_scores</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">scores</em>, <em class="sig-param">exclude=None</em>, <em class="sig-param">labels=None</em>, <em class="sig-param">axhline=None</em>, <em class="sig-param">title='ICA component scores'</em>, <em class="sig-param">figsize=None</em>, <em class="sig-param">show=True</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L1591-L1597"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.plot_scores" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">plot_scores</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">scores</em>, <em class="sig-param">exclude=None</em>, <em class="sig-param">labels=None</em>, <em class="sig-param">axhline=None</em>, <em class="sig-param">title='ICA component scores'</em>, <em class="sig-param">figsize=None</em>, <em class="sig-param">show=True</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L1595-L1601"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.plot_scores" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot scores related to detected components.</p>
 <p>Use this function to asses how well your score describes outlier
 sources and how well you were detecting them.</p>
@@ -1266,7 +1271,7 @@ EOG channels.</p>
 
 <dl class="method">
 <dt id="mne.preprocessing.ICA.plot_sources">
-<code class="sig-name descname">plot_sources</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">inst</em>, <em class="sig-param">picks=None</em>, <em class="sig-param">exclude='deprecated'</em>, <em class="sig-param">start=None</em>, <em class="sig-param">stop=None</em>, <em class="sig-param">title=None</em>, <em class="sig-param">show=True</em>, <em class="sig-param">block=False</em>, <em class="sig-param">show_first_samp=False</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L1583-L1589"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.plot_sources" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">plot_sources</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">inst</em>, <em class="sig-param">picks=None</em>, <em class="sig-param">exclude='deprecated'</em>, <em class="sig-param">start=None</em>, <em class="sig-param">stop=None</em>, <em class="sig-param">title=None</em>, <em class="sig-param">show=True</em>, <em class="sig-param">block=False</em>, <em class="sig-param">show_first_samp=False</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L1587-L1593"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.plot_sources" title="Permalink to this definition">¶</a></dt>
 <dd><p>Plot estimated latent sources given the unmixing matrix.</p>
 <p>Typical usecases:</p>
 <ol class="arabic simple">
@@ -1296,7 +1301,7 @@ instead.</p>
 <dt><strong>stop</strong><span class="classifier"><a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">int</span></code></a></span></dt><dd><p>X-axis stop index. If None, next 20 are shown, in case of evoked to the
 end.</p>
 </dd>
-<dt><strong>title</strong><span class="classifier"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">str</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">None</span></code></a></span></dt><dd><p>The figure title. If None a default is provided.</p>
+<dt><strong>title</strong><span class="classifier"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">str</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.7)"><code class="docutils literal notranslate"><span class="pre">None</span></code></a></span></dt><dd><p>The window title. If None a default is provided.</p>
 </dd>
 <dt><strong>show</strong><span class="classifier"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#bltin-boolean-values" title="(in Python v3.7)"><span class="xref std std-ref">bool</span></a></span></dt><dd><p>Show figure if True.</p>
 </dd>
@@ -1326,7 +1331,7 @@ exclusion by clicking on the line. The selected components are added to
 
 <dl class="method">
 <dt id="mne.preprocessing.ICA.save">
-<code class="sig-name descname">save</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">fname</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L1515-L1542"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.save" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">save</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">fname</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L1519-L1546"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.save" title="Permalink to this definition">¶</a></dt>
 <dd><p>Store ICA solution into a fiff file.</p>
 <dl class="field-list">
 <dt class="field-odd">Parameters</dt>
@@ -1341,7 +1346,7 @@ The file name should end with -ica.fif or -ica.fif.gz.</p>
 
 <dl class="method">
 <dt id="mne.preprocessing.ICA.score_sources">
-<code class="sig-name descname">score_sources</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">inst</em>, <em class="sig-param">target=None</em>, <em class="sig-param">score_func='pearsonr'</em>, <em class="sig-param">start=None</em>, <em class="sig-param">stop=None</em>, <em class="sig-param">l_freq=None</em>, <em class="sig-param">h_freq=None</em>, <em class="sig-param">reject_by_annotation=True</em>, <em class="sig-param">verbose=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L918-L998"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.score_sources" title="Permalink to this definition">¶</a></dt>
+<code class="sig-name descname">score_sources</code><span class="sig-paren">(</span><em class="sig-param">self</em>, <em class="sig-param">inst</em>, <em class="sig-param">target=None</em>, <em class="sig-param">score_func='pearsonr'</em>, <em class="sig-param">start=None</em>, <em class="sig-param">stop=None</em>, <em class="sig-param">l_freq=None</em>, <em class="sig-param">h_freq=None</em>, <em class="sig-param">reject_by_annotation=True</em>, <em class="sig-param">verbose=None</em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/preprocessing/ica.py#L922-L1002"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.preprocessing.ICA.score_sources" title="Permalink to this definition">¶</a></dt>
 <dd><p>Assign score to components based on statistic or metric.</p>
 <dl class="field-list">
 <dt class="field-odd">Parameters</dt>
@@ -1420,13 +1425,9 @@ and <a class="reference internal" href="../auto_tutorials/intro/plot_50_configur
 <img alt="../_images/sphx_glr_plot_20_rejecting_bad_data_thumb.png" src="../_images/sphx_glr_plot_20_rejecting_bad_data_thumb.png" />
 <p class="caption"><span class="caption-text"><a class="reference internal" href="../auto_tutorials/preprocessing/plot_20_rejecting_bad_data.html#sphx-glr-auto-tutorials-preprocessing-plot-20-rejecting-bad-data-py"><span class="std std-ref">Rejecting bad data spans</span></a></span><a class="headerlink" href="#id18" title="Permalink to this image">¶</a></p>
 </div>
-</div><div class="sphx-glr-thumbcontainer" tooltip="ICA finds directions in the feature space corresponding to projections with high non-Gaussianit..."><div class="figure align-default" id="id19">
+</div><div class="sphx-glr-thumbcontainer" tooltip="This tutorial covers the basics of independent components analysis (ICA) and shows how ICA can ..."><div class="figure align-default" id="id19">
 <img alt="../_images/sphx_glr_plot_40_artifact_correction_ica_thumb.png" src="../_images/sphx_glr_plot_40_artifact_correction_ica_thumb.png" />
-<p class="caption"><span class="caption-text"><a class="reference internal" href="../auto_tutorials/preprocessing/plot_40_artifact_correction_ica.html#sphx-glr-auto-tutorials-preprocessing-plot-40-artifact-correction-ica-py"><span class="std std-ref">Artifact Correction with ICA</span></a></span><a class="headerlink" href="#id19" title="Permalink to this image">¶</a></p>
-</div>
-</div><div class="sphx-glr-thumbcontainer" tooltip="ICA is fit to MEG raw data. The sources matching the ECG and EOG are automatically found and di..."><div class="figure align-default" id="id20">
-<img alt="../_images/sphx_glr_plot_45_ica_from_raw_thumb.png" src="../_images/sphx_glr_plot_45_ica_from_raw_thumb.png" />
-<p class="caption"><span class="caption-text"><a class="reference internal" href="../auto_tutorials/preprocessing/plot_45_ica_from_raw.html#sphx-glr-auto-tutorials-preprocessing-plot-45-ica-from-raw-py"><span class="std std-ref">Compute ICA on MEG data and remove artifacts</span></a></span><a class="headerlink" href="#id20" title="Permalink to this image">¶</a></p>
+<p class="caption"><span class="caption-text"><a class="reference internal" href="../auto_tutorials/preprocessing/plot_40_artifact_correction_ica.html#sphx-glr-auto-tutorials-preprocessing-plot-40-artifact-correction-ica-py"><span class="std std-ref">Repairing artifacts with ICA</span></a></span><a class="headerlink" href="#id19" title="Permalink to this image">¶</a></p>
 </div>
 </div></div>
 </div>
