@@ -268,7 +268,7 @@ Cambrdige University Press, Chapter 11.2.</p>
 <span class="n">baseline</span> <span class="o">=</span> <span class="kc">None</span>
 
 <span class="c1"># get the header to extract events</span>
-<span class="n">raw</span> <span class="o">=</span> <a href="../../generated/mne.io.read_raw_fif.html#mne.io.read_raw_fif" title="View documentation for mne.io.read_raw_fif"><span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read_raw_fif</span></a><span class="p">(</span><span class="n">raw_fname</span><span class="p">,</span> <span class="n">preload</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">raw</span> <span class="o">=</span> <a href="../../generated/mne.io.read_raw_fif.html#mne.io.read_raw_fif" title="View documentation for mne.io.read_raw_fif"><span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read_raw_fif</span></a><span class="p">(</span><span class="n">raw_fname</span><span class="p">)</span>
 <span class="n">events</span> <span class="o">=</span> <a href="../../generated/mne.find_events.html#mne.find_events" title="View documentation for mne.find_events"><span class="n">mne</span><span class="o">.</span><span class="n">find_events</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">stim_channel</span><span class="o">=</span><span class="s1">&#39;STI 014&#39;</span><span class="p">)</span>
 
 <span class="n">frequency_map</span> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
@@ -278,21 +278,23 @@ Cambrdige University Press, Chapter 11.2.</p>
     <span class="n">raw</span> <span class="o">=</span> <a href="../../generated/mne.io.read_raw_fif.html#mne.io.read_raw_fif" title="View documentation for mne.io.read_raw_fif"><span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read_raw_fif</span></a><span class="p">(</span><span class="n">raw_fname</span><span class="p">,</span> <span class="n">preload</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">raw</span><span class="o">.</span><span class="n">pick_types</span><span class="p">(</span><span class="n">meg</span><span class="o">=</span><span class="s1">&#39;grad&#39;</span><span class="p">,</span> <span class="n">eog</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># we just look at gradiometers</span>
 
-    <span class="c1"># bandpass filter and compute Hilbert</span>
+    <span class="c1"># bandpass filter</span>
     <span class="n">raw</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="n">fmin</span><span class="p">,</span> <span class="n">fmax</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>  <span class="c1"># use more jobs to speed up.</span>
                <span class="n">l_trans_bandwidth</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>  <span class="c1"># make sure filter params are the same</span>
-               <span class="n">h_trans_bandwidth</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>  <span class="c1"># in each band and skip &quot;auto&quot; option.</span>
-               <span class="n">fir_design</span><span class="o">=</span><span class="s1">&#39;firwin&#39;</span><span class="p">)</span>
-    <span class="n">raw</span><span class="o">.</span><span class="n">apply_hilbert</span><span class="p">(</span><span class="n">n_jobs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">envelope</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+               <span class="n">h_trans_bandwidth</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>  <span class="c1"># in each band and skip &quot;auto&quot; option.</span>
 
+    <span class="c1"># epoch</span>
     <span class="n">epochs</span> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs" title="View documentation for mne.Epochs"><span class="n">mne</span><span class="o">.</span><span class="n">Epochs</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">event_id</span><span class="p">,</span> <span class="n">tmin</span><span class="p">,</span> <span class="n">tmax</span><span class="p">,</span> <span class="n">baseline</span><span class="o">=</span><span class="n">baseline</span><span class="p">,</span>
-                        <span class="n">reject</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">grad</span><span class="o">=</span><span class="mf">4000e-13</span><span class="p">,</span> <span class="n">eog</span><span class="o">=</span><span class="mf">350e-6</span><span class="p">),</span> <span class="n">preload</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-    <span class="c1"># remove evoked response and get analytic signal (envelope)</span>
-    <span class="n">epochs</span><span class="o">.</span><span class="n">subtract_evoked</span><span class="p">()</span>  <span class="c1"># for this we need to construct new epochs.</span>
-    <span class="n">epochs</span> <span class="o">=</span> <a href="../../generated/mne.EpochsArray.html#mne.EpochsArray" title="View documentation for mne.EpochsArray"><span class="n">mne</span><span class="o">.</span><span class="n">EpochsArray</span></a><span class="p">(</span>
-        <span class="n">data</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">abs</span><span class="p">(</span><span class="n">epochs</span><span class="o">.</span><span class="n">get_data</span><span class="p">()),</span> <span class="n">info</span><span class="o">=</span><span class="n">epochs</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">tmin</span><span class="o">=</span><span class="n">epochs</span><span class="o">.</span><span class="n">tmin</span><span class="p">)</span>
-    <span class="c1"># now average and move on</span>
+                        <span class="n">reject</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">grad</span><span class="o">=</span><span class="mf">4000e-13</span><span class="p">,</span> <span class="n">eog</span><span class="o">=</span><span class="mf">350e-6</span><span class="p">),</span>
+                        <span class="n">preload</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="c1"># remove evoked response</span>
+    <span class="n">epochs</span><span class="o">.</span><span class="n">subtract_evoked</span><span class="p">()</span>
+
+    <span class="c1"># get analytic signal (envelope)</span>
+    <span class="n">epochs</span><span class="o">.</span><span class="n">apply_hilbert</span><span class="p">(</span><span class="n">envelope</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <span class="n">frequency_map</span><span class="o">.</span><span class="n">append</span><span class="p">(((</span><span class="n">band</span><span class="p">,</span> <span class="n">fmin</span><span class="p">,</span> <span class="n">fmax</span><span class="p">),</span> <span class="n">epochs</span><span class="o">.</span><span class="n">average</span><span class="p">()))</span>
+    <span class="k">del</span> <span class="n">epochs</span>
+<span class="k">del</span> <span class="n">raw</span>
 </pre></div>
 </div>
 <p class="sphx-glr-script-out">Out:</p>
@@ -333,11 +335,6 @@ Loading data for 111 events and 1202 original time points ...
 Subtracting Evoked from Epochs
     The following channels are not included in the subtraction: EOG 061
 [done]
-108 matching events found
-No baseline correction applied
-Not setting metadata
-0 projection items activated
-0 bad epochs dropped
 Opening raw data file /home/circleci/mne_data/MNE-somato-data/sub-01/meg/sub-01_task-somato_meg.fif...
     Range : 237600 ... 506999 =    791.189 ...  1688.266 secs
 Ready.
@@ -369,11 +366,6 @@ Loading data for 111 events and 1202 original time points ...
 Subtracting Evoked from Epochs
     The following channels are not included in the subtraction: EOG 061
 [done]
-108 matching events found
-No baseline correction applied
-Not setting metadata
-0 projection items activated
-0 bad epochs dropped
 Opening raw data file /home/circleci/mne_data/MNE-somato-data/sub-01/meg/sub-01_task-somato_meg.fif...
     Range : 237600 ... 506999 =    791.189 ...  1688.266 secs
 Ready.
@@ -405,11 +397,6 @@ Loading data for 111 events and 1202 original time points ...
 Subtracting Evoked from Epochs
     The following channels are not included in the subtraction: EOG 061
 [done]
-108 matching events found
-No baseline correction applied
-Not setting metadata
-0 projection items activated
-0 bad epochs dropped
 Opening raw data file /home/circleci/mne_data/MNE-somato-data/sub-01/meg/sub-01_task-somato_meg.fif...
     Range : 237600 ... 506999 =    791.189 ...  1688.266 secs
 Ready.
@@ -441,11 +428,6 @@ Loading data for 111 events and 1202 original time points ...
 Subtracting Evoked from Epochs
     The following channels are not included in the subtraction: EOG 061
 [done]
-108 matching events found
-No baseline correction applied
-Not setting metadata
-0 projection items activated
-0 bad epochs dropped
 </pre></div>
 </div>
 <p>Now we can compute the Global Field Power
@@ -493,8 +475,8 @@ Applying baseline correction (mode: mean)
 Applying baseline correction (mode: mean)
 </pre></div>
 </div>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  42.846 seconds)</p>
-<p><strong>Estimated memory usage:</strong>  1530 MB</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  29.626 seconds)</p>
+<p><strong>Estimated memory usage:</strong>  1076 MB</p>
 <div class="sphx-glr-footer class sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-time-frequency-plot-time-frequency-global-field-power-py">
 <div class="sphx-glr-download docutils container">
 <p><a class="reference download internal" download="" href="../../_downloads/739530b61e6eb2569ffe12307adb51f8/plot_time_frequency_global_field_power.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">plot_time_frequency_global_field_power.py</span></code></a></p>
