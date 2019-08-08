@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>Artifact correction with Maxwell filter &#8212; MNE 0.19.dev0 documentation</title>
+    <title>Signal-space separation (SSS) and Maxwell filtering &#8212; MNE 0.19.dev0 documentation</title>
     <link rel="stylesheet" href="../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css" />
@@ -171,7 +171,14 @@ This documentation is for <strong>development version 0.19.dev0</strong>.
             <p class="logo"><a href="../../index.html">
               <img class="logo" src="../../_static/mne_logo_small.png" alt="Logo"/>
             </a></p><ul>
-<li><a class="reference internal" href="#">Artifact correction with Maxwell filter</a></li>
+<li><a class="reference internal" href="#">Signal-space separation (SSS) and Maxwell filtering</a><ul>
+<li><a class="reference internal" href="#using-sss-and-maxwell-filtering-in-mne-python">Using SSS and Maxwell filtering in MNE-Python</a></li>
+<li><a class="reference internal" href="#spatiotemporal-sss-tsss">Spatiotemporal SSS (tSSS)</a></li>
+<li><a class="reference internal" href="#movement-compensation">Movement compensation</a></li>
+<li><a class="reference internal" href="#caveats-to-using-sss-maxwell-filtering">Caveats to using SSS / Maxwell filtering</a></li>
+<li><a class="reference internal" href="#references">References</a></li>
+</ul>
+</li>
 </ul>
 
 <form action="../../search.html" method="get">
@@ -189,42 +196,80 @@ This documentation is for <strong>development version 0.19.dev0</strong>.
 <p class="admonition-title">Note</p>
 <p>Click <a class="reference internal" href="#sphx-glr-download-auto-tutorials-preprocessing-plot-60-maxwell-filtering-sss-py"><span class="std std-ref">here</span></a> to download the full example code</p>
 </div>
-<div class="sphx-glr-example-title section" id="artifact-correction-with-maxwell-filter">
-<span id="tut-artifact-sss"></span><span id="sphx-glr-auto-tutorials-preprocessing-plot-60-maxwell-filtering-sss-py"></span><h1>Artifact correction with Maxwell filter<a class="headerlink" href="#artifact-correction-with-maxwell-filter" title="Permalink to this headline">¶</a></h1>
-<p>This tutorial shows how to clean MEG data with Maxwell filtering.</p>
-<p>Maxwell filtering in MNE can be used to suppress sources of external
-interference and compensate for subject head movements.</p>
-<p>See <a class="reference internal" href="../../manual/preprocessing/maxwell.html#maxwell"><span class="std std-ref">Maxwell filtering</span></a> for more details.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">mne</span>
-<span class="kn">from</span> <span class="nn">mne.preprocessing</span> <span class="k">import</span> <a href="../../generated/mne.preprocessing.maxwell_filter.html#mne.preprocessing.maxwell_filter" title="View documentation for mne.preprocessing.maxwell_filter"><span class="n">maxwell_filter</span></a>
+<div class="sphx-glr-example-title section" id="signal-space-separation-sss-and-maxwell-filtering">
+<span id="tut-artifact-sss"></span><span id="sphx-glr-auto-tutorials-preprocessing-plot-60-maxwell-filtering-sss-py"></span><h1>Signal-space separation (SSS) and Maxwell filtering<a class="headerlink" href="#signal-space-separation-sss-and-maxwell-filtering" title="Permalink to this headline">¶</a></h1>
+<p>This tutorial covers reducing environmental noise and compensating for head
+movement with SSS and Maxwell filtering.</p>
+<div class="contents local topic" id="page-contents">
+<p class="topic-title first">Page contents</p>
+<ul class="simple">
+<li><p><a class="reference internal" href="#using-sss-and-maxwell-filtering-in-mne-python" id="id6">Using SSS and Maxwell filtering in MNE-Python</a></p></li>
+<li><p><a class="reference internal" href="#spatiotemporal-sss-tsss" id="id7">Spatiotemporal SSS (tSSS)</a></p></li>
+<li><p><a class="reference internal" href="#movement-compensation" id="id8">Movement compensation</a></p></li>
+<li><p><a class="reference internal" href="#caveats-to-using-sss-maxwell-filtering" id="id9">Caveats to using SSS / Maxwell filtering</a></p></li>
+<li><p><a class="reference internal" href="#references" id="id10">References</a></p></li>
+</ul>
+</div>
+<p>As usual we’ll start by importing the modules we need, loading some
+<a class="reference internal" href="../../manual/datasets_index.html#sample-dataset"><span class="std std-ref">example data</span></a>, and cropping it to save on memory:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">mne</span>
 
-<span class="n">data_path</span> <span class="o">=</span> <a href="../../generated/mne.datasets.sample.data_path.html#mne.datasets.sample.data_path" title="View documentation for mne.datasets.sample.data_path"><span class="n">mne</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">sample</span><span class="o">.</span><span class="n">data_path</span></a><span class="p">()</span>
+<span class="n">sample_data_folder</span> <span class="o">=</span> <a href="../../generated/mne.datasets.sample.data_path.html#mne.datasets.sample.data_path" title="View documentation for mne.datasets.sample.data_path"><span class="n">mne</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">sample</span><span class="o">.</span><span class="n">data_path</span></a><span class="p">()</span>
+<span class="n">sample_data_raw_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">sample_data_folder</span><span class="p">,</span> <span class="s1">&#39;MEG&#39;</span><span class="p">,</span> <span class="s1">&#39;sample&#39;</span><span class="p">,</span>
+                                    <span class="s1">&#39;sample_audvis_raw.fif&#39;</span><span class="p">)</span>
+<span class="n">raw</span> <span class="o">=</span> <a href="../../generated/mne.io.read_raw_fif.html#mne.io.read_raw_fif" title="View documentation for mne.io.read_raw_fif"><span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read_raw_fif</span></a><span class="p">(</span><span class="n">sample_data_raw_file</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="n">raw</span><span class="o">.</span><span class="n">crop</span><span class="p">(</span><span class="n">tmax</span><span class="o">=</span><span class="mi">60</span><span class="p">)</span><span class="o">.</span><span class="n">load_data</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>Set parameters</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">raw_fname</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis_raw.fif&#39;</span>
-<span class="n">ctc_fname</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/SSS/ct_sparse_mgh.fif&#39;</span>
-<span class="n">fine_cal_fname</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/SSS/sss_cal_mgh.dat&#39;</span>
+<p>Signal-space separation (SSS) <a class="footnote-reference brackets" href="#id4" id="id1">1</a> <a class="footnote-reference brackets" href="#id5" id="id2">2</a> is a technique based on the physics
+of electromagnetic fields. SSS separates the measured signal into components
+attributable to sources <em>inside</em> the measurement volume of the sensor array
+(the <em>internal components</em>), and components attributable to sources <em>outside</em>
+the measurement volume (the <em>external components</em>). The internal and external
+components are linearly independent, so it is possible to simply discard the
+external components to reduce environmental noise. <em>Maxwell filtering</em> is a
+related procedure that omits the higher-order components of the internal
+subspace, which are dominated by sensor noise. Typically, Maxwell filtering
+and SSS are performed together (in MNE-Python they are implemented together
+in a single function).</p>
+<p>Like <a class="reference internal" href="plot_50_artifact_correction_ssp.html#tut-artifact-ssp"><span class="std std-ref">SSP</span></a>, SSS is a form of projection. Whereas SSP
+empirically determines a noise subspace based on data (empty-room recordings,
+EOG or ECG activity, etc) and projects the measurements onto a subspace
+orthogonal to the noise, SSS mathematically constructs the external and
+internal subspaces from <a class="reference external" href="https://en.wikipedia.org/wiki/Spherical_harmonics">spherical harmonics</a> and reconstructs the sensor
+signals using only the internal subspace (i.e., does an oblique projection).</p>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Maxwell filtering was originally developed for Elekta Neuromag® systems,
+and should be considered <em>experimental</em> for non-Neuromag data. See the
+Notes section of the <a class="reference internal" href="../../generated/mne.preprocessing.maxwell_filter.html#mne.preprocessing.maxwell_filter" title="mne.preprocessing.maxwell_filter"><code class="xref py py-func docutils literal notranslate"><span class="pre">maxwell_filter()</span></code></a> docstring
+for details.</p>
+</div>
+<div class="section" id="using-sss-and-maxwell-filtering-in-mne-python">
+<h2><a class="toc-backref" href="#id6">Using SSS and Maxwell filtering in MNE-Python</a><a class="headerlink" href="#using-sss-and-maxwell-filtering-in-mne-python" title="Permalink to this headline">¶</a></h2>
+<p>For optimal use of SSS with data from Elekta Neuromag® systems, you should
+provide the path to the fine calibration file (which encodes site-specific
+information about sensor orientation and calibration) as well as a crosstalk
+compensation file (which reduces interference between Elekta’s co-located
+magnetometer and paired gradiometer sensor units).</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">fine_cal_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">sample_data_folder</span><span class="p">,</span> <span class="s1">&#39;SSS&#39;</span><span class="p">,</span> <span class="s1">&#39;sss_cal_mgh.dat&#39;</span><span class="p">)</span>
+<span class="n">crosstalk_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">sample_data_folder</span><span class="p">,</span> <span class="s1">&#39;SSS&#39;</span><span class="p">,</span> <span class="s1">&#39;ct_sparse_mgh.fif&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Preprocess with Maxwell filtering</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">raw</span> <span class="o">=</span> <a href="../../generated/mne.io.read_raw_fif.html#mne.io.read_raw_fif" title="View documentation for mne.io.read_raw_fif"><span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read_raw_fif</span></a><span class="p">(</span><span class="n">raw_fname</span><span class="p">)</span>
-<span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;bads&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;MEG 2443&#39;</span><span class="p">,</span> <span class="s1">&#39;EEG 053&#39;</span><span class="p">,</span> <span class="s1">&#39;MEG 1032&#39;</span><span class="p">,</span> <span class="s1">&#39;MEG 2313&#39;</span><span class="p">]</span>  <span class="c1"># set bads</span>
-<span class="c1"># Here we don&#39;t use tSSS (set st_duration) because MGH data is very clean</span>
-<span class="n">raw_sss</span> <span class="o">=</span> <a href="../../generated/mne.preprocessing.maxwell_filter.html#mne.preprocessing.maxwell_filter" title="View documentation for mne.preprocessing.maxwell_filter"><span class="n">maxwell_filter</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">cross_talk</span><span class="o">=</span><span class="n">ctc_fname</span><span class="p">,</span> <span class="n">calibration</span><span class="o">=</span><span class="n">fine_cal_fname</span><span class="p">)</span>
+<p>Before we perform SSS we’ll set a couple additional bad channels — <code class="docutils literal notranslate"><span class="pre">MEG</span>
+<span class="pre">2313</span></code> has some DC jumps and <code class="docutils literal notranslate"><span class="pre">MEG</span> <span class="pre">1032</span></code> has some large-ish low-frequency
+drifts. After that, performing SSS and Maxwell filtering is done with a
+single call to <a class="reference internal" href="../../generated/mne.preprocessing.maxwell_filter.html#mne.preprocessing.maxwell_filter" title="mne.preprocessing.maxwell_filter"><code class="xref py py-func docutils literal notranslate"><span class="pre">maxwell_filter()</span></code></a>, with the crosstalk
+and fine calibration filenames provided (if available):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;bads&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">extend</span><span class="p">([</span><span class="s1">&#39;MEG 1032&#39;</span><span class="p">,</span> <span class="s1">&#39;MEG 2313&#39;</span><span class="p">])</span>
+<span class="n">raw_sss</span> <span class="o">=</span> <a href="../../generated/mne.preprocessing.maxwell_filter.html#mne.preprocessing.maxwell_filter" title="View documentation for mne.preprocessing.maxwell_filter"><span class="n">mne</span><span class="o">.</span><span class="n">preprocessing</span><span class="o">.</span><span class="n">maxwell_filter</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">cross_talk</span><span class="o">=</span><span class="n">crosstalk_file</span><span class="p">,</span>
+                                           <span class="n">calibration</span><span class="o">=</span><span class="n">fine_cal_file</span><span class="p">)</span>
 </pre></div>
 </div>
 <p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Opening raw data file /home/circleci/mne_data/MNE-sample-data/MEG/sample/sample_audvis_raw.fif...
-    Read a total of 3 projection items:
-        PCA-v1 (1 x 102)  idle
-        PCA-v2 (1 x 102)  idle
-        PCA-v3 (1 x 102)  idle
-    Range : 25800 ... 192599 =     42.956 ...   320.670 secs
-Ready.
-Current compensation grade : 0
-Maxwell filtering raw data
-    Loading raw data from disk
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Maxwell filtering raw data
+    Using loaded raw data
     Bad MEG channels being reconstructed: [&#39;MEG 2443&#39;, &#39;MEG 1032&#39;, &#39;MEG 2313&#39;]
     Processing 204 gradiometers and 102 magnetometers
     Using fine calibration sss_cal_mgh.dat
@@ -233,21 +278,21 @@ Maxwell filtering raw data
     Automatic origin fit: head of radius 91.0 mm
     Using origin -4.1, 16.0, 51.7 mm in the head frame
         Using 87/95 harmonic components for    0.000  (72/80 in, 15/15 out)
-    Processing 27 data chunks
+    Processing 6 data chunks
 [done]
 </pre></div>
 </div>
-<p>Select events to extract epochs from, pick M/EEG channels, and plot evoked</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">tmin</span><span class="p">,</span> <span class="n">tmax</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.5</span>
-<span class="n">event_id</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;Auditory/Left&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">}</span>
-<span class="n">events</span> <span class="o">=</span> <a href="../../generated/mne.find_events.html#mne.find_events" title="View documentation for mne.find_events"><span class="n">mne</span><span class="o">.</span><span class="n">find_events</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="s1">&#39;STI 014&#39;</span><span class="p">)</span>
-<span class="k">for</span> <span class="n">r</span><span class="p">,</span> <span class="n">kind</span> <span class="ow">in</span> <span class="nb">zip</span><span class="p">((</span><span class="n">raw</span><span class="p">,</span> <span class="n">raw_sss</span><span class="p">),</span> <span class="p">(</span><span class="s1">&#39;Raw data&#39;</span><span class="p">,</span> <span class="s1">&#39;Maxwell filtered data&#39;</span><span class="p">)):</span>
-    <span class="n">epochs</span> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs" title="View documentation for mne.Epochs"><span class="n">mne</span><span class="o">.</span><span class="n">Epochs</span></a><span class="p">(</span><span class="n">r</span><span class="p">,</span> <span class="n">events</span><span class="p">,</span> <span class="n">event_id</span><span class="p">,</span> <span class="n">tmin</span><span class="p">,</span> <span class="n">tmax</span><span class="p">,</span>
-                        <span class="n">picks</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;meg&#39;</span><span class="p">,</span> <span class="s1">&#39;eog&#39;</span><span class="p">),</span>
-                        <span class="n">baseline</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">reject</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">eog</span><span class="o">=</span><span class="mf">150e-6</span><span class="p">))</span>
-    <span class="n">evoked</span> <span class="o">=</span> <span class="n">epochs</span><span class="o">.</span><span class="n">average</span><span class="p">()</span>
-    <span class="n">evoked</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">window_title</span><span class="o">=</span><span class="n">kind</span><span class="p">,</span> <span class="n">ylim</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">grad</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">200</span><span class="p">,</span> <span class="mi">250</span><span class="p">),</span>
-                                             <span class="n">mag</span><span class="o">=</span><span class="p">(</span><span class="o">-</span><span class="mi">600</span><span class="p">,</span> <span class="mi">700</span><span class="p">)),</span> <span class="n">time_unit</span><span class="o">=</span><span class="s1">&#39;s&#39;</span><span class="p">)</span>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>Automatic bad channel detection is not currently implemented. It is
+critical to mark bad channels in <code class="docutils literal notranslate"><span class="pre">raw.info['bads']</span></code> <em>before</em> calling
+<a class="reference internal" href="../../generated/mne.preprocessing.maxwell_filter.html#mne.preprocessing.maxwell_filter" title="mne.preprocessing.maxwell_filter"><code class="xref py py-func docutils literal notranslate"><span class="pre">maxwell_filter()</span></code></a> in order to prevent bad
+channel noise from spreading.</p>
+</div>
+<p>To see the effect, we can plot the data before and after SSS / Maxwell
+filtering.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">raw</span><span class="o">.</span><span class="n">pick</span><span class="p">([</span><span class="s1">&#39;meg&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">duration</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">butterfly</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">raw_sss</span><span class="o">.</span><span class="n">pick</span><span class="p">([</span><span class="s1">&#39;meg&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">duration</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">butterfly</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
 <ul class="sphx-glr-horizontal">
@@ -256,54 +301,111 @@ Maxwell filtering raw data
 <li><img alt="../../_images/sphx_glr_plot_60_maxwell_filtering_sss_002.png" class="sphx-glr-multi-img" src="../../_images/sphx_glr_plot_60_maxwell_filtering_sss_002.png" />
 </li>
 </ul>
-<p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>320 events found
-Event IDs: [ 1  2  3  4  5 32]
-72 matching events found
-Applying baseline correction (mode: mean)
-Not setting metadata
-Created an SSP operator (subspace dimension = 3)
-3 projection items activated
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-72 matching events found
-Applying baseline correction (mode: mean)
-Not setting metadata
-0 projection items activated
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+<p>Notice that channels marked as “bad” have been effectively repaired by SSS,
+eliminating the need to perform <a class="reference internal" href="plot_15_handling_bad_channels.html#tut-bad-channels"><span class="std std-ref">interpolation</span></a>.
+The heartbeat artifact has also been substantially reduced.</p>
+<p>The <a class="reference internal" href="../../generated/mne.preprocessing.maxwell_filter.html#mne.preprocessing.maxwell_filter" title="mne.preprocessing.maxwell_filter"><code class="xref py py-func docutils literal notranslate"><span class="pre">maxwell_filter()</span></code></a> function has parameters
+<code class="docutils literal notranslate"><span class="pre">int_order</span></code> and <code class="docutils literal notranslate"><span class="pre">ext_order</span></code> for setting the order of the spherical
+harmonic expansion of the interior and exterior components; the default
+values are appropriate for most use cases. Additional parameters include
+<code class="docutils literal notranslate"><span class="pre">coord_frame</span></code> and <code class="docutils literal notranslate"><span class="pre">origin</span></code> for controlling the coordinate frame (“head”
+or “meg”) and the origin of the sphere; the defaults are appropriate for most
+studies that include digitization of the scalp surface / electrodes. See the
+documentation of <a class="reference internal" href="../../generated/mne.preprocessing.maxwell_filter.html#mne.preprocessing.maxwell_filter" title="mne.preprocessing.maxwell_filter"><code class="xref py py-func docutils literal notranslate"><span class="pre">maxwell_filter()</span></code></a> for details.</p>
+</div>
+<div class="section" id="spatiotemporal-sss-tsss">
+<h2><a class="toc-backref" href="#id7">Spatiotemporal SSS (tSSS)</a><a class="headerlink" href="#spatiotemporal-sss-tsss" title="Permalink to this headline">¶</a></h2>
+<p>An assumption of SSS is that the measurement volume (the spherical shell
+where the sensors are physically located) is free of electromagnetic sources.
+The thickness of this source-free measurement shell should be 4-8 cm for SSS
+to perform optimally. In practice, there may be sources falling within that
+measurement volume; these can often be mitigated by using Spatiotemporal
+Signal Space Separation (tSSS) <a class="footnote-reference brackets" href="#id5" id="id3">2</a>. tSSS works by looking for temporal
+correlation between components of the internal and external subspaces, and
+projecting out any components that are common to the internal and external
+subspaces. The projection is done in an analogous way to
+<a class="reference internal" href="plot_50_artifact_correction_ssp.html#tut-artifact-ssp"><span class="std std-ref">SSP</span></a>, except that the noise vector is computed
+across time points instead of across sensors.</p>
+<p>To use tSSS in MNE-Python, pass a time (in seconds) to the parameter
+<code class="docutils literal notranslate"><span class="pre">st_duration</span></code> of <a class="reference internal" href="../../generated/mne.preprocessing.maxwell_filter.html#mne.preprocessing.maxwell_filter" title="mne.preprocessing.maxwell_filter"><code class="xref py py-func docutils literal notranslate"><span class="pre">maxwell_filter()</span></code></a>. This will
+determine the “chunk duration” over which to compute the temporal projection.
+The chunk duration effectively acts as a high-pass filter with a cutoff
+frequency of <span class="math notranslate nohighlight">\(\frac{1}{\mathtt{st\_duration}}~\mathrm{Hz}\)</span>; this
+effective high-pass has an important consequence:</p>
+<ul class="simple">
+<li><p>In general, larger values of <code class="docutils literal notranslate"><span class="pre">st_duration</span></code> are better (provided that your
+computer has sufficient memory) because larger values of <code class="docutils literal notranslate"><span class="pre">st_duration</span></code>
+will have a smaller effect on the signal.</p></li>
+</ul>
+<p>If the chunk duration does not evenly divide your data length, the final
+(shorter) chunk will be added to the prior chunk before filtering, leading
+to slightly different effective filtering for the combined chunk (the
+effective cutoff frequency differing at most by a factor of 2). If you need
+to ensure identical processing of all analyzed chunks, either:</p>
+<ul class="simple">
+<li><p>choose a chunk duration that evenly divides your data length (only
+recommended if analyzing a single subject or run), or</p></li>
+<li><p>include at least <code class="docutils literal notranslate"><span class="pre">2</span> <span class="pre">*</span> <span class="pre">st_duration</span></code> of post-experiment recording time at
+the end of the <a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-class docutils literal notranslate"><span class="pre">Raw</span></code></a> object, so that the data you intend to
+further analyze is guaranteed not to be in the final or penultimate chunks.</p></li>
+</ul>
+<p>Additional parameters affecting tSSS include <code class="docutils literal notranslate"><span class="pre">st_correlation</span></code> (to set the
+correlation value above which correlated internal and external components
+will be projected out) and <code class="docutils literal notranslate"><span class="pre">st_only</span></code> (to apply only the temporal projection
+without also performing SSS and Maxwell filtering). See the docstring of
+<a class="reference internal" href="../../generated/mne.preprocessing.maxwell_filter.html#mne.preprocessing.maxwell_filter" title="mne.preprocessing.maxwell_filter"><code class="xref py py-func docutils literal notranslate"><span class="pre">maxwell_filter()</span></code></a> for details.</p>
+</div>
+<div class="section" id="movement-compensation">
+<h2><a class="toc-backref" href="#id8">Movement compensation</a><a class="headerlink" href="#movement-compensation" title="Permalink to this headline">¶</a></h2>
+<p>If you have information about subject head position relative to the sensors
+(i.e., continuous head position indicator coils, or <a class="reference internal" href="../../glossary.html#term-hpi"><span class="xref std std-term">cHPI</span></a>), SSS
+can take that into account when projecting sensor data onto the internal
+subspace. Head position data is loaded with the
+<a class="reference internal" href="../../generated/mne.chpi.read_head_pos.html#mne.chpi.read_head_pos" title="mne.chpi.read_head_pos"><code class="xref py py-func docutils literal notranslate"><span class="pre">read_head_pos()</span></code></a> function. The <a class="reference internal" href="../../manual/datasets_index.html#sample-dataset"><span class="std std-ref">example data</span></a> doesn’t include cHPI, so here we’ll load a <code class="file docutils literal notranslate"><span class="pre">.pos</span></code>
+file used for testing, just to demonstrate:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">head_pos_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">mne</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><span class="n">data_path</span><span class="p">(),</span> <span class="s1">&#39;SSS&#39;</span><span class="p">,</span>
+                             <span class="s1">&#39;test_move_anon_raw.pos&#39;</span><span class="p">)</span>
+<span class="n">head_pos</span> <span class="o">=</span> <a href="../../generated/mne.chpi.read_head_pos.html#mne.chpi.read_head_pos" title="View documentation for mne.chpi.read_head_pos"><span class="n">mne</span><span class="o">.</span><span class="n">chpi</span><span class="o">.</span><span class="n">read_head_pos</span></a><span class="p">(</span><span class="n">head_pos_file</span><span class="p">)</span>
+<a href="../../generated/mne.viz.plot_head_positions.html#mne.viz.plot_head_positions" title="View documentation for mne.viz.plot_head_positions"><span class="n">mne</span><span class="o">.</span><span class="n">viz</span><span class="o">.</span><span class="n">plot_head_positions</span></a><span class="p">(</span><span class="n">head_pos</span><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s1">&#39;traces&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  6.385 seconds)</p>
-<p><strong>Estimated memory usage:</strong>  487 MB</p>
+<img alt="../../_images/sphx_glr_plot_60_maxwell_filtering_sss_003.png" class="sphx-glr-single-img" src="../../_images/sphx_glr_plot_60_maxwell_filtering_sss_003.png" />
+<p>The cHPI data file could also be passed as the <code class="docutils literal notranslate"><span class="pre">head_pos</span></code> parameter of
+<a class="reference internal" href="../../generated/mne.preprocessing.maxwell_filter.html#mne.preprocessing.maxwell_filter" title="mne.preprocessing.maxwell_filter"><code class="xref py py-func docutils literal notranslate"><span class="pre">maxwell_filter()</span></code></a>. Not only would this account for
+movement within a given recording session, but also would effectively
+normalize head position across different measurement sessions and subjects.
+See <a class="reference internal" href="../../auto_examples/preprocessing/plot_movement_compensation.html#example-movement-comp"><span class="std std-ref">here</span></a> for an extended example of applying
+movement compensation during Maxwell filtering / SSS.</p>
+</div>
+<div class="section" id="caveats-to-using-sss-maxwell-filtering">
+<h2><a class="toc-backref" href="#id9">Caveats to using SSS / Maxwell filtering</a><a class="headerlink" href="#caveats-to-using-sss-maxwell-filtering" title="Permalink to this headline">¶</a></h2>
+<ol class="arabic simple">
+<li><p>There are patents related to the Maxwell filtering algorithm, which may
+legally preclude using it in commercial applications. More details are
+provided in the documentation of
+<a class="reference internal" href="../../generated/mne.preprocessing.maxwell_filter.html#mne.preprocessing.maxwell_filter" title="mne.preprocessing.maxwell_filter"><code class="xref py py-func docutils literal notranslate"><span class="pre">maxwell_filter()</span></code></a>.</p></li>
+<li><p>SSS works best when both magnetometers and gradiometers are present, and
+is most effective when gradiometers are planar (due to the need for very
+accurate sensor geometry and fine calibration information). Thus its
+performance is dependent on the MEG system used to collect the data.</p></li>
+</ol>
+</div>
+<div class="section" id="references">
+<h2><a class="toc-backref" href="#id10">References</a><a class="headerlink" href="#references" title="Permalink to this headline">¶</a></h2>
+<dl class="footnote brackets">
+<dt class="label" id="id4"><span class="brackets"><a class="fn-backref" href="#id1">1</a></span></dt>
+<dd><p>Taulu S and Kajola M. (2005). Presentation of electromagnetic
+multichannel data: The signal space separation method. <em>J Appl Phys</em>
+97, 124905 1-10. <a class="reference external" href="https://doi.org/10.1063/1.1935742">https://doi.org/10.1063/1.1935742</a></p>
+</dd>
+<dt class="label" id="id5"><span class="brackets">2</span><span class="fn-backref">(<a href="#id2">1</a>,<a href="#id3">2</a>)</span></dt>
+<dd><p>Taulu S and Simola J. (2006). Spatiotemporal signal space separation
+method for rejecting nearby interference in MEG measurements. <em>Phys
+Med Biol</em> 51, 1759-1768. <a class="reference external" href="https://doi.org/10.1088/0031-9155/51/7/008">https://doi.org/10.1088/0031-9155/51/7/008</a></p>
+</dd>
+</dl>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  6.194 seconds)</p>
+<p><strong>Estimated memory usage:</strong>  215 MB</p>
 <div class="sphx-glr-footer class sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-tutorials-preprocessing-plot-60-maxwell-filtering-sss-py">
 <div class="sphx-glr-download docutils container">
 <p><a class="reference download internal" download="" href="../../_downloads/d8485c39432b23a02cd4ff4e2dd17f54/plot_60_maxwell_filtering_sss.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">plot_60_maxwell_filtering_sss.py</span></code></a></p>
@@ -313,6 +415,7 @@ Not setting metadata
 </div>
 </div>
 <p class="sphx-glr-signature"><a class="reference external" href="https://sphinx-gallery.github.io">Gallery generated by Sphinx-Gallery</a></p>
+</div>
 </div>
 
 
