@@ -3,7 +3,7 @@
 <html xmlns="http://www.w3.org/1999/xhtml">
   <head>
     <meta charset="utf-8" />
-    <title>Morphing and averaging &#8212; MNE 0.19.dev0 documentation</title>
+    <title>Morphing and averaging source estimates &#8212; MNE 0.19.dev0 documentation</title>
     <link rel="stylesheet" href="../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css" />
@@ -171,8 +171,8 @@ This documentation is for <strong>development version 0.19.dev0</strong>.
             <p class="logo"><a href="../../index.html">
               <img class="logo" src="../../_static/mne_logo_small.png" alt="Logo"/>
             </a></p><ul>
-<li><a class="reference internal" href="#">Morphing and averaging</a><ul>
-<li><a class="reference internal" href="#overview">Overview</a></li>
+<li><a class="reference internal" href="#">Morphing and averaging source estimates</a><ul>
+<li><a class="reference internal" href="#why-morphing">Why morphing?</a></li>
 <li><a class="reference internal" href="#the-morphing-maps">The morphing maps</a></li>
 <li><a class="reference internal" href="#about-smoothing">About smoothing</a></li>
 <li><a class="reference internal" href="#precomputing-the-morphing-maps">Precomputing the morphing maps</a></li>
@@ -191,50 +191,68 @@ This documentation is for <strong>development version 0.19.dev0</strong>.
       </div>
     <div class="body col-md-12 content" role="main">
       
-  <div class="section" id="morphing-and-averaging">
-<span id="c-legacy-ch-morph"></span><h1>Morphing and averaging<a class="headerlink" href="#morphing-and-averaging" title="Permalink to this headline">¶</a></h1>
-<div class="contents local topic" id="contents">
-<p class="topic-title first">Contents</p>
+  <div class="section" id="morphing-and-averaging-source-estimates">
+<span id="c-legacy-ch-morph"></span><h1>Morphing and averaging source estimates<a class="headerlink" href="#morphing-and-averaging-source-estimates" title="Permalink to this headline">¶</a></h1>
+<p>The spherical morphing of BEM surfaces accomplished by FreeSurfer can be
+employed to bring data from different subjects into a common anatomical frame.
+This page describes utilities which make use of the spherical <a class="reference internal" href="../../glossary.html#term-morphing"><span class="xref std std-term">morphing</span></a>
+procedure. <code class="docutils literal notranslate"><span class="pre">mne_morph_labels</span></code> morphs label files between subjects allowing
+the definition of labels in a one brain and transforming them to anatomically
+analogous labels in another. <code class="docutils literal notranslate"><span class="pre">mne_average_estimates</span></code> offers the capability to
+compute averages of data computed with the MNE software across subjects.</p>
+<div class="contents local topic" id="page-contents">
+<p class="topic-title first">Page contents</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="#overview" id="id1">Overview</a></p></li>
+<li><p><a class="reference internal" href="#why-morphing" id="id1">Why morphing?</a></p></li>
 <li><p><a class="reference internal" href="#the-morphing-maps" id="id2">The morphing maps</a></p></li>
 <li><p><a class="reference internal" href="#about-smoothing" id="id3">About smoothing</a></p></li>
 <li><p><a class="reference internal" href="#precomputing-the-morphing-maps" id="id4">Precomputing the morphing maps</a></p></li>
 </ul>
 </div>
-<div class="section" id="overview">
-<h2><a class="toc-backref" href="#id1">Overview</a><a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
-<p>The spherical morphing of the surfaces accomplished by FreeSurfer can be
-employed to bring data from different subjects into a common anatomical
-frame. This chapter describes utilities which make use of the spherical morphing
-procedure. mne_morph_labels morphs
-label files between subjects allowing the definition of labels in
-a one brain and transforming them to anatomically analogous labels
-in another. mne_average_estimates offers
-the capability to compute averages of data computed with the MNE software
-across subjects.</p>
+<div class="section" id="why-morphing">
+<h2><a class="toc-backref" href="#id1">Why morphing?</a><a class="headerlink" href="#why-morphing" title="Permalink to this headline">¶</a></h2>
+<div class="sidebar">
+<p class="sidebar-title">Morphing examples in MNE-Python</p>
+<p>Examples of morphing in MNE-Python include <a class="reference internal" href="../../auto_tutorials/source-modeling/plot_mne_solutions.html#tut-mne-fixed-free"><span class="std std-ref">this tutorial</span></a> on surface source estimation or these examples on
+<a class="reference internal" href="../../auto_examples/inverse/plot_morph_surface_stc.html#ex-morph-surface"><span class="std std-ref">surface</span></a> and <a class="reference internal" href="../../auto_examples/inverse/plot_morph_volume_stc.html#ex-morph-volume"><span class="std std-ref">volumetric</span></a>
+source estimation.</p>
+</div>
+<p>Modern neuroimaging techniques, such as source reconstruction or fMRI analyses,
+make use of advanced mathematical models and hardware to map brain activity
+patterns into a subject-specific anatomical brain space. This enables the study
+of spatio-temporal brain activity. The representation of spatio-temporal brain
+data is often mapped onto the anatomical brain structure to relate functional
+and anatomical maps. Thereby activity patterns are overlaid with anatomical
+locations that supposedly produced the activity. Anatomical MR images are often
+used as such or are transformed into an inflated surface representations to
+serve as  “canvas” for the visualization.</p>
+<p>In order to compute group-level statistics, data representations across
+subjects must be morphed to a common frame, such that anatomically and
+functional similar structures are represented at the same spatial location for
+<em>all subjects equally</em>. Since brains vary, <a class="reference internal" href="../../glossary.html#term-morphing"><span class="xref std std-term">morphing</span></a> comes into play to
+tell us how the data produced by subject A would be represented on the brain of
+subject B (and vice-versa).</p>
 </div>
 <div class="section" id="the-morphing-maps">
 <span id="chdjdhii"></span><h2><a class="toc-backref" href="#id2">The morphing maps</a><a class="headerlink" href="#the-morphing-maps" title="Permalink to this headline">¶</a></h2>
-<p>The MNE software accomplishes morphing with help of morphing
-maps which can be either computed on demand or precomputed using mne_make_morph_maps ,
-see <a class="reference internal" href="#chdbbhdh"><span class="std std-ref">Precomputing the morphing maps</span></a>. The morphing is performed with help
-of the registered spherical surfaces (<code class="docutils literal notranslate"><span class="pre">lh.sphere.reg</span></code> and <code class="docutils literal notranslate"><span class="pre">rh.sphere.reg</span></code> )
-which must be produced in FreeSurfer .
-A morphing map is a linear mapping from cortical surface values
-in subject A (<span class="math notranslate nohighlight">\(x^{(A)}\)</span>) to those in another
-subject B (<span class="math notranslate nohighlight">\(x^{(B)}\)</span>)</p>
+<p>The MNE software accomplishes morphing with help of morphing maps which can be
+either computed on demand or precomputed using <code class="docutils literal notranslate"><span class="pre">mne_make_morph_maps</span></code>, see
+<a class="reference internal" href="#chdbbhdh"><span class="std std-ref">Precomputing the morphing maps</span></a>. The morphing is performed with help of the registered
+spherical surfaces (<code class="docutils literal notranslate"><span class="pre">lh.sphere.reg</span></code> and <code class="docutils literal notranslate"><span class="pre">rh.sphere.reg</span></code> ) which must be
+produced in FreeSurfer. A morphing map is a linear mapping from cortical
+surface values in subject A (<span class="math notranslate nohighlight">\(x^{(A)}\)</span>) to those in another subject B
+(<span class="math notranslate nohighlight">\(x^{(B)}\)</span>)</p>
 <div class="math notranslate nohighlight">
 \[x^{(B)} = M^{(AB)} x^{(A)}\ ,\]</div>
-<p>where <span class="math notranslate nohighlight">\(M^{(AB)}\)</span> is a sparse matrix
-with at most three nonzero elements on each row. These elements
-are determined as follows. First, using the aligned spherical surfaces,
-for each vertex <span class="math notranslate nohighlight">\(x_j^{(B)}\)</span>, find the triangle <span class="math notranslate nohighlight">\(T_j^{(A)}\)</span> on the
-spherical surface of subject A which contains the location <span class="math notranslate nohighlight">\(x_j^{(B)}\)</span>.
-Next, find the numbers of the vertices of this triangle and set
-the corresponding elements on the <em>j</em> th row of <span class="math notranslate nohighlight">\(M^{(AB)}\)</span> so that <span class="math notranslate nohighlight">\(x_j^{(B)}\)</span> will
-be a linear interpolation between the triangle vertex values reflecting
-the location <span class="math notranslate nohighlight">\(x_j^{(B)}\)</span> within the triangle <span class="math notranslate nohighlight">\(T_j^{(A)}\)</span>.</p>
+<p>where <span class="math notranslate nohighlight">\(M^{(AB)}\)</span> is a sparse matrix with at most three nonzero elements
+on each row. These elements are determined as follows. First, using the aligned
+spherical surfaces, for each vertex <span class="math notranslate nohighlight">\(x_j^{(B)}\)</span>, find the triangle
+<span class="math notranslate nohighlight">\(T_j^{(A)}\)</span> on the spherical surface of subject A which contains the
+location <span class="math notranslate nohighlight">\(x_j^{(B)}\)</span>. Next, find the numbers of the vertices of this
+triangle and set the corresponding elements on the <em>j</em> th row of
+<span class="math notranslate nohighlight">\(M^{(AB)}\)</span> so that <span class="math notranslate nohighlight">\(x_j^{(B)}\)</span> will be a linear interpolation
+between the triangle vertex values reflecting the location <span class="math notranslate nohighlight">\(x_j^{(B)}\)</span>
+within the triangle <span class="math notranslate nohighlight">\(T_j^{(A)}\)</span>.</p>
 <p>It follows from the above definition that in general</p>
 <div class="math notranslate nohighlight">
 \[M^{(AB)} \neq (M^{(BA)})^{-1}\ ,\]</div>
@@ -244,72 +262,64 @@ the location <span class="math notranslate nohighlight">\(x_j^{(B)}\)</span> wit
 <p>even if</p>
 <div class="math notranslate nohighlight">
 \[x^{(A)} \approx M^{(BA)} M^{(AB)} x^{(A)}\ ,\]</div>
-<p><em>i.e.</em>, the mapping is <em>almost</em> a
-bijection.</p>
+<p><em>i.e.</em>, the mapping is <em>almost</em> a bijection.</p>
 </div>
 <div class="section" id="about-smoothing">
 <span id="chdebahh"></span><h2><a class="toc-backref" href="#id3">About smoothing</a><a class="headerlink" href="#about-smoothing" title="Permalink to this headline">¶</a></h2>
-<p>The current estimates are normally defined only in a decimated
-grid which is a sparse subset of the vertices in the triangular
-tessellation of the cortical surface. Therefore, any sparse set
-of values is distributed to neighboring vertices to make the visualized
-results easily understandable. This procedure has been traditionally
-called smoothing but a more appropriate name
-might be smudging or blurring in
-accordance with similar operations in image processing programs.</p>
-<p>In MNE software terms, smoothing of the vertex data is an
-iterative procedure, which produces a blurred image <span class="math notranslate nohighlight">\(x^{(N)}\)</span> from
-the original sparse image <span class="math notranslate nohighlight">\(x^{(0)}\)</span> by applying
-in each iteration step a sparse blurring matrix:</p>
+<p>The current estimates are normally defined only in a decimated grid which is a
+sparse subset of the vertices in the triangular tessellation of the cortical
+surface. Therefore, any sparse set of values is distributed to neighboring
+vertices to make the visualized results easily understandable. This procedure
+has been traditionally called smoothing but a more appropriate name might be
+smudging or blurring in accordance with similar operations in image processing
+programs.</p>
+<p>In MNE software terms, smoothing of the vertex data is an iterative procedure,
+which produces a blurred image <span class="math notranslate nohighlight">\(x^{(N)}\)</span> from the original sparse image
+<span class="math notranslate nohighlight">\(x^{(0)}\)</span> by applying in each iteration step a sparse blurring matrix:</p>
 <div class="math notranslate nohighlight">
 \[x^{(p)} = S^{(p)} x^{(p - 1)}\ .\]</div>
-<p>On each row <span class="math notranslate nohighlight">\(j\)</span> of the matrix <span class="math notranslate nohighlight">\(S^{(p)}\)</span> there
-are <span class="math notranslate nohighlight">\(N_j^{(p - 1)}\)</span> nonzero entries whose values
-equal <span class="math notranslate nohighlight">\(1/N_j^{(p - 1)}\)</span>. Here <span class="math notranslate nohighlight">\(N_j^{(p - 1)}\)</span> is
-the number of immediate neighbors of vertex <span class="math notranslate nohighlight">\(j\)</span> which
-had non-zero values at iteration step <span class="math notranslate nohighlight">\(p - 1\)</span>.
-Matrix <span class="math notranslate nohighlight">\(S^{(p)}\)</span> thus assigns the average
-of the non-zero neighbors as the new value for vertex <span class="math notranslate nohighlight">\(j\)</span>.
-One important feature of this procedure is that it tends to preserve
-the amplitudes while blurring the surface image.</p>
-<p>Once the indices non-zero vertices in <span class="math notranslate nohighlight">\(x^{(0)}\)</span> and
-the topology of the triangulation are fixed the matrices <span class="math notranslate nohighlight">\(S^{(p)}\)</span> are
-fixed and independent of the data. Therefore, it would be in principle
-possible to construct a composite blurring matrix</p>
+<p>On each row <span class="math notranslate nohighlight">\(j\)</span> of the matrix <span class="math notranslate nohighlight">\(S^{(p)}\)</span> there are <span class="math notranslate nohighlight">\(N_j^{(p -
+1)}\)</span> nonzero entries whose values equal <span class="math notranslate nohighlight">\(1/N_j^{(p - 1)}\)</span>. Here
+<span class="math notranslate nohighlight">\(N_j^{(p - 1)}\)</span> is the number of immediate neighbors of vertex <span class="math notranslate nohighlight">\(j\)</span>
+which had non-zero values at iteration step <span class="math notranslate nohighlight">\(p - 1\)</span>. Matrix
+<span class="math notranslate nohighlight">\(S^{(p)}\)</span> thus assigns the average of the non-zero neighbors as the new
+value for vertex <span class="math notranslate nohighlight">\(j\)</span>. One important feature of this procedure is that it
+tends to preserve the amplitudes while blurring the surface image.</p>
+<p>Once the indices non-zero vertices in <span class="math notranslate nohighlight">\(x^{(0)}\)</span> and the topology of the
+triangulation are fixed the matrices <span class="math notranslate nohighlight">\(S^{(p)}\)</span> are fixed and independent
+of the data. Therefore, it would be in principle possible to construct a
+composite blurring matrix</p>
 <div class="math notranslate nohighlight">
 \[S^{(N)} = \prod_{p = 1}^N {S^{(p)}}\ .\]</div>
-<p>However, it turns out to be computationally more effective
-to do blurring with an iteration. The above formula for <span class="math notranslate nohighlight">\(S^{(N)}\)</span> also
-shows that the smudging (smoothing) operation is linear.</p>
+<p>However, it turns out to be computationally more effective to do blurring with
+an iteration. The above formula for <span class="math notranslate nohighlight">\(S^{(N)}\)</span> also shows that the
+smudging (smoothing) operation is linear.</p>
 </div>
 <div class="section" id="precomputing-the-morphing-maps">
 <span id="chdbbhdh"></span><h2><a class="toc-backref" href="#id4">Precomputing the morphing maps</a><a class="headerlink" href="#precomputing-the-morphing-maps" title="Permalink to this headline">¶</a></h2>
-<p>The utility mne_make_morph_maps was
-created to assist mne_analyze and mne_make_movie in
-morphing. Since the morphing maps described above take a while to
-compute, it is beneficial to construct all necessary maps in advance
+<p>The utility <a class="reference internal" href="../c_reference.html#mne-make-morph-maps"><span class="std std-ref">mne_make_morph_maps</span></a> was created to assist mne_analyze and
+mne_make_movie in morphing. Since the morphing maps described above take a
+while to compute, it is beneficial to construct all necessary maps in advance
 before using mne_make_movie .</p>
-<p>The precomputed morphing maps are located in <code class="docutils literal notranslate"><span class="pre">$SUBJECTS_DIR/morph-maps</span></code> . mne_make_morph_maps creates
-this directory automatically if it does not exist. If this directory
-exists when mne_analyze or mne_make_movie is run
-and morphing is requested, the software first looks for already
-existing morphing maps there. Also, if mne_analyze or mne_make_movie have
-to recompute any morphing maps, they will be saved to <code class="docutils literal notranslate"><span class="pre">$SUBJECTS_DIR/morph-maps</span></code> if
-this directory exists.</p>
-<p>The names of the files in <code class="docutils literal notranslate"><span class="pre">$SUBJECTS_DIR/morph-maps</span></code> are
-of the form:</p>
+<p>The precomputed morphing maps are located in
+<code class="file docutils literal notranslate"><em><span class="pre">$SUBJECTS_DIR</span></em><span class="pre">/morph-maps</span></code>. <a class="reference internal" href="../c_reference.html#mne-make-morph-maps"><span class="std std-ref">mne_make_morph_maps</span></a> creates this
+directory automatically if it does not exist. If this directory exists when
+mne_analyze or mne_make_movie is run and morphing is requested, the software
+first looks for already existing morphing maps there. Also, if mne_analyze or
+mne_make_movie have to recompute any morphing maps, they will be saved to
+<code class="file docutils literal notranslate"><em><span class="pre">$SUBJECTS_DIR</span></em><span class="pre">/morph-maps</span></code> if this directory exists.</p>
+<p>The names of the files in <code class="file docutils literal notranslate"><em><span class="pre">$SUBJECTS_DIR</span></em><span class="pre">/morph-maps</span></code> are of the form:</p>
 <blockquote>
-<div><p>&lt;<em>A</em>&gt; - &lt;<em>B</em>&gt; -<code class="docutils literal notranslate"><span class="pre">morph.fif</span></code> ,</p>
+<div><p><code class="file docutils literal notranslate"><em><span class="pre">&lt;A&gt;</span></em><span class="pre">-</span><em><span class="pre">&lt;B&gt;</span></em><span class="pre">-morph.fif</span></code>,</p>
 </div></blockquote>
-<p>where &lt;<em>A</em>&gt; and &lt;<em>B</em>&gt; are
-names of subjects. These files contain the maps for both hemispheres,
-and in both directions, <em>i.e.</em>, both <span class="math notranslate nohighlight">\(M^{(AB)}\)</span> and <span class="math notranslate nohighlight">\(M^{(BA)}\)</span>, as
-defined above. Thus the files &lt;<em>A</em>&gt; - &lt;<em>B</em>&gt; -<code class="docutils literal notranslate"><span class="pre">morph.fif</span></code> or &lt;<em>B</em>&gt; - &lt;<em>A</em>&gt; -<code class="docutils literal notranslate"><span class="pre">morph.fif</span></code> are
-functionally equivalent. The name of the file produced by mne_analyze or mne_make_movie depends
-on the role of &lt;<em>A</em>&gt; and &lt;<em>B</em>&gt; in
-the analysis.</p>
-<p>If you choose to compute the morphing maps in batch in advance,
-use <a class="reference internal" href="../c_reference.html#mne-make-morph-maps"><span class="std std-ref">mne_make_morph_maps</span></a>.</p>
+<p>where <em>&lt;A&gt;</em> and <em>&lt;B&gt;</em> are names of subjects. These files contain the maps for
+both hemispheres, and in both directions, <em>i.e.</em>, both <span class="math notranslate nohighlight">\(M^{(AB)}\)</span> and
+<span class="math notranslate nohighlight">\(M^{(BA)}\)</span>, as defined above. Thus the files
+<code class="file docutils literal notranslate"><em><span class="pre">&lt;A&gt;</span></em><span class="pre">-</span><em><span class="pre">&lt;B&gt;</span></em><span class="pre">-morph.fif</span></code> or <code class="file docutils literal notranslate"><em><span class="pre">&lt;B&gt;</span></em><span class="pre">-</span><em><span class="pre">&lt;A&gt;</span></em><span class="pre">-morph.fif</span></code> are functionally
+equivalent. The name of the file produced by mne_analyze or mne_make_movie
+depends on the role of <em>&lt;A&gt;</em> and <em>&lt;B&gt;</em> in the analysis.</p>
+<p>If you choose to compute the morphing maps in batch in advance, use
+<a class="reference internal" href="../c_reference.html#mne-make-morph-maps"><span class="std std-ref">mne_make_morph_maps</span></a>.</p>
 </div>
 </div>
 

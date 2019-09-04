@@ -172,7 +172,6 @@ This documentation is for <strong>development version 0.19.dev0</strong>.
               <img class="logo" src="../../_static/mne_logo_small.png" alt="Logo"/>
             </a></p><ul>
 <li><a class="reference internal" href="#">The forward solution</a><ul>
-<li><a class="reference internal" href="#overview">Overview</a></li>
 <li><a class="reference internal" href="#meg-eeg-and-mri-coordinate-systems">MEG/EEG and MRI coordinate systems</a></li>
 <li><a class="reference internal" href="#the-head-and-device-coordinate-systems">The head and device coordinate systems</a></li>
 <li><a class="reference internal" href="#creating-a-surface-based-source-space">Creating a surface-based source space</a></li>
@@ -199,10 +198,7 @@ This documentation is for <strong>development version 0.19.dev0</strong>.
 <li><a class="reference internal" href="#field-derivatives">Field derivatives</a></li>
 </ul>
 </li>
-<li><a class="reference internal" href="#averaging-forward-solutions">Averaging forward solutions</a><ul>
-<li><a class="reference internal" href="#id1">Purpose</a></li>
-</ul>
-</li>
+<li><a class="reference internal" href="#averaging-forward-solutions">Averaging forward solutions</a></li>
 </ul>
 </li>
 </ul>
@@ -220,146 +216,142 @@ This documentation is for <strong>development version 0.19.dev0</strong>.
       
   <div class="section" id="the-forward-solution">
 <span id="c-legacy-ch-forward"></span><h1>The forward solution<a class="headerlink" href="#the-forward-solution" title="Permalink to this headline">¶</a></h1>
-<div class="contents local topic" id="contents">
-<p class="topic-title first">Contents</p>
+<p>This page covers the definitions of different coordinate systems employed in
+MNE software and FreeSurfer, the details of the computation of the forward
+solutions, and the associated low-level utilities.</p>
+<div class="contents local topic" id="page-contents">
+<p class="topic-title first">Page contents</p>
 <ul class="simple">
-<li><p><a class="reference internal" href="#overview" id="id10">Overview</a></p></li>
-<li><p><a class="reference internal" href="#meg-eeg-and-mri-coordinate-systems" id="id11">MEG/EEG and MRI coordinate systems</a></p></li>
-<li><p><a class="reference internal" href="#the-head-and-device-coordinate-systems" id="id12">The head and device coordinate systems</a></p></li>
-<li><p><a class="reference internal" href="#creating-a-surface-based-source-space" id="id13">Creating a surface-based source space</a></p></li>
-<li><p><a class="reference internal" href="#creating-a-volumetric-or-discrete-source-space" id="id14">Creating a volumetric or discrete source space</a></p></li>
-<li><p><a class="reference internal" href="#creating-the-bem-meshes" id="id15">Creating the BEM meshes</a></p>
+<li><p><a class="reference internal" href="#meg-eeg-and-mri-coordinate-systems" id="id10">MEG/EEG and MRI coordinate systems</a></p></li>
+<li><p><a class="reference internal" href="#the-head-and-device-coordinate-systems" id="id11">The head and device coordinate systems</a></p></li>
+<li><p><a class="reference internal" href="#creating-a-surface-based-source-space" id="id12">Creating a surface-based source space</a></p></li>
+<li><p><a class="reference internal" href="#creating-a-volumetric-or-discrete-source-space" id="id13">Creating a volumetric or discrete source space</a></p></li>
+<li><p><a class="reference internal" href="#creating-the-bem-meshes" id="id14">Creating the BEM meshes</a></p>
 <ul>
-<li><p><a class="reference internal" href="#tessellation-file-format" id="id16">Tessellation file format</a></p></li>
-<li><p><a class="reference internal" href="#topology-checks" id="id17">Topology checks</a></p></li>
+<li><p><a class="reference internal" href="#tessellation-file-format" id="id15">Tessellation file format</a></p></li>
+<li><p><a class="reference internal" href="#topology-checks" id="id16">Topology checks</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#computing-the-bem-geometry-data" id="id18">Computing the BEM geometry data</a></p></li>
-<li><p><a class="reference internal" href="#coil-geometry-information" id="id19">Coil geometry information</a></p>
+<li><p><a class="reference internal" href="#computing-the-bem-geometry-data" id="id17">Computing the BEM geometry data</a></p></li>
+<li><p><a class="reference internal" href="#coil-geometry-information" id="id18">Coil geometry information</a></p>
 <ul>
-<li><p><a class="reference internal" href="#the-sensor-coordinate-system" id="id20">The sensor coordinate system</a></p></li>
-<li><p><a class="reference internal" href="#calculation-of-the-magnetic-field" id="id21">Calculation of the magnetic field</a></p></li>
-<li><p><a class="reference internal" href="#implemented-coil-geometries" id="id22">Implemented coil geometries</a></p></li>
-<li><p><a class="reference internal" href="#the-coil-definition-file" id="id23">The coil definition file</a></p></li>
-<li><p><a class="reference internal" href="#creating-the-coil-definition-file" id="id24">Creating the coil definition file</a></p></li>
+<li><p><a class="reference internal" href="#the-sensor-coordinate-system" id="id19">The sensor coordinate system</a></p></li>
+<li><p><a class="reference internal" href="#calculation-of-the-magnetic-field" id="id20">Calculation of the magnetic field</a></p></li>
+<li><p><a class="reference internal" href="#implemented-coil-geometries" id="id21">Implemented coil geometries</a></p></li>
+<li><p><a class="reference internal" href="#the-coil-definition-file" id="id22">The coil definition file</a></p></li>
+<li><p><a class="reference internal" href="#creating-the-coil-definition-file" id="id23">Creating the coil definition file</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#computing-the-forward-solution" id="id25">Computing the forward solution</a></p>
+<li><p><a class="reference internal" href="#computing-the-forward-solution" id="id24">Computing the forward solution</a></p>
 <ul>
-<li><p><a class="reference internal" href="#purpose" id="id26">Purpose</a></p></li>
-<li><p><a class="reference internal" href="#implementation-of-software-gradient-compensation" id="id27">Implementation of software gradient compensation</a></p></li>
-<li><p><a class="reference internal" href="#the-eeg-sphere-model-definition-file" id="id28">The EEG sphere model definition file</a></p></li>
-<li><p><a class="reference internal" href="#eeg-forward-solution-in-the-sphere-model" id="id29">EEG forward solution in the sphere model</a></p></li>
-<li><p><a class="reference internal" href="#field-derivatives" id="id30">Field derivatives</a></p></li>
+<li><p><a class="reference internal" href="#purpose" id="id25">Purpose</a></p></li>
+<li><p><a class="reference internal" href="#implementation-of-software-gradient-compensation" id="id26">Implementation of software gradient compensation</a></p></li>
+<li><p><a class="reference internal" href="#the-eeg-sphere-model-definition-file" id="id27">The EEG sphere model definition file</a></p></li>
+<li><p><a class="reference internal" href="#eeg-forward-solution-in-the-sphere-model" id="id28">EEG forward solution in the sphere model</a></p></li>
+<li><p><a class="reference internal" href="#field-derivatives" id="id29">Field derivatives</a></p></li>
 </ul>
 </li>
-<li><p><a class="reference internal" href="#averaging-forward-solutions" id="id31">Averaging forward solutions</a></p>
-<ul>
-<li><p><a class="reference internal" href="#id1" id="id32">Purpose</a></p></li>
+<li><p><a class="reference internal" href="#averaging-forward-solutions" id="id30">Averaging forward solutions</a></p></li>
 </ul>
-</li>
-</ul>
-</div>
-<div class="section" id="overview">
-<h2><a class="toc-backref" href="#id10">Overview</a><a class="headerlink" href="#overview" title="Permalink to this headline">¶</a></h2>
-<p>This Chapter covers the definitions of different coordinate
-systems employed in MNE software and FreeSurfer, the details of
-the computation of the forward solutions, and the associated low-level
-utilities.</p>
 </div>
 <div class="section" id="meg-eeg-and-mri-coordinate-systems">
-<span id="c-legacy-chdedfib"></span><h2><a class="toc-backref" href="#id11">MEG/EEG and MRI coordinate systems</a><a class="headerlink" href="#meg-eeg-and-mri-coordinate-systems" title="Permalink to this headline">¶</a></h2>
-<p>The coordinate systems used in MNE software (and FreeSurfer)
-and their relationships are depicted in <a class="reference internal" href="#c-legacy-chdffjij"><span class="std std-ref">MEG/EEG and MRI coordinate systems</span></a>.
-Except for the <em>Sensor coordinates</em>, all of the
-coordinate systems are Cartesian and have the “RAS” (Right-Anterior-Superior)
-orientation, <em>i.e.</em>, the <span class="math notranslate nohighlight">\(x\)</span> axis
-points to the right, the <span class="math notranslate nohighlight">\(y\)</span> axis
-to the front, and the <span class="math notranslate nohighlight">\(z\)</span> axis up.</p>
+<span id="c-legacy-chdedfib"></span><h2><a class="toc-backref" href="#id10">MEG/EEG and MRI coordinate systems</a><a class="headerlink" href="#meg-eeg-and-mri-coordinate-systems" title="Permalink to this headline">¶</a></h2>
+<div class="sidebar">
+<p class="sidebar-title">Coordinate systems in MNE-Python</p>
+<p>In some MNE-Python objects (e.g., <a class="reference internal" href="../../generated/mne.Forward.html#mne.Forward" title="mne.Forward"><code class="xref py py-class docutils literal notranslate"><span class="pre">Forward</span></code></a>,
+<a class="reference internal" href="../../generated/mne.SourceSpaces.html#mne.SourceSpaces" title="mne.SourceSpaces"><code class="xref py py-class docutils literal notranslate"><span class="pre">SourceSpaces</span></code></a>, etc), information about the coordinate frame is
+encoded as a constant integer value. The meaning of those integers is
+determined <a class="reference external" href="https://github.com/mne-tools/mne-python/blob/master/mne/io/constants.py#L186-L197">in the source code</a>.</p>
+</div>
+<p>The coordinate systems used in MNE software (and FreeSurfer) and their
+relationships are depicted in <a class="reference internal" href="#c-legacy-chdffjij"><span class="std std-ref">MEG/EEG and MRI coordinate systems</span></a>. Except for the <em>Sensor
+coordinates</em>, all of the coordinate systems are Cartesian and have the “RAS”
+(Right-Anterior-Superior) orientation, <em>i.e.</em>, the <span class="math notranslate nohighlight">\(x\)</span> axis points to the
+right, the <span class="math notranslate nohighlight">\(y\)</span> axis to the front, and the <span class="math notranslate nohighlight">\(z\)</span> axis up.</p>
 <div class="figure align-default" id="id2">
 <span id="c-legacy-chdffjij"></span><img alt="MEG/EEG and MRI coordinate systems" src="../../_images/CoordinateSystems.png" />
 <p class="caption"><span class="caption-text">MEG/EEG and MRI coordinate systems</span><a class="headerlink" href="#id2" title="Permalink to this image">¶</a></p>
 <div class="legend">
-<p>The coordinate transforms present in the fif files in MNE and the FreeSurfer files as well as those set to fixed values are indicated with <span class="math notranslate nohighlight">\(T_x\)</span>, where <span class="math notranslate nohighlight">\(x\)</span> identifies the transformation.</p>
+<p>The coordinate transforms present in the fif files in MNE and the
+FreeSurfer files as well as those set to fixed values are indicated with
+<span class="math notranslate nohighlight">\(T_x\)</span>, where <span class="math notranslate nohighlight">\(x\)</span> identifies the transformation.</p>
 </div>
 </div>
-<p>The coordinate systems related
-to MEG/EEG data are:</p>
+<p>The coordinate systems related to MEG/EEG data are:</p>
 <p><strong>Head coordinates</strong></p>
 <blockquote>
 <div><p>This is a coordinate system defined with help of the fiducial landmarks
 (nasion and the two auricular points). In fif files, EEG electrode
 locations are given in this coordinate system. In addition, the head
-digitization data acquired in the beginning of an MEG, MEG/EEG,
-or EEG acquisition are expressed in head coordinates. For details,
-see <a class="reference internal" href="#c-legacy-chdedfib"><span class="std std-ref">MEG/EEG and MRI coordinate systems</span></a>.</p>
+digitization data acquired in the beginning of an MEG, MEG/EEG, or EEG
+acquisition are expressed in head coordinates. For details, see
+<a class="reference internal" href="#c-legacy-chdedfib"><span class="std std-ref">MEG/EEG and MRI coordinate systems</span></a>.</p>
 </div></blockquote>
 <p><strong>Device coordinates</strong></p>
 <blockquote>
-<div><p>This is a coordinate system tied to the MEG device. The relationship
-of the Device and Head coordinates is determined during an MEG measurement
-by feeding current to three to five head-position
-indicator (HPI) coils and by determining their locations with respect
-to the MEG sensor array from the magnetic fields they generate.</p>
+<div><p>This is a coordinate system tied to the MEG device. The relationship of the
+Device and Head coordinates is determined during an MEG measurement by
+feeding current to three to five head-position indicator (HPI) coils and by
+determining their locations with respect to the MEG sensor array from the
+magnetic fields they generate.</p>
 </div></blockquote>
 <p><strong>Sensor coordinates</strong></p>
 <blockquote>
-<div><p>Each MEG sensor has a local coordinate system defining the orientation
-and location of the sensor. With help of this coordinate system,
-the numerical integration data needed for the computation of the
-magnetic field can be expressed conveniently as discussed in <a class="reference internal" href="#c-legacy-bjeiaeie"><span class="std std-ref">Coil geometry information</span></a>. The channel information data in the fif files
-contain the information to specify the coordinate transformation
-between the coordinates of each sensor and the MEG device coordinates.</p>
+<div><p>Each MEG sensor has a local coordinate system defining the orientation and
+location of the sensor. With help of this coordinate system, the numerical
+integration data needed for the computation of the magnetic field can be
+expressed conveniently as discussed in <a class="reference internal" href="#c-legacy-bjeiaeie"><span class="std std-ref">Coil geometry information</span></a>. The
+channel information data in the fif files contain the information to
+specify the coordinate transformation between the coordinates of each
+sensor and the MEG device coordinates.</p>
 </div></blockquote>
-<p>The coordinate systems related
-to MRI data are:</p>
+<p>The coordinate systems related to MRI data are:</p>
 <p><strong>Surface RAS coordinates</strong></p>
 <blockquote>
 <div><p>The FreeSurfer surface data are expressed in this coordinate system. The
 origin of this coordinate system is at the center of the conformed
 FreeSurfer MRI volumes (usually 256 x 256 x 256 isotropic 1-mm3  voxels)
-and the axes are oriented along the axes of this volume. The BEM
-surface and the locations of the sources in the source space are
-usually expressed in this coordinate system in the fif files. In
-this manual, the <em>Surface RAS coordinates</em> are
-usually referred to as <em>MRI coordinates</em> unless
-there is need to specifically discuss the different MRI-related
-coordinate systems.</p>
+and the axes are oriented along the axes of this volume. The BEM surface
+and the locations of the sources in the source space are usually expressed
+in this coordinate system in the fif files. In this manual, the <em>Surface
+RAS coordinates</em> are usually referred to as <em>MRI coordinates</em> unless there
+is need to specifically discuss the different MRI-related coordinate
+systems.</p>
 </div></blockquote>
 <p><strong>RAS coordinates</strong></p>
 <blockquote>
-<div><p>This coordinate system has axes identical to the Surface RAS coordinates but the location of the origin
-is different and defined by the original MRI data, i.e. ,
-the origin is in a scanner-dependent location. There is hardly any
-need to refer to this coordinate system explicitly in the analysis
-with the MNE software. However, since the Talairach coordinates,
-discussed below, are defined with respect to <em>RAS coordinates</em> rather
-than the <em>Surface RAS coordinates</em>, the RAS coordinate
-system is implicitly involved in the transformation between Surface RAS coordinates and the two <em>Talairach</em> coordinate
-systems.</p>
+<div><p>This coordinate system has axes identical to the Surface RAS coordinates
+but the location of the origin is different and defined by the original MRI
+data, i.e. , the origin is in a scanner-dependent location. There is hardly
+any need to refer to this coordinate system explicitly in the analysis with
+the MNE software. However, since the Talairach coordinates, discussed
+below, are defined with respect to <em>RAS coordinates</em> rather than the
+<em>Surface RAS coordinates</em>, the RAS coordinate system is implicitly involved
+in the transformation between Surface RAS coordinates and the two
+<em>Talairach</em> coordinate systems.</p>
 </div></blockquote>
 <p><strong>MNI Talairach coordinates</strong></p>
 <blockquote>
-<div><p>The definition of this coordinate system is discussed, e.g. ,
-in  <a class="reference external" href="http://imaging.mrc-cbu.cam.ac.uk/imaging/MniTalairach">http://imaging.mrc-cbu.cam.ac.uk/imaging/MniTalairach</a>. This
-transformation is determined during the FreeSurfer reconstruction
-process.</p>
+<div><p>The definition of this coordinate system is discussed, e.g., in
+<a class="reference external" href="http://imaging.mrc-cbu.cam.ac.uk/imaging/MniTalairach">http://imaging.mrc-cbu.cam.ac.uk/imaging/MniTalairach</a>. This transformation
+is determined during the FreeSurfer reconstruction process. These
+coordinates are in MNI305 space.</p>
 </div></blockquote>
 <p><strong>FreeSurfer Talairach coordinates</strong></p>
 <blockquote>
 <div><p>The problem with the MNI Talairach coordinates is that the linear MNI
-Talairach transform does matched the brains completely to the Talairach
-brain. This is probably because the Talairach atlas brain is a rather
-odd shape, and as a result, it is difficult to match a standard brain
-to the atlas brain using an affine transform. As a result, the MNI
-brains are slightly larger (in particular higher, deeper and longer)
-than the Talairach brain. The differences are larger as you get
-further from the middle of the brain, towards the outside. The FreeSurfer
-Talairach coordinates mitigate this problem by additing a an additional
-transformation, defined separately for negatice and positive MNI
-Talairach <span class="math notranslate nohighlight">\(z\)</span> coordinates. These two
-transformations, denoted by <span class="math notranslate nohighlight">\(T_-\)</span> and <span class="math notranslate nohighlight">\(T_+\)</span> in <a class="reference internal" href="#c-legacy-chdffjij"><span class="std std-ref">MEG/EEG and MRI coordinate systems</span></a>, are fixed as discussed in <a class="reference external" href="http://imaging.mrc-cbu.cam.ac.uk/imaging/MniTalairach">http://imaging.mrc-cbu.cam.ac.uk/imaging/MniTalairach</a>
-(<em>Approach 2</em>).</p>
+Talairach transform does not match the brains completely to the Talairach
+brain. This is probably because the Talairach atlas brain is a rather odd
+shape, and as a result, it is difficult to match a standard brain to the
+atlas brain using an affine transform. As a result, the MNI brains are
+slightly larger (in particular higher, deeper and longer) than the
+Talairach brain. The differences are larger as you get further from the
+middle of the brain, towards the outside. The FreeSurfer Talairach
+coordinates mitigate this problem by additing a an additional
+transformation, defined separately for negatice and positive MNI Talairach
+<span class="math notranslate nohighlight">\(z\)</span> coordinates. These two transformations, denoted by <span class="math notranslate nohighlight">\(T_-\)</span>
+and <span class="math notranslate nohighlight">\(T_+\)</span> in <a class="reference internal" href="#c-legacy-chdffjij"><span class="std std-ref">MEG/EEG and MRI coordinate systems</span></a>, are fixed as discussed in
+<a class="reference external" href="http://imaging.mrc-cbu.cam.ac.uk/imaging/MniTalairach">http://imaging.mrc-cbu.cam.ac.uk/imaging/MniTalairach</a> (<em>Approach 2</em>).</p>
 </div></blockquote>
 <p>The different coordinate systems are related by coordinate
 transformations depicted in <a class="reference internal" href="#c-legacy-chdffjij"><span class="std std-ref">MEG/EEG and MRI coordinate systems</span></a>. The arrows and
@@ -379,8 +371,8 @@ z_1 \\
 1
 \end{bmatrix} = \begin{bmatrix}
 R_{11} &amp; R_{12} &amp; R_{13} &amp; x_0 \\
-R_{13} &amp; R_{13} &amp; R_{13} &amp; y_0 \\
-R_{13} &amp; R_{13} &amp; R_{13} &amp; z_0 \\
+R_{21} &amp; R_{22} &amp; R_{23} &amp; y_0 \\
+R_{31} &amp; R_{32} &amp; R_{33} &amp; z_0 \\
 0 &amp; 0 &amp; 0 &amp; 1
 \end{bmatrix} \begin{bmatrix}
 x_1 \\
@@ -388,15 +380,14 @@ y_1 \\
 z_1 \\
 1
 \end{bmatrix}\ ,\end{split}\]</div>
-<p>where <span class="math notranslate nohighlight">\(x_k\)</span>,:math:<em class="xref py py-obj">y_k</em>,and <span class="math notranslate nohighlight">\(z_k\)</span> are the location
-coordinates in two coordinate systems, <span class="math notranslate nohighlight">\(T_{12}\)</span> is
-the coordinate transformation from coordinate system “1” to “2”,
-<span class="math notranslate nohighlight">\(x_0\)</span>, <span class="math notranslate nohighlight">\(y_0\)</span>,and <span class="math notranslate nohighlight">\(z_0\)</span> is the location of the origin
-of coordinate system “1” in coordinate system “2”,
-and <span class="math notranslate nohighlight">\(R_{jk}\)</span> are the elements of the rotation
-matrix relating the two coordinate systems. The coordinate transformations
-are present in different files produced by FreeSurfer and MNE as
-summarized in <a class="reference internal" href="#c-legacy-chdjdedj"><span class="std std-ref">Coordinate transformations in FreeSurfer and MNE software packages.</span></a>. The fixed transformations <span class="math notranslate nohighlight">\(T_-\)</span> and <span class="math notranslate nohighlight">\(T_+\)</span> are:</p>
+<p>where <span class="math notranslate nohighlight">\(x_k\)</span>, <span class="math notranslate nohighlight">\(y_k\)</span>,and <span class="math notranslate nohighlight">\(z_k\)</span> are the location coordinates in
+two coordinate systems, <span class="math notranslate nohighlight">\(T_{12}\)</span> is the coordinate transformation from
+coordinate system “1” to “2”, <span class="math notranslate nohighlight">\(x_0\)</span>, <span class="math notranslate nohighlight">\(y_0\)</span>, and <span class="math notranslate nohighlight">\(z_0\)</span> is the
+location of the origin of coordinate system “1” in coordinate system “2”, and
+<span class="math notranslate nohighlight">\(R_{jk}\)</span> are the elements of the rotation matrix relating the two
+coordinate systems. The coordinate transformations are present in different
+files produced by FreeSurfer and MNE as summarized in <a class="reference internal" href="#c-legacy-chdjdedj"><span class="std std-ref">Coordinate transformations in FreeSurfer and MNE software packages.</span></a>.
+The fixed transformations <span class="math notranslate nohighlight">\(T_-\)</span> and <span class="math notranslate nohighlight">\(T_+\)</span> are:</p>
 <div class="math notranslate nohighlight">
 \[\begin{split}T_{-} = \begin{bmatrix}
 0.99 &amp; 0 &amp; 0 &amp; 0 \\
@@ -414,7 +405,12 @@ summarized in <a class="reference internal" href="#c-legacy-chdjdedj"><span clas
 \end{bmatrix}\end{split}\]</div>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>This section does not discuss the transformation    between the MRI voxel indices and the different MRI coordinates.    However, it is important to note that in FreeSurfer, MNE, as well    as in Neuromag software an integer voxel coordinate corresponds    to the location of the center of a voxel. Detailed information on    the FreeSurfer MRI systems can be found at  <a class="reference external" href="https://surfer.nmr.mgh.harvard.edu/fswiki/CoordinateSystems">https://surfer.nmr.mgh.harvard.edu/fswiki/CoordinateSystems</a>.</p>
+<p>This section does not discuss the transformation between the MRI voxel
+indices and the different MRI coordinates. However, it is important to note
+that in FreeSurfer, MNE, as well as in Neuromag software an integer voxel
+coordinate corresponds to the location of the center of a voxel. Detailed
+information on the FreeSurfer MRI systems can be found at
+<a class="reference external" href="https://surfer.nmr.mgh.harvard.edu/fswiki/CoordinateSystems">https://surfer.nmr.mgh.harvard.edu/fswiki/CoordinateSystems</a>.</p>
 </div>
 <span id="c-legacy-chdjdedj"></span><table class="docutils align-default" id="id3">
 <caption><span class="caption-text">Coordinate transformations in FreeSurfer and MNE software packages.</span><a class="headerlink" href="#id3" title="Permalink to this table">¶</a></caption>
@@ -481,61 +477,69 @@ mgz or mgh format.</p></td>
 </table>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>The symbols <span class="math notranslate nohighlight">\(T_x\)</span> are defined in <a class="reference internal" href="#c-legacy-chdffjij"><span class="std std-ref">MEG/EEG and MRI coordinate systems</span></a>. mne_make_cor_set /mne_setup_mri prior to release 2.6 did not include transformations <span class="math notranslate nohighlight">\(T_3\)</span>, <span class="math notranslate nohighlight">\(T_4\)</span>, <span class="math notranslate nohighlight">\(T_-\)</span>, and <span class="math notranslate nohighlight">\(T_+\)</span> in the fif files produced.</p>
+<p>The symbols <span class="math notranslate nohighlight">\(T_x\)</span> are defined in <a class="reference internal" href="#c-legacy-chdffjij"><span class="std std-ref">MEG/EEG and MRI coordinate systems</span></a>.
+mne_make_cor_set /mne_setup_mri prior to release 2.6 did not include
+transformations <span class="math notranslate nohighlight">\(T_3\)</span>, <span class="math notranslate nohighlight">\(T_4\)</span>, <span class="math notranslate nohighlight">\(T_-\)</span>, and <span class="math notranslate nohighlight">\(T_+\)</span> in
+the fif files produced.</p>
 </div>
 </div>
 <div class="section" id="the-head-and-device-coordinate-systems">
-<span id="c-legacy-bjebibai"></span><h2><a class="toc-backref" href="#id12">The head and device coordinate systems</a><a class="headerlink" href="#the-head-and-device-coordinate-systems" title="Permalink to this headline">¶</a></h2>
+<span id="c-legacy-bjebibai"></span><h2><a class="toc-backref" href="#id11">The head and device coordinate systems</a><a class="headerlink" href="#the-head-and-device-coordinate-systems" title="Permalink to this headline">¶</a></h2>
 <div class="figure align-default" id="id4">
 <img alt="Head coordinate system" src="../../_images/HeadCS.png" />
 <p class="caption"><span class="caption-text">The head coordinate system</span><a class="headerlink" href="#id4" title="Permalink to this image">¶</a></p>
 </div>
-<p>The MEG/EEG head coordinate system employed in the MNE software
-is a right-handed Cartesian coordinate system. The direction of <span class="math notranslate nohighlight">\(x\)</span> axis
-is from left to right, that of <span class="math notranslate nohighlight">\(y\)</span> axis
-to the front, and the <span class="math notranslate nohighlight">\(z\)</span> axis thus
-points up.</p>
-<p>The <span class="math notranslate nohighlight">\(x\)</span> axis of the head coordinate
-system passes through the two periauricular or preauricular points
-digitized before acquiring the data with positive direction to the
-right. The <span class="math notranslate nohighlight">\(y\)</span> axis passes through
-the nasion and is normal to the <span class="math notranslate nohighlight">\(x\)</span> axis.
-The <span class="math notranslate nohighlight">\(z\)</span> axis points up according to
+<p>The MEG/EEG head coordinate system employed in the MNE software is a
+right-handed Cartesian coordinate system. The direction of <span class="math notranslate nohighlight">\(x\)</span> axis is
+from left to right, that of <span class="math notranslate nohighlight">\(y\)</span> axis to the front, and the <span class="math notranslate nohighlight">\(z\)</span> axis
+thus points up.</p>
+<p>The <span class="math notranslate nohighlight">\(x\)</span> axis of the head coordinate system passes through the two
+periauricular or preauricular points digitized before acquiring the data with
+positive direction to the right. The <span class="math notranslate nohighlight">\(y\)</span> axis passes through the nasion
+and is normal to the <span class="math notranslate nohighlight">\(x\)</span> axis. The <span class="math notranslate nohighlight">\(z\)</span> axis points up according to
 the right-hand rule and is normal to the <span class="math notranslate nohighlight">\(xy\)</span> plane.</p>
-<p>The origin of the MEG device coordinate system is device
-dependent. Its origin is located approximately at the center of
-a sphere which fits the occipital section of the MEG helmet best
-with <span class="math notranslate nohighlight">\(x\)</span> axis axis going from left to right
-and <span class="math notranslate nohighlight">\(y\)</span> axis pointing front. The <span class="math notranslate nohighlight">\(z\)</span> axis
-is, again, normal to the <span class="math notranslate nohighlight">\(xy\)</span> plane
-with positive direction up.</p>
+<p>The origin of the MEG device coordinate system is device dependent. Its origin
+is located approximately at the center of a sphere which fits the occipital
+section of the MEG helmet best with <span class="math notranslate nohighlight">\(x\)</span> axis axis going from left to
+right and <span class="math notranslate nohighlight">\(y\)</span> axis pointing front. The <span class="math notranslate nohighlight">\(z\)</span> axis is, again, normal
+to the <span class="math notranslate nohighlight">\(xy\)</span> plane with positive direction up.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
-<p>The above definition is identical to that    of the Neuromag MEG/EEG (head) coordinate system. However, in 4-D    Neuroimaging and CTF MEG systems the head coordinate frame definition    is different. The origin of the coordinate system is at the midpoint    of the left and right auricular points. The <span class="math notranslate nohighlight">\(x\)</span> axis    passes through the nasion and the origin with positive direction    to the front. The <span class="math notranslate nohighlight">\(y\)</span> axis is perpendicular    to the <span class="math notranslate nohighlight">\(x\)</span> axis on the and lies in    the plane defined by the three fiducial landmarks, positive direction    from right to left. The <span class="math notranslate nohighlight">\(z\)</span> axis is    normal to the plane of the landmarks, pointing up. Note that in    this convention the auricular points are not necessarily located    on <span class="math notranslate nohighlight">\(y\)</span> coordinate axis. The file conversion utilities take care of these idiosyncrasies and convert all coordinate information    to the MNE software head coordinate frame.</p>
+<p>The above definition is identical to that of the Neuromag MEG/EEG (head)
+coordinate system. However, in 4-D Neuroimaging and CTF MEG systems the head
+coordinate frame definition is different. The origin of the coordinate
+system is at the midpoint of the left and right auricular points. The
+<span class="math notranslate nohighlight">\(x\)</span> axis passes through the nasion and the origin with positive
+direction to the front. The <span class="math notranslate nohighlight">\(y\)</span> axis is perpendicular to the <span class="math notranslate nohighlight">\(x\)</span>
+axis on the and lies in the plane defined by the three fiducial landmarks,
+positive direction from right to left. The <span class="math notranslate nohighlight">\(z\)</span> axis is normal to the
+plane of the landmarks, pointing up. Note that in this convention the
+auricular points are not necessarily located on <span class="math notranslate nohighlight">\(y\)</span> coordinate axis.
+The file conversion utilities take care of these idiosyncrasies and convert
+all coordinate information to the MNE software head coordinate frame.</p>
 </div>
 </div>
 <div class="section" id="creating-a-surface-based-source-space">
-<span id="c-legacy-behcgjdd"></span><h2><a class="toc-backref" href="#id13">Creating a surface-based source space</a><a class="headerlink" href="#creating-a-surface-based-source-space" title="Permalink to this headline">¶</a></h2>
-<p>The fif format source space files containing the dipole locations
-and orientations are created with the utility <a class="reference internal" href="../c_reference.html#mne-make-source-space"><span class="std std-ref">mne_make_source_space</span></a>.
-This utility is usually invoked by the convenience script <a class="reference internal" href="../c_reference.html#mne-setup-source-space"><span class="std std-ref">mne_setup_source_space</span></a>,
-see <a class="reference internal" href="../cookbook.html#setting-up-source-space"><span class="std std-ref">Setting up the source space</span></a>.</p>
+<span id="c-legacy-behcgjdd"></span><h2><a class="toc-backref" href="#id12">Creating a surface-based source space</a><a class="headerlink" href="#creating-a-surface-based-source-space" title="Permalink to this headline">¶</a></h2>
+<p>The fif format source space files containing the dipole locations and
+orientations are created with the utility <a class="reference internal" href="../c_reference.html#mne-make-source-space"><span class="std std-ref">mne_make_source_space</span></a>. This
+utility is usually invoked by the convenience script
+<a class="reference internal" href="../c_reference.html#mne-setup-source-space"><span class="std std-ref">mne_setup_source_space</span></a>, see <a class="reference internal" href="../cookbook.html#setting-up-source-space"><span class="std std-ref">Setting up the source space</span></a>.</p>
 </div>
 <div class="section" id="creating-a-volumetric-or-discrete-source-space">
-<span id="c-legacy-bjefehji"></span><h2><a class="toc-backref" href="#id14">Creating a volumetric or discrete source space</a><a class="headerlink" href="#creating-a-volumetric-or-discrete-source-space" title="Permalink to this headline">¶</a></h2>
-<p>In addition to source spaces confined to a surface, the MNE
-software provides some support for three-dimensional source spaces
-bounded by a surface as well as source spaces comprised of discrete,
-arbitrarily located source points. The <a class="reference internal" href="../c_reference.html#mne-volume-source-space"><span class="std std-ref">mne_volume_source_space</span></a> utility
-assists in generating such source spaces.</p>
+<span id="c-legacy-bjefehji"></span><h2><a class="toc-backref" href="#id13">Creating a volumetric or discrete source space</a><a class="headerlink" href="#creating-a-volumetric-or-discrete-source-space" title="Permalink to this headline">¶</a></h2>
+<p>In addition to source spaces confined to a surface, the MNE software provides
+some support for three-dimensional source spaces bounded by a surface as well
+as source spaces comprised of discrete, arbitrarily located source points. The
+<a class="reference internal" href="../c_reference.html#mne-volume-source-space"><span class="std std-ref">mne_volume_source_space</span></a> utility assists in generating such source
+spaces.</p>
 </div>
 <div class="section" id="creating-the-bem-meshes">
-<span id="c-legacy-behcaccj"></span><h2><a class="toc-backref" href="#id15">Creating the BEM meshes</a><a class="headerlink" href="#creating-the-bem-meshes" title="Permalink to this headline">¶</a></h2>
-<p>The <a class="reference internal" href="../c_reference.html#mne-surf2bem"><span class="std std-ref">mne_surf2bem</span></a> utility
-converts surface triangle meshes from ASCII and FreeSurfer binary
-file formats to the fif format. The resulting fiff file also contains
-conductivity information so that it can be employed in the BEM calculations.
-See command-line options in <a class="reference internal" href="../c_reference.html#mne-surf2bem"><span class="std std-ref">mne_surf2bem</span></a>.</p>
+<span id="c-legacy-behcaccj"></span><h2><a class="toc-backref" href="#id14">Creating the BEM meshes</a><a class="headerlink" href="#creating-the-bem-meshes" title="Permalink to this headline">¶</a></h2>
+<p>The <a class="reference internal" href="../c_reference.html#mne-surf2bem"><span class="std std-ref">mne_surf2bem</span></a> utility converts surface triangle meshes from ASCII and
+FreeSurfer binary file formats to the fif format. The resulting fiff file also
+contains conductivity information so that it can be employed in the BEM
+calculations. See command-line options in <a class="reference internal" href="../c_reference.html#mne-surf2bem"><span class="std std-ref">mne_surf2bem</span></a>.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>The utility <code class="docutils literal notranslate"><span class="pre">mne_tri2fiff</span></code> previously used for this task has been replaced by <a class="reference internal" href="../c_reference.html#mne-surf2bem"><span class="std std-ref">mne_surf2bem</span></a>.</p>
@@ -549,7 +553,7 @@ See command-line options in <a class="reference internal" href="../c_reference.h
 <p>The vertices of all surfaces should be given in the MRI coordinate system.</p>
 </div>
 <div class="section" id="tessellation-file-format">
-<span id="c-legacy-behdefcd"></span><h3><a class="toc-backref" href="#id16">Tessellation file format</a><a class="headerlink" href="#tessellation-file-format" title="Permalink to this headline">¶</a></h3>
+<span id="c-legacy-behdefcd"></span><h3><a class="toc-backref" href="#id15">Tessellation file format</a><a class="headerlink" href="#tessellation-file-format" title="Permalink to this headline">¶</a></h3>
 <p>The format of the text format surface files is the following:</p>
 <blockquote>
 <div><div class="line-block">
@@ -597,7 +601,7 @@ triangle list may also contain running numbers on each line describing
 a triangle.</p>
 </div>
 <div class="section" id="topology-checks">
-<span id="c-legacy-behcbdde"></span><h3><a class="toc-backref" href="#id17">Topology checks</a><a class="headerlink" href="#topology-checks" title="Permalink to this headline">¶</a></h3>
+<span id="c-legacy-behcbdde"></span><h3><a class="toc-backref" href="#id16">Topology checks</a><a class="headerlink" href="#topology-checks" title="Permalink to this headline">¶</a></h3>
 <p>If the <code class="docutils literal notranslate"><span class="pre">--check</span></code> option is specified, the following
 topology checks are performed:</p>
 <ul class="simple">
@@ -626,27 +630,33 @@ meters instead of millimeters.</p></li>
 </div>
 </div>
 <div class="section" id="computing-the-bem-geometry-data">
-<span id="c-legacy-chdjfheb"></span><h2><a class="toc-backref" href="#id18">Computing the BEM geometry data</a><a class="headerlink" href="#computing-the-bem-geometry-data" title="Permalink to this headline">¶</a></h2>
-<p>The utility <a class="reference internal" href="../c_reference.html#mne-prepare-bem-model"><span class="std std-ref">mne_prepare_bem_model</span></a> computes
-the geometry information for BEM. This utility is usually invoked
-by the convenience script <a class="reference internal" href="../c_reference.html#mne-setup-forward-model"><span class="std std-ref">mne_setup_forward_model</span></a>,
-see <a class="reference internal" href="../cookbook.html#cihdbfeg"><span class="std std-ref">Setting up the boundary-element model</span></a>. The command-line options are listed under
-<a class="reference internal" href="../c_reference.html#mne-prepare-bem-model"><span class="std std-ref">mne_prepare_bem_model</span></a>.</p>
+<span id="c-legacy-chdjfheb"></span><h2><a class="toc-backref" href="#id17">Computing the BEM geometry data</a><a class="headerlink" href="#computing-the-bem-geometry-data" title="Permalink to this headline">¶</a></h2>
+<p>The utility <a class="reference internal" href="../c_reference.html#mne-prepare-bem-model"><span class="std std-ref">mne_prepare_bem_model</span></a> computes the geometry information for
+BEM. This utility is usually invoked by the convenience script
+<a class="reference internal" href="../c_reference.html#mne-setup-forward-model"><span class="std std-ref">mne_setup_forward_model</span></a>, see <a class="reference internal" href="../cookbook.html#cihdbfeg"><span class="std std-ref">Setting up the boundary-element model</span></a>. The command-line options
+are listed under <a class="reference internal" href="../c_reference.html#mne-prepare-bem-model"><span class="std std-ref">mne_prepare_bem_model</span></a>.</p>
 </div>
 <div class="section" id="coil-geometry-information">
-<span id="c-legacy-bjeiaeie"></span><h2><a class="toc-backref" href="#id19">Coil geometry information</a><a class="headerlink" href="#coil-geometry-information" title="Permalink to this headline">¶</a></h2>
-<p>This Section explains the presentation of MEG detection coil
-geometry information the approximations used for different detection
-coils in MNE software. Two pieces of information are needed to characterize
-the detectors:</p>
+<span id="c-legacy-bjeiaeie"></span><h2><a class="toc-backref" href="#id18">Coil geometry information</a><a class="headerlink" href="#coil-geometry-information" title="Permalink to this headline">¶</a></h2>
+<p>This Section explains the presentation of MEG detection coil geometry
+information the approximations used for different detection coils in MNE
+software. Two pieces of information are needed to characterize the detectors:</p>
 <ul class="simple">
-<li><p>The location and orientation a local
-coordinate system for each detector.</p></li>
-<li><p>A unique identifier, which has an one-to-one correspondence
-to the geometrical description of the coil.</p></li>
+<li><p>The location and orientation a local coordinate system for each detector.</p></li>
+<li><p>A unique identifier, which has an one-to-one correspondence to the
+geometrical description of the coil.</p></li>
 </ul>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>MNE ships with several coil geometry configurations.
+They can be found in <code class="docutils literal notranslate"><span class="pre">mne/data</span></code>.
+See <a class="reference internal" href="../../auto_examples/visualization/plot_meg_sensors.html#ex-plot-meg-sensors"><span class="std std-ref">Plotting sensor layouts of MEG systems</span></a>
+for a comparison between different coil geometries, and
+<a class="reference internal" href="#implemented-coil-geometries"><span class="std std-ref">Implemented coil geometries</span></a> for detailed information regarding
+the files describing Neuromag coil geometries.</p>
+</div>
 <div class="section" id="the-sensor-coordinate-system">
-<h3><a class="toc-backref" href="#id20">The sensor coordinate system</a><a class="headerlink" href="#the-sensor-coordinate-system" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id19">The sensor coordinate system</a><a class="headerlink" href="#the-sensor-coordinate-system" title="Permalink to this headline">¶</a></h3>
 <p>The sensor coordinate system is completely characterized
 by the location of its origin and the direction cosines of three
 orthogonal unit vectors pointing to the directions of the x, y,
@@ -660,7 +670,8 @@ was used. Optionally, the MNE software forward calculation applies
 another coordinate transformation to the head-coordinate data to
 bring the coil locations and orientations to the MRI coordinate system.</p>
 <p>If <span class="math notranslate nohighlight">\(r_0\)</span> is a row vector for
-the origin of the local sensor coordinate system and <span class="math notranslate nohighlight">\(e_x\)</span>, <span class="math notranslate nohighlight">\(e_y\)</span>, and <span class="math notranslate nohighlight">\(e_z\)</span> are the row vectors for the
+the origin of the local sensor coordinate system and <span class="math notranslate nohighlight">\(e_x\)</span>, <span class="math notranslate nohighlight">\(e_y\)</span>,
+and <span class="math notranslate nohighlight">\(e_z\)</span> are the row vectors for the
 three orthogonal unit vectors, all given in device coordinates,
 a location of a point <span class="math notranslate nohighlight">\(r_C\)</span> in sensor coordinates
 is transformed to device coordinates (<span class="math notranslate nohighlight">\(r_D\)</span>)
@@ -677,7 +688,7 @@ r_{0D} &amp; 1
 \end{bmatrix}\ .\end{split}\]</div>
 </div>
 <div class="section" id="calculation-of-the-magnetic-field">
-<h3><a class="toc-backref" href="#id21">Calculation of the magnetic field</a><a class="headerlink" href="#calculation-of-the-magnetic-field" title="Permalink to this headline">¶</a></h3>
+<h3><a class="toc-backref" href="#id20">Calculation of the magnetic field</a><a class="headerlink" href="#calculation-of-the-magnetic-field" title="Permalink to this headline">¶</a></h3>
 <p>The forward calculation in the MNE software computes the
 signals detected by each MEG sensor for three orthogonal dipoles
 at each source space location. This requires specification of the
@@ -693,11 +704,11 @@ MEG channel, <span class="math notranslate nohighlight">\(b_k\)</span> can be ap
 \[b_k = \sum_{p = 1}^{N_k} {w_{kp} B(r_{kp}) \cdot n_{kp}}\]</div>
 <p>where <span class="math notranslate nohighlight">\(r_{kp}\)</span> are a set of <span class="math notranslate nohighlight">\(N_k\)</span> integration
 points covering the pickup coil loops of the sensor, <span class="math notranslate nohighlight">\(B(r_{kp})\)</span> is
-the magnetic field due to the current sources calculated at <span class="math notranslate nohighlight">\(r_{kp}\)</span>, <span class="math notranslate nohighlight">\(n_{kp}\)</span> are
-the coil normal directions at these points, and <span class="math notranslate nohighlight">\(w_{kp}\)</span> are
-the weights associated to the integration points. This formula essentially
-presents numerical integration of the magnetic field over the pickup
-loops of sensor <span class="math notranslate nohighlight">\(k\)</span>.</p>
+the magnetic field due to the current sources calculated at <span class="math notranslate nohighlight">\(r_{kp}\)</span>,
+<span class="math notranslate nohighlight">\(n_{kp}\)</span> are the coil normal directions at these points, and
+<span class="math notranslate nohighlight">\(w_{kp}\)</span> are the weights associated to the integration points. This
+formula essentially presents numerical integration of the magnetic field over
+the pickup loops of sensor <span class="math notranslate nohighlight">\(k\)</span>.</p>
 <p>There are three accuracy levels for the numerical integration
 expressed above. The <em>simple</em> accuracy means
 the simplest description of the coil. This accuracy is not used
@@ -711,9 +722,9 @@ sixteen for magnetometers. Detailed information about the integration
 points is given in the next section.</p>
 </div>
 <div class="section" id="implemented-coil-geometries">
-<h3><a class="toc-backref" href="#id22">Implemented coil geometries</a><a class="headerlink" href="#implemented-coil-geometries" title="Permalink to this headline">¶</a></h3>
+<span id="id1"></span><h3><a class="toc-backref" href="#id21">Implemented coil geometries</a><a class="headerlink" href="#implemented-coil-geometries" title="Permalink to this headline">¶</a></h3>
 <p>This section describes the coil geometries currently implemented
-in Neuromag software. The coil types fall in two general categories:</p>
+in MNE. The coil types fall in two general categories:</p>
 <ul class="simple">
 <li><p>Axial gradiometers and planar gradiometers
 and</p></li>
@@ -1061,24 +1072,25 @@ gradiometer</p></td>
 </table>
 </div>
 <div class="section" id="the-coil-definition-file">
-<span id="c-legacy-bjecigeb"></span><h3><a class="toc-backref" href="#id23">The coil definition file</a><a class="headerlink" href="#the-coil-definition-file" title="Permalink to this headline">¶</a></h3>
+<span id="c-legacy-bjecigeb"></span><h3><a class="toc-backref" href="#id22">The coil definition file</a><a class="headerlink" href="#the-coil-definition-file" title="Permalink to this headline">¶</a></h3>
 <p>The coil geometry information is stored in the text file
-$MNE_ROOT/share/mne/coil_def.dat. In this file, any lines starting
-with the pound sign (#) are comments. A coil definition starts with
-a description line containing the following fields:</p>
+<code class="file docutils literal notranslate"><em><span class="pre">$MNE_ROOT</span></em><span class="pre">/share/mne/coil_def.dat</span></code>. In this file, any lines starting
+with the pound sign (#) are comments. A coil definition starts with a
+description line containing the following fields:</p>
 <p>** &lt;<em>class</em>&gt;**</p>
 <blockquote>
-<div><p>This is a number indicating class of this coil. Possible values
-are listed in <a class="reference internal" href="#c-legacy-bjefabha"><span class="std std-ref">Coil class values</span></a>.</p>
+<div><p>This is a number indicating class of this coil. Possible values are listed
+in <a class="reference internal" href="#c-legacy-bjefabha"><span class="std std-ref">Coil class values</span></a>.</p>
 </div></blockquote>
 <p>** &lt;<em>id</em>&gt;**</p>
 <blockquote>
-<div><p>Coil id value. This value is listed in the first column of Tables <a class="reference internal" href="#c-legacy-bgbbhgec"><span class="std std-ref">Normal coil descriptions.</span></a> and <a class="reference internal" href="#c-legacy-chdbdfje"><span class="std std-ref">Accurate coil descriptions</span></a>.</p>
+<div><p>Coil id value. This value is listed in the first column of Tables
+<a class="reference internal" href="#c-legacy-bgbbhgec"><span class="std std-ref">Normal coil descriptions.</span></a> and <a class="reference internal" href="#c-legacy-chdbdfje"><span class="std std-ref">Accurate coil descriptions</span></a>.</p>
 </div></blockquote>
 <p>** &lt;<em>accuracy</em>&gt;**</p>
 <blockquote>
-<div><p>The coil representation accuracy. Possible values and their meanings
-are listed in <a class="reference internal" href="#c-legacy-bjehibjc"><span class="std std-ref">Coil representation accuracies.</span></a>.</p>
+<div><p>The coil representation accuracy. Possible values and their meanings are
+listed in <a class="reference internal" href="#c-legacy-bjehibjc"><span class="std std-ref">Coil representation accuracies.</span></a>.</p>
 </div></blockquote>
 <p>** &lt;<em>np</em>&gt;**</p>
 <blockquote>
@@ -1086,23 +1098,22 @@ are listed in <a class="reference internal" href="#c-legacy-bjehibjc"><span clas
 </div></blockquote>
 <p>** &lt;<em>size/m</em>&gt;**</p>
 <blockquote>
-<div><p>The size of the coil. For circular coils this is the diameter of
-the coil and for square ones the side length of the square. This
-information is mainly included to facilitate drawing of the coil
-geometry. It should not be employed to infer a coil approximation
-for the forward calculations.</p>
+<div><p>The size of the coil. For circular coils this is the diameter of the coil
+and for square ones the side length of the square. This information is
+mainly included to facilitate drawing of the coil geometry. It should not
+be employed to infer a coil approximation for the forward calculations.</p>
 </div></blockquote>
 <p>** &lt;<em>baseline/m</em>&gt;**</p>
 <blockquote>
 <div><p>The baseline of a this kind of a coil. This will be zero for magnetometer
-coils. This information is mainly included to facilitate drawing
-of the coil geometry. It should not be employed to infer a coil
-approximation for the forward calculations.</p>
+coils. This information is mainly included to facilitate drawing of the
+coil geometry. It should not be employed to infer a coil approximation for
+the forward calculations.</p>
 </div></blockquote>
 <p>** &lt;<em>description</em>&gt;**</p>
 <blockquote>
-<div><p>Short description of this kind of a coil. If the description contains several
-words, it is enclosed in quotes.</p>
+<div><p>Short description of this kind of a coil. If the description contains
+several words, it is enclosed in quotes.</p>
 </div></blockquote>
 <span id="c-legacy-bjefabha"></span><table class="docutils align-default" id="id7">
 <caption><span class="caption-text">Coil class values</span><a class="headerlink" href="#id7" title="Permalink to this table">¶</a></caption>
@@ -1156,26 +1167,28 @@ words, it is enclosed in quotes.</p>
 </tr>
 </tbody>
 </table>
-<p>Each coil description line is followed by one or more integration
-point lines, consisting of seven numbers:</p>
+<p>Each coil description line is followed by one or more integration point lines,
+consisting of seven numbers:</p>
 <p>** &lt;<em>weight</em>&gt;**</p>
 <blockquote>
-<div><p>Gives the weight for this integration point (last column in Tables <a class="reference internal" href="#c-legacy-bgbbhgec"><span class="std std-ref">Normal coil descriptions.</span></a> and <a class="reference internal" href="#c-legacy-chdbdfje"><span class="std std-ref">Accurate coil descriptions</span></a>).</p>
+<div><p>Gives the weight for this integration point (last column in Tables
+<a class="reference internal" href="#c-legacy-bgbbhgec"><span class="std std-ref">Normal coil descriptions.</span></a> and <a class="reference internal" href="#c-legacy-chdbdfje"><span class="std std-ref">Accurate coil descriptions</span></a>).</p>
 </div></blockquote>
 <p>** &lt;<em>x/m</em>&gt; &lt;<em>y/m</em>&gt; &lt;<em>z/m</em>&gt;**</p>
 <blockquote>
-<div><p>Indicates the location of the integration point (fourth column in Tables <a class="reference internal" href="#c-legacy-bgbbhgec"><span class="std std-ref">Normal coil descriptions.</span></a> and <a class="reference internal" href="#c-legacy-chdbdfje"><span class="std std-ref">Accurate coil descriptions</span></a>).</p>
+<div><p>Indicates the location of the integration point (fourth column in Tables
+<a class="reference internal" href="#c-legacy-bgbbhgec"><span class="std std-ref">Normal coil descriptions.</span></a> and <a class="reference internal" href="#c-legacy-chdbdfje"><span class="std std-ref">Accurate coil descriptions</span></a>).</p>
 </div></blockquote>
 <p>** &lt;<em>nx</em>&gt; &lt;<em>ny</em>&gt; &lt;<em>nz</em>&gt;**</p>
 <blockquote>
 <div><p>Components of a unit vector indicating the field component to be selected.
-Note that listing a separate unit vector for each integration points
-allows the implementation of curved coils and coils with the gradiometer
-loops tilted with respect to each other.</p>
+Note that listing a separate unit vector for each integration points allows
+the implementation of curved coils and coils with the gradiometer loops
+tilted with respect to each other.</p>
 </div></blockquote>
 </div>
 <div class="section" id="creating-the-coil-definition-file">
-<span id="c-legacy-bjehhjij"></span><h3><a class="toc-backref" href="#id24">Creating the coil definition file</a><a class="headerlink" href="#creating-the-coil-definition-file" title="Permalink to this headline">¶</a></h3>
+<span id="c-legacy-bjehhjij"></span><h3><a class="toc-backref" href="#id23">Creating the coil definition file</a><a class="headerlink" href="#creating-the-coil-definition-file" title="Permalink to this headline">¶</a></h3>
 <p>The standard coil definition file $MNE_ROOT/share/mne/coil_def.dat
 is included with the MNE software package. The coil definition file
 can be recreated with the utility mne_list_coil_def
@@ -1184,54 +1197,72 @@ as follows:</p>
 </div>
 </div>
 <div class="section" id="computing-the-forward-solution">
-<span id="c-legacy-chddibah"></span><h2><a class="toc-backref" href="#id25">Computing the forward solution</a><a class="headerlink" href="#computing-the-forward-solution" title="Permalink to this headline">¶</a></h2>
+<span id="c-legacy-chddibah"></span><h2><a class="toc-backref" href="#id24">Computing the forward solution</a><a class="headerlink" href="#computing-the-forward-solution" title="Permalink to this headline">¶</a></h2>
 <div class="section" id="purpose">
-<h3><a class="toc-backref" href="#id26">Purpose</a><a class="headerlink" href="#purpose" title="Permalink to this headline">¶</a></h3>
-<p>Instead of using the convenience script <a class="reference internal" href="../c_reference.html#mne-do-forward-solution"><span class="std std-ref">mne_do_forward_solution</span></a> it
-is also possible to invoke the forward solution computation program <a class="reference internal" href="../c_reference.html#mne-forward-solution"><span class="std std-ref">mne_forward_solution</span></a> directly.
-In this approach, the convenience of the automatic file naming conventions
-present in <a class="reference internal" href="../c_reference.html#mne-do-forward-solution"><span class="std std-ref">mne_do_forward_solution</span></a> are
-lost. However, there are some special-purpose options available
-in <a class="reference internal" href="../c_reference.html#mne-forward-solution"><span class="std std-ref">mne_forward_solution</span></a> only.
-Please refer to <a class="reference internal" href="../cookbook.html#babchejd"><span class="std std-ref">Computing the forward solution</span></a> for information on <a class="reference internal" href="../c_reference.html#mne-do-forward-solution"><span class="std std-ref">mne_do_forward_solution</span></a>.
-See <a class="reference internal" href="../c_reference.html#mne-forward-solution"><span class="std std-ref">mne_forward_solution</span></a> for command-line options.</p>
+<h3><a class="toc-backref" href="#id25">Purpose</a><a class="headerlink" href="#purpose" title="Permalink to this headline">¶</a></h3>
+<div class="sidebar">
+<p class="sidebar-title">The forward solution in MNE-Python</p>
+<p>Examples on how to compute the forward solution in MNE-Python using
+<a class="reference internal" href="../../generated/mne.make_forward_solution.html#mne.make_forward_solution" title="mne.make_forward_solution"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.make_forward_solution()</span></code></a> can be found
+<a class="reference internal" href="../../auto_tutorials/source-modeling/plot_forward.html#plot-forward-compute-forward-solution"><span class="std std-ref">Compute forward solution</span></a> and <a class="reference internal" href="../cookbook.html#babchejd"><span class="std std-ref">Computing the forward solution</span></a>.</p>
+</div>
+<p>Instead of using the convenience script <a class="reference internal" href="../c_reference.html#mne-do-forward-solution"><span class="std std-ref">mne_do_forward_solution</span></a> it is
+also possible to invoke the forward solution computation program
+<a class="reference internal" href="../c_reference.html#mne-forward-solution"><span class="std std-ref">mne_forward_solution</span></a> directly. In this approach, the convenience of the
+automatic file naming conventions present in <a class="reference internal" href="../c_reference.html#mne-do-forward-solution"><span class="std std-ref">mne_do_forward_solution</span></a> are
+lost. However, there are some special-purpose options available in
+<a class="reference internal" href="../c_reference.html#mne-forward-solution"><span class="std std-ref">mne_forward_solution</span></a> only. Please refer to <a class="reference internal" href="../cookbook.html#babchejd"><span class="std std-ref">Computing the forward solution</span></a> for
+information on <a class="reference internal" href="../c_reference.html#mne-do-forward-solution"><span class="std std-ref">mne_do_forward_solution</span></a>. See <a class="reference internal" href="../c_reference.html#mne-forward-solution"><span class="std std-ref">mne_forward_solution</span></a>
+for command-line options.</p>
 </div>
 <div class="section" id="implementation-of-software-gradient-compensation">
-<h3><a class="toc-backref" href="#id27">Implementation of software gradient compensation</a><a class="headerlink" href="#implementation-of-software-gradient-compensation" title="Permalink to this headline">¶</a></h3>
-<p>As described in <a class="reference internal" href="../io.html#behddfbi"><span class="std std-ref">Applying software gradient compensation</span></a> the CTF and 4D Neuroimaging
-data may have been subjected to noise cancellation employing the
-data from the reference sensor array. Even though these sensor are
-rather far away from the brain sources, mne_forward_solution takes
-them into account in the computations. If the data file specified
-with the <code class="docutils literal notranslate"><span class="pre">--meas</span></code> option has software gradient compensation
-activated, mne_forward_solution computes
-the field of at the reference sensors in addition to the main MEG
-sensor array and computes a compensated forward solution using the
-methods described in <a class="reference internal" href="../io.html#behddfbi"><span class="std std-ref">Applying software gradient compensation</span></a>.</p>
+<h3><a class="toc-backref" href="#id26">Implementation of software gradient compensation</a><a class="headerlink" href="#implementation-of-software-gradient-compensation" title="Permalink to this headline">¶</a></h3>
+<div class="sidebar">
+<p class="sidebar-title">Gradient compensation in MNE-Python</p>
+<p>Accounting for noise cancellation in MNE-Python is accomplished in
+<a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw.apply_gradient_compensation" title="mne.io.Raw.apply_gradient_compensation"><code class="xref py py-meth docutils literal notranslate"><span class="pre">mne.io.Raw.apply_gradient_compensation()</span></code></a>.
+See <a class="reference internal" href="../../auto_tutorials/sample-datasets/plot_brainstorm_phantom_ctf.html#plot-brainstorm-phantom-ctf"><span class="std std-ref">Brainstorm CTF phantom dataset tutorial</span></a> for an example.</p>
+</div>
+<p>As described in <a class="reference internal" href="../io.html#behddfbi"><span class="std std-ref">Applying software gradient compensation</span></a> the CTF and 4D Neuroimaging data may have been
+subjected to noise cancellation employing the data from the reference sensor
+array. Even though these sensor are rather far away from the brain sources,
+<code class="docutils literal notranslate"><span class="pre">mne_forward_solution</span></code> takes them into account in the computations. If the
+data file specified with the <code class="docutils literal notranslate"><span class="pre">--meas</span></code> option has software gradient
+compensation activated, <code class="docutils literal notranslate"><span class="pre">mne_forward_solution</span></code> computes the field of at the
+reference sensors in addition to the main MEG sensor array and computes a
+compensated forward solution using the methods described in <a class="reference internal" href="../io.html#behddfbi"><span class="std std-ref">Applying software gradient compensation</span></a>.</p>
 <div class="admonition warning">
 <p class="admonition-title">Warning</p>
-<p>If a data file specified with the <code class="docutils literal notranslate"><span class="pre">--meas</span></code> option    and that used in the actual inverse computations with mne_analyze and mne_make_movie have    different software gradient compensation states., the forward solution    will be in mismatch with the data to be analyzed and the current    estimates will be slightly erroneous.</p>
+<p>If a data file specified with the <code class="docutils literal notranslate"><span class="pre">--meas</span></code> option and that used in the
+actual inverse computations with mne_analyze and mne_make_movie have
+different software gradient compensation states., the forward solution will
+be in mismatch with the data to be analyzed and the current estimates will
+be slightly erroneous.</p>
 </div>
 </div>
 <div class="section" id="the-eeg-sphere-model-definition-file">
-<span id="c-legacy-chdiafig"></span><h3><a class="toc-backref" href="#id28">The EEG sphere model definition file</a><a class="headerlink" href="#the-eeg-sphere-model-definition-file" title="Permalink to this headline">¶</a></h3>
-<p>For the computation of the electric potential distribution
-on the surface of the head (EEG) it is necessary to define the conductivities
-(<span class="math notranslate nohighlight">\(\sigma\)</span>) and radiuses of the spherically
-symmetric layers. Different sphere models can be specified with
-the <code class="docutils literal notranslate"><span class="pre">--eegmodels</span></code> option.</p>
-<p>The EEG sphere model definition files may contain comment
-lines starting with a # and model
-definition lines in the following format:</p>
+<span id="c-legacy-chdiafig"></span><h3><a class="toc-backref" href="#id27">The EEG sphere model definition file</a><a class="headerlink" href="#the-eeg-sphere-model-definition-file" title="Permalink to this headline">¶</a></h3>
+<div class="sidebar">
+<p class="sidebar-title">Sphere models in MNE-Python</p>
+<p>In MNE-Python, different sphere models can be specified through
+<a class="reference internal" href="../../generated/mne.make_sphere_model.html#mne.make_sphere_model" title="mne.make_sphere_model"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.make_sphere_model()</span></code></a>. The default values (resulting from
+<code class="docutils literal notranslate"><span class="pre">sphere</span> <span class="pre">=</span> <span class="pre">mne.make_sphere_model()</span></code>) are given in <a class="reference internal" href="#c-legacy-babebgda"><span class="std std-ref">the table below</span></a>.</p>
+</div>
+<p>For the computation of the electric potential distribution on the surface of
+the head (EEG) it is necessary to define the conductivities (<span class="math notranslate nohighlight">\(\sigma\)</span>)
+and radiuses of the spherically symmetric layers. Different sphere models can
+be specified with the <code class="docutils literal notranslate"><span class="pre">--eegmodels</span></code> option.</p>
+<p>The EEG sphere model definition files may contain comment lines starting with a
+# and model definition lines in the following format:</p>
 <blockquote>
 <div><p>&lt;<em>name</em>&gt;: &lt;<em>radius1</em>&gt;: &lt;<em>conductivity1</em>&gt;: &lt;<em>radius2</em>&gt;: &lt;<em>conductivity2</em>&gt;:…</p>
 </div></blockquote>
-<p>When the file is loaded the layers are sorted so that the
-radiuses will be in ascending order and the radius of the outermost
-layer is scaled to 1.0. The scalp radius specified with the <code class="docutils literal notranslate"><span class="pre">--eegrad</span></code> option
-is then consulted to scale the model to the correct dimensions.
-Even if the model setup file is not present, a model called Default is
-always provided. This model has the structure given in <a class="reference internal" href="#c-legacy-babebgda"><span class="std std-ref">Structure of the default EEG model</span></a></p>
+<p>When the file is loaded the layers are sorted so that the radiuses will be in
+ascending order and the radius of the outermost layer is scaled to 1.0. The
+scalp radius specified with the <code class="docutils literal notranslate"><span class="pre">--eegrad</span></code> option is then consulted to scale
+the model to the correct dimensions. Even if the model setup file is not
+present, a model called Default is always provided. This model has the
+structure given in <a class="reference internal" href="#c-legacy-babebgda"><span class="std std-ref">Structure of the default EEG model</span></a></p>
 <span id="c-legacy-babebgda"></span><table class="docutils align-default" id="id9">
 <caption><span class="caption-text">Structure of the default EEG model</span><a class="headerlink" href="#id9" title="Permalink to this table">¶</a></caption>
 <colgroup>
@@ -1264,65 +1295,77 @@ always provided. This model has the structure given in <a class="reference inter
 </tr>
 </tbody>
 </table>
+<p>Although it is not BEM model per se the <code class="docutils literal notranslate"><span class="pre">sphere</span></code> structure describes the head
+geometry so it can be passed as <code class="docutils literal notranslate"><span class="pre">bem</span></code> parameter in MNE-Python functions such
+as <a class="reference internal" href="../../generated/mne.fit_dipole.html#mne.fit_dipole" title="mne.fit_dipole"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.fit_dipole()</span></code></a>, <a class="reference internal" href="../../generated/mne.viz.plot_alignment.html#mne.viz.plot_alignment" title="mne.viz.plot_alignment"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.viz.plot_alignment()</span></code></a> or
+<a class="reference internal" href="../../generated/mne.make_forward_solution.html#mne.make_forward_solution" title="mne.make_forward_solution"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.make_forward_solution()</span></code></a>.</p>
 </div>
 <div class="section" id="eeg-forward-solution-in-the-sphere-model">
-<h3><a class="toc-backref" href="#id29">EEG forward solution in the sphere model</a><a class="headerlink" href="#eeg-forward-solution-in-the-sphere-model" title="Permalink to this headline">¶</a></h3>
-<p>When the sphere model is employed, the computation of the
-EEG solution can be substantially accelerated by using approximation
-methods described by Mosher, Zhang, and Berg, see <a class="reference internal" href="../../references.html#cegegdei"><span class="std std-ref">Forward modeling</span></a> (Mosher <em>et
-al.</em> and references therein). mne_forward_solution approximates
-the solution with three dipoles in a homogeneous sphere whose locations
-and amplitudes are determined by minimizing the cost function:</p>
+<h3><a class="toc-backref" href="#id28">EEG forward solution in the sphere model</a><a class="headerlink" href="#eeg-forward-solution-in-the-sphere-model" title="Permalink to this headline">¶</a></h3>
+<div class="sidebar">
+<p class="sidebar-title">Sphere-model examples in MNE-Python</p>
+<p>For examples of using the sphere model when computing the forward model
+(using <a class="reference internal" href="../../generated/mne.make_forward_solution.html#mne.make_forward_solution" title="mne.make_forward_solution"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.make_forward_solution()</span></code></a>), see <a class="reference internal" href="../../auto_tutorials/sample-datasets/plot_brainstorm_phantom_ctf.html#plt-brainstorm-phantom-ctf-eeg-sphere-geometry"><span class="std std-ref">Brainstorm CTF phantom
+dataset tutorial</span></a>,
+<a class="reference internal" href="../../auto_tutorials/sample-datasets/plot_brainstorm_phantom_elekta.html#plt-brainstorm-phantom-elekta-eeg-sphere-geometry"><span class="std std-ref">Brainstorm Elekta phantom dataset tutorial</span></a>, and
+<a class="reference internal" href="../../auto_tutorials/source-modeling/plot_source_alignment.html#plot-source-alignment-without-mri"><span class="std std-ref">Alignment without MRI</span></a>.</p>
+</div>
+<p>When the sphere model is employed, the computation of the EEG solution can be
+substantially accelerated by using approximation methods described by Mosher,
+Zhang, and Berg, see <a class="reference internal" href="../../references.html#cegegdei"><span class="std std-ref">Forward modeling</span></a> (Mosher <em>et al.</em> and references therein).
+<code class="docutils literal notranslate"><span class="pre">mne_forward_solution</span></code> approximates the solution with three dipoles in a
+homogeneous sphere whose locations and amplitudes are determined by minimizing
+the cost function:</p>
 <div class="math notranslate nohighlight">
 \[S(r_1,\dotsc,r_m\ ,\ \mu_1,\dotsc,\mu_m) = \int_{scalp} {(V_{true} - V_{approx})}\,dS\]</div>
-<p>where <span class="math notranslate nohighlight">\(r_1,\dotsc,r_m\)</span> and <span class="math notranslate nohighlight">\(\mu_1,\dotsc,\mu_m\)</span> are
-the locations and amplitudes of the approximating dipoles and <span class="math notranslate nohighlight">\(V_{true}\)</span> and <span class="math notranslate nohighlight">\(V_{approx}\)</span> are
-the potential distributions given by the true and approximative
-formulas, respectively. It can be shown that this integral can be
-expressed in closed form using an expansion of the potentials in
-spherical harmonics. The formula is evaluated for the most superficial
-dipoles, <em>i.e.</em>, those lying just inside the
-inner skull surface.</p>
+<p>where <span class="math notranslate nohighlight">\(r_1,\dotsc,r_m\)</span> and <span class="math notranslate nohighlight">\(\mu_1,\dotsc,\mu_m\)</span> are the locations
+and amplitudes of the approximating dipoles and <span class="math notranslate nohighlight">\(V_{true}\)</span> and
+<span class="math notranslate nohighlight">\(V_{approx}\)</span> are the potential distributions given by the true and
+approximative formulas, respectively. It can be shown that this integral can be
+expressed in closed form using an expansion of the potentials in spherical
+harmonics. The formula is evaluated for the most superficial dipoles, <em>i.e.</em>,
+those lying just inside the inner skull surface.</p>
 </div>
 <div class="section" id="field-derivatives">
-<span id="c-legacy-bjefejjg"></span><h3><a class="toc-backref" href="#id30">Field derivatives</a><a class="headerlink" href="#field-derivatives" title="Permalink to this headline">¶</a></h3>
-<p>If the <code class="docutils literal notranslate"><span class="pre">--grad</span></code> option is specified, mne_forward_solution includes
-the derivatives of the forward solution with respect to the dipole
-location coordinates to the output file. Let</p>
+<span id="c-legacy-bjefejjg"></span><h3><a class="toc-backref" href="#id29">Field derivatives</a><a class="headerlink" href="#field-derivatives" title="Permalink to this headline">¶</a></h3>
+<p>If the <code class="docutils literal notranslate"><span class="pre">--grad</span></code> option is specified, mne_forward_solution includes the
+derivatives of the forward solution with respect to the dipole location
+coordinates to the output file. Let</p>
 <div class="math notranslate nohighlight">
 \[G_k = [g_{xk} g_{yk} g_{zk}]\]</div>
-<p>be the <span class="math notranslate nohighlight">\(N_{chan} \times 3\)</span> matrix containing
-the signals produced by three orthogonal dipoles at location <span class="math notranslate nohighlight">\(r_k\)</span> making
-up <span class="math notranslate nohighlight">\(N_{chan} \times 3N_{source}\)</span> the gain matrix</p>
+<p>be the <span class="math notranslate nohighlight">\(N_{chan} \times 3\)</span> matrix containing the signals produced by
+three orthogonal dipoles at location <span class="math notranslate nohighlight">\(r_k\)</span> making up <span class="math notranslate nohighlight">\(N_{chan}
+\times 3N_{source}\)</span> the gain matrix</p>
 <div class="math notranslate nohighlight">
 \[G = [G_1 \dotso G_{N_{source}}]\ .\]</div>
-<p>With the <code class="docutils literal notranslate"><span class="pre">--grad</span></code> option, the output from mne_forward_solution also
-contains the <span class="math notranslate nohighlight">\(N_{chan} \times 9N_{source}\)</span> derivative matrix</p>
+<p>With the <code class="docutils literal notranslate"><span class="pre">--grad</span></code> option, the output from mne_forward_solution also contains
+the <span class="math notranslate nohighlight">\(N_{chan} \times 9N_{source}\)</span> derivative matrix</p>
 <div class="math notranslate nohighlight">
 \[D = [D_1 \dotso D_{N_{source}}]\ ,\]</div>
 <p>where</p>
 <div class="math notranslate nohighlight">
 \[D_k = [\frac{\delta g_{xk}}{\delta x_k} \frac{\delta g_{xk}}{\delta y_k} \frac{\delta g_{xk}}{\delta z_k} \frac{\delta g_{yk}}{\delta x_k} \frac{\delta g_{yk}}{\delta y_k} \frac{\delta g_{yk}}{\delta z_k} \frac{\delta g_{zk}}{\delta x_k} \frac{\delta g_{zk}}{\delta y_k} \frac{\delta g_{zk}}{\delta z_k}]\ ,\]</div>
-<p>where <span class="math notranslate nohighlight">\(x_k\)</span>, <span class="math notranslate nohighlight">\(y_k\)</span>, and <span class="math notranslate nohighlight">\(z_k\)</span> are the location
-coordinates of the <span class="math notranslate nohighlight">\(k^{th}\)</span> dipole. If
-the dipole orientations are to the cortical normal with the <code class="docutils literal notranslate"><span class="pre">--fixed</span></code>
-option, the dimensions of <span class="math notranslate nohighlight">\(G\)</span> and <span class="math notranslate nohighlight">\(D\)</span> are <span class="math notranslate nohighlight">\(N_{chan} \times N_{source}\)</span> and <span class="math notranslate nohighlight">\(N_{chan} \times 3N_{source}\)</span>,
-respectively. Both <span class="math notranslate nohighlight">\(G\)</span> and <span class="math notranslate nohighlight">\(D\)</span> can
-be read with the mne_read_forward_solution Matlab
-function, see Table 10.1.</p>
+<p>where <span class="math notranslate nohighlight">\(x_k\)</span>, <span class="math notranslate nohighlight">\(y_k\)</span>, and <span class="math notranslate nohighlight">\(z_k\)</span> are the location coordinates of
+the <span class="math notranslate nohighlight">\(k^{th}\)</span> dipole. If the dipole orientations are to the cortical
+normal with the <code class="docutils literal notranslate"><span class="pre">--fixed</span></code> option, the dimensions of <span class="math notranslate nohighlight">\(G\)</span> and <span class="math notranslate nohighlight">\(D\)</span>
+are <span class="math notranslate nohighlight">\(N_{chan} \times N_{source}\)</span> and <span class="math notranslate nohighlight">\(N_{chan} \times 3N_{source}\)</span>,
+respectively. Both <span class="math notranslate nohighlight">\(G\)</span> and <span class="math notranslate nohighlight">\(D\)</span> can be read with the
+mne_read_forward_solution Matlab function, see Table 10.1.</p>
 </div>
 </div>
 <div class="section" id="averaging-forward-solutions">
-<span id="c-legacy-chdbbfca"></span><h2><a class="toc-backref" href="#id31">Averaging forward solutions</a><a class="headerlink" href="#averaging-forward-solutions" title="Permalink to this headline">¶</a></h2>
-<div class="section" id="id1">
-<h3><a class="toc-backref" href="#id32">Purpose</a><a class="headerlink" href="#id1" title="Permalink to this headline">¶</a></h3>
-<p>One possibility to make a grand average over several runs
-of a experiment is to average the data across runs and average the
-forward solutions accordingly. For this purpose, <a class="reference internal" href="../c_reference.html#mne-average-forward-solutions"><span class="std std-ref">mne_average_forward_solutions</span></a> computes a
-weighted average of several forward solutions. The program averages both
-MEG and EEG forward solutions. Usually the EEG forward solution is
-identical across runs because the electrode locations do not change.</p>
+<span id="c-legacy-chdbbfca"></span><h2><a class="toc-backref" href="#id30">Averaging forward solutions</a><a class="headerlink" href="#averaging-forward-solutions" title="Permalink to this headline">¶</a></h2>
+<div class="sidebar">
+<p class="sidebar-title">Grand averages in MNE-Python</p>
+<p>The equivalent function in MNE-Python is
+<a class="reference internal" href="../../generated/mne.average_forward_solutions.html#mne.average_forward_solutions" title="mne.average_forward_solutions"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.average_forward_solutions()</span></code></a>.</p>
 </div>
+<p>One possibility to make a grand average over several runs of a experiment is to
+average the data across runs and average the forward solutions accordingly. For
+this purpose, <a class="reference internal" href="../c_reference.html#mne-average-forward-solutions"><span class="std std-ref">mne_average_forward_solutions</span></a> computes a weighted average
+of several forward solutions. The program averages both MEG and EEG forward
+solutions. Usually the EEG forward solution is identical across runs because
+the electrode locations do not change.</p>
 </div>
 </div>
 
