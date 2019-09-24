@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>mne.filter &mdash; MNE-Realtime 0.0.1 documentation</title>
+  <title>mne.filter &mdash; MNE-Realtime 0.1.dev0 documentation</title>
   
 
   
@@ -52,7 +52,7 @@
           
 
           
-            <a href="../../index.html" class="icon icon-home"> MNE-Realtime
+            <a href="../../index.html" class="icon icon-home" alt="Documentation Home"> MNE-Realtime
           
 
           
@@ -65,7 +65,7 @@
             
             
               <div class="version">
-                0.0.1
+                0.1.dev0
               </div>
             
           
@@ -90,16 +90,8 @@
               
             
             
-              <p class="caption"><span class="caption-text">Documentation</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../user_guide.html">User guide: create your own mne project</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../api.html">mne-realtime API</a></li>
-</ul>
-<p class="caption"><span class="caption-text">Tutorial - Examples</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../auto_examples/index.html">Real-time M/EEG Acquisition</a></li>
-</ul>
-
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
             
           
         </div>
@@ -142,7 +134,7 @@
 
   <ul class="wy-breadcrumbs">
     
-      <li><a href="../../index.html">Docs</a> &raquo;</li>
+      <li><a href="../../index.html" class="icon icon-home"></a> &raquo;</li>
         
           <li><a href="../index.html">Module code</a> &raquo;</li>
         
@@ -168,12 +160,12 @@
 <span class="kn">from</span> <span class="nn">functools</span> <span class="k">import</span> <span class="n">partial</span>
 
 <span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
-<span class="kn">from</span> <span class="nn">scipy.fftpack</span> <span class="k">import</span> <span class="n">ifftshift</span><span class="p">,</span> <span class="n">fftfreq</span>
 
+<span class="kn">from</span> <span class="nn">.annotations</span> <span class="k">import</span> <span class="n">_annotations_starts_stops</span>
 <span class="kn">from</span> <span class="nn">.io.pick</span> <span class="k">import</span> <span class="n">_picks_to_idx</span>
 <span class="kn">from</span> <span class="nn">.cuda</span> <span class="k">import</span> <span class="p">(</span><span class="n">_setup_cuda_fft_multiply_repeated</span><span class="p">,</span> <span class="n">_fft_multiply_repeated</span><span class="p">,</span>
                    <span class="n">_setup_cuda_fft_resample</span><span class="p">,</span> <span class="n">_fft_resample</span><span class="p">,</span> <span class="n">_smart_pad</span><span class="p">)</span>
-<span class="kn">from</span> <span class="nn">.fixes</span> <span class="k">import</span> <span class="n">get_sosfiltfilt</span><span class="p">,</span> <span class="n">minimum_phase</span><span class="p">,</span> <span class="n">_sosfreqz</span>
+<span class="kn">from</span> <span class="nn">.fixes</span> <span class="k">import</span> <span class="n">minimum_phase</span><span class="p">,</span> <span class="n">_sosfreqz</span><span class="p">,</span> <span class="n">irfft</span><span class="p">,</span> <span class="n">ifftshift</span><span class="p">,</span> <span class="n">fftfreq</span>
 <span class="kn">from</span> <span class="nn">.parallel</span> <span class="k">import</span> <span class="n">parallel_func</span><span class="p">,</span> <span class="n">check_n_jobs</span>
 <span class="kn">from</span> <span class="nn">.time_frequency.multitaper</span> <span class="k">import</span> <span class="n">_mt_spectra</span><span class="p">,</span> <span class="n">_compute_mt_params</span>
 <span class="kn">from</span> <span class="nn">.utils</span> <span class="k">import</span> <span class="p">(</span><span class="n">logger</span><span class="p">,</span> <span class="n">verbose</span><span class="p">,</span> <span class="n">sum_squared</span><span class="p">,</span> <span class="n">check_version</span><span class="p">,</span> <span class="n">warn</span><span class="p">,</span> <span class="n">_pl</span><span class="p">,</span>
@@ -426,9 +418,7 @@
 
 <span class="k">def</span> <span class="nf">_prep_for_filtering</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">copy</span><span class="p">,</span> <span class="n">picks</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Set up array as 2D for filtering ease.&quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">dtype</span> <span class="o">!=</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">:</span>
-        <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="s2">&quot;Arrays passed for filtering must have a dtype of &quot;</span>
-                        <span class="s2">&quot;np.float64, got type </span><span class="si">%s</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">dtype</span><span class="p">,))</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">_check_filterable</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
     <span class="k">if</span> <span class="n">copy</span> <span class="ow">is</span> <span class="kc">True</span><span class="p">:</span>
         <span class="n">x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
     <span class="n">orig_shape</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span>
@@ -588,12 +578,11 @@
 <span class="k">def</span> <span class="nf">_filtfilt</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">iir_params</span><span class="p">,</span> <span class="n">picks</span><span class="p">,</span> <span class="n">n_jobs</span><span class="p">,</span> <span class="n">copy</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Call filtfilt.&quot;&quot;&quot;</span>
     <span class="c1"># set up array for filtering, reshape to 2D, operate on last axis</span>
-    <span class="kn">from</span> <span class="nn">scipy.signal</span> <span class="k">import</span> <span class="n">filtfilt</span>
+    <span class="kn">from</span> <span class="nn">scipy.signal</span> <span class="k">import</span> <span class="n">filtfilt</span><span class="p">,</span> <span class="n">sosfiltfilt</span>
     <span class="n">padlen</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">iir_params</span><span class="p">[</span><span class="s1">&#39;padlen&#39;</span><span class="p">],</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
     <span class="n">n_jobs</span> <span class="o">=</span> <span class="n">check_n_jobs</span><span class="p">(</span><span class="n">n_jobs</span><span class="p">)</span>
     <span class="n">x</span><span class="p">,</span> <span class="n">orig_shape</span><span class="p">,</span> <span class="n">picks</span> <span class="o">=</span> <span class="n">_prep_for_filtering</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">copy</span><span class="p">,</span> <span class="n">picks</span><span class="p">)</span>
     <span class="k">if</span> <span class="s1">&#39;sos&#39;</span> <span class="ow">in</span> <span class="n">iir_params</span><span class="p">:</span>
-        <span class="n">sosfiltfilt</span> <span class="o">=</span> <span class="n">get_sosfiltfilt</span><span class="p">()</span>
         <span class="n">fun</span> <span class="o">=</span> <span class="n">partial</span><span class="p">(</span><span class="n">sosfiltfilt</span><span class="p">,</span> <span class="n">sos</span><span class="o">=</span><span class="n">iir_params</span><span class="p">[</span><span class="s1">&#39;sos&#39;</span><span class="p">],</span> <span class="n">padlen</span><span class="o">=</span><span class="n">padlen</span><span class="p">,</span>
                       <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
         <span class="n">_check_coefficients</span><span class="p">(</span><span class="n">iir_params</span><span class="p">[</span><span class="s1">&#39;sos&#39;</span><span class="p">])</span>
@@ -974,8 +963,7 @@
 <span class="sd">    :ref:`disc-filtering` and :ref:`tut-filter-resample` and</span>
 <span class="sd">    :func:`mne.filter.create_filter`.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
-    <span class="k">if</span> <span class="ow">not</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">data</span><span class="p">,</span> <span class="n">np</span><span class="o">.</span><span class="n">ndarray</span><span class="p">):</span>
-        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;data must be an array&#39;</span><span class="p">)</span>
+    <span class="n">data</span> <span class="o">=</span> <span class="n">_check_filterable</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
     <span class="n">iir_params</span><span class="p">,</span> <span class="n">method</span> <span class="o">=</span> <span class="n">_check_method</span><span class="p">(</span><span class="n">method</span><span class="p">,</span> <span class="n">iir_params</span><span class="p">)</span>
     <span class="n">filt</span> <span class="o">=</span> <span class="n">create_filter</span><span class="p">(</span>
         <span class="n">data</span><span class="p">,</span> <span class="n">sfreq</span><span class="p">,</span> <span class="n">l_freq</span><span class="p">,</span> <span class="n">h_freq</span><span class="p">,</span> <span class="n">filter_length</span><span class="p">,</span> <span class="n">l_trans_bandwidth</span><span class="p">,</span>
@@ -1493,6 +1481,14 @@
     <span class="k">return</span> <span class="n">x</span> <span class="o">-</span> <span class="n">datafit</span><span class="p">,</span> <span class="n">rm_freqs</span>
 
 
+<span class="k">def</span> <span class="nf">_check_filterable</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s1">&#39;filtered&#39;</span><span class="p">):</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asanyarray</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">x</span><span class="o">.</span><span class="n">dtype</span> <span class="o">!=</span> <span class="n">np</span><span class="o">.</span><span class="n">float64</span><span class="p">:</span>
+        <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s1">&#39;Data to be </span><span class="si">%s</span><span class="s1"> must be real floating, got </span><span class="si">%s</span><span class="s1">&#39;</span>
+                         <span class="o">%</span> <span class="p">(</span><span class="n">kind</span><span class="p">,</span> <span class="n">x</span><span class="o">.</span><span class="n">dtype</span><span class="p">,))</span>
+    <span class="k">return</span> <span class="n">x</span>
+
+
 <span class="nd">@verbose</span>
 <span class="k">def</span> <span class="nf">resample</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">up</span><span class="o">=</span><span class="mf">1.</span><span class="p">,</span> <span class="n">down</span><span class="o">=</span><span class="mf">1.</span><span class="p">,</span> <span class="n">npad</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="s1">&#39;boxcar&#39;</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
              <span class="n">pad</span><span class="o">=</span><span class="s1">&#39;reflect_limited&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
@@ -1547,7 +1543,7 @@
         <span class="k">raise</span> <span class="ne">TypeError</span><span class="p">(</span><span class="n">err</span><span class="p">)</span>
 
     <span class="c1"># make sure our arithmetic will work</span>
-    <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asanyarray</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+    <span class="n">x</span> <span class="o">=</span> <span class="n">_check_filterable</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="s1">&#39;resampled&#39;</span><span class="p">)</span>
     <span class="n">ratio</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">up</span><span class="p">)</span> <span class="o">/</span> <span class="n">down</span>
     <span class="k">if</span> <span class="n">axis</span> <span class="o">&lt;</span> <span class="mi">0</span><span class="p">:</span>
         <span class="n">axis</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">ndim</span> <span class="o">+</span> <span class="n">axis</span>
@@ -1918,7 +1914,7 @@
 
     <span class="c1"># If we have data supplied, do a sanity check</span>
     <span class="k">if</span> <span class="n">x</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">x</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">asanyarray</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="n">_check_filterable</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
         <span class="n">len_x</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]</span>
         <span class="k">if</span> <span class="n">method</span> <span class="o">!=</span> <span class="s1">&#39;fir&#39;</span><span class="p">:</span>
             <span class="n">filter_length</span> <span class="o">=</span> <span class="n">len_x</span>
@@ -2003,7 +1999,8 @@
                <span class="n">l_trans_bandwidth</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="n">h_trans_bandwidth</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
                <span class="n">method</span><span class="o">=</span><span class="s1">&#39;fir&#39;</span><span class="p">,</span> <span class="n">iir_params</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">phase</span><span class="o">=</span><span class="s1">&#39;zero&#39;</span><span class="p">,</span>
                <span class="n">fir_window</span><span class="o">=</span><span class="s1">&#39;hamming&#39;</span><span class="p">,</span> <span class="n">fir_design</span><span class="o">=</span><span class="s1">&#39;firwin&#39;</span><span class="p">,</span>
-               <span class="n">pad</span><span class="o">=</span><span class="s1">&#39;edge&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+               <span class="n">skip_by_annotation</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;edge&#39;</span><span class="p">,</span> <span class="s1">&#39;bad_acq_skip&#39;</span><span class="p">),</span> <span class="n">pad</span><span class="o">=</span><span class="s1">&#39;edge&#39;</span><span class="p">,</span>
+               <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Filter a subset of channels.</span>
 
 <span class="sd">        Parameters</span>
@@ -2020,19 +2017,34 @@
 <span class="sd">        %(phase)s</span>
 <span class="sd">        %(fir_window)s</span>
 <span class="sd">        %(fir_design)s</span>
+<span class="sd">        skip_by_annotation : str | list of str</span>
+<span class="sd">            If a string (or list of str), any annotation segment that begins</span>
+<span class="sd">            with the given string will not be included in filtering, and</span>
+<span class="sd">            segments on either side of the given excluded annotated segment</span>
+<span class="sd">            will be filtered separately (i.e., as independent signals).</span>
+<span class="sd">            The default (``(&#39;edge&#39;, &#39;bad_acq_skip&#39;)`` will separately filter</span>
+<span class="sd">            any segments that were concatenated by :func:`mne.concatenate_raws`</span>
+<span class="sd">            or :meth:`mne.io.Raw.append`, or separated during acquisition.</span>
+<span class="sd">            To disable, provide an empty list. Only used if ``inst`` is raw.</span>
+
+<span class="sd">            .. versionadded:: 0.16.</span>
 <span class="sd">        %(pad-fir)s</span>
-<span class="sd">            The default is ``&#39;edge&#39;``, which pads with the edge values of each</span>
-<span class="sd">            vector.</span>
 <span class="sd">        %(verbose_meth)s</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
-<span class="sd">        inst : instance of Epochs or Evoked</span>
+<span class="sd">        inst : instance of Epochs, Evoked, or Raw</span>
 <span class="sd">            The filtered data.</span>
 
 <span class="sd">        See Also</span>
 <span class="sd">        --------</span>
 <span class="sd">        mne.filter.create_filter</span>
+<span class="sd">        mne.Evoked.savgol_filter</span>
+<span class="sd">        mne.io.Raw.notch_filter</span>
+<span class="sd">        mne.io.Raw.resample</span>
+<span class="sd">        mne.filter.create_filter</span>
+<span class="sd">        mne.filter.filter_data</span>
+<span class="sd">        mne.filter.construct_iir_filter</span>
 
 <span class="sd">        Notes</span>
 <span class="sd">        -----</span>
@@ -2058,23 +2070,45 @@
 <span class="sd">                  ``len(picks) * n_times`` additional time points need to</span>
 <span class="sd">                  be temporaily stored in memory.</span>
 
+<span class="sd">        For more information, see the tutorials</span>
+<span class="sd">        :ref:`disc-filtering` and :ref:`tut-filter-resample` and</span>
+<span class="sd">        :func:`mne.filter.create_filter`.</span>
+
 <span class="sd">        .. versionadded:: 0.15</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="kn">from</span> <span class="nn">.io.base</span> <span class="k">import</span> <span class="n">BaseRaw</span>
         <span class="n">_check_preload</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;inst.filter&#39;</span><span class="p">)</span>
         <span class="k">if</span> <span class="n">pad</span> <span class="ow">is</span> <span class="kc">None</span> <span class="ow">and</span> <span class="n">method</span> <span class="o">!=</span> <span class="s1">&#39;iir&#39;</span><span class="p">:</span>
             <span class="n">pad</span> <span class="o">=</span> <span class="s1">&#39;edge&#39;</span>
         <span class="n">update_info</span><span class="p">,</span> <span class="n">picks</span> <span class="o">=</span> <span class="n">_filt_check_picks</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">picks</span><span class="p">,</span>
                                                <span class="n">l_freq</span><span class="p">,</span> <span class="n">h_freq</span><span class="p">)</span>
-        <span class="n">filter_data</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;sfreq&#39;</span><span class="p">],</span> <span class="n">l_freq</span><span class="p">,</span> <span class="n">h_freq</span><span class="p">,</span> <span class="n">picks</span><span class="p">,</span>
-                    <span class="n">filter_length</span><span class="p">,</span> <span class="n">l_trans_bandwidth</span><span class="p">,</span> <span class="n">h_trans_bandwidth</span><span class="p">,</span>
-                    <span class="n">n_jobs</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">iir_params</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">phase</span><span class="o">=</span><span class="n">phase</span><span class="p">,</span>
-                    <span class="n">fir_window</span><span class="o">=</span><span class="n">fir_window</span><span class="p">,</span> <span class="n">fir_design</span><span class="o">=</span><span class="n">fir_design</span><span class="p">,</span> <span class="n">pad</span><span class="o">=</span><span class="n">pad</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">BaseRaw</span><span class="p">):</span>
+            <span class="c1"># Deal with annotations</span>
+            <span class="n">onsets</span><span class="p">,</span> <span class="n">ends</span> <span class="o">=</span> <span class="n">_annotations_starts_stops</span><span class="p">(</span>
+                <span class="bp">self</span><span class="p">,</span> <span class="n">skip_by_annotation</span><span class="p">,</span> <span class="s1">&#39;skip_by_annotation&#39;</span><span class="p">,</span> <span class="n">invert</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Filtering raw data in </span><span class="si">%d</span><span class="s1"> contiguous segment</span><span class="si">%s</span><span class="s1">&#39;</span>
+                        <span class="o">%</span> <span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">onsets</span><span class="p">),</span> <span class="n">_pl</span><span class="p">(</span><span class="n">onsets</span><span class="p">)))</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">onsets</span><span class="p">,</span> <span class="n">ends</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">]),</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">1</span><span class="p">]])</span>
+        <span class="n">max_idx</span> <span class="o">=</span> <span class="p">(</span><span class="n">ends</span> <span class="o">-</span> <span class="n">onsets</span><span class="p">)</span><span class="o">.</span><span class="n">argmax</span><span class="p">()</span>
+        <span class="k">for</span> <span class="n">si</span><span class="p">,</span> <span class="p">(</span><span class="n">start</span><span class="p">,</span> <span class="n">stop</span><span class="p">)</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><span class="n">onsets</span><span class="p">,</span> <span class="n">ends</span><span class="p">)):</span>
+            <span class="c1"># Only output filter params once (for info level), and only warn</span>
+            <span class="c1"># once about the length criterion (longest segment is too short)</span>
+            <span class="n">use_verbose</span> <span class="o">=</span> <span class="n">verbose</span> <span class="k">if</span> <span class="n">si</span> <span class="o">==</span> <span class="n">max_idx</span> <span class="k">else</span> <span class="s1">&#39;error&#39;</span>
+            <span class="n">filter_data</span><span class="p">(</span>
+                <span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">[:,</span> <span class="n">start</span><span class="p">:</span><span class="n">stop</span><span class="p">],</span> <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;sfreq&#39;</span><span class="p">],</span> <span class="n">l_freq</span><span class="p">,</span> <span class="n">h_freq</span><span class="p">,</span>
+                <span class="n">picks</span><span class="p">,</span> <span class="n">filter_length</span><span class="p">,</span> <span class="n">l_trans_bandwidth</span><span class="p">,</span> <span class="n">h_trans_bandwidth</span><span class="p">,</span>
+                <span class="n">n_jobs</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">iir_params</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">phase</span><span class="o">=</span><span class="n">phase</span><span class="p">,</span>
+                <span class="n">fir_window</span><span class="o">=</span><span class="n">fir_window</span><span class="p">,</span> <span class="n">fir_design</span><span class="o">=</span><span class="n">fir_design</span><span class="p">,</span> <span class="n">pad</span><span class="o">=</span><span class="n">pad</span><span class="p">,</span>
+                <span class="n">verbose</span><span class="o">=</span><span class="n">use_verbose</span><span class="p">)</span>
+        <span class="c1"># update info if filter is applied to all data channels,</span>
+        <span class="c1"># and it&#39;s not a band-stop filter</span>
         <span class="n">_filt_update_info</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">update_info</span><span class="p">,</span> <span class="n">l_freq</span><span class="p">,</span> <span class="n">h_freq</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span>
 
     <span class="nd">@verbose</span>
     <span class="k">def</span> <span class="nf">resample</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sfreq</span><span class="p">,</span> <span class="n">npad</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="s1">&#39;boxcar&#39;</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-                 <span class="n">pad</span><span class="o">=</span><span class="s1">&#39;edge&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+                 <span class="n">pad</span><span class="o">=</span><span class="s1">&#39;edge&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>  <span class="c1"># lgtm</span>
         <span class="sd">&quot;&quot;&quot;Resample data.</span>
 
 <span class="sd">        .. note:: Data must be loaded.</span>
@@ -2108,27 +2142,32 @@
 <span class="sd">        artifacts. This is dataset dependent -- check your data!</span>
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">from</span> <span class="nn">.epochs</span> <span class="k">import</span> <span class="n">BaseEpochs</span>
+        <span class="kn">from</span> <span class="nn">.evoked</span> <span class="k">import</span> <span class="n">Evoked</span>
+        <span class="c1"># Should be guaranteed by our inheritance, and the fact that</span>
+        <span class="c1"># mne.io.base.BaseRaw overrides this method</span>
+        <span class="k">assert</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="p">(</span><span class="n">BaseEpochs</span><span class="p">,</span> <span class="n">Evoked</span><span class="p">))</span>
+
         <span class="n">_check_preload</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;inst.resample&#39;</span><span class="p">)</span>
+
         <span class="n">sfreq</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">sfreq</span><span class="p">)</span>
         <span class="n">o_sfreq</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;sfreq&#39;</span><span class="p">]</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">_data</span> <span class="o">=</span> <span class="n">resample</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="p">,</span> <span class="n">sfreq</span><span class="p">,</span> <span class="n">o_sfreq</span><span class="p">,</span> <span class="n">npad</span><span class="p">,</span> <span class="n">window</span><span class="o">=</span><span class="n">window</span><span class="p">,</span>
                               <span class="n">n_jobs</span><span class="o">=</span><span class="n">n_jobs</span><span class="p">,</span> <span class="n">pad</span><span class="o">=</span><span class="n">pad</span><span class="p">)</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;sfreq&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">float</span><span class="p">(</span><span class="n">sfreq</span><span class="p">)</span>
+        <span class="n">lowpass</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;lowpass&#39;</span><span class="p">)</span>
+        <span class="n">lowpass</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">inf</span> <span class="k">if</span> <span class="n">lowpass</span> <span class="ow">is</span> <span class="kc">None</span> <span class="k">else</span> <span class="n">lowpass</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;lowpass&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="nb">min</span><span class="p">(</span><span class="n">lowpass</span><span class="p">,</span> <span class="n">sfreq</span> <span class="o">/</span> <span class="mf">2.</span><span class="p">)</span>
         <span class="n">new_times</span> <span class="o">=</span> <span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_data</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">np</span><span class="o">.</span><span class="n">float</span><span class="p">)</span> <span class="o">/</span>
                      <span class="n">sfreq</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">times</span><span class="p">[</span><span class="mi">0</span><span class="p">])</span>
         <span class="c1"># adjust indirectly affected variables</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">BaseEpochs</span><span class="p">):</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_set_times</span><span class="p">(</span><span class="n">new_times</span><span class="p">)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">_raw_times</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">times</span>
-        <span class="k">else</span><span class="p">:</span>
+        <span class="k">else</span><span class="p">:</span>  <span class="c1"># isinstance(self, Evoked)</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">times</span> <span class="o">=</span> <span class="n">new_times</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">first</span> <span class="o">=</span> <span class="nb">int</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">times</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">*</span> <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;sfreq&#39;</span><span class="p">])</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">last</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">times</span><span class="p">)</span> <span class="o">+</span> <span class="bp">self</span><span class="o">.</span><span class="n">first</span> <span class="o">-</span> <span class="mi">1</span>
         <span class="k">return</span> <span class="bp">self</span>
-
-
-<span class="k">class</span> <span class="nc">HilbertMixin</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
-    <span class="sd">&quot;&quot;&quot;Object for Epoch/Evoked/Raw Hilbert transformations.&quot;&quot;&quot;</span>
 
     <span class="nd">@verbose</span>
     <span class="k">def</span> <span class="nf">apply_hilbert</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">picks</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">envelope</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">n_fft</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span>
@@ -2342,7 +2381,7 @@
         <span class="n">freq_resp</span><span class="p">[</span><span class="n">start</span><span class="p">:</span><span class="n">stop</span><span class="p">]</span> <span class="o">*=</span> <span class="n">np</span><span class="o">.</span><span class="n">cos</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">/</span> <span class="mf">4.</span> <span class="o">*</span> <span class="n">k</span><span class="p">)</span> <span class="o">**</span> <span class="mi">2</span>
         <span class="n">freq_resp</span><span class="p">[</span><span class="n">stop</span><span class="p">:]</span> <span class="o">=</span> <span class="mf">0.0</span>
     <span class="c1"># Get the time-domain version of this signal</span>
-    <span class="n">h</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">fft</span><span class="o">.</span><span class="n">irfft</span><span class="p">(</span><span class="n">freq_resp</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">2</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">freq_resp</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">h</span> <span class="o">=</span> <span class="n">irfft</span><span class="p">(</span><span class="n">freq_resp</span><span class="p">,</span> <span class="n">n</span><span class="o">=</span><span class="mi">2</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><span class="n">freq_resp</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
     <span class="n">h</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">roll</span><span class="p">(</span><span class="n">h</span><span class="p">,</span> <span class="n">n_freqs</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>  <span class="c1"># center the impulse like a linear-phase filt</span>
     <span class="k">return</span> <span class="n">h</span>
 
@@ -2353,8 +2392,13 @@
     <span class="c1"># This will pick *all* data channels</span>
     <span class="n">picks</span> <span class="o">=</span> <span class="n">_picks_to_idx</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="n">picks</span><span class="p">,</span> <span class="s1">&#39;data_or_ica&#39;</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="p">())</span>
     <span class="k">if</span> <span class="n">h_freq</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span> <span class="ow">or</span> <span class="n">l_freq</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
-        <span class="n">data_picks</span> <span class="o">=</span> <span class="n">_picks_to_idx</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="s1">&#39;data_or_ica&#39;</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="p">())</span>
-        <span class="k">if</span> <span class="n">np</span><span class="o">.</span><span class="n">in1d</span><span class="p">(</span><span class="n">data_picks</span><span class="p">,</span> <span class="n">picks</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
+        <span class="n">data_picks</span> <span class="o">=</span> <span class="n">_picks_to_idx</span><span class="p">(</span><span class="n">info</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="s1">&#39;data_or_ica&#39;</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="p">(),</span>
+                                   <span class="n">allow_empty</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+        <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">data_picks</span><span class="p">)</span> <span class="o">==</span> <span class="mi">0</span><span class="p">:</span>
+            <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;No data channels found. The highpass and &#39;</span>
+                        <span class="s1">&#39;lowpass values in the measurement info will not &#39;</span>
+                        <span class="s1">&#39;be updated.&#39;</span><span class="p">)</span>
+        <span class="k">elif</span> <span class="n">np</span><span class="o">.</span><span class="n">in1d</span><span class="p">(</span><span class="n">data_picks</span><span class="p">,</span> <span class="n">picks</span><span class="p">)</span><span class="o">.</span><span class="n">all</span><span class="p">():</span>
             <span class="n">update_info</span> <span class="o">=</span> <span class="kc">True</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Filtering a subset of channels. The highpass and &#39;</span>
@@ -2480,7 +2524,8 @@
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2012-2019, MNE Developers. Last updated on 2019-05-21
+        
+        &copy; Copyright 2012-2019, MNE Developers. Last updated on 2019-10-09
 
     </p>
   </div> 
@@ -2494,7 +2539,6 @@
 
   </div>
   
-
 
   <script type="text/javascript">
       jQuery(function () {

@@ -8,7 +8,7 @@
   
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   
-  <title>mne.channels.channels &mdash; MNE-Realtime 0.0.1 documentation</title>
+  <title>mne.channels.channels &mdash; MNE-Realtime 0.1.dev0 documentation</title>
   
 
   
@@ -52,7 +52,7 @@
           
 
           
-            <a href="../../../index.html" class="icon icon-home"> MNE-Realtime
+            <a href="../../../index.html" class="icon icon-home" alt="Documentation Home"> MNE-Realtime
           
 
           
@@ -65,7 +65,7 @@
             
             
               <div class="version">
-                0.0.1
+                0.1.dev0
               </div>
             
           
@@ -90,16 +90,8 @@
               
             
             
-              <p class="caption"><span class="caption-text">Documentation</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../user_guide.html">User guide: create your own mne project</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../api.html">mne-realtime API</a></li>
-</ul>
-<p class="caption"><span class="caption-text">Tutorial - Examples</span></p>
-<ul>
-<li class="toctree-l1"><a class="reference internal" href="../../../auto_examples/index.html">Real-time M/EEG Acquisition</a></li>
-</ul>
-
+              <!-- Local TOC -->
+              <div class="local-toc"></div>
             
           
         </div>
@@ -142,7 +134,7 @@
 
   <ul class="wy-breadcrumbs">
     
-      <li><a href="../../../index.html">Docs</a> &raquo;</li>
+      <li><a href="../../../index.html" class="icon icon-home"></a> &raquo;</li>
         
           <li><a href="../../index.html">Module code</a> &raquo;</li>
         
@@ -162,11 +154,12 @@
            <div itemprop="articleBody">
             
   <h1>Source code for mne.channels.channels</h1><div class="highlight"><pre>
-<span></span><span class="c1"># Authors: Alexandre Gramfort &lt;alexandre.gramfort@telecom-paristech.fr&gt;</span>
-<span class="c1">#          Matti Hamalainen &lt;msh@nmr.mgh.harvard.edu&gt;</span>
+<span></span><span class="c1"># Authors: Alexandre Gramfort &lt;alexandre.gramfort@inria.fr&gt;</span>
+<span class="c1">#          Matti Hämäläinen &lt;msh@nmr.mgh.harvard.edu&gt;</span>
 <span class="c1">#          Denis Engemann &lt;denis.engemann@gmail.com&gt;</span>
 <span class="c1">#          Andrew Dykstra &lt;andrew.r.dykstra@gmail.com&gt;</span>
 <span class="c1">#          Teon Brooks &lt;teon.brooks@gmail.com&gt;</span>
+<span class="c1">#          Daniel McCloy &lt;dan.mccloy@gmail.com&gt;</span>
 <span class="c1">#</span>
 <span class="c1"># License: BSD (3-clause)</span>
 
@@ -185,6 +178,9 @@
 <span class="kn">from</span> <span class="nn">..io.pick</span> <span class="k">import</span> <span class="p">(</span><span class="n">channel_type</span><span class="p">,</span> <span class="n">pick_info</span><span class="p">,</span> <span class="n">pick_types</span><span class="p">,</span> <span class="n">_picks_by_type</span><span class="p">,</span>
                        <span class="n">_check_excludes_includes</span><span class="p">,</span> <span class="n">_contains_ch_type</span><span class="p">,</span>
                        <span class="n">channel_indices_by_type</span><span class="p">,</span> <span class="n">pick_channels</span><span class="p">,</span> <span class="n">_picks_to_idx</span><span class="p">)</span>
+
+
+<span class="n">DEPRECATED_PARAM</span> <span class="o">=</span> <span class="nb">object</span><span class="p">()</span>
 
 
 <span class="k">def</span> <span class="nf">_get_meg_system</span><span class="p">(</span><span class="n">info</span><span class="p">):</span>
@@ -328,6 +324,10 @@
         <span class="sd">&quot;&quot;&quot;The current gradient compensation grade.&quot;&quot;&quot;</span>
         <span class="k">return</span> <span class="n">get_current_comp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">)</span>
 
+    <span class="k">def</span> <span class="nf">get_channel_types</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;Get a list of channel type for each channel.&quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="p">[</span><span class="n">channel_type</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">n</span><span class="p">)</span>
+                <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;ch_names&#39;</span><span class="p">]))]</span>
 
 <span class="c1"># XXX Eventually de-duplicate with _kind_dict of mne/io/meas_info.py</span>
 <span class="n">_human2fiff</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;ecg&#39;</span><span class="p">:</span> <span class="n">FIFF</span><span class="o">.</span><span class="n">FIFFV_ECG_CH</span><span class="p">,</span>
@@ -343,6 +343,8 @@
                <span class="s1">&#39;syst&#39;</span><span class="p">:</span> <span class="n">FIFF</span><span class="o">.</span><span class="n">FIFFV_SYST_CH</span><span class="p">,</span>
                <span class="s1">&#39;bio&#39;</span><span class="p">:</span> <span class="n">FIFF</span><span class="o">.</span><span class="n">FIFFV_BIO_CH</span><span class="p">,</span>
                <span class="s1">&#39;ecog&#39;</span><span class="p">:</span> <span class="n">FIFF</span><span class="o">.</span><span class="n">FIFFV_ECOG_CH</span><span class="p">,</span>
+               <span class="s1">&#39;fnirs_raw&#39;</span><span class="p">:</span> <span class="n">FIFF</span><span class="o">.</span><span class="n">FIFFV_FNIRS_CH</span><span class="p">,</span>
+               <span class="s1">&#39;fnirs_od&#39;</span><span class="p">:</span> <span class="n">FIFF</span><span class="o">.</span><span class="n">FIFFV_FNIRS_CH</span><span class="p">,</span>
                <span class="s1">&#39;hbo&#39;</span><span class="p">:</span> <span class="n">FIFF</span><span class="o">.</span><span class="n">FIFFV_FNIRS_CH</span><span class="p">,</span>
                <span class="s1">&#39;hbr&#39;</span><span class="p">:</span> <span class="n">FIFF</span><span class="o">.</span><span class="n">FIFFV_FNIRS_CH</span><span class="p">}</span>
 <span class="n">_human2unit</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;ecg&#39;</span><span class="p">:</span> <span class="n">FIFF</span><span class="o">.</span><span class="n">FIFF_UNIT_V</span><span class="p">,</span>
@@ -358,13 +360,16 @@
                <span class="s1">&#39;syst&#39;</span><span class="p">:</span> <span class="n">FIFF</span><span class="o">.</span><span class="n">FIFF_UNIT_NONE</span><span class="p">,</span>
                <span class="s1">&#39;bio&#39;</span><span class="p">:</span> <span class="n">FIFF</span><span class="o">.</span><span class="n">FIFF_UNIT_V</span><span class="p">,</span>
                <span class="s1">&#39;ecog&#39;</span><span class="p">:</span> <span class="n">FIFF</span><span class="o">.</span><span class="n">FIFF_UNIT_V</span><span class="p">,</span>
+               <span class="s1">&#39;fnirs_raw&#39;</span><span class="p">:</span> <span class="n">FIFF</span><span class="o">.</span><span class="n">FIFF_UNIT_V</span><span class="p">,</span>
+               <span class="s1">&#39;fnirs_od&#39;</span><span class="p">:</span> <span class="n">FIFF</span><span class="o">.</span><span class="n">FIFF_UNIT_NONE</span><span class="p">,</span>
                <span class="s1">&#39;hbo&#39;</span><span class="p">:</span> <span class="n">FIFF</span><span class="o">.</span><span class="n">FIFF_UNIT_MOL</span><span class="p">,</span>
                <span class="s1">&#39;hbr&#39;</span><span class="p">:</span> <span class="n">FIFF</span><span class="o">.</span><span class="n">FIFF_UNIT_MOL</span><span class="p">}</span>
 <span class="n">_unit2human</span> <span class="o">=</span> <span class="p">{</span><span class="n">FIFF</span><span class="o">.</span><span class="n">FIFF_UNIT_V</span><span class="p">:</span> <span class="s1">&#39;V&#39;</span><span class="p">,</span>
                <span class="n">FIFF</span><span class="o">.</span><span class="n">FIFF_UNIT_T</span><span class="p">:</span> <span class="s1">&#39;T&#39;</span><span class="p">,</span>
                <span class="n">FIFF</span><span class="o">.</span><span class="n">FIFF_UNIT_T_M</span><span class="p">:</span> <span class="s1">&#39;T/m&#39;</span><span class="p">,</span>
                <span class="n">FIFF</span><span class="o">.</span><span class="n">FIFF_UNIT_MOL</span><span class="p">:</span> <span class="s1">&#39;M&#39;</span><span class="p">,</span>
-               <span class="n">FIFF</span><span class="o">.</span><span class="n">FIFF_UNIT_NONE</span><span class="p">:</span> <span class="s1">&#39;NA&#39;</span><span class="p">}</span>
+               <span class="n">FIFF</span><span class="o">.</span><span class="n">FIFF_UNIT_NONE</span><span class="p">:</span> <span class="s1">&#39;NA&#39;</span><span class="p">,</span>
+               <span class="n">FIFF</span><span class="o">.</span><span class="n">FIFF_UNIT_CEL</span><span class="p">:</span> <span class="s1">&#39;C&#39;</span><span class="p">}</span>
 
 
 <span class="k">def</span> <span class="nf">_check_set</span><span class="p">(</span><span class="n">ch</span><span class="p">,</span> <span class="n">projs</span><span class="p">,</span> <span class="n">ch_type</span><span class="p">):</span>
@@ -384,7 +389,7 @@
 
     <span class="nd">@verbose</span>
     <span class="k">def</span> <span class="nf">set_eeg_reference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ref_channels</span><span class="o">=</span><span class="s1">&#39;average&#39;</span><span class="p">,</span> <span class="n">projection</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                          <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+                          <span class="n">ch_type</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Specify which reference to use for EEG data.</span>
 
 <span class="sd">        By default, MNE-Python will automatically re-reference the EEG signal</span>
@@ -438,6 +443,12 @@
 <span class="sd">            ``projection=False``, the average reference is directly applied to</span>
 <span class="sd">            the data. If ``ref_channels`` is not ``&#39;average&#39;``, ``projection``</span>
 <span class="sd">            must be set to ``False`` (the default in this case).</span>
+<span class="sd">        ch_type : &#39;auto&#39; | &#39;eeg&#39; | &#39;ecog&#39; | &#39;seeg&#39;</span>
+<span class="sd">            The name of the channel type to apply the reference to. If &#39;auto&#39;,</span>
+<span class="sd">            the first channel type of eeg, ecog or seeg that is found (in that</span>
+<span class="sd">            order) will be selected.</span>
+
+<span class="sd">            .. versionadded:: 0.19</span>
 <span class="sd">        %(verbose_meth)s</span>
 
 <span class="sd">        Returns</span>
@@ -470,7 +481,7 @@
 <span class="sd">        &quot;&quot;&quot;</span>
         <span class="kn">from</span> <span class="nn">..io.reference</span> <span class="k">import</span> <span class="n">set_eeg_reference</span>
         <span class="k">return</span> <span class="n">set_eeg_reference</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ref_channels</span><span class="o">=</span><span class="n">ref_channels</span><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-                                 <span class="n">projection</span><span class="o">=</span><span class="n">projection</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+                                 <span class="n">projection</span><span class="o">=</span><span class="n">projection</span><span class="p">,</span> <span class="n">ch_type</span><span class="o">=</span><span class="n">ch_type</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
 
     <span class="k">def</span> <span class="nf">_get_channel_positions</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">picks</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Get channel locations from info.</span>
@@ -577,6 +588,10 @@
                 <span class="n">coil_type</span> <span class="o">=</span> <span class="n">FIFF</span><span class="o">.</span><span class="n">FIFFV_COIL_FNIRS_HBO</span>
             <span class="k">elif</span> <span class="n">ch_type</span> <span class="o">==</span> <span class="s1">&#39;hbr&#39;</span><span class="p">:</span>
                 <span class="n">coil_type</span> <span class="o">=</span> <span class="n">FIFF</span><span class="o">.</span><span class="n">FIFFV_COIL_FNIRS_HBR</span>
+            <span class="k">elif</span> <span class="n">ch_type</span> <span class="o">==</span> <span class="s1">&#39;fnirs_raw&#39;</span><span class="p">:</span>
+                <span class="n">coil_type</span> <span class="o">=</span> <span class="n">FIFF</span><span class="o">.</span><span class="n">FIFFV_COIL_FNIRS_RAW</span>
+            <span class="k">elif</span> <span class="n">ch_type</span> <span class="o">==</span> <span class="s1">&#39;fnirs_od&#39;</span><span class="p">:</span>
+                <span class="n">coil_type</span> <span class="o">=</span> <span class="n">FIFF</span><span class="o">.</span><span class="n">FIFFV_COIL_FNIRS_OD</span>
             <span class="k">else</span><span class="p">:</span>
                 <span class="n">coil_type</span> <span class="o">=</span> <span class="n">FIFF</span><span class="o">.</span><span class="n">FIFFV_COIL_NONE</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;chs&#39;</span><span class="p">][</span><span class="n">c_ind</span><span class="p">][</span><span class="s1">&#39;coil_type&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">coil_type</span>
@@ -601,18 +616,23 @@
         <span class="n">rename_channels</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">mapping</span><span class="p">)</span>
 
     <span class="nd">@verbose</span>
-    <span class="k">def</span> <span class="nf">set_montage</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">montage</span><span class="p">,</span> <span class="n">set_dig</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">set_montage</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span> <span class="n">montage</span><span class="p">,</span> <span class="n">raise_if_subset</span><span class="o">=</span><span class="n">DEPRECATED_PARAM</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">None</span>
+    <span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;Set EEG sensor configuration and head digitization.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        montage : instance of Montage | instance of DigMontage | str | None</span>
-<span class="sd">            The montage to use (None removes any location information).</span>
-<span class="sd">        set_dig : bool</span>
-<span class="sd">            If True, update the digitization information (``info[&#39;dig&#39;]``)</span>
-<span class="sd">            in addition to the channel positions (``info[&#39;chs&#39;][idx][&#39;loc&#39;]``).</span>
+<span class="sd">        %(montage)s</span>
+<span class="sd">        raise_if_subset: bool</span>
+<span class="sd">            If True, ValueError will be raised when montage.ch_names is a</span>
+<span class="sd">            subset of info[&#39;ch_names&#39;]. This parameter was introduced for</span>
+<span class="sd">            backward compatibility when set to False.</span>
 
-<span class="sd">            .. versionadded: 0.15</span>
+<span class="sd">            Defaults to False in 0.19, it will change to default to True in</span>
+<span class="sd">            0.20, and will be removed in 0.21.</span>
+
+<span class="sd">            .. versionadded: 0.19</span>
 <span class="sd">        %(verbose_meth)s</span>
 
 <span class="sd">        Notes</span>
@@ -621,8 +641,11 @@
 
 <span class="sd">        .. versionadded:: 0.9.0</span>
 <span class="sd">        &quot;&quot;&quot;</span>
+        <span class="c1"># How to set up a montage to old named fif file (walk through example)</span>
+        <span class="c1"># https://gist.github.com/massich/f6a9f4799f1fbeb8f5e8f8bc7b07d3df</span>
+
         <span class="kn">from</span> <span class="nn">.montage</span> <span class="k">import</span> <span class="n">_set_montage</span>
-        <span class="n">_set_montage</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">montage</span><span class="p">,</span> <span class="n">set_dig</span><span class="o">=</span><span class="n">set_dig</span><span class="p">)</span>
+        <span class="n">_set_montage</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">montage</span><span class="p">,</span> <span class="n">raise_if_subset</span><span class="o">=</span><span class="n">raise_if_subset</span><span class="p">)</span>
         <span class="k">return</span> <span class="bp">self</span>
 
     <span class="k">def</span> <span class="nf">plot_sensors</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">kind</span><span class="o">=</span><span class="s1">&#39;topomap&#39;</span><span class="p">,</span> <span class="n">ch_type</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
@@ -706,17 +729,14 @@
                             <span class="n">show</span><span class="o">=</span><span class="n">show</span><span class="p">)</span>
 
     <span class="nd">@copy_function_doc_to_method_doc</span><span class="p">(</span><span class="n">anonymize_info</span><span class="p">)</span>
-    <span class="k">def</span> <span class="nf">anonymize</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span> <span class="nf">anonymize</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">daysback</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">keep_his</span><span class="o">=</span><span class="kc">False</span><span class="p">):</span>
         <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">        .. versionadded:: 0.13.0</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="n">anonymize_info</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">)</span>
+        <span class="n">anonymize_info</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">daysback</span><span class="o">=</span><span class="n">daysback</span><span class="p">,</span> <span class="n">keep_his</span><span class="o">=</span><span class="n">keep_his</span><span class="p">)</span>
         <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="s1">&#39;annotations&#39;</span><span class="p">):</span>
-            <span class="c1"># XXX : anonymize should rather subtract a random date</span>
-            <span class="c1"># rather than setting it to None</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">annotations</span><span class="o">.</span><span class="n">orig_time</span> <span class="o">=</span> <span class="kc">None</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">annotations</span><span class="o">.</span><span class="n">orig_time</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;meas_date&#39;</span><span class="p">]</span>
             <span class="bp">self</span><span class="o">.</span><span class="n">annotations</span><span class="o">.</span><span class="n">onset</span> <span class="o">-=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_first_time</span>
-
         <span class="k">return</span> <span class="bp">self</span>
 
 
@@ -901,8 +921,8 @@
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
-<span class="sd">        ch_names : list or str</span>
-<span class="sd">            List of channel name(s) or channel name to remove.</span>
+<span class="sd">        ch_names : iterable or str</span>
+<span class="sd">            Iterable (e.g. list) of channel name(s) or channel name to remove.</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
@@ -919,15 +939,18 @@
 <span class="sd">        -----</span>
 <span class="sd">        .. versionadded:: 0.9.0</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ch_names</span><span class="p">,</span> <span class="nb">list</span><span class="p">):</span>
-            <span class="k">if</span> <span class="ow">not</span> <span class="nb">all</span><span class="p">([</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">ch</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="n">ch_names</span><span class="p">]):</span>
-                <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;&#39;ch_names&#39; must be a list of strings, got &quot;</span>
-                                 <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">([</span><span class="nb">type</span><span class="p">(</span><span class="n">ch</span><span class="p">)</span> <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="n">ch_names</span><span class="p">]))</span>
-        <span class="k">elif</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ch_names</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">ch_names</span><span class="p">,</span> <span class="nb">str</span><span class="p">):</span>
             <span class="n">ch_names</span> <span class="o">=</span> <span class="p">[</span><span class="n">ch_names</span><span class="p">]</span>
-        <span class="k">else</span><span class="p">:</span>
-            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;&#39;ch_names&#39; must be a list or a string, got &quot;</span>
-                             <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">ch_names</span><span class="p">)))</span>
+
+        <span class="k">try</span><span class="p">:</span>
+            <span class="n">all_str</span> <span class="o">=</span> <span class="nb">all</span><span class="p">([</span><span class="nb">isinstance</span><span class="p">(</span><span class="n">ch</span><span class="p">,</span> <span class="nb">str</span><span class="p">)</span> <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="n">ch_names</span><span class="p">])</span>
+        <span class="k">except</span> <span class="ne">TypeError</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;&#39;ch_names&#39; must be iterable, got &quot;</span>
+                             <span class="s2">&quot;type </span><span class="si">{}</span><span class="s2"> (</span><span class="si">{}</span><span class="s2">).&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">ch_names</span><span class="p">),</span> <span class="n">ch_names</span><span class="p">))</span>
+
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">all_str</span><span class="p">:</span>
+            <span class="k">raise</span> <span class="ne">ValueError</span><span class="p">(</span><span class="s2">&quot;Each element in &#39;ch_names&#39; must be str, got &quot;</span>
+                             <span class="s2">&quot;</span><span class="si">{}</span><span class="s2">.&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">([</span><span class="nb">type</span><span class="p">(</span><span class="n">ch</span><span class="p">)</span> <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="n">ch_names</span><span class="p">]))</span>
 
         <span class="n">missing</span> <span class="o">=</span> <span class="p">[</span><span class="n">ch</span> <span class="k">for</span> <span class="n">ch</span> <span class="ow">in</span> <span class="n">ch_names</span> <span class="k">if</span> <span class="n">ch</span> <span class="ow">not</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">ch_names</span><span class="p">]</span>
         <span class="k">if</span> <span class="nb">len</span><span class="p">(</span><span class="n">missing</span><span class="p">)</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
@@ -1353,6 +1376,9 @@
             <span class="n">conn_name</span> <span class="o">=</span> <span class="s1">&#39;ctf275&#39;</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">conn_name</span> <span class="o">=</span> <span class="s1">&#39;ctf151&#39;</span>
+    <span class="k">elif</span> <span class="n">n_kit_grads</span> <span class="o">&gt;</span> <span class="mi">0</span><span class="p">:</span>
+        <span class="kn">from</span> <span class="nn">..io.kit.constants</span> <span class="k">import</span> <span class="n">KIT_NEIGHBORS</span>
+        <span class="n">conn_name</span> <span class="o">=</span> <span class="n">KIT_NEIGHBORS</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;kit_system_id&#39;</span><span class="p">])</span>
 
     <span class="k">if</span> <span class="n">conn_name</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
         <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s1">&#39;Reading connectivity matrix for </span><span class="si">%s</span><span class="s1">.&#39;</span> <span class="o">%</span> <span class="n">conn_name</span><span class="p">)</span>
@@ -1442,7 +1468,7 @@
 
 <span class="sd">    .. note:: The effect of the difference between the coil sizes on the</span>
 <span class="sd">              current estimates computed by the MNE software is very small.</span>
-<span class="sd">              Therefore the use of mne_fix_mag_coil_types is not mandatory.</span>
+<span class="sd">              Therefore the use of ``fix_mag_coil_types`` is not mandatory.</span>
 <span class="sd">    &quot;&quot;&quot;</span>
     <span class="n">old_mag_inds</span> <span class="o">=</span> <span class="n">_get_T1T2_mag_inds</span><span class="p">(</span><span class="n">info</span><span class="p">)</span>
 
@@ -1576,7 +1602,8 @@
 
   <div role="contentinfo">
     <p>
-        &copy; Copyright 2012-2019, MNE Developers. Last updated on 2019-05-21
+        
+        &copy; Copyright 2012-2019, MNE Developers. Last updated on 2019-10-09
 
     </p>
   </div> 
@@ -1590,7 +1617,6 @@
 
   </div>
   
-
 
   <script type="text/javascript">
       jQuery(function () {
