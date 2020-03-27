@@ -60,8 +60,8 @@ EDF and EDF+ files can be read using :func:`mne.io.read_raw_edf`.
 The EDF+ files may contain an annotation channel which can be used to store
 trigger information. These annotations are available in ``raw.annotations``.
 
-Saving EDF files is not supported natively yet. This
-`gist <https://gist.github.com/skjerns/bc660ef59dca0dbd53f00ed38c42f6be>`__
+Saving EDF files is not supported natively yet. `This gist
+<https://gist.github.com/skjerns/bc660ef59dca0dbd53f00ed38c42f6be>`__
 can be used to save any mne.io.Raw into EDF/EDF+/BDF/BDF+.
 
 
@@ -173,7 +173,8 @@ Setting EEG references
 The preferred method for applying an EEG reference in MNE is
 :func:`mne.set_eeg_reference`, or equivalent instance methods like
 :meth:`raw.set_eeg_reference() <mne.io.Raw.set_eeg_reference>`. By default,
-an average reference is used. See :ref:`tut-set-eeg-ref` for more information.
+the data are assumed to already be properly referenced. See
+:ref:`tut-set-eeg-ref` for more information.
 
 Reading electrode locations and head shapes for EEG recordings
 ==============================================================

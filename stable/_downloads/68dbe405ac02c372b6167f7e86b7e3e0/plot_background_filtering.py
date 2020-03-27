@@ -6,8 +6,8 @@ r"""
 Background information on filtering
 ===================================
 
-Here we give some background information on filtering in general,
-and how it is done in MNE-Python in particular.
+Here we give some background information on filtering in general, and
+how it is done in MNE-Python in particular.
 Recommended reading for practical applications of digital
 filter design can be found in Parks & Burrus (1987) [1]_ and
 Ifeachor & Jervis (2002) [2]_, and for filtering in an
@@ -305,10 +305,10 @@ plot_filter(h, sfreq, freq, gain, 'Windowed 50 Hz transition (0.2 s)',
 # not end up being as steep as the linear/zero-phase version.
 #
 # We can construct a minimum-phase filter from our existing linear-phase
-# filter with the ``minimum_phase`` function in :mod:`scipy.signal`, and note
+# filter with the :func:`scipy.signal.minimum_phase` function, and note
 # that the falloff is not as steep:
 
-h_min = mne.fixes.minimum_phase(h)
+h_min = signal.minimum_phase(h)
 plot_filter(h_min, sfreq, freq, gain, 'Minimum-phase', flim=flim)
 
 ###############################################################################

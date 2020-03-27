@@ -28,7 +28,8 @@ raw.crop(tmax=60).load_data()
 # Background on SSS and Maxwell filtering
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 #
-# Signal-space separation (SSS) [1]_ [2]_ is a technique based on the physics
+# Signal-space separation (SSS) :footcite:`TauluKajola2005,TauluSimola2006`
+# is a technique based on the physics
 # of electromagnetic fields. SSS separates the measured signal into components
 # attributable to sources *inside* the measurement volume of the sensor array
 # (the *internal components*), and components attributable to sources *outside*
@@ -57,6 +58,8 @@ raw.crop(tmax=60).load_data()
 # The MNE-Python implementation of SSS / Maxwell filtering currently provides
 # the following features:
 #
+# - Basic bad channel detection
+#   (:func:`~mne.preprocessing.find_bad_channels_maxwell`)
 # - Bad channel reconstruction
 # - Cross-talk cancellation
 # - Fine calibration correction
@@ -66,8 +69,8 @@ raw.crop(tmax=60).load_data()
 # - Raw movement compensation (using head positions estimated by MaxFilter)
 # - cHPI subtraction (see :func:`mne.chpi.filter_chpi`)
 # - Handling of 3D (in addition to 1D) fine calibration files
-# - Epoch-based movement compensation as described in [1]_ through
-#   :func:`mne.epochs.average_movements`
+# - Epoch-based movement compensation as described in
+#   :footcite:`TauluKajola2005` through :func:`mne.epochs.average_movements`
 # - **Experimental** processing of data from (un-compensated) non-Elekta
 #   systems
 #
@@ -85,24 +88,47 @@ fine_cal_file = os.path.join(sample_data_folder, 'SSS', 'sss_cal_mgh.dat')
 crosstalk_file = os.path.join(sample_data_folder, 'SSS', 'ct_sparse_mgh.fif')
 
 ###############################################################################
-# Before we perform SSS we'll set a couple additional bad channels — ``MEG
-# 2313`` has some DC jumps and ``MEG 1032`` has some large-ish low-frequency
-# drifts. After that, performing SSS and Maxwell filtering is done with a
+# Before we perform SSS we'll look for bad channels — ``MEG 2443`` is quite
+# noisy.
+#
+# .. warning::
+#
+#     It is critical to mark bad channels in ``raw.info['bads']`` *before*
+#     calling :func:`~mne.preprocessing.maxwell_filter` in order to prevent
+#     bad channel noise from spreading.
+#
+# Let's see if we can automatically detect it. To do this we need to
+# operate on a signal without line noise or cHPI signals, which is most
+# easily achieved using :func:`mne.chpi.filter_chpi`,
+# :func:`mne.io.Raw.notch_filter`, or :meth:`mne.io.Raw.filter`. For simplicity
+# we just low-pass filter these data:
+
+raw.info['bads'] = []
+raw_check = raw.copy().pick_types(exclude=()).filter(None, 40)
+auto_noisy_chs, auto_flat_chs = mne.preprocessing.find_bad_channels_maxwell(
+    raw_check, cross_talk=crosstalk_file, calibration=fine_cal_file,
+    verbose=True)
+print(auto_noisy_chs)  # we should find them!
+print(auto_flat_chs)  # none for this dataset
+raw.info['bads'].extend(auto_noisy_chs + auto_flat_chs)
+
+###############################################################################
+# But this algorithm is not perfect. For example, it misses ``MEG 2313``,
+# which has some flux jumps, because there are not enough flux jumps in the
+# recording. So it can still be useful to manually inspect and mark bad
+# channels:
+
+raw.info['bads'] += ['MEG 2313']  # from manual inspection
+
+###############################################################################
+# After that, performing SSS and Maxwell filtering is done with a
 # single call to :func:`~mne.preprocessing.maxwell_filter`, with the crosstalk
 # and fine calibration filenames provided (if available):
 
-raw.info['bads'].extend(['MEG 1032', 'MEG 2313'])
-raw_sss = mne.preprocessing.maxwell_filter(raw, cross_talk=crosstalk_file,
-                                           calibration=fine_cal_file)
+raw_sss = mne.preprocessing.maxwell_filter(
+    raw, cross_talk=crosstalk_file, calibration=fine_cal_file, verbose=True)
 
 ###############################################################################
-#  .. warning::
-#
-#      Automatic bad channel detection is not currently implemented. It is
-#      critical to mark bad channels in ``raw.info['bads']`` *before* calling
-#      :func:`~mne.preprocessing.maxwell_filter` in order to prevent bad
-#      channel noise from spreading.
-#
 # To see the effect, we can plot the data before and after SSS / Maxwell
 # filtering.
 
@@ -132,7 +158,8 @@ raw_sss.pick(['meg']).plot(duration=2, butterfly=True)
 # The thickness of this source-free measurement shell should be 4-8 cm for SSS
 # to perform optimally. In practice, there may be sources falling within that
 # measurement volume; these can often be mitigated by using Spatiotemporal
-# Signal Space Separation (tSSS) [2]_. tSSS works by looking for temporal
+# Signal Space Separation (tSSS) :footcite:`TauluSimola2006`.
+# tSSS works by looking for temporal
 # correlation between components of the internal and external subspaces, and
 # projecting out any components that are common to the internal and external
 # subspaces. The projection is done in an analogous way to
@@ -176,10 +203,11 @@ raw_sss.pick(['meg']).plot(duration=2, butterfly=True)
 # If you have information about subject head position relative to the sensors
 # (i.e., continuous head position indicator coils, or :term:`cHPI <hpi>`), SSS
 # can take that into account when projecting sensor data onto the internal
-# subspace. Head position data is loaded with the
-# :func:`~mne.chpi.read_head_pos` function. The :ref:`example data
-# <sample-dataset>` doesn't include cHPI, so here we'll load a :file:`.pos`
-# file used for testing, just to demonstrate:
+# subspace. Head position data can be computed using
+# :func:`mne.chpi.compute_chpi_locs` and :func:`mne.chpi.compute_head_pos`,
+# or loaded with the:func:`mne.chpi.read_head_pos` function. The
+# :ref:`example data <sample-dataset>` doesn't include cHPI, so here we'll
+# load a :file:`.pos` file used for testing, just to demonstrate:
 
 head_pos_file = os.path.join(mne.datasets.testing.data_path(), 'SSS',
                              'test_move_anon_raw.pos')
@@ -219,13 +247,7 @@ mne.viz.plot_head_positions(head_pos, mode='traces')
 # References
 # ^^^^^^^^^^
 #
-# .. [1] Taulu S and Kajola M. (2005). Presentation of electromagnetic
-#        multichannel data: The signal space separation method. *J Appl Phys*
-#        97, 124905 1-10. https://doi.org/10.1063/1.1935742
-#
-# .. [2] Taulu S and Simola J. (2006). Spatiotemporal signal space separation
-#        method for rejecting nearby interference in MEG measurements. *Phys
-#        Med Biol* 51, 1759-1768. https://doi.org/10.1088/0031-9155/51/7/008
+# .. footbibliography::
 #
 #
 # .. LINKS
