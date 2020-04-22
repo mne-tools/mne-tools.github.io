@@ -190,7 +190,7 @@ This documentation is for <strong>development version 0.21.dev0</strong>.
 <h1>mne.extract_label_time_course<a class="headerlink" href="#mne-extract-label-time-course" title="Permalink to this headline">¶</a></h1>
 <dl class="py function">
 <dt id="mne.extract_label_time_course">
-<code class="sig-prename descclassname">mne.</code><code class="sig-name descname">extract_label_time_course</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">stcs</span></em>, <em class="sig-param"><span class="n">labels</span></em>, <em class="sig-param"><span class="n">src</span></em>, <em class="sig-param"><span class="n">mode</span><span class="o">=</span><span class="default_value">'mean_flip'</span></em>, <em class="sig-param"><span class="n">allow_empty</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">return_generator</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">verbose</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/source_estimate.py#L2812-L2870"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.extract_label_time_course" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mne.</code><code class="sig-name descname">extract_label_time_course</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">stcs</span></em>, <em class="sig-param"><span class="n">labels</span></em>, <em class="sig-param"><span class="n">src</span></em>, <em class="sig-param"><span class="n">mode</span><span class="o">=</span><span class="default_value">'auto'</span></em>, <em class="sig-param"><span class="n">allow_empty</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">return_generator</span><span class="o">=</span><span class="default_value">False</span></em>, <em class="sig-param"><span class="n">verbose</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/source_estimate.py#L2866-L2925"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.extract_label_time_course" title="Permalink to this definition">¶</a></dt>
 <dd><p>Extract label time course for lists of labels and source estimates.</p>
 <p>This function will extract one time course for each label and source
 estimate. The way the time courses are extracted depends on the mode
@@ -225,7 +225,7 @@ and <a class="reference internal" href="../auto_tutorials/intro/plot_50_configur
 </dl>
 <p class="rubric">Notes</p>
 <p>Valid values for <code class="docutils literal notranslate"><span class="pre">mode</span></code> are:</p>
-<ul class="simple">
+<ul>
 <li><dl class="simple">
 <dt><code class="docutils literal notranslate"><span class="pre">'max'</span></code></dt><dd><p>Maximum value across vertices at each time point within each label.</p>
 </dd>
@@ -233,7 +233,10 @@ and <a class="reference internal" href="../auto_tutorials/intro/plot_50_configur
 </li>
 <li><dl class="simple">
 <dt><code class="docutils literal notranslate"><span class="pre">'mean'</span></code></dt><dd><p>Average across vertices at each time point within each label. Ignores
-orientation of sources.</p>
+orientation of sources for standard source estimates, which varies
+across the cortical surface, which can lead to cancellation.
+Vector source estimates are always in XYZ / RAS orientation, and are thus
+already geometrically aligned.</p>
 </dd>
 </dl>
 </li>
@@ -257,11 +260,23 @@ similar STCs does not result in 180° direction/phase changes.</p>
 </dd>
 </dl>
 </li>
+<li><dl>
+<dt><code class="docutils literal notranslate"><span class="pre">'auto'</span></code> (default)</dt><dd><p>Uses <code class="docutils literal notranslate"><span class="pre">'mean_flip'</span></code> when a standard source estimate is applied, and
+<code class="docutils literal notranslate"><span class="pre">'mean'</span></code> when a vector source estimate is supplied.</p>
+<div class="versionadded">
+<p><span class="versionmodified added">New in version 0.21: </span>Support for <code class="docutils literal notranslate"><span class="pre">'auto'</span></code> and vector source estimates.</p>
+</div>
+</dd>
+</dl>
+</li>
 </ul>
+<p>The only modes that work for vector source estimates are <code class="docutils literal notranslate"><span class="pre">'mean'</span></code>,
+<code class="docutils literal notranslate"><span class="pre">'max'</span></code>, and <code class="docutils literal notranslate"><span class="pre">'auto'</span></code>.</p>
 <p>If encountering a <code class="docutils literal notranslate"><span class="pre">ValueError</span></code> due to mismatch between number of
 source points in the subject source space and computed <code class="docutils literal notranslate"><span class="pre">stc</span></code> object set
-<code class="docutils literal notranslate"><span class="pre">src</span></code> argument to <code class="docutils literal notranslate"><span class="pre">fwd['src']</span></code> to ensure the source space is
-compatible between forward and inverse routines.</p>
+<code class="docutils literal notranslate"><span class="pre">src</span></code> argument to <code class="docutils literal notranslate"><span class="pre">fwd['src']</span></code> or <code class="docutils literal notranslate"><span class="pre">inv['src']</span></code> to ensure the source
+space is the one actually used by the inverse to compute the source
+time courses.</p>
 </dd></dl>
 
 <div class="section" id="examples-using-mne-extract-label-time-course">
