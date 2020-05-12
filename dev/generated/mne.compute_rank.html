@@ -187,7 +187,7 @@ This documentation is for <strong>development version 0.21.dev0</strong>.
 <h1>mne.compute_rank<a class="headerlink" href="#mne-compute-rank" title="Permalink to this headline">¶</a></h1>
 <dl class="py function">
 <dt id="mne.compute_rank">
-<code class="sig-prename descclassname">mne.</code><code class="sig-name descname">compute_rank</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inst</span></em>, <em class="sig-param"><span class="n">rank</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">scalings</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">info</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">tol</span><span class="o">=</span><span class="default_value">'auto'</span></em>, <em class="sig-param"><span class="n">proj</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">verbose</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/rank.py#L266-L415"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.compute_rank" title="Permalink to this definition">¶</a></dt>
+<code class="sig-prename descclassname">mne.</code><code class="sig-name descname">compute_rank</code><span class="sig-paren">(</span><em class="sig-param"><span class="n">inst</span></em>, <em class="sig-param"><span class="n">rank</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">scalings</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">info</span><span class="o">=</span><span class="default_value">None</span></em>, <em class="sig-param"><span class="n">tol</span><span class="o">=</span><span class="default_value">'auto'</span></em>, <em class="sig-param"><span class="n">proj</span><span class="o">=</span><span class="default_value">True</span></em>, <em class="sig-param"><span class="n">tol_kind</span><span class="o">=</span><span class="default_value">'absolute'</span></em>, <em class="sig-param"><span class="n">verbose</span><span class="o">=</span><span class="default_value">None</span></em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/master/mne/rank.py#L271-L421"><span class="viewcode-link">[source]</span></a><a class="headerlink" href="#mne.compute_rank" title="Permalink to this definition">¶</a></dt>
 <dd><p>Compute the rank of data or noise covariance.</p>
 <p>This function will normalize the rows of the data (typically
 channels or vertices) such that non-zero singular values
@@ -209,10 +209,38 @@ to comparable values.</p>
 only necessary if inst is a Covariance object (since this does
 not provide <code class="docutils literal notranslate"><span class="pre">inst.info</span></code>).</p>
 </dd>
-<dt><strong>tol</strong><span class="classifier"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><code class="docutils literal notranslate"><span class="pre">float</span></code></a> | <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.8)"><code class="docutils literal notranslate"><span class="pre">str</span></code></a></span></dt><dd><p>Tolerance. See <code class="docutils literal notranslate"><span class="pre">estimate_rank</span></code>.</p>
+<dt><strong>tol</strong><span class="classifier"><a class="reference external" href="https://docs.python.org/3/library/functions.html#float" title="(in Python v3.8)"><code class="docutils literal notranslate"><span class="pre">float</span></code></a> | ‘auto’</span></dt><dd><p>Tolerance for singular values to consider non-zero in
+calculating the rank. The singular values are calculated
+in this method such that independent data are expected to
+have singular value around one. Can be ‘auto’ to use the
+same thresholding as <a class="reference external" href="https://scipy.github.io/devdocs/generated/scipy.linalg.orth.html#scipy.linalg.orth" title="(in SciPy v1.5.0.dev0+9f1addd)"><code class="xref py py-func docutils literal notranslate"><span class="pre">scipy.linalg.orth()</span></code></a>.</p>
 </dd>
 <dt><strong>proj</strong><span class="classifier"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#bltin-boolean-values" title="(in Python v3.8)"><span class="xref std std-ref">bool</span></a></span></dt><dd><p>If True, all projs in <code class="docutils literal notranslate"><span class="pre">inst</span></code> and <code class="docutils literal notranslate"><span class="pre">info</span></code> will be applied or
 considered when <code class="docutils literal notranslate"><span class="pre">rank=None</span></code> or <code class="docutils literal notranslate"><span class="pre">rank='info'</span></code>.</p>
+</dd>
+<dt><strong>tol_kind</strong><span class="classifier"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.8)"><code class="docutils literal notranslate"><span class="pre">str</span></code></a></span></dt><dd><p>Can be: “absolute” (default) or “relative”. Only used if <code class="docutils literal notranslate"><span class="pre">tol</span></code> is a
+float, because when <code class="docutils literal notranslate"><span class="pre">tol</span></code> is a string the mode is implicitly relative.
+After applying the chosen scale factors / normalization to the data,
+the singular values are computed, and the rank is then taken as:</p>
+<ul class="simple">
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">'absolute'</span></code></dt><dd><p>The number of singular values <code class="docutils literal notranslate"><span class="pre">s</span></code> greater than <code class="docutils literal notranslate"><span class="pre">tol</span></code>.
+This mode can fail if your data do not adhere to typical
+data scalings.</p>
+</dd>
+</dl>
+</li>
+<li><dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">'relative'</span></code></dt><dd><p>The number of singular values <code class="docutils literal notranslate"><span class="pre">s</span></code> greater than <code class="docutils literal notranslate"><span class="pre">tol</span> <span class="pre">*</span> <span class="pre">s.max()</span></code>.
+This mode can fail if you have one or more large components in the
+data (e.g., artifacts).</p>
+</dd>
+</dl>
+</li>
+</ul>
+<div class="versionadded">
+<p><span class="versionmodified added">New in version 0.21.0.</span></p>
+</div>
 </dd>
 <dt><strong>verbose</strong><span class="classifier"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#bltin-boolean-values" title="(in Python v3.8)"><span class="xref std std-ref">bool</span></a>, <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.8)"><code class="docutils literal notranslate"><span class="pre">str</span></code></a>, <a class="reference external" href="https://docs.python.org/3/library/functions.html#int" title="(in Python v3.8)"><code class="docutils literal notranslate"><span class="pre">int</span></code></a>, or <a class="reference external" href="https://docs.python.org/3/library/constants.html#None" title="(in Python v3.8)"><code class="docutils literal notranslate"><span class="pre">None</span></code></a></span></dt><dd><p>If not None, override default verbose level (see <a class="reference internal" href="mne.verbose.html#mne.verbose" title="mne.verbose"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.verbose()</span></code></a>
 and <a class="reference internal" href="../auto_tutorials/intro/plot_50_configure_mne.html#tut-logging"><span class="std std-ref">Logging documentation</span></a> for more).</p>
