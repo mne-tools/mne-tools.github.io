@@ -3,7 +3,7 @@
     const latestStable = '0.20';
     const goodPaths = ['stable', 'dev', latestStable];
     const showWarning = (msg) => {
-        $('.body[role=main]').prepend(`<div class="d-block devbar alert alert-danger">${msg}</div>`)
+        $('body').prepend(`<div class="d-block devbar alert alert-danger">${msg}</div>`)
     };
     if (location.hostname === 'mne.tools' || location.hostname.includes('circle-artifacts.com')) {
         const versionPath = location.pathname.split('/')[1];
