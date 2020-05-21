@@ -15,7 +15,7 @@
         $('body').prepend(`<div class="d-block devbar alert alert-danger" style="${devbar_style}">${msg}</div>`)
 
     };
-    if (location.hostname === 'mne.tools' || location.hostname.includes('circle-artifacts.com')) {
+    if (location.hostname === 'mne.tools') {
         const versionPath = location.pathname.split('/')[1];
         if (!goodPaths.includes(versionPath)) {
             const link_style = "color: #ffffff; font-weight: bold"
