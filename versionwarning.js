@@ -10,6 +10,7 @@
         'background-color: #e74c3c',
         'border-color: #e74c3c',
         'color: #ffffff',
+        'font-weight: normal'
     ].join('; ')
     const showWarning = (msg) => {
         $('body').prepend(`<div class="d-block devbar alert alert-danger" style="${devbar_style}">${msg}</div>`)
