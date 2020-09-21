@@ -5,8 +5,8 @@
 Repairing artifacts with SSP
 ============================
 
-This tutorial covers the basics of signal-space projection (SSP) and
-shows how SSP can be used for artifact repair; extended examples illustrate use
+This tutorial covers the basics of signal-space projection (SSP) and shows
+how SSP can be used for artifact repair; extended examples illustrate use
 of SSP for environmental noise reduction, and for repair of ocular and
 heartbeat artifacts.
 
@@ -39,7 +39,8 @@ from mne.preprocessing import (create_eog_epochs, create_ecg_epochs,
 # What is SSP?
 # ^^^^^^^^^^^^
 #
-# Signal-space projection (SSP) [1]_ is a technique for removing noise from EEG
+# Signal-space projection (SSP) :footcite:`UusitaloIlmoniemi1997` is a
+# technique for removing noise from EEG
 # and MEG signals by :term:`projecting <projector>` the signal onto a
 # lower-dimensional subspace. The subspace is chosen by calculating the average
 # pattern across sensors when the noise is present, treating that pattern as
@@ -111,11 +112,16 @@ for average in (False, True):
 # We create the SSP vectors using :func:`~mne.compute_proj_raw`, and control
 # the number of projectors with parameters ``n_grad`` and ``n_mag``. Once
 # created, the field pattern of the projectors can be easily visualized with
-# :func:`~mne.viz.plot_projs_topomap`.
+# :func:`~mne.viz.plot_projs_topomap`. We include the parameter
+# ``vlim='joint'`` so that the colormap is computed jointly for all projectors
+# of a given channel type; this makes it easier to compare their relative
+# smoothness. Note that for the function to know the types of channels in a
+# projector, you must also provide the corresponding :class:`~mne.Info` object:
 
 # sphinx_gallery_thumbnail_number = 3
 empty_room_projs = mne.compute_proj_raw(empty_room_raw, n_grad=3, n_mag=3)
-mne.viz.plot_projs_topomap(empty_room_projs, colorbar=True)
+mne.viz.plot_projs_topomap(empty_room_projs, colorbar=True, vlim='joint',
+                           info=empty_room_raw.info)
 
 ###############################################################################
 # Notice that the gradiometer-based projectors seem to reflect problems with
@@ -128,8 +134,9 @@ mne.viz.plot_projs_topomap(empty_room_projs, colorbar=True)
 # polarity.
 
 fig, axs = plt.subplots(2, 3)
-mne.viz.plot_projs_topomap(system_projs, axes=axs[0], colorbar=True)
-mne.viz.plot_projs_topomap(empty_room_projs[3:], axes=axs[1], colorbar=True)
+for idx, _projs in enumerate([system_projs, empty_room_projs[3:]]):
+    mne.viz.plot_projs_topomap(_projs, axes=axs[idx], colorbar=True,
+                               vlim='joint', info=empty_room_raw.info)
 
 ###############################################################################
 # Visualizing how projectors affect the signal
@@ -164,8 +171,8 @@ event_id = {'auditory/left': 1}
 # NOTE: appropriate rejection criteria are highly data-dependent
 reject = dict(mag=4000e-15,     # 4000 fT
               grad=4000e-13,    # 4000 fT/cm
-              eeg=150e-6,       # 150 μV
-              eog=250e-6)       # 250 μV
+              eeg=150e-6,       # 150 µV
+              eog=250e-6)       # 250 µV
 
 # time range where we expect to see the auditory N100: 50-150 ms post-stimulus
 times = np.linspace(0.05, 0.15, 5)
@@ -297,7 +304,7 @@ for title, proj in [('Without', empty_room_projs), ('With', ecg_projs)]:
 # detected ECG epochs would be used when computing the projectors (regardless
 # of signal quality in the data sensors during those epochs). The default
 # behavior is to reject epochs based on signal amplitude: epochs with
-# peak-to-peak amplitudes exceeding 50 μV in EEG channels, 250 μV in EOG
+# peak-to-peak amplitudes exceeding 50 µV in EEG channels, 250 µV in EOG
 # channels, 2000 fT/cm in gradiometer channels, or 3000 fT in magnetometer
 # channels. You can change these thresholds by passing a dictionary with keys
 # ``eeg``, ``eog``, ``mag``, and ``grad`` (though be sure to pass the threshold
@@ -399,6 +406,4 @@ for title in ('Without', 'With'):
 # References
 # ^^^^^^^^^^
 #
-# .. [1] Uusitalo MA and Ilmoniemi RJ. (1997). Signal-space projection method
-#        for separating MEG or EEG into components. *Med Biol Eng Comput*
-#        35(2), 135–140. doi:10.1007/BF02534144
+# .. footbibliography::

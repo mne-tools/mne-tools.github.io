@@ -44,21 +44,23 @@ stc = mne.read_source_estimate(fname_stc)
 evoked.plot()
 
 stc.plot(views='lat', hemi='split', size=(800, 400), subject='sample',
-         subjects_dir=subjects_dir, initial_time=max_t)
+         subjects_dir=subjects_dir, initial_time=max_t,
+         time_viewer=False, show_traces=False)
 
 ###############################################################################
 # To make a publication-ready figure, first we'll re-plot the brain on a white
 # background, take a screenshot of it, and then crop out the white margins.
-# While we're at it, let's change the colormap, set custom colormap limits, and
+# While we're at it, let's change the colormap, set custom colormap limits and
 # remove the default colorbar (so we can add a smaller, vertical one later):
 
 colormap = 'viridis'
 clim = dict(kind='value', lims=[4, 8, 12])
 
-# Plot the STC, get the brain image, crop it
+# Plot the STC, get the brain image, crop it:
 brain = stc.plot(views='lat', hemi='split', size=(800, 400), subject='sample',
-                 subjects_dir=subjects_dir, initial_time=max_t,
-                 background='w', colorbar=False, clim=clim, colormap=colormap)
+                 subjects_dir=subjects_dir, initial_time=max_t, background='w',
+                 colorbar=False, clim=clim, colormap=colormap,
+                 time_viewer=False, show_traces=False)
 screenshot = brain.screenshot()
 brain.close()
 

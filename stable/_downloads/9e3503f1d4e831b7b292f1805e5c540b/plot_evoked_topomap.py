@@ -19,6 +19,7 @@ additional options.
 
 import numpy as np
 import matplotlib.pyplot as plt
+
 from mne.datasets import sample
 from mne import read_evokeds
 
@@ -47,6 +48,13 @@ evoked.plot_topomap(times, ch_type='mag', time_unit='s')
 # If times is set to None at most 10 regularly spaced topographies will be
 # shown:
 evoked.plot_topomap(ch_type='mag', time_unit='s')
+
+###############################################################################
+# We can use ``nrows`` and ``ncols`` parameter to create multiline plots
+# with more timepoints.
+all_times = np.arange(-0.2, 0.5, 0.03)
+evoked.plot_topomap(all_times, ch_type='mag', time_unit='s',
+                    ncols=8, nrows='auto')
 
 ###############################################################################
 # Instead of showing topographies at specific time points we can compute
@@ -80,12 +88,15 @@ evoked.plot_topomap(times, ch_type='mag', cmap='Spectral_r', res=32,
 # Compare this with ``extrapolate='head'`` (second topography below) where
 # extrapolation goes to 0 at the head circle and ``extrapolate='local'`` where
 # extrapolation is performed only within some distance from channels:
+
 extrapolations = ['box', 'head', 'local']
 fig, axes = plt.subplots(figsize=(7.5, 2.5), ncols=3)
 
+# Here we look at EEG channels, and use a custom head sphere to get all the
+# sensors to be well within the drawn head surface
 for ax, extr in zip(axes, extrapolations):
-    evoked.plot_topomap(0.1, ch_type='mag', size=2, extrapolate=extr, axes=ax,
-                        show=False, colorbar=False)
+    evoked.plot_topomap(0.1, ch_type='eeg', size=2, extrapolate=extr, axes=ax,
+                        show=False, colorbar=False, sphere=(0., 0., 0., 0.09))
     ax.set_title(extr, fontsize=14)
 
 ###############################################################################
@@ -96,7 +107,7 @@ for ax, extr in zip(axes, extrapolations):
 # post-stimulus, add channel labels, title and adjust plot margins:
 evoked.plot_topomap(0.1, ch_type='mag', show_names=True, colorbar=False,
                     size=6, res=128, title='Auditory response',
-                    time_unit='s')
+                    time_unit='s', extrapolate='local', border='mean')
 plt.subplots_adjust(left=0.01, right=0.99, bottom=0.01, top=0.88)
 
 ###############################################################################

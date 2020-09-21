@@ -190,8 +190,8 @@ event_dict = {'auditory/left': 1, 'auditory/right': 2, 'visual/left': 3,
 # attribute to get the sampling frequency of the recording (so our x-axis will
 # be in seconds instead of in samples).
 
-fig = mne.viz.plot_events(events, event_id=event_dict, sfreq=raw.info['sfreq'])
-fig.subplots_adjust(right=0.7)  # make room for the legend
+fig = mne.viz.plot_events(events, event_id=event_dict, sfreq=raw.info['sfreq'],
+                          first_samp=raw.first_samp)
 
 ###############################################################################
 # For paradigms that are not event-related (e.g., analysis of resting-state
@@ -207,7 +207,7 @@ fig.subplots_adjust(right=0.7)  # make room for the legend
 #
 # The :class:`~mne.io.Raw` object and the events array are the bare minimum
 # needed to create an :class:`~mne.Epochs` object, which we create with the
-# :class:`mne.Epochs` class constructor. Here we'll also specify some data
+# :class:`~mne.Epochs` class constructor. Here we'll also specify some data
 # quality constraints: we'll reject any epoch where peak-to-peak signal
 # amplitude is beyond reasonable limits for that channel type. This is done
 # with a *rejection dictionary*; you may include or omit thresholds for any of
@@ -218,8 +218,8 @@ fig.subplots_adjust(right=0.7)  # make room for the legend
 
 reject_criteria = dict(mag=4000e-15,     # 4000 fT
                        grad=4000e-13,    # 4000 fT/cm
-                       eeg=150e-6,       # 150 μV
-                       eog=250e-6)       # 250 μV
+                       eeg=150e-6,       # 150 µV
+                       eog=250e-6)       # 250 µV
 
 ###############################################################################
 # We'll also pass the event dictionary as the ``event_id`` parameter (so we can
@@ -376,7 +376,6 @@ stc.plot(initial_time=0.1, hemi='split', views=['lat', 'med'],
 # well as many other capabilities of MNE-Python not mentioned here:
 # connectivity analysis, encoding/decoding models, lots more visualization
 # options, etc). Read on to learn more!
-#
 #
 # .. LINKS
 #

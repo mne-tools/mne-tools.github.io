@@ -33,10 +33,10 @@ lh_surf = surf[0]
 
 # setup a volume source space of the left cerebellum cortex
 volume_label = 'Left-Cerebellum-Cortex'
-sphere = (0, 0, 0, 120)
-lh_cereb = setup_volume_source_space(subject, mri=aseg_fname, sphere=sphere,
-                                     volume_label=volume_label,
-                                     subjects_dir=subjects_dir)
+sphere = (0, 0, 0, 0.12)
+lh_cereb = setup_volume_source_space(
+    subject, mri=aseg_fname, sphere=sphere, volume_label=volume_label,
+    subjects_dir=subjects_dir, sphere_units='m')
 
 # Combine the source spaces
 src = surf + lh_cereb
@@ -50,21 +50,18 @@ fig = mne.viz.plot_alignment(subject=subject, subjects_dir=subjects_dir,
 mne.viz.set_3d_view(fig, azimuth=173.78, elevation=101.75,
                     distance=0.30, focalpoint=(-0.03, -0.01, 0.03))
 
-##############################################################################
-# Compare volume source locations to segmentation file in freeview
 
-# Export source positions to nift file
-nii_fname = data_path + '/MEG/sample/mne_sample_lh-cerebellum-cortex.nii'
-
-src.export_volume(nii_fname, mri_resolution=True)
-
-# Uncomment the following lines to display source positions in freeview.
-'''
-# display image in freeview
-from mne.utils import run_subprocess
-mri_fname = subjects_dir + '/sample/mri/brain.mgz'
-run_subprocess(['freeview', '-v', mri_fname, '-v',
-                '%s:colormap=lut:opacity=0.5' % aseg_fname, '-v',
-                '%s:colormap=jet:colorscale=0,2' % nii_fname, '-slice',
-                '157 75 105'])
-'''
+###############################################################################
+# You can export source positions to a NIfTI file::
+#
+#     >>> nii_fname = 'mne_sample_lh-cerebellum-cortex.nii'
+#     >>> src.export_volume(nii_fname, mri_resolution=True)
+#
+# And display source positions in freeview::
+#
+#    >>> from mne.utils import run_subprocess
+#    >>> mri_fname = subjects_dir + '/sample/mri/brain.mgz'
+#    >>> run_subprocess(['freeview', '-v', mri_fname, '-v',
+#                        '%s:colormap=lut:opacity=0.5' % aseg_fname, '-v',
+#                        '%s:colormap=jet:colorscale=0,2' % nii_fname,
+#                        '-slice', '157 75 105'])
