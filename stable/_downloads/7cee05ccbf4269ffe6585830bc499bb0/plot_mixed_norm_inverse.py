@@ -4,9 +4,8 @@ Compute sparse inverse solution with mixed norm: MxNE and irMxNE
 ================================================================
 
 Runs an (ir)MxNE (L1/L2 [1]_ or L0.5/L2 [2]_ mixed norm) inverse solver.
-L0.5/L2 is done with irMxNE which allows for sparser
-source estimates with less amplitude bias due to the non-convexity
-of the L0.5/L2 mixed norm penalty.
+L0.5/L2 is done with irMxNE which allows for sparser source estimates with less
+amplitude bias due to the non-convexity of the L0.5/L2 mixed norm penalty.
 """
 # Author: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #         Daniel Strohmeier <daniel.strohmeier@tu-ilmenau.de>
@@ -60,7 +59,13 @@ dipoles, residual = mixed_norm(
     evoked, forward, cov, alpha, loose=loose, depth=depth, maxit=3000,
     tol=1e-4, active_set_size=10, debias=True, weights=stc_dspm,
     weights_min=8., n_mxne_iter=n_mxne_iter, return_residual=True,
-    return_as_dipoles=True)
+    return_as_dipoles=True, verbose=True)
+
+t = 0.083
+tidx = evoked.time_as_index(t)
+for di, dip in enumerate(dipoles, 1):
+    print(f'Dipole #{di} GOF at {1000 * t:0.1f} ms: '
+          f'{float(dip.gof[tidx]):0.1f}%')
 
 ###############################################################################
 # Plot dipole activations

@@ -39,13 +39,15 @@ You can view the specification hosted on the
 `Brain Products website <https://www.brainproducts.com/productdetails.php?id=21&tab=5>`_
 
 BrainVision EEG files can be read in using :func:`mne.io.read_raw_brainvision`
-with the .vhdr header file as an input.
+with the ``.vhdr`` header file as an input.
 
 .. warning:: Renaming BrainVision files can be problematic due to their
              multifile structure. See this
-             `example <https://mne-tools.github.io/mne-bids/auto_examples/rename_brainvision_files>`_
+             `example <https://mne.tools/mne-bids/stable/auto_examples/rename_brainvision_files.html#sphx-glr-auto-examples-rename-brainvision-files-py>`_
              for an instruction.
 
+.. note:: For *writing* BrainVision files, you can use the Python package
+          `pybv <https://pypi.org/project/pybv/>`_.
 
 .. _import-edf:
 
@@ -166,6 +168,21 @@ eXimia EEG data (.nxe)
 
 EEG data from the Nexstim eXimia system can be read in using the
 :func:`mne.io.read_raw_eximia` function.
+
+
+.. _import-persyst:
+
+Persyst EEG data (.lay, .dat)
+=============================
+
+EEG data from the Persyst system can be read in using the
+:func:`mne.io.read_raw_persyst` function.
+
+Note that not all the subject metadata may be properly read in
+due to the fact that Persyst changes its specification
+sometimes from version to version. Please submit an issue, or
+pull request if you encounter a problem.
+
 
 Setting EEG references
 ======================
