@@ -173,18 +173,16 @@ to download the full example code</p>
 <span id="sphx-glr-auto-examples-inverse-plot-multidict-reweighted-tfmxne-py"></span><h1>Compute iterative reweighted TF-MxNE with multiscale time-frequency dictionary<a class="headerlink" href="#compute-iterative-reweighted-tf-mxne-with-multiscale-time-frequency-dictionary" title="Permalink to this headline">¶</a></h1>
 <p>The iterative reweighted TF-MxNE solver is a distributed inverse method
 based on the TF-MxNE solver, which promotes focal (sparse) sources
-<a class="footnote-reference brackets" href="#strohmeieretal2015" id="id1">2</a>. The benefit of this approach is that:</p>
-<blockquote>
-<div><ul class="simple">
-<li><p>it is spatio-temporal without assuming stationarity (sources properties
+<a class="footnote-reference brackets" href="#strohmeieretal2015" id="id1">2</a>. The benefits of this approach are that:</p>
+<ul class="simple">
+<li><p>it is spatio-temporal without assuming stationarity (source properties
 can vary over time),</p></li>
-<li><p>activations are localized in space, time and frequency in one step,</p></li>
+<li><p>activations are localized in space, time, and frequency in one step,</p></li>
 <li><p>the solver uses non-convex penalties in the TF domain, which results in a
 solution less biased towards zero than when simple TF-MxNE is used,</p></li>
 <li><p>using a multiscale dictionary allows to capture short transient
 activations along with slower brain waves <a class="footnote-reference brackets" href="#bekhtietal2016" id="id2">1</a>.</p></li>
 </ul>
-</div></blockquote>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Author: Mathurin Massias &lt;mathurin.massias@gmail.com&gt;</span>
 <span class="c1">#         Yousra Bekhti &lt;yousra.bekhti@gmail.com&gt;</span>
 <span class="c1">#         Daniel Strohmeier &lt;daniel.strohmeier@tu-ilmenau.de&gt;</span>
@@ -211,23 +209,22 @@ activations along with slower brain waves <a class="footnote-reference brackets"
 <a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">fwd_fname</span></a> <span class="o">=</span> <a href="https://docs.python.org/3/library/os.path.html#os.path.join" title="os.path.join" class="sphx-glr-backref-module-os-path sphx-glr-backref-type-py-function"><span class="n">op</span><span class="o">.</span><span class="n">join</span></a><span class="p">(</span><a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">data_path</span></a><span class="p">,</span> <span class="s1">&#39;derivatives&#39;</span><span class="p">,</span> <span class="s1">&#39;sub-</span><span class="si">{}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">subject</span></a><span class="p">),</span>
                     <span class="s1">&#39;sub-</span><span class="si">{}</span><span class="s1">_task-</span><span class="si">{}</span><span class="s1">-fwd.fif&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">subject</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">task</span></a><span class="p">))</span>
 
-<a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">condition</span></a> <span class="o">=</span> <span class="s1">&#39;Unknown&#39;</span>
-
 <span class="c1"># Read evoked</span>
-<a href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw</span></a> <span class="o">=</span> <a href="../../generated/mne.io.read_raw_fif.html#mne.io.read_raw_fif" title="mne.io.read_raw_fif" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read_raw_fif</span></a><span class="p">(</span><a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw_fname</span></a><span class="p">)</span>
-<a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">events</span></a> <span class="o">=</span> <a href="../../generated/mne.find_events.html#mne.find_events" title="mne.find_events" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">find_events</span></a><span class="p">(</span><a href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw</span></a><span class="p">,</span> <span class="n">stim_channel</span><span class="o">=</span><span class="s1">&#39;STI 014&#39;</span><span class="p">)</span>
-<a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">reject</span></a> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">grad</span><span class="o">=</span><span class="mf">4000e-13</span><span class="p">,</span> <span class="n">eog</span><span class="o">=</span><span class="mf">350e-6</span><span class="p">)</span>
-<a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">picks</span></a> <span class="o">=</span> <a href="../../generated/mne.pick_types.html#mne.pick_types" title="mne.pick_types" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">pick_types</span></a><span class="p">(</span><a href="../../generated/mne.Info.html#mne.Info" title="mne.Info" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw</span><span class="o">.</span><span class="n">info</span></a><span class="p">,</span> <span class="n">meg</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">eog</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">raw</span> <span class="o">=</span> <a href="../../generated/mne.io.read_raw_fif.html#mne.io.read_raw_fif" title="mne.io.read_raw_fif" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read_raw_fif</span></a><span class="p">(</span><a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw_fname</span></a><span class="p">)</span>
+<span class="n">raw</span><span class="o">.</span><span class="n">pick_types</span><span class="p">(</span><span class="n">meg</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">eog</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">stim</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">events</span></a> <span class="o">=</span> <a href="../../generated/mne.find_events.html#mne.find_events" title="mne.find_events" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">find_events</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">stim_channel</span><span class="o">=</span><span class="s1">&#39;STI 014&#39;</span><span class="p">)</span>
 
-<a href="https://docs.python.org/3/library/functions.html#int" title="builtins.int" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">event_id</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmin</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmax</span></a> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mf">1.</span><span class="p">,</span> <span class="mf">3.</span>
-<a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class"><span class="n">mne</span><span class="o">.</span><span class="n">Epochs</span></a><span class="p">(</span><a href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw</span></a><span class="p">,</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">events</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/functions.html#int" title="builtins.int" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">event_id</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmin</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmax</span></a><span class="p">,</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">picks</span></a><span class="o">=</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">picks</span></a><span class="p">,</span>
-                    <a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">reject</span></a><span class="o">=</span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">reject</span></a><span class="p">,</span> <span class="n">preload</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="mne.EvokedArray" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">evoked</span></a> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs.filter" title="mne.Epochs.filter" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">epochs</span><span class="o">.</span><span class="n">filter</span></a><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span><span class="o">.</span><span class="n">average</span><span class="p">()</span>
-<a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="mne.EvokedArray" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">evoked</span></a> <span class="o">=</span> <a href="../../generated/mne.EvokedArray.html#mne.EvokedArray.pick_types" title="mne.EvokedArray.pick_types" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">evoked</span><span class="o">.</span><span class="n">pick_types</span></a><span class="p">(</span><span class="n">meg</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<a href="../../generated/mne.EvokedArray.html#mne.EvokedArray.crop" title="mne.EvokedArray.crop" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">evoked</span><span class="o">.</span><span class="n">crop</span></a><span class="p">(</span><a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmin</span></a><span class="o">=</span><span class="mf">0.008</span><span class="p">,</span> <a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmax</span></a><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+<a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">reject</span></a> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">grad</span><span class="o">=</span><span class="mf">4000e-13</span><span class="p">,</span> <span class="n">eog</span><span class="o">=</span><span class="mf">350e-6</span><span class="p">)</span>
+<a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">event_id</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmin</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmax</span></a> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">unknown</span><span class="o">=</span><span class="mi">1</span><span class="p">),</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span>
+<span class="n">epochs</span> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class"><span class="n">mne</span><span class="o">.</span><span class="n">Epochs</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">events</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">event_id</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmin</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmax</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">reject</span></a><span class="o">=</span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">reject</span></a><span class="p">,</span>
+                    <span class="n">baseline</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+<a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="mne.EvokedArray" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">evoked</span></a> <span class="o">=</span> <span class="n">epochs</span><span class="o">.</span><span class="n">average</span><span class="p">()</span>
+
+<a href="../../generated/mne.EvokedArray.html#mne.EvokedArray.crop" title="mne.EvokedArray.crop" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">evoked</span><span class="o">.</span><span class="n">crop</span></a><span class="p">(</span><a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmin</span></a><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmax</span></a><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
 
 <span class="c1"># Compute noise covariance matrix</span>
-<a href="../../generated/mne.Covariance.html#mne.Covariance" title="mne.Covariance" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">cov</span></a> <span class="o">=</span> <a href="../../generated/mne.compute_covariance.html#mne.compute_covariance" title="mne.compute_covariance" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">compute_covariance</span></a><span class="p">(</span><a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a><span class="p">,</span> <span class="n">rank</span><span class="o">=</span><span class="s1">&#39;info&#39;</span><span class="p">,</span> <a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmax</span></a><span class="o">=</span><span class="mf">0.</span><span class="p">)</span>
+<a href="../../generated/mne.Covariance.html#mne.Covariance" title="mne.Covariance" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">cov</span></a> <span class="o">=</span> <a href="../../generated/mne.compute_covariance.html#mne.compute_covariance" title="mne.compute_covariance" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">compute_covariance</span></a><span class="p">(</span><span class="n">epochs</span><span class="p">,</span> <span class="n">rank</span><span class="o">=</span><span class="s1">&#39;info&#39;</span><span class="p">,</span> <a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmax</span></a><span class="o">=</span><span class="mf">0.</span><span class="p">)</span>
+<span class="k">del</span> <span class="n">epochs</span><span class="p">,</span> <span class="n">raw</span>
 
 <span class="c1"># Handling forward solution</span>
 <a href="../../generated/mne.Forward.html#mne.Forward" title="mne.Forward" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">forward</span></a> <span class="o">=</span> <a href="../../generated/mne.read_forward_solution.html#mne.read_forward_solution" title="mne.read_forward_solution" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">read_forward_solution</span></a><span class="p">(</span><a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">fwd_fname</span></a><span class="p">)</span>
@@ -242,32 +239,20 @@ Event IDs: [1]
 Not setting metadata
 Not setting metadata
 111 matching events found
-Setting baseline interval to [-0.9989760657919393, 0.0] sec
+Setting baseline interval to [-0.49948803289596966, 0.0] sec
 Applying baseline correction (mode: mean)
 0 projection items activated
-Loading data for 111 events and 1202 original time points ...
     Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+Loading data for 111 events and 301 original time points ...
     Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
-3 bad epochs dropped
-Setting up high-pass filter at 1 Hz
-
-FIR filter parameters
----------------------
-Designing a one-pass, zero-phase, non-causal highpass filter:
-- Windowed time-domain design (firwin) method
-- Hamming window with 0.0194 passband ripple and 53 dB stopband attenuation
-- Lower passband edge: 1.00
-- Lower transition bandwidth: 1.00 Hz (-6 dB cutoff frequency: 0.50 Hz)
-- Filter length: 993 samples (3.307 sec)
-
+1 bad epochs dropped
 Computing rank from data with rank=&#39;info&#39;
     MEG: rank 64 after 0 projectors applied to 306 channels
     Setting small MEG eigenvalues to zero (without PCA)
 Reducing data rank from 306 -&gt; 64
 Estimating covariance using EMPIRICAL
 Done.
-Number of samples used : 32508
+Number of samples used : 16610
 [done]
 Reading forward solution from /home/circleci/mne_data/MNE-somato-data/derivatives/sub-01/sub-01_task-somato-fwd.fif...
     Reading a source space...
@@ -282,7 +267,7 @@ Reading forward solution from /home/circleci/mne_data/MNE-somato-data/derivative
 </div>
 <p>Run iterative reweighted multidict TF-MxNE solver</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="https://docs.python.org/3/library/functions.html#int" title="builtins.int" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">alpha</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">l1_ratio</span></a> <span class="o">=</span> <span class="mi">20</span><span class="p">,</span> <span class="mf">0.05</span>
-<a href="https://docs.python.org/3/library/functions.html#int" title="builtins.int" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">loose</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">depth</span></a> <span class="o">=</span> <span class="mi">1</span><span class="p">,</span> <span class="mf">0.95</span>
+<a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">loose</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">depth</span></a> <span class="o">=</span> <span class="mf">0.9</span><span class="p">,</span> <span class="mf">1.</span>
 <span class="c1"># Use a multiscale time-frequency dictionary</span>
 <a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">wsize</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tstep</span></a> <span class="o">=</span> <span class="p">[</span><span class="mi">4</span><span class="p">,</span> <span class="mi">16</span><span class="p">],</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">4</span><span class="p">]</span>
 
@@ -291,26 +276,25 @@ Reading forward solution from /home/circleci/mne_data/MNE-somato-data/derivative
 <span class="c1"># Compute TF-MxNE inverse solution with dipole output</span>
 <a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">dipoles</span></a><span class="p">,</span> <a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="mne.EvokedArray" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">residual</span></a> <span class="o">=</span> <a href="../../generated/mne.inverse_sparse.tf_mixed_norm.html#mne.inverse_sparse.tf_mixed_norm" title="mne.inverse_sparse.tf_mixed_norm" class="sphx-glr-backref-module-mne-inverse_sparse sphx-glr-backref-type-py-function"><span class="n">tf_mixed_norm</span></a><span class="p">(</span>
     <a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="mne.EvokedArray" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">evoked</span></a><span class="p">,</span> <a href="../../generated/mne.Forward.html#mne.Forward" title="mne.Forward" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">forward</span></a><span class="p">,</span> <a href="../../generated/mne.Covariance.html#mne.Covariance" title="mne.Covariance" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">cov</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/functions.html#int" title="builtins.int" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">alpha</span></a><span class="o">=</span><a href="https://docs.python.org/3/library/functions.html#int" title="builtins.int" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">alpha</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">l1_ratio</span></a><span class="o">=</span><a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">l1_ratio</span></a><span class="p">,</span>
-    <a href="https://docs.python.org/3/library/functions.html#int" title="builtins.int" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">n_tfmxne_iter</span></a><span class="o">=</span><a href="https://docs.python.org/3/library/functions.html#int" title="builtins.int" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">n_tfmxne_iter</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/functions.html#int" title="builtins.int" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">loose</span></a><span class="o">=</span><a href="https://docs.python.org/3/library/functions.html#int" title="builtins.int" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">loose</span></a><span class="p">,</span>
+    <a href="https://docs.python.org/3/library/functions.html#int" title="builtins.int" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">n_tfmxne_iter</span></a><span class="o">=</span><a href="https://docs.python.org/3/library/functions.html#int" title="builtins.int" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">n_tfmxne_iter</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">loose</span></a><span class="o">=</span><a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">loose</span></a><span class="p">,</span>
     <a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">depth</span></a><span class="o">=</span><a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">depth</span></a><span class="p">,</span> <span class="n">tol</span><span class="o">=</span><span class="mf">1e-3</span><span class="p">,</span>
     <a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">wsize</span></a><span class="o">=</span><a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">wsize</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tstep</span></a><span class="o">=</span><a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tstep</span></a><span class="p">,</span> <span class="n">return_as_dipoles</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
     <span class="n">return_residual</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-<span class="c1"># Crop to remove edges</span>
-<span class="k">for</span> <a href="../../generated/mne.Dipole.html#mne.Dipole" title="mne.Dipole" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">dip</span></a> <span class="ow">in</span> <a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">dipoles</span></a><span class="p">:</span>
-    <a href="../../generated/mne.Dipole.html#mne.Dipole.crop" title="mne.Dipole.crop" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">dip</span><span class="o">.</span><span class="n">crop</span></a><span class="p">(</span><a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmin</span></a><span class="o">=-</span><span class="mf">0.05</span><span class="p">,</span> <a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmax</span></a><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
-<a href="../../generated/mne.EvokedArray.html#mne.EvokedArray.crop" title="mne.EvokedArray.crop" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">evoked</span><span class="o">.</span><span class="n">crop</span></a><span class="p">(</span><a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmin</span></a><span class="o">=-</span><span class="mf">0.05</span><span class="p">,</span> <a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmax</span></a><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
-<a href="../../generated/mne.EvokedArray.html#mne.EvokedArray.crop" title="mne.EvokedArray.crop" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">residual</span><span class="o">.</span><span class="n">crop</span></a><span class="p">(</span><a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmin</span></a><span class="o">=-</span><span class="mf">0.05</span><span class="p">,</span> <a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmax</span></a><span class="o">=</span><span class="mf">0.3</span><span class="p">)</span>
 </pre></div>
 </div>
 <p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Computing inverse operator with 306 channels.
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Converting forward solution to surface orientation
+    No patch info available. The standard source space normals will be employed in the rotation to the local surface coordinates....
+    Converting to surface-based source orientations...
+    [done]
+Computing inverse operator with 306 channels.
     306 out of 306 channels remain after picking
 Selected 306 channels
 Creating the depth weighting matrix...
+Applying loose dipole orientations to surface source spaces: 0.9
 Whitening the forward solution.
 Computing rank from covariance with rank=None
-    Using tolerance 3.8e-12 (2.2e-16 eps * 306 dim * 55  max singular value)
+    Using tolerance 3.6e-12 (2.2e-16 eps * 306 dim * 53  max singular value)
     Estimated rank (mag + grad): 64
     MEG: rank 64 computed from 306 data channels with 0 projectors
     Setting small MEG eigenvalues to zero (without PCA)
@@ -318,107 +302,111 @@ Creating the source covariance matrix
 Adjusting source covariance matrix.
 Whitening data matrix.
 
-dgap 5.30e+01 :: p_obj 219.111438 :: d_obj 166.093924 :: n_active 187
+dgap 9.89e+01 :: p_obj 289.000835 :: d_obj 190.083203 :: n_active 247
 
-dgap 1.26e+01 :: p_obj 207.829965 :: d_obj 195.192651 :: n_active 146
+dgap 1.27e+01 :: p_obj 253.327890 :: d_obj 240.582652 :: n_active 132
 
-    Iteration 10 :: n_active 109
-    dgap 1.96e+00 :: p_obj 206.332222 :: d_obj 204.372084
+    Iteration 10 :: n_active 82
+    dgap 4.53e+00 :: p_obj 250.707285 :: d_obj 246.182101
 
-dgap 2.00e+00 :: p_obj 206.173555 :: d_obj 204.174517 :: n_active 91
+dgap 3.18e+00 :: p_obj 250.589468 :: d_obj 247.408712 :: n_active 76
 
-    Iteration 10 :: n_active 79
-    dgap 1.19e+00 :: p_obj 206.053443 :: d_obj 204.866068
+    Iteration 10 :: n_active 60
+    dgap 1.82e+00 :: p_obj 250.243688 :: d_obj 248.420556
 
-    Iteration 20 :: n_active 68
-    dgap 8.96e-01 :: p_obj 205.998619 :: d_obj 205.102729
+    Iteration 20 :: n_active 55
+    dgap 1.67e+00 :: p_obj 250.094971 :: d_obj 248.420556
 
-    Iteration 30 :: n_active 63
-    dgap 6.79e-01 :: p_obj 205.958722 :: d_obj 205.279576
+    Iteration 30 :: n_active 48
+    dgap 1.57e+00 :: p_obj 249.991067 :: d_obj 248.420556
 
-dgap 6.79e-01 :: p_obj 205.958722 :: d_obj 205.279576 :: n_active 63
+    Iteration 40 :: n_active 43
+    dgap 1.49e+00 :: p_obj 249.936498 :: d_obj 248.442467
+
+    Iteration 50 :: n_active 43
+    dgap 1.08e+00 :: p_obj 249.906871 :: d_obj 248.829870
+
+    Iteration 60 :: n_active 43
+    dgap 8.70e-01 :: p_obj 249.887205 :: d_obj 249.017223
+
+    Iteration 70 :: n_active 43
+    dgap 7.24e-01 :: p_obj 249.872107 :: d_obj 249.148583
+
+dgap 1.11e+00 :: p_obj 249.872107 :: d_obj 248.762424 :: n_active 43
+
+    Iteration 10 :: n_active 44
+    dgap 5.94e-01 :: p_obj 249.854012 :: d_obj 249.259629
+
+dgap 5.94e-01 :: p_obj 249.854012 :: d_obj 249.259629 :: n_active 44
 
 Convergence reached!
 
-Iteration 1: active set size=63, E=716.228469
+Iteration 1: active set size=44, E=659.867870
 
-    Iteration 10 :: n_active 12
-    dgap 3.63e+00 :: p_obj 259.829107 :: d_obj 256.199601
+    Iteration 10 :: n_active 8
+    dgap 4.46e+00 :: p_obj 275.043596 :: d_obj 270.587841
 
-    Iteration 20 :: n_active 12
-    dgap 2.45e+00 :: p_obj 259.550599 :: d_obj 257.102324
+    Iteration 20 :: n_active 8
+    dgap 1.87e+00 :: p_obj 274.722230 :: d_obj 272.856399
 
-    Iteration 30 :: n_active 11
-    dgap 8.95e-01 :: p_obj 259.447620 :: d_obj 258.552132
+    Iteration 30 :: n_active 8
+    dgap 8.29e-01 :: p_obj 274.678013 :: d_obj 273.849283
 
-    Iteration 40 :: n_active 11
-    dgap 5.70e-01 :: p_obj 259.401046 :: d_obj 258.831477
-
-dgap 5.70e-01 :: p_obj 259.401046 :: d_obj 258.831477 :: n_active 11
+dgap 8.29e-01 :: p_obj 274.678013 :: d_obj 273.849283 :: n_active 8
 
 Convergence reached!
 
-Iteration 2: active set size=11, E=322.858183
+Iteration 2: active set size=8, E=335.966495
 
-    Iteration 10 :: n_active 6
-    dgap 2.37e+00 :: p_obj 221.951597 :: d_obj 219.582361
+    Iteration 10 :: n_active 5
+    dgap 2.73e+00 :: p_obj 239.215341 :: d_obj 236.481796
 
     Iteration 20 :: n_active 5
-    dgap 3.74e-01 :: p_obj 221.820898 :: d_obj 221.447360
+    dgap 9.17e-01 :: p_obj 239.095509 :: d_obj 238.178504
 
-dgap 3.74e-01 :: p_obj 221.820898 :: d_obj 221.447360 :: n_active 5
+    Iteration 30 :: n_active 5
+    dgap 4.77e-01 :: p_obj 239.068507 :: d_obj 238.591286
 
-Convergence reached!
-
-Iteration 3: active set size=5, E=263.705321
-
-    Iteration 10 :: n_active 4
-    dgap 5.41e-01 :: p_obj 202.744185 :: d_obj 202.203575
-
-dgap 5.41e-01 :: p_obj 202.744185 :: d_obj 202.203575 :: n_active 4
+dgap 4.77e-01 :: p_obj 239.068507 :: d_obj 238.591286 :: n_active 5
 
 Convergence reached!
 
-Iteration 4: active set size=4, E=257.598857
+Iteration 3: active set size=5, E=298.546285
 
-    Iteration 10 :: n_active 4
-    dgap 4.13e-01 :: p_obj 199.013542 :: d_obj 198.600553
+    Iteration 10 :: n_active 5
+    dgap 3.06e-01 :: p_obj 223.133013 :: d_obj 222.826666
 
-dgap 4.13e-01 :: p_obj 199.013542 :: d_obj 198.600553 :: n_active 4
+dgap 3.06e-01 :: p_obj 223.133013 :: d_obj 222.826666 :: n_active 5
 
 Convergence reached!
 
-Iteration 5: active set size=4, E=256.932103
-Convergence reached after 4 reweightings!
-Debiasing converged after 276 iterations max(|D - D0| = 7.775514e-07 &lt; 1.000000e-06)
+Iteration 4: active set size=5, E=295.194637
+Convergence reached after 3 reweightings!
+Debiasing converged after 551 iterations max(|D - D0| = 6.235933e-07 &lt; 1.000000e-06)
 [done]
 </pre></div>
 </div>
 <p>Generate stc from dipoles</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="../../generated/mne.SourceEstimate.html#mne.SourceEstimate" title="mne.SourceEstimate" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">stc</span></a> <span class="o">=</span> <a href="../../generated/mne.inverse_sparse.make_stc_from_dipoles.html#mne.inverse_sparse.make_stc_from_dipoles" title="mne.inverse_sparse.make_stc_from_dipoles" class="sphx-glr-backref-module-mne-inverse_sparse sphx-glr-backref-type-py-function"><span class="n">make_stc_from_dipoles</span></a><span class="p">(</span><a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">dipoles</span></a><span class="p">,</span> <a href="../../generated/mne.Forward.html#mne.Forward" title="mne.Forward" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">forward</span></a><span class="p">[</span><span class="s1">&#39;src&#39;</span><span class="p">])</span>
-
-<a href="../../generated/mne.viz.plot_sparse_source_estimates.html#mne.viz.plot_sparse_source_estimates" title="mne.viz.plot_sparse_source_estimates" class="sphx-glr-backref-module-mne-viz sphx-glr-backref-type-py-function"><span class="n">plot_sparse_source_estimates</span></a><span class="p">(</span><a href="../../generated/mne.Forward.html#mne.Forward" title="mne.Forward" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">forward</span></a><span class="p">[</span><span class="s1">&#39;src&#39;</span><span class="p">],</span> <a href="../../generated/mne.SourceEstimate.html#mne.SourceEstimate" title="mne.SourceEstimate" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">stc</span></a><span class="p">,</span> <span class="n">bgcolor</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span>
-                             <span class="n">opacity</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">fig_name</span><span class="o">=</span><span class="s2">&quot;irTF-MxNE (cond </span><span class="si">%s</span><span class="s2">)&quot;</span>
-                             <span class="o">%</span> <a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">condition</span></a><span class="p">)</span>
+<a href="../../generated/mne.viz.plot_sparse_source_estimates.html#mne.viz.plot_sparse_source_estimates" title="mne.viz.plot_sparse_source_estimates" class="sphx-glr-backref-module-mne-viz sphx-glr-backref-type-py-function"><span class="n">plot_sparse_source_estimates</span></a><span class="p">(</span>
+    <a href="../../generated/mne.Forward.html#mne.Forward" title="mne.Forward" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">forward</span></a><span class="p">[</span><span class="s1">&#39;src&#39;</span><span class="p">],</span> <a href="../../generated/mne.SourceEstimate.html#mne.SourceEstimate" title="mne.SourceEstimate" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">stc</span></a><span class="p">,</span> <span class="n">bgcolor</span><span class="o">=</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">opacity</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span>
+    <span class="n">fig_name</span><span class="o">=</span><span class="sa">f</span><span class="s2">&quot;irTF-MxNE (cond </span><span class="si">{</span><a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">evoked</span><span class="o">.</span><span class="n">comment</span></a><span class="si">}</span><span class="s2">)&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<img alt="irTF-MxNE (cond Unknown)" class="sphx-glr-single-img" src="../../_images/sphx_glr_plot_multidict_reweighted_tfmxne_001.png" />
+<img alt="irTF-MxNE (cond unknown)" class="sphx-glr-single-img" src="../../_images/sphx_glr_plot_multidict_reweighted_tfmxne_001.png" />
 <img alt="plot multidict reweighted tfmxne" class="sphx-glr-single-img" src="../../_images/sphx_glr_plot_multidict_reweighted_tfmxne_002.png" />
 <p class="sphx-glr-script-out">Out:</p>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Converting dipoles into a SourceEstimate.
 [done]
-Total number of active sources: 4
+Total number of active sources: 5
 </pre></div>
 </div>
 <p>Show the evoked response and the residual for gradiometers</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">ylim</span></a> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">grad</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">300</span><span class="p">,</span> <span class="mi">300</span><span class="p">])</span>
-<a href="../../generated/mne.EvokedArray.html#mne.EvokedArray.pick_types" title="mne.EvokedArray.pick_types" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">evoked</span><span class="o">.</span><span class="n">pick_types</span></a><span class="p">(</span><span class="n">meg</span><span class="o">=</span><span class="s1">&#39;grad&#39;</span><span class="p">)</span>
-<a href="../../generated/mne.EvokedArray.html#mne.EvokedArray.plot" title="mne.EvokedArray.plot" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">evoked</span><span class="o">.</span><span class="n">plot</span></a><span class="p">(</span><span class="n">titles</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">grad</span><span class="o">=</span><span class="s1">&#39;Evoked Response: Gradiometers&#39;</span><span class="p">),</span> <a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">ylim</span></a><span class="o">=</span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">ylim</span></a><span class="p">,</span>
-            <span class="n">proj</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-
-<a href="../../generated/mne.EvokedArray.html#mne.EvokedArray.pick_types" title="mne.EvokedArray.pick_types" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">residual</span><span class="o">.</span><span class="n">pick_types</span></a><span class="p">(</span><span class="n">meg</span><span class="o">=</span><span class="s1">&#39;grad&#39;</span><span class="p">)</span>
-<a href="../../generated/mne.EvokedArray.html#mne.EvokedArray.plot" title="mne.EvokedArray.plot" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">residual</span><span class="o">.</span><span class="n">plot</span></a><span class="p">(</span><span class="n">titles</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">grad</span><span class="o">=</span><span class="s1">&#39;Residuals: Gradiometers&#39;</span><span class="p">),</span> <a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">ylim</span></a><span class="o">=</span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">ylim</span></a><span class="p">,</span>
-              <span class="n">proj</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a href="../../generated/mne.EvokedArray.html#mne.EvokedArray.copy" title="mne.EvokedArray.copy" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">evoked</span><span class="o">.</span><span class="n">copy</span></a><span class="p">()</span><span class="o">.</span><span class="n">pick_types</span><span class="p">(</span><span class="n">meg</span><span class="o">=</span><span class="s1">&#39;grad&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+    <span class="n">titles</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">grad</span><span class="o">=</span><span class="s1">&#39;Evoked Response: Gradiometers&#39;</span><span class="p">),</span> <a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">ylim</span></a><span class="o">=</span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">ylim</span></a><span class="p">)</span>
+<a href="../../generated/mne.EvokedArray.html#mne.EvokedArray.copy" title="mne.EvokedArray.copy" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">residual</span><span class="o">.</span><span class="n">copy</span></a><span class="p">()</span><span class="o">.</span><span class="n">pick_types</span><span class="p">(</span><span class="n">meg</span><span class="o">=</span><span class="s1">&#39;grad&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+    <span class="n">titles</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">grad</span><span class="o">=</span><span class="s1">&#39;Residuals: Gradiometers&#39;</span><span class="p">),</span> <a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">ylim</span></a><span class="o">=</span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">ylim</span></a><span class="p">)</span>
 </pre></div>
 </div>
 <ul class="sphx-glr-horizontal">
@@ -438,8 +426,8 @@ Total number of active sources: 4
 </dd>
 </dl>
 </p>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 1 minutes  29.658 seconds)</p>
-<p><strong>Estimated memory usage:</strong>  530 MB</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  28.512 seconds)</p>
+<p><strong>Estimated memory usage:</strong>  324 MB</p>
 <div class="sphx-glr-footer class sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-inverse-plot-multidict-reweighted-tfmxne-py">
 <div class="sphx-glr-download sphx-glr-download-python docutils container">
 <p><a class="reference download internal" download="" href="../../_downloads/5c105d8114330f8328ad58483d6fcc7b/plot_multidict_reweighted_tfmxne.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">plot_multidict_reweighted_tfmxne.py</span></code></a></p>
