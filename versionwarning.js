@@ -1,29 +1,24 @@
 (function() {
     // adapted 2020-05 from https://scikit-learn.org/versionwarning.js
-    const latestStable = '0.20';
-    const goodPaths = ['stable', 'dev', latestStable];
-    const devbar_style = [
-        'text-align: center',
-        'padding: 5px',
-        'margin-bottom: 5px',
-        'border-radius: 0 0 4px 4px !important',
-        'background-color: #e74c3c',
-        'border-color: #e74c3c',
-        'color: #ffffff',
-        'font-weight: normal'
-    ].join('; ')
-    const showWarning = (msg) => {
-        $('body').prepend(`<div class="d-block devbar alert alert-danger" style="${devbar_style}">${msg}</div>`)
-
-    };
     if (location.hostname === 'mne.tools') {
-        const versionPath = location.pathname.split('/')[1];
-        if (!goodPaths.includes(versionPath)) {
-            const link_style = "color: #ffffff; font-weight: bold"
-            const warning = `This is documentation for an old release of MNE-Python (version ${versionPath}).
-            Try the <a style="${link_style}" href="https://mne.tools">latest stable release</a> (version ${latestStable})
-            or the <a style="${link_style}" href="https://mne.tools/dev">development</a> (unstable) version.`;
-            showWarning(warning)
+        const urlParts = location.pathname.split('/');
+        const version = urlParts[1];
+        var filePath = urlParts.slice(2).join('/');
+        // see if filePath exists in the stable version of the docs
+        $.ajax({
+            type: 'HEAD',
+            url: `https://mne.tools/stable/${filePath}`,
+        }).fail(function() {
+            filePath = '';
+        });
+        if (version !== 'stable') {
+            var verText = `an old version (${version})`;
+            var devLink = `, or the (unstable) <a class="alert-link" href="https://mne.tools/dev/${filePath}">development version</a>`;
+            if (version == 'dev') {
+                verText = 'the <em>unstable development version</em>';
+                devLink = '';
+            }
+            $('body').prepend(`<div class="container-fluid alert-danger devbar"><div class="row no-gutters"><div class="col-12 text-center">This is documentation for ${verText} of MNE-Python. Switch to the <a class="alert-link" href="https://mne.tools/stable/${filePath}">stable version</a>${devLink}.</div></div></div>`);
         }
     }
 })()
