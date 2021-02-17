@@ -17,7 +17,7 @@
             var post = '</div></div></div>';
             var anchor = 'class="alert-link"';
             if (parseFloat(version) < 0.23) {  // 'stable' or 'dev' → NaN → false (which is what we want)
-                pre = '<div class="d-block devbar alert alert-danger" style="font-weight: normal;"></div>';
+                pre = '<div class="d-block devbar alert alert-danger" style="font-weight: normal;">';
                 post = '</div>';
                 anchor = 'style="font-weight: bold; color: #fff;"';
             }
