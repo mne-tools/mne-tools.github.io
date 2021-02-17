@@ -15,20 +15,20 @@
             // parse version to figure out which website theme classes to use
             var pre = '<div class="container-fluid alert-danger devbar"><div class="row no-gutters"><div class="col-12 text-center">';
             var post = '</div></div></div>';
-            var anchor = 'class="alert-link"';
+            var anchor = 'class="btn btn-danger alert-link"';
             if (parseFloat(version) < 0.23) {  // 'stable' or 'dev' → NaN → false (which is what we want)
                 pre = '<div class="d-block devbar alert alert-danger" style="font-weight: normal;">';
                 post = '</div>';
-                anchor = 'style="font-weight: bold; color: #fff;"';
+                anchor = 'class="btn btn-danger" style="font-weight: bold; color: #fff;"';
             }
             // triage message
             var verText = `an old version (${version})`;
-            var devLink = `, or the (unstable) <a ${anchor} href="https://mne.tools/dev/${filePath}">development version</a>`;
+            var devLink = `<a ${anchor} href="https://mne.tools/dev/${filePath}">Switch to development version</a>`;
             if (version == 'dev') {
                 verText = 'the <em>unstable development version</em>';
                 devLink = '';
             }
-            $('body').prepend(`${pre}This is documentation for ${verText} of MNE-Python. Switch to the <a ${anchor} href="https://mne.tools/stable/${filePath}">stable version</a>${devLink}.${post}`);
+            $('body').prepend(`${pre}This is documentation for ${verText} of MNE-Python. <a ${anchor} href="https://mne.tools/stable/${filePath}">Switch to stable version</a>${devLink}${post}`);
         }
     }
 })()
