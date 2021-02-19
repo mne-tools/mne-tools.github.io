@@ -19,7 +19,7 @@
             if (parseFloat(version) < 0.23) {  // 'dev' → NaN → false (which is what we want)
                 pre = '<div class="d-block devbar alert alert-danger">';
                 post = '</div>';
-                anchor = `class="btn btn-danger" style="font-weight: bold; vertical-align: baseline; margin: 0.5rem; border-style: solid; border-color: white;"`;
+                anchor = 'class="btn btn-danger" style="font-weight: bold; vertical-align: baseline; margin: 0.5rem; border-style: solid; border-color: white;"';
             }
             // triage message
             var verText = `an <strong>old version (${version})</strong>`;
