@@ -13,14 +13,13 @@
         });
         if (version !== 'stable') {
             // parse version to figure out which website theme classes to use
-            var pre = '<div class="container-fluid alert-danger devbar"><div class="row no-gutters"><div class="col-12 text-center text-dark">';
+            var pre = '<div class="container-fluid alert-danger devbar"><div class="row no-gutters"><div class="col-12 text-center">';
             var post = '</div></div></div>';
-            var anchor = 'class="btn btn-danger alert-link font-weight-bold ml-3 my-3 d-md align-baseline text-white"';
-            if (parseFloat(version) < 0.23) {  // 'stable' or 'dev' → NaN → false (which is what we want)
-                pre = '<div class="d-block devbar alert alert-danger font-weight-normal">';
+            var anchor = 'class="btn btn-danger font-weight-bold ml-3 my-3 align-baseline"';
+            if (parseFloat(version) < 0.23) {  // 'dev' → NaN → false (which is what we want)
+                pre = '<div class="d-block devbar alert alert-danger">';
                 post = '</div>';
-                const style = 'vertical-align: baseline; margin-left: 0.5rem; margin-top: 0.5rem; margin-bottom: 0.5rem; border-style: solid; border-color: white;';
-                anchor = `class="btn btn-danger d-md font-weight-bold" style="${style}"`;
+                anchor = `class="btn btn-danger" style="font-weight: bold; vertical-align: baseline; margin: 0.5rem; border-style: solid; border-color: white;"`;
             }
             // triage message
             var verText = `an <strong>old version (${version})</strong>`;
