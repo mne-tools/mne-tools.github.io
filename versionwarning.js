@@ -13,22 +13,21 @@
         });
         if (version !== 'stable') {
             // parse version to figure out which website theme classes to use
-            var pre = '<div class="container-fluid alert-danger devbar"><div class="row no-gutters"><div class="col-12 text-center">';
+            var pre = '<div class="container-fluid alert-danger devbar"><div class="row no-gutters"><div class="col-12 text-center text-dark">';
             var post = '</div></div></div>';
-            var anchor = 'class="btn btn-danger alert-link"';
+            var anchor = 'class="btn btn-danger alert-link font-weight-bold ml-3 my-3 d-md align-baseline text-white"';
             if (parseFloat(version) < 0.23) {  // 'stable' or 'dev' → NaN → false (which is what we want)
-                pre = '<div class="d-block devbar alert alert-danger" style="font-weight: normal;">';
+                pre = '<div class="d-block devbar alert alert-danger font-weight-normal">';
                 post = '</div>';
-                anchor = 'class="btn btn-danger" style="font-weight: bold; color: #fff;"';
+                const style = 'vertical-align: baseline; margin-left: 0.5rem; margin-top: 0.5rem; margin-bottom: 0.5rem; border-style: solid; border-color: white;';
+                anchor = `class="btn btn-danger d-md font-weight-bold" style="${style}"`;
             }
             // triage message
-            var verText = `an old version (${version})`;
-            var devLink = `<a ${anchor} href="https://mne.tools/dev/${filePath}">Switch to development version</a>`;
+            var verText = `an <strong>old version (${version})</strong>`;
             if (version == 'dev') {
-                verText = 'the <em>unstable development version</em>';
-                devLink = '';
+                verText = 'the <strong>unstable development version</strong>';
             }
-            $('body').prepend(`${pre}This is documentation for ${verText} of MNE-Python. <a ${anchor} href="https://mne.tools/stable/${filePath}">Switch to stable version</a>${devLink}${post}`);
+            $('body').prepend(`${pre}This is documentation for ${verText} of MNE-Python. <a ${anchor} href="https://mne.tools/stable/${filePath}">Switch to stable version</a>${post}`);
         }
     }
 })()
