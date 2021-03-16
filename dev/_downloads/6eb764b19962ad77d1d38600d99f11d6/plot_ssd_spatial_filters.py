@@ -1,6 +1,6 @@
 """
 ===========================================================
-Compute Spectro-Spatial Decomposition (SSD) spatial filters
+Compute Sepctro-Spatial Decomposition (SSD) spatial filters
 ===========================================================
 
 In this example, we will compute spatial filters for retaining
