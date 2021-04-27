@@ -1,0 +1,641 @@
+<!DOCTYPE html>
+
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Compute source power estimate by projecting the covariance with MNE &#8212; MNE 0.22.1 documentation</title>
+    <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/bootstrap-sphinx.css" type="text/css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/bootstrap_divs.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/gallery.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/gallery-binder.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/gallery-dataframe.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/gallery-rendered-html.css" />
+    <script id="documentation_options" data-url_root="../../" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/bootstrap_divs.js"></script>
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+
+    <link rel="canonical" href="https://mne.tools/stable/index.html" />
+    <script type="text/javascript" src="../../_static/copybutton.js"></script>
+
+
+    <script type="text/javascript">
+    var _gaq = _gaq || [];
+    _gaq.push(['_setAccount', 'UA-37225609-1']);
+    _gaq.push(['_trackPageview']);
+
+    (function() {
+        var ga = document.createElement('script'); ga.type = 'text/javascript'; ga.async = true;
+        ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+        var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+    })();
+    </script>
+
+
+    <link rel="stylesheet" href="../../_static/style.css " type="text/css" />
+    <link rel="stylesheet" href="../../_static/font-awesome.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/font-source-code-pro.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/font-source-sans-pro.css" type="text/css" />
+    <link rel="stylesheet" href="../../_static/flag-icon.css" type="text/css" />
+
+
+    <script type="text/javascript">
+    (function() {
+    var po = document.createElement('script'); po.type = 'text/javascript'; po.async = true;
+    po.src = 'https://apis.google.com/js/plusone.js';
+    var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+    })();
+    </script>
+
+
+
+<meta charset='utf-8'>
+<meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
+<meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
+<meta name="apple-mobile-web-app-capable" content="yes">
+<script type="text/javascript" src="../../_static/js/jquery-1.12.4.min.js "></script>
+<script type="text/javascript" src="../../_static/js/jquery-fix.js "></script>
+<script type="text/javascript" src="../../_static/bootstrap-3.4.1/js/bootstrap.min.js "></script>
+<script type="text/javascript" src="../../_static/bootstrap-sphinx.js "></script>
+
+
+
+  </head><body>
+
+
+
+
+
+  <div id="navbar" class="navbar navbar-default navbar-fixed-top">
+    <div class="container">
+      <div class="navbar-header">
+        <!-- .btn-navbar is used as the toggle for collapsed navbar content -->
+        <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </button>
+        <a class="navbar-brand" href="../../index.html"><span><img src="../../_static/mne_logo_small.svg"></span>
+           </a>
+        <span class="navbar-text navbar-version pull-left"><b>0.22.1</b></span>
+      </div>
+
+        <div class="collapse navbar-collapse nav-collapse">
+          <ul class="nav navbar-nav">
+            
+                <li><a href="../../install/index.html">Install</a></li>
+                <li><a href="../../overview/index.html">Overview</a></li>
+                <li><a href="../../auto_tutorials/index.html">Tutorials</a></li>
+                <li><a href="../index.html">Examples</a></li>
+                <li><a href="../../glossary.html">Glossary</a></li>
+                <li><a href="../../python_reference.html">API</a></li>
+            
+            
+            <li class="dropdown globaltoc-container">
+              <a role="button" id="dLabelGlobalToc" data-toggle="dropdown" data-target="#" href="#">More<b class="caret"></b></a>
+              <ul class="dropdown-menu globaltoc" role="menu" aria-labelledby="dLabelGlobalToc">
+                <li><a href="https://github.com/mne-tools/mne-python"><i class="fa fa-github"></i> GitHub</a></li>
+                <li><a href="../../overview/get_help.html"><i class="fa fa-question-circle"></i> Get help</a></li>
+                <li><a href="../../install/contributing.html"><i class="fa fa-code-fork"></i> Contribute</a></li>
+                <li><a href="../../overview/cite.html"><i class="fa fa-book"></i> Cite MNE</a></li>
+              </ul>
+            </li>
+
+            <li class="dropdown">
+              <button type="button" class="btn btn-primary btn-sm navbar-btn dropdown-toggle" id="dLabelMore" data-toggle="dropdown" style="margin-left: 10px">
+              v0.22.1
+              <span class="caret"></span>
+            </button>
+              <ul class="dropdown-menu" aria-labelledby="dLabelMore">
+                <li><a href="https://mne-tools.github.io/dev/index.html">Development</a></li>
+                <li><a href="https://mne-tools.github.io/stable/index.html">v0.22 (stable)</a></li>
+                <li><a href="https://mne-tools.github.io/0.21/index.html">v0.21</a></li>
+                <li><a href="https://mne-tools.github.io/0.20/index.html">v0.20</a></li>
+                <li><a href="https://mne-tools.github.io/0.19/index.html">v0.19</a></li>
+                <li><a href="https://mne-tools.github.io/0.18/index.html">v0.18</a></li>
+                <li><a href="https://mne-tools.github.io/0.17/index.html">v0.17</a></li>
+                <li><a href="https://mne-tools.github.io/0.16/index.html">v0.16</a></li>
+                <li><a href="https://mne-tools.github.io/0.15/index.html">v0.15</a></li>
+                <li><a href="https://mne-tools.github.io/0.14/index.html">v0.14</a></li>
+                <li><a href="https://mne-tools.github.io/0.13/index.html">v0.13</a></li>
+                <li><a href="https://mne-tools.github.io/0.12/index.html">v0.12</a></li>
+                <li><a href="https://mne-tools.github.io/0.11/index.html">v0.11</a></li>
+              </ul>
+            </li>
+
+            
+            
+            
+            
+              <li class="hidden-sm"></li>
+            
+          </ul>
+
+          
+            
+<form class="navbar-form navbar-right" action="../../search.html" method="get">
+ <div class="form-group">
+  <input type="text" name="q" class="form-control" placeholder="Search" />
+ </div>
+  <input type="hidden" name="check_keywords" value="yes" />
+  <input type="hidden" name="area" value="default" />
+</form>
+          
+        </div>
+    </div>
+  </div>
+
+<div class="container">
+  <div class="row">
+    <div class="body col-md-12 content" role="main">
+      
+  <div class="sphx-glr-download-link-note admonition note">
+<p class="admonition-title">Note</p>
+<p>Click <a class="reference internal" href="#sphx-glr-download-auto-examples-inverse-plot-mne-cov-power-py"><span class="std std-ref">here</span></a>
+to download the full example code</p>
+</div>
+<section class="sphx-glr-example-title" id="compute-source-power-estimate-by-projecting-the-covariance-with-mne">
+<span id="sphx-glr-auto-examples-inverse-plot-mne-cov-power-py"></span><h1>Compute source power estimate by projecting the covariance with MNE<a class="headerlink" href="#compute-source-power-estimate-by-projecting-the-covariance-with-mne" title="Permalink to this headline">¶</a></h1>
+<p>We can apply the MNE inverse operator to a covariance matrix to obtain
+an estimate of source power. This is computationally more efficient than first
+estimating the source timecourses and then computing their power. This
+code is based on the code from <a class="footnote-reference brackets" href="#sabbagh2020" id="id1">1</a> and has been useful to
+correct for individual field spread using source localization in the context of
+predictive modeling.</p>
+<section id="references">
+<h2>References<a class="headerlink" href="#references" title="Permalink to this headline">¶</a></h2>
+<p><dl class="footnote brackets">
+<dt class="label" id="sabbagh2020"><span class="brackets"><a class="fn-backref" href="#id1">1</a></span></dt>
+<dd><p>David Sabbagh, Pierre Ablin, Gaël Varoquaux, Alexandre Gramfort, and Denis A. Engemann. Predictive regression modeling with meg/eeg: from source power to signals and cognitive states. <em>NeuroImage</em>, 2020. <a class="reference external" href="https://doi.org/10.1016/j.neuroimage.2020.116893">doi:10.1016/j.neuroimage.2020.116893</a>.</p>
+</dd>
+</dl>
+</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Author: Denis A. Engemann &lt;denis-alexander.engemann@inria.fr&gt;</span>
+<span class="c1">#         Luke Bloy &lt;luke.bloy@gmail.com&gt;</span>
+<span class="c1">#</span>
+<span class="c1"># License: BSD (3-clause)</span>
+
+<span class="kn">import</span> <span class="nn">os.path</span> <span class="k">as</span> <span class="nn">op</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+
+<span class="kn">import</span> <span class="nn">mne</span>
+<span class="kn">from</span> <span class="nn">mne.datasets</span> <span class="kn">import</span> <span class="n">sample</span>
+<span class="kn">from</span> <span class="nn">mne.minimum_norm</span> <span class="kn">import</span> <a href="../../generated/mne.minimum_norm.make_inverse_operator.html#mne.minimum_norm.make_inverse_operator" title="mne.minimum_norm.make_inverse_operator" class="sphx-glr-backref-module-mne-minimum_norm sphx-glr-backref-type-py-function"><span class="n">make_inverse_operator</span></a><span class="p">,</span> <a href="../../generated/mne.minimum_norm.apply_inverse_cov.html#mne.minimum_norm.apply_inverse_cov" title="mne.minimum_norm.apply_inverse_cov" class="sphx-glr-backref-module-mne-minimum_norm sphx-glr-backref-type-py-function"><span class="n">apply_inverse_cov</span></a>
+
+<a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">data_path</span></a> <span class="o">=</span> <a href="../../generated/mne.datasets.sample.data_path.html#mne.datasets.sample.data_path" title="mne.datasets.sample.data_path" class="sphx-glr-backref-module-mne-datasets-sample sphx-glr-backref-type-py-function"><span class="n">sample</span><span class="o">.</span><span class="n">data_path</span></a><span class="p">()</span>
+<a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">subjects_dir</span></a> <span class="o">=</span> <a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">data_path</span></a> <span class="o">+</span> <span class="s1">&#39;/subjects&#39;</span>
+<a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw_fname</span></a> <span class="o">=</span> <a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">data_path</span></a> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis_filt-0-40_raw.fif&#39;</span>
+<span class="n">raw</span> <span class="o">=</span> <a href="../../generated/mne.io.read_raw_fif.html#mne.io.read_raw_fif" title="mne.io.read_raw_fif" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read_raw_fif</span></a><span class="p">(</span><a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw_fname</span></a><span class="p">)</span>
+</pre></div>
+</div>
+<p class="sphx-glr-script-out">Out:</p>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Opening raw data file /home/circleci/mne_data/MNE-sample-data/MEG/sample/sample_audvis_filt-0-40_raw.fif...
+    Read a total of 4 projection items:
+        PCA-v1 (1 x 102)  idle
+        PCA-v2 (1 x 102)  idle
+        PCA-v3 (1 x 102)  idle
+        Average EEG reference (1 x 60)  idle
+    Range : 6450 ... 48149 =     42.956 ...   320.665 secs
+Ready.
+</pre></div>
+</div>
+</section>
+<section id="compute-empty-room-covariance">
+<h2>Compute empty-room covariance<a class="headerlink" href="#compute-empty-room-covariance" title="Permalink to this headline">¶</a></h2>
+<p>First we compute an empty-room covariance, which captures noise from the
+sensors and environment.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw_empty_room_fname</span></a> <span class="o">=</span> <a href="https://docs.python.org/3/library/os.path.html#os.path.join" title="os.path.join" class="sphx-glr-backref-module-os-path sphx-glr-backref-type-py-function"><span class="n">op</span><span class="o">.</span><span class="n">join</span></a><span class="p">(</span>
+    <a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">data_path</span></a><span class="p">,</span> <span class="s1">&#39;MEG&#39;</span><span class="p">,</span> <span class="s1">&#39;sample&#39;</span><span class="p">,</span> <span class="s1">&#39;ernoise_raw.fif&#39;</span><span class="p">)</span>
+<span class="n">raw_empty_room</span> <span class="o">=</span> <a href="../../generated/mne.io.read_raw_fif.html#mne.io.read_raw_fif" title="mne.io.read_raw_fif" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read_raw_fif</span></a><span class="p">(</span><a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw_empty_room_fname</span></a><span class="p">)</span>
+<span class="n">raw_empty_room</span><span class="o">.</span><span class="n">crop</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">60</span><span class="p">)</span>
+<span class="n">raw_empty_room</span><span class="o">.</span><a href="../../generated/mne.Info.html#mne.Info" title="mne.Info" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">info</span></a><span class="p">[</span><span class="s1">&#39;bads&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;MEG 2443&#39;</span><span class="p">]</span>
+<span class="n">raw_empty_room</span><span class="o">.</span><a href="../../generated/mne.Info.html#mne.Info" title="mne.Info" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">info</span></a><span class="p">[</span><span class="s1">&#39;projs&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="n">raw</span><span class="o">.</span><a href="../../generated/mne.Info.html#mne.Info" title="mne.Info" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">info</span></a><span class="p">[</span><span class="s1">&#39;projs&#39;</span><span class="p">]</span>
+<a href="../../generated/mne.Covariance.html#mne.Covariance" title="mne.Covariance" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">noise_cov</span></a> <span class="o">=</span> <a href="../../generated/mne.compute_raw_covariance.html#mne.compute_raw_covariance" title="mne.compute_raw_covariance" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">compute_raw_covariance</span></a><span class="p">(</span>
+    <span class="n">raw_empty_room</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;empirical&#39;</span><span class="p">,</span> <span class="s1">&#39;shrunk&#39;</span><span class="p">])</span>
+<span class="k">del</span> <span class="n">raw_empty_room</span>
+</pre></div>
+</div>
+<p class="sphx-glr-script-out">Out:</p>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Opening raw data file /home/circleci/mne_data/MNE-sample-data/MEG/sample/ernoise_raw.fif...
+Isotrak not found
+    Read a total of 3 projection items:
+        PCA-v1 (1 x 102)  idle
+        PCA-v2 (1 x 102)  idle
+        PCA-v3 (1 x 102)  idle
+    Range : 19800 ... 85867 =     32.966 ...   142.965 secs
+Ready.
+Using up to 300 segments
+Computing rank from data with rank=None
+    Using tolerance 3e-09 (2.2e-16 eps * 305 dim * 4.4e+04  max singular value)
+    Estimated rank (mag + grad): 302
+    MEG: rank 302 computed from 305 data channels with 3 projectors
+    Created an SSP operator (subspace dimension = 3)
+    Setting small MEG eigenvalues to zero (without PCA)
+Reducing data rank from 305 -&gt; 302
+Estimating covariance using EMPIRICAL
+Done.
+Estimating covariance using SHRUNK
+Done.
+Using cross-validation to select the best estimator.
+Number of samples used : 36000
+log-likelihood on unseen data (descending order):
+   shrunk: -1588.456
+   empirical: -1589.805
+selecting best estimator: shrunk
+[done]
+</pre></div>
+</div>
+</section>
+<section id="epoch-the-data">
+<h2>Epoch the data<a class="headerlink" href="#epoch-the-data" title="Permalink to this headline">¶</a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">raw</span><span class="o">.</span><a href="../../generated/mne.Info.html#mne.Info" title="mne.Info" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">info</span></a><span class="p">[</span><span class="s1">&#39;bads&#39;</span><span class="p">]</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;MEG 2443&#39;</span><span class="p">,</span> <span class="s1">&#39;EEG 053&#39;</span><span class="p">]</span>
+<span class="n">raw</span><span class="o">.</span><span class="n">load_data</span><span class="p">()</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">12</span><span class="p">)</span>
+<a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">events</span></a> <span class="o">=</span> <a href="../../generated/mne.find_events.html#mne.find_events" title="mne.find_events" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">find_events</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">stim_channel</span><span class="o">=</span><span class="s1">&#39;STI 014&#39;</span><span class="p">)</span>
+<a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">event_id</span></a> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">aud_l</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">aud_r</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">vis_l</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">vis_r</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+<a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmin</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmax</span></a> <span class="o">=</span> <span class="o">-</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.5</span>
+<a href="https://docs.python.org/3/library/stdtypes.html#tuple" title="builtins.tuple" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">baseline</span></a> <span class="o">=</span> <span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>  <span class="c1"># means from the first instant to t = 0</span>
+<a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">reject</span></a> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">grad</span><span class="o">=</span><span class="mf">4000e-13</span><span class="p">,</span> <span class="n">mag</span><span class="o">=</span><span class="mf">4e-12</span><span class="p">,</span> <span class="n">eog</span><span class="o">=</span><span class="mf">150e-6</span><span class="p">)</span>
+<a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class"><span class="n">mne</span><span class="o">.</span><span class="n">Epochs</span></a><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">copy</span><span class="p">()</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">12</span><span class="p">),</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">events</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">event_id</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmin</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmax</span></a><span class="p">,</span>
+                    <span class="n">proj</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">picks</span><span class="o">=</span><span class="p">(</span><span class="s1">&#39;meg&#39;</span><span class="p">,</span> <span class="s1">&#39;eog&#39;</span><span class="p">),</span> <a href="https://docs.python.org/3/library/stdtypes.html#tuple" title="builtins.tuple" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">baseline</span></a><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+                    <a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">reject</span></a><span class="o">=</span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">reject</span></a><span class="p">,</span> <span class="n">preload</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="k">del</span> <span class="n">raw</span>
+</pre></div>
+</div>
+<p class="sphx-glr-script-out">Out:</p>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Reading 0 ... 41699  =      0.000 ...   277.709 secs...
+Filtering raw data in 1 contiguous segment
+Setting up band-pass filter from 4 - 12 Hz
+
+FIR filter parameters
+---------------------
+Designing a one-pass, zero-phase, non-causal bandpass filter:
+- Windowed time-domain design (firwin) method
+- Hamming window with 0.0194 passband ripple and 53 dB stopband attenuation
+- Lower passband edge: 4.00
+- Lower transition bandwidth: 2.00 Hz (-6 dB cutoff frequency: 3.00 Hz)
+- Upper passband edge: 12.00 Hz
+- Upper transition bandwidth: 3.00 Hz (-6 dB cutoff frequency: 13.50 Hz)
+- Filter length: 249 samples (1.658 sec)
+
+319 events found
+Event IDs: [ 1  2  3  4  5 32]
+Filtering raw data in 1 contiguous segment
+Setting up band-pass filter from 4 - 12 Hz
+
+FIR filter parameters
+---------------------
+Designing a one-pass, zero-phase, non-causal bandpass filter:
+- Windowed time-domain design (firwin) method
+- Hamming window with 0.0194 passband ripple and 53 dB stopband attenuation
+- Lower passband edge: 4.00
+- Lower transition bandwidth: 2.00 Hz (-6 dB cutoff frequency: 3.00 Hz)
+- Upper passband edge: 12.00 Hz
+- Upper transition bandwidth: 3.00 Hz (-6 dB cutoff frequency: 13.50 Hz)
+- Filter length: 249 samples (1.658 sec)
+
+Not setting metadata
+Not setting metadata
+288 matching events found
+No baseline correction applied
+Created an SSP operator (subspace dimension = 3)
+4 projection items activated
+Loading data for 288 events and 106 original time points ...
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on MAG : [&#39;MEG 1711&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+48 bad epochs dropped
+</pre></div>
+</div>
+</section>
+<section id="compute-and-plot-covariances">
+<h2>Compute and plot covariances<a class="headerlink" href="#compute-and-plot-covariances" title="Permalink to this headline">¶</a></h2>
+<p>In addition to the empty-room covariance above, we compute two additional
+covariances:</p>
+<ol class="arabic simple">
+<li><p>Baseline covariance, which captures signals not of interest in our
+analysis (e.g., sensor noise, environmental noise, physiological
+artifacts, and also resting-state-like brain activity / “noise”).</p></li>
+<li><p>Data covariance, which captures our activation of interest (in addition
+to noise sources).</p></li>
+</ol>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="../../generated/mne.Covariance.html#mne.Covariance" title="mne.Covariance" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">base_cov</span></a> <span class="o">=</span> <a href="../../generated/mne.compute_covariance.html#mne.compute_covariance" title="mne.compute_covariance" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">compute_covariance</span></a><span class="p">(</span>
+    <a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmin</span></a><span class="o">=-</span><span class="mf">0.2</span><span class="p">,</span> <a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmax</span></a><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;shrunk&#39;</span><span class="p">,</span> <span class="s1">&#39;empirical&#39;</span><span class="p">],</span> <span class="n">rank</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a href="../../generated/mne.Covariance.html#mne.Covariance" title="mne.Covariance" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">data_cov</span></a> <span class="o">=</span> <a href="../../generated/mne.compute_covariance.html#mne.compute_covariance" title="mne.compute_covariance" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">compute_covariance</span></a><span class="p">(</span>
+    <a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmin</span></a><span class="o">=</span><span class="mf">0.</span><span class="p">,</span> <a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmax</span></a><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;shrunk&#39;</span><span class="p">,</span> <span class="s1">&#39;empirical&#39;</span><span class="p">],</span> <span class="n">rank</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<a href="https://docs.python.org/3/library/stdtypes.html#tuple" title="builtins.tuple" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">fig_noise_cov</span></a> <span class="o">=</span> <a href="../../generated/mne.viz.plot_cov.html#mne.viz.plot_cov" title="mne.viz.plot_cov" class="sphx-glr-backref-module-mne-viz sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">viz</span><span class="o">.</span><span class="n">plot_cov</span></a><span class="p">(</span><a href="../../generated/mne.Covariance.html#mne.Covariance" title="mne.Covariance" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">noise_cov</span></a><span class="p">,</span> <a href="../../generated/mne.Info.html#mne.Info" title="mne.Info" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span><span class="o">.</span><span class="n">info</span></a><span class="p">,</span> <span class="n">show_svd</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<a href="https://docs.python.org/3/library/stdtypes.html#tuple" title="builtins.tuple" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">fig_base_cov</span></a> <span class="o">=</span> <a href="../../generated/mne.viz.plot_cov.html#mne.viz.plot_cov" title="mne.viz.plot_cov" class="sphx-glr-backref-module-mne-viz sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">viz</span><span class="o">.</span><span class="n">plot_cov</span></a><span class="p">(</span><a href="../../generated/mne.Covariance.html#mne.Covariance" title="mne.Covariance" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">base_cov</span></a><span class="p">,</span> <a href="../../generated/mne.Info.html#mne.Info" title="mne.Info" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span><span class="o">.</span><span class="n">info</span></a><span class="p">,</span> <span class="n">show_svd</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<a href="https://docs.python.org/3/library/stdtypes.html#tuple" title="builtins.tuple" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">fig_data_cov</span></a> <span class="o">=</span> <a href="../../generated/mne.viz.plot_cov.html#mne.viz.plot_cov" title="mne.viz.plot_cov" class="sphx-glr-backref-module-mne-viz sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">viz</span><span class="o">.</span><span class="n">plot_cov</span></a><span class="p">(</span><a href="../../generated/mne.Covariance.html#mne.Covariance" title="mne.Covariance" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">data_cov</span></a><span class="p">,</span> <a href="../../generated/mne.Info.html#mne.Info" title="mne.Info" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span><span class="o">.</span><span class="n">info</span></a><span class="p">,</span> <span class="n">show_svd</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+<ul class="sphx-glr-horizontal">
+<li><img alt="Magnetometers covariance, Gradiometers covariance" class="sphx-glr-multi-img" src="../../_images/sphx_glr_plot_mne_cov_power_001.png" />
+</li>
+<li><img alt="Magnetometers covariance, Gradiometers covariance" class="sphx-glr-multi-img" src="../../_images/sphx_glr_plot_mne_cov_power_002.png" />
+</li>
+<li><img alt="Magnetometers covariance, Gradiometers covariance" class="sphx-glr-multi-img" src="../../_images/sphx_glr_plot_mne_cov_power_003.png" />
+</li>
+</ul>
+<p class="sphx-glr-script-out">Out:</p>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Computing rank from data with rank=None
+    Using tolerance 3.9e-09 (2.2e-16 eps * 305 dim * 5.8e+04  max singular value)
+    Estimated rank (mag + grad): 302
+    MEG: rank 302 computed from 305 data channels with 3 projectors
+    Created an SSP operator (subspace dimension = 3)
+    Setting small MEG eigenvalues to zero (without PCA)
+Reducing data rank from 305 -&gt; 302
+Estimating covariance using SHRUNK
+Done.
+Estimating covariance using EMPIRICAL
+Done.
+Using cross-validation to select the best estimator.
+Number of samples used : 7440
+log-likelihood on unseen data (descending order):
+   shrunk: -1308.077
+   empirical: -1344.171
+selecting best estimator: shrunk
+[done]
+Computing rank from data with rank=None
+    Using tolerance 4.4e-09 (2.2e-16 eps * 305 dim * 6.5e+04  max singular value)
+    Estimated rank (mag + grad): 302
+    MEG: rank 302 computed from 305 data channels with 3 projectors
+    Created an SSP operator (subspace dimension = 3)
+    Setting small MEG eigenvalues to zero (without PCA)
+Reducing data rank from 305 -&gt; 302
+Estimating covariance using SHRUNK
+Done.
+Estimating covariance using EMPIRICAL
+Done.
+Using cross-validation to select the best estimator.
+Number of samples used : 7440
+log-likelihood on unseen data (descending order):
+   shrunk: -1314.135
+   empirical: -1350.783
+selecting best estimator: shrunk
+[done]
+</pre></div>
+</div>
+<p>We can also look at the covariances using topomaps, here we just show the
+baseline and data covariances, followed by the data covariance whitened
+by the baseline covariance:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="mne.EvokedArray" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">evoked</span></a> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs.average" title="mne.Epochs.average" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">epochs</span><span class="o">.</span><span class="n">average</span></a><span class="p">()</span><span class="o">.</span><span class="n">pick</span><span class="p">(</span><span class="s1">&#39;meg&#39;</span><span class="p">)</span>
+<a href="../../generated/mne.EvokedArray.html#mne.EvokedArray.drop_channels" title="mne.EvokedArray.drop_channels" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">evoked</span><span class="o">.</span><span class="n">drop_channels</span></a><span class="p">(</span><a href="../../generated/mne.Info.html#mne.Info" title="mne.Info" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">evoked</span><span class="o">.</span><span class="n">info</span></a><span class="p">[</span><span class="s1">&#39;bads&#39;</span><span class="p">])</span>
+<a href="../../generated/mne.EvokedArray.html#mne.EvokedArray.plot" title="mne.EvokedArray.plot" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">evoked</span><span class="o">.</span><span class="n">plot</span></a><span class="p">(</span><span class="n">time_unit</span><span class="o">=</span><span class="s1">&#39;s&#39;</span><span class="p">)</span>
+<a href="../../generated/mne.EvokedArray.html#mne.EvokedArray.plot_topomap" title="mne.EvokedArray.plot_topomap" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">evoked</span><span class="o">.</span><span class="n">plot_topomap</span></a><span class="p">(</span><span class="n">times</span><span class="o">=</span><a href="https://numpy.org/devdocs/reference/generated/numpy.linspace.html#numpy.linspace" title="numpy.linspace" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-function"><span class="n">np</span><span class="o">.</span><span class="n">linspace</span></a><span class="p">(</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.15</span><span class="p">,</span> <span class="mi">5</span><span class="p">),</span> <span class="n">ch_type</span><span class="o">=</span><span class="s1">&#39;mag&#39;</span><span class="p">)</span>
+<a href="../../generated/mne.Covariance.html#mne.Covariance.plot_topomap" title="mne.Covariance.plot_topomap" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">noise_cov</span><span class="o">.</span><span class="n">plot_topomap</span></a><span class="p">(</span><a href="../../generated/mne.Info.html#mne.Info" title="mne.Info" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">evoked</span><span class="o">.</span><span class="n">info</span></a><span class="p">,</span> <span class="s1">&#39;grad&#39;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s1">&#39;Noise&#39;</span><span class="p">)</span>
+<a href="../../generated/mne.Covariance.html#mne.Covariance.plot_topomap" title="mne.Covariance.plot_topomap" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">data_cov</span><span class="o">.</span><span class="n">plot_topomap</span></a><span class="p">(</span><a href="../../generated/mne.Info.html#mne.Info" title="mne.Info" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">evoked</span><span class="o">.</span><span class="n">info</span></a><span class="p">,</span> <span class="s1">&#39;grad&#39;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s1">&#39;Data&#39;</span><span class="p">)</span>
+<a href="../../generated/mne.Covariance.html#mne.Covariance.plot_topomap" title="mne.Covariance.plot_topomap" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">data_cov</span><span class="o">.</span><span class="n">plot_topomap</span></a><span class="p">(</span><a href="../../generated/mne.Info.html#mne.Info" title="mne.Info" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">evoked</span><span class="o">.</span><span class="n">info</span></a><span class="p">,</span> <span class="s1">&#39;grad&#39;</span><span class="p">,</span> <a href="../../generated/mne.Covariance.html#mne.Covariance" title="mne.Covariance" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">noise_cov</span></a><span class="o">=</span><a href="../../generated/mne.Covariance.html#mne.Covariance" title="mne.Covariance" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">noise_cov</span></a><span class="p">,</span>
+                      <span class="n">title</span><span class="o">=</span><span class="s1">&#39;Whitened data&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<ul class="sphx-glr-horizontal">
+<li><img alt="Gradiometers (203 channels), Magnetometers (102 channels)" class="sphx-glr-multi-img" src="../../_images/sphx_glr_plot_mne_cov_power_004.png" />
+</li>
+<li><img alt="0.050 s, 0.075 s, 0.100 s, 0.125 s, 0.150 s, fT" class="sphx-glr-multi-img" src="../../_images/sphx_glr_plot_mne_cov_power_005.png" />
+</li>
+<li><img alt="Noise, (fT/cm)²" class="sphx-glr-multi-img" src="../../_images/sphx_glr_plot_mne_cov_power_006.png" />
+</li>
+<li><img alt="Data, (fT/cm)²" class="sphx-glr-multi-img" src="../../_images/sphx_glr_plot_mne_cov_power_007.png" />
+</li>
+<li><img alt="Whitened data, AU" class="sphx-glr-multi-img" src="../../_images/sphx_glr_plot_mne_cov_power_008.png" />
+</li>
+</ul>
+<p class="sphx-glr-script-out">Out:</p>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Removing projector &lt;Projection | Average EEG reference, active : True, n_channels : 60&gt;
+Removing projector &lt;Projection | PCA-v1, active : True, n_channels : 102&gt;
+Removing projector &lt;Projection | PCA-v2, active : True, n_channels : 102&gt;
+Removing projector &lt;Projection | PCA-v3, active : True, n_channels : 102&gt;
+Removing projector &lt;Projection | PCA-v1, active : True, n_channels : 102&gt;
+Removing projector &lt;Projection | PCA-v2, active : True, n_channels : 102&gt;
+Removing projector &lt;Projection | PCA-v3, active : True, n_channels : 102&gt;
+    Created an SSP operator (subspace dimension = 3)
+Computing rank from covariance with rank=None
+    Using tolerance 1.4e-13 (2.2e-16 eps * 305 dim * 2  max singular value)
+    Estimated rank (mag + grad): 302
+    MEG: rank 302 computed from 305 data channels with 3 projectors
+    Setting small MEG eigenvalues to zero (without PCA)
+    Created the whitener using a noise covariance matrix with rank 302 (3 small eigenvalues omitted)
+    Created an SSP operator (subspace dimension = 3)
+Computing rank from covariance with rank=None
+    Using tolerance 1.4e-13 (2.2e-16 eps * 305 dim * 2  max singular value)
+    Estimated rank (mag + grad): 302
+    MEG: rank 302 computed from 305 data channels with 3 projectors
+    Setting small MEG eigenvalues to zero (without PCA)
+    Created the whitener using a noise covariance matrix with rank 302 (3 small eigenvalues omitted)
+Removing projector &lt;Projection | PCA-v1, active : True, n_channels : 102&gt;
+Removing projector &lt;Projection | PCA-v2, active : True, n_channels : 102&gt;
+Removing projector &lt;Projection | PCA-v3, active : True, n_channels : 102&gt;
+</pre></div>
+</div>
+</section>
+<section id="apply-inverse-operator-to-covariance">
+<h2>Apply inverse operator to covariance<a class="headerlink" href="#apply-inverse-operator-to-covariance" title="Permalink to this headline">¶</a></h2>
+<p>Finally, we can construct an inverse using the empty-room noise covariance:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Read the forward solution and compute the inverse operator</span>
+<a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">fname_fwd</span></a> <span class="o">=</span> <a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">data_path</span></a> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis-meg-oct-6-fwd.fif&#39;</span>
+<a href="../../generated/mne.Forward.html#mne.Forward" title="mne.Forward" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">fwd</span></a> <span class="o">=</span> <a href="../../generated/mne.read_forward_solution.html#mne.read_forward_solution" title="mne.read_forward_solution" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">read_forward_solution</span></a><span class="p">(</span><a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">fname_fwd</span></a><span class="p">)</span>
+
+<span class="c1"># make an MEG inverse operator</span>
+<a href="../../generated/mne.Info.html#mne.Info" title="mne.Info" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">info</span></a> <span class="o">=</span> <a href="../../generated/mne.Info.html#mne.Info" title="mne.Info" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">evoked</span><span class="o">.</span><span class="n">info</span></a>
+<a href="../../generated/mne.minimum_norm.InverseOperator.html#mne.minimum_norm.InverseOperator" title="mne.minimum_norm.InverseOperator" class="sphx-glr-backref-module-mne-minimum_norm sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">inverse_operator</span></a> <span class="o">=</span> <a href="../../generated/mne.minimum_norm.make_inverse_operator.html#mne.minimum_norm.make_inverse_operator" title="mne.minimum_norm.make_inverse_operator" class="sphx-glr-backref-module-mne-minimum_norm sphx-glr-backref-type-py-function"><span class="n">make_inverse_operator</span></a><span class="p">(</span><a href="../../generated/mne.Info.html#mne.Info" title="mne.Info" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">info</span></a><span class="p">,</span> <a href="../../generated/mne.Forward.html#mne.Forward" title="mne.Forward" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">fwd</span></a><span class="p">,</span> <a href="../../generated/mne.Covariance.html#mne.Covariance" title="mne.Covariance" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">noise_cov</span></a><span class="p">,</span>
+                                         <span class="n">loose</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">depth</span><span class="o">=</span><span class="mf">0.8</span><span class="p">)</span>
+</pre></div>
+</div>
+<p class="sphx-glr-script-out">Out:</p>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Reading forward solution from /home/circleci/mne_data/MNE-sample-data/MEG/sample/sample_audvis-meg-oct-6-fwd.fif...
+    Reading a source space...
+    Computing patch statistics...
+    Patch information added...
+    Distance information added...
+    [done]
+    Reading a source space...
+    Computing patch statistics...
+    Patch information added...
+    Distance information added...
+    [done]
+    2 source spaces read
+    Desired named matrix (kind = 3523) not available
+    Read MEG forward solution (7498 sources, 306 channels, free orientations)
+    Source spaces transformed to the forward solution coordinate frame
+Converting forward solution to surface orientation
+    Average patch normals will be employed in the rotation to the local surface coordinates....
+    Converting to surface-based source orientations...
+    [done]
+Computing inverse operator with 305 channels.
+    305 out of 306 channels remain after picking
+Selected 305 channels
+Creating the depth weighting matrix...
+    203 planar channels
+    limit = 7265/7498 = 10.037795
+    scale = 2.52065e-08 exp = 0.8
+Applying loose dipole orientations to surface source spaces: 0.2
+Whitening the forward solution.
+    Created an SSP operator (subspace dimension = 3)
+Computing rank from covariance with rank=None
+    Using tolerance 1.4e-13 (2.2e-16 eps * 305 dim * 2  max singular value)
+    Estimated rank (mag + grad): 302
+    MEG: rank 302 computed from 305 data channels with 3 projectors
+    Setting small MEG eigenvalues to zero (without PCA)
+Creating the source covariance matrix
+Adjusting source covariance matrix.
+Computing SVD of whitened and weighted lead field matrix.
+    largest singular value = 6.38809
+    scaling factor to adjust the trace = 5.27749e+19
+</pre></div>
+</div>
+<p>Project our data and baseline covariance to source space:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="../../generated/mne.SourceEstimate.html#mne.SourceEstimate" title="mne.SourceEstimate" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">stc_data</span></a> <span class="o">=</span> <a href="../../generated/mne.minimum_norm.apply_inverse_cov.html#mne.minimum_norm.apply_inverse_cov" title="mne.minimum_norm.apply_inverse_cov" class="sphx-glr-backref-module-mne-minimum_norm sphx-glr-backref-type-py-function"><span class="n">apply_inverse_cov</span></a><span class="p">(</span><a href="../../generated/mne.Covariance.html#mne.Covariance" title="mne.Covariance" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">data_cov</span></a><span class="p">,</span> <a href="../../generated/mne.Info.html#mne.Info" title="mne.Info" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">evoked</span><span class="o">.</span><span class="n">info</span></a><span class="p">,</span> <a href="../../generated/mne.minimum_norm.InverseOperator.html#mne.minimum_norm.InverseOperator" title="mne.minimum_norm.InverseOperator" class="sphx-glr-backref-module-mne-minimum_norm sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">inverse_operator</span></a><span class="p">,</span>
+                             <span class="n">nave</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a><span class="p">),</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;dSPM&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a href="../../generated/mne.SourceEstimate.html#mne.SourceEstimate" title="mne.SourceEstimate" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">stc_base</span></a> <span class="o">=</span> <a href="../../generated/mne.minimum_norm.apply_inverse_cov.html#mne.minimum_norm.apply_inverse_cov" title="mne.minimum_norm.apply_inverse_cov" class="sphx-glr-backref-module-mne-minimum_norm sphx-glr-backref-type-py-function"><span class="n">apply_inverse_cov</span></a><span class="p">(</span><a href="../../generated/mne.Covariance.html#mne.Covariance" title="mne.Covariance" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">base_cov</span></a><span class="p">,</span> <a href="../../generated/mne.Info.html#mne.Info" title="mne.Info" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">evoked</span><span class="o">.</span><span class="n">info</span></a><span class="p">,</span> <a href="../../generated/mne.minimum_norm.InverseOperator.html#mne.minimum_norm.InverseOperator" title="mne.minimum_norm.InverseOperator" class="sphx-glr-backref-module-mne-minimum_norm sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">inverse_operator</span></a><span class="p">,</span>
+                             <span class="n">nave</span><span class="o">=</span><span class="nb">len</span><span class="p">(</span><a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a><span class="p">),</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;dSPM&#39;</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<p class="sphx-glr-script-out">Out:</p>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Preparing the inverse operator for use...
+    Scaled noise and source covariance from nave = 1 to nave = 240
+    Created the regularized inverter
+    Created an SSP operator (subspace dimension = 3)
+    Created the whitener using a noise covariance matrix with rank 302 (3 small eigenvalues omitted)
+    Computing noise-normalization factors (dSPM)...
+[done]
+Applying inverse operator to &quot;cov&quot;...
+    Picked 305 channels from the data
+    Computing inverse...
+    Eigenleads need to be weighted ...
+    Computing residual...
+    Explained  37.2% variance
+    dSPM...
+    Combining the current components...
+[done]
+Preparing the inverse operator for use...
+    Scaled noise and source covariance from nave = 1 to nave = 240
+    Created the regularized inverter
+    Created an SSP operator (subspace dimension = 3)
+    Created the whitener using a noise covariance matrix with rank 302 (3 small eigenvalues omitted)
+    Computing noise-normalization factors (dSPM)...
+[done]
+Applying inverse operator to &quot;cov&quot;...
+    Picked 305 channels from the data
+    Computing inverse...
+    Eigenleads need to be weighted ...
+    Computing residual...
+    Explained  37.2% variance
+    dSPM...
+    Combining the current components...
+[done]
+</pre></div>
+</div>
+<p>And visualize power is relative to the baseline:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="../../generated/mne.SourceEstimate.html#mne.SourceEstimate" title="mne.SourceEstimate" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">stc_data</span></a> <span class="o">/=</span> <a href="../../generated/mne.SourceEstimate.html#mne.SourceEstimate" title="mne.SourceEstimate" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">stc_base</span></a>
+<a href="../../generated/mne.viz.Brain.html#mne.viz.Brain" title="mne.viz.Brain" class="sphx-glr-backref-module-mne-viz sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">brain</span></a> <span class="o">=</span> <a href="../../generated/mne.SourceEstimate.html#mne.SourceEstimate.plot" title="mne.SourceEstimate.plot" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">stc_data</span><span class="o">.</span><span class="n">plot</span></a><span class="p">(</span><span class="n">subject</span><span class="o">=</span><span class="s1">&#39;sample&#39;</span><span class="p">,</span> <a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">subjects_dir</span></a><span class="o">=</span><a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">subjects_dir</span></a><span class="p">,</span>
+                      <span class="n">clim</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">kind</span><span class="o">=</span><span class="s1">&#39;percent&#39;</span><span class="p">,</span> <span class="n">lims</span><span class="o">=</span><span class="p">(</span><span class="mi">50</span><span class="p">,</span> <span class="mi">90</span><span class="p">,</span> <span class="mi">98</span><span class="p">)))</span>
+</pre></div>
+</div>
+<img alt="plot mne cov power" class="sphx-glr-single-img" src="../../_images/sphx_glr_plot_mne_cov_power_009.png" />
+<p class="sphx-glr-script-out">Out:</p>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Using control points [1.13405797 1.49777712 2.14096143]
+</pre></div>
+</div>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 1 minutes  12.629 seconds)</p>
+<p><strong>Estimated memory usage:</strong>  391 MB</p>
+<div class="sphx-glr-footer class sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-inverse-plot-mne-cov-power-py">
+<div class="sphx-glr-download sphx-glr-download-python docutils container">
+<p><a class="reference download internal" download="" href="../../_downloads/4d86330aa1188a8c79a3fbf37b4c950d/plot_mne_cov_power.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">plot_mne_cov_power.py</span></code></a></p>
+</div>
+<div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
+<p><a class="reference download internal" download="" href="../../_downloads/9ae38deb3b38617e0444984e7140c666/plot_mne_cov_power.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">plot_mne_cov_power.ipynb</span></code></a></p>
+</div>
+</div>
+<p class="sphx-glr-signature"><a class="reference external" href="https://sphinx-gallery.github.io">Gallery generated by Sphinx-Gallery</a></p>
+</section>
+</section>
+
+
+    </div>
+    
+  </div>
+</div>
+<footer class="footer">
+  <div class="container"><div class="row">
+    <div class="container col-md-12 institutions">
+      <ul class="list-unstyled">
+        <li><a href="https://www.massgeneral.org/"><img class="institution" src="../../_static/institution_logos/MGH.svg" title="Massachusetts General Hospital" alt="Massachusetts General Hospital"/></a></li>
+        <li><a href="https://martinos.org/"><img class="institution" src="../../_static/institution_logos/Martinos.png" title="Athinoula A. Martinos Center for Biomedical Imaging" alt="Athinoula A. Martinos Center for Biomedical Imaging"/></a></li>
+        <li><a href="https://hms.harvard.edu/"><img class="institution" src="../../_static/institution_logos/Harvard.png" title="Harvard Medical School" alt="Harvard Medical School"/></a></li>
+        <li><a href="https://web.mit.edu/"><img class="institution" src="../../_static/institution_logos/MIT.svg" title="Massachusetts Institute of Technology" alt="Massachusetts Institute of Technology"/></a></li>
+        <li><a href="https://www.nyu.edu/"><img class="institution" src="../../_static/institution_logos/NYU.png" title="New York University" alt="New York University"/></a></li>
+        <li><a href="http://www.cea.fr/"><img class="institution" src="../../_static/institution_logos/CEA.png" title="Commissariat à l´énergie atomique et aux énergies alternatives" alt="Commissariat à l´énergie atomique et aux énergies alternatives"/></a></li>
+        <li><a href="https://sci.aalto.fi/"><img class="institution" src="../../_static/institution_logos/Aalto.svg" title="Aalto-yliopiston perustieteiden korkeakoulu" alt="Aalto-yliopiston perustieteiden korkeakoulu"/></a></li>
+        <li><a href="https://www.telecom-paris.fr/"><img class="institution" src="../../_static/institution_logos/Telecom_Paris_Tech.png" title="Télécom ParisTech" alt="Télécom ParisTech"/></a></li>
+        <li><a href="https://www.washington.edu/"><img class="institution" src="../../_static/institution_logos/Washington.png" title="University of Washington" alt="University of Washington"/></a></li>
+        <li><a href="https://icm-institute.org/"><img class="institution" src="../../_static/institution_logos/ICM.jpg" title="Institut du Cerveau et de la Moelle épinière" alt="Institut du Cerveau et de la Moelle épinière"/></a></li>
+        <li><a href="https://www.bu.edu/"><img class="institution" src="../../_static/institution_logos/BU.svg" title="Boston University" alt="Boston University"/></a></li>
+        <li><a href="https://www.inserm.fr/"><img class="institution" src="../../_static/institution_logos/Inserm.svg" title="Institut national de la santé et de la recherche médicale" alt="Institut national de la santé et de la recherche médicale"/></a></li>
+        <li><a href="https://www.fz-juelich.de/"><img class="institution" src="../../_static/institution_logos/Julich.svg" title="Forschungszentrum Jülich" alt="Forschungszentrum Jülich"/></a></li>
+        <li><a href="https://www.tu-ilmenau.de/"><img class="institution" src="../../_static/institution_logos/Ilmenau.gif" title="Technische Universität Ilmenau" alt="Technische Universität Ilmenau"/></a></li>
+        <li><a href="https://bids.berkeley.edu/"><img class="institution" src="../../_static/institution_logos/BIDS.png" title="Berkeley Institute for Data Science" alt="Berkeley Institute for Data Science"/></a></li>
+        <li><a href="https://www.inria.fr/"><img class="institution" src="../../_static/institution_logos/inria.png" title="Institut national de recherche en informatique et en automatique" alt="Institut national de recherche en informatique et en automatique"/></a></li>
+        <li><a href="https://www.au.dk/"><img class="institution" src="../../_static/institution_logos/Aarhus.png" title="Aarhus Universitet" alt="Aarhus Universitet"/></a></li>
+        <li><a href="https://www.uni-graz.at/"><img class="institution" src="../../_static/institution_logos/Graz.jpg" title="Karl-Franzens-Universität Graz" alt="Karl-Franzens-Universität Graz"/></a></li>
+      </ul>
+      <p class="text-center text-muted small">&copy; Copyright 2012-2021, MNE Developers. Last updated <time datetime="2021-04-02T17:37:54.428702+00:00" class="localized">2021-04-02 17:37 UTC</time>
+<script type="text/javascript">$(function () { $("time.localized").each(function () { var el = $(this); el.text(new Date(el.attr("datetime")).toLocaleString([], {dateStyle: "medium", timeStyle: "long"})); }); } )</script></p>
+    </div></div></div>
+  </footer>
+  <script src="https://mne.tools/versionwarning.js"></script>
+  </body>
+</html>
