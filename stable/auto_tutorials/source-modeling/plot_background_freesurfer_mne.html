@@ -4,7 +4,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>How MNE uses FreeSurfer’s outputs &#8212; MNE 0.21.2 documentation</title>
+    <title>How MNE uses FreeSurfer’s outputs &#8212; MNE 0.22.1 documentation</title>
     <link rel="stylesheet" href="../../_static/pygments.css" type="text/css" />
     <link rel="stylesheet" href="../../_static/bootstrap-sphinx.css" type="text/css" />
     <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css" />
@@ -17,9 +17,7 @@
     <script src="../../_static/jquery.js"></script>
     <script src="../../_static/underscore.js"></script>
     <script src="../../_static/doctools.js"></script>
-    <script src="../../_static/language_data.js"></script>
     <script src="../../_static/bootstrap_divs.js"></script>
-    <script async="async" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.7/latest.js?config=TeX-AMS-MML_HTMLorMML"></script>
     <link rel="shortcut icon" href="../../_static/favicon.ico"/>
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
@@ -62,9 +60,9 @@
 <meta http-equiv='X-UA-Compatible' content='IE=edge,chrome=1'>
 <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1'>
 <meta name="apple-mobile-web-app-capable" content="yes">
-<script type="text/javascript" src="../../_static/js/jquery-1.11.0.min.js "></script>
+<script type="text/javascript" src="../../_static/js/jquery-1.12.4.min.js "></script>
 <script type="text/javascript" src="../../_static/js/jquery-fix.js "></script>
-<script type="text/javascript" src="../../_static/bootstrap-3.3.7/js/bootstrap.min.js "></script>
+<script type="text/javascript" src="../../_static/bootstrap-3.4.1/js/bootstrap.min.js "></script>
 <script type="text/javascript" src="../../_static/bootstrap-sphinx.js "></script>
 
 
@@ -86,7 +84,7 @@
         </button>
         <a class="navbar-brand" href="../../index.html"><span><img src="../../_static/mne_logo_small.svg"></span>
            </a>
-        <span class="navbar-text navbar-version pull-left"><b>0.21.2</b></span>
+        <span class="navbar-text navbar-version pull-left"><b>0.22.1</b></span>
       </div>
 
         <div class="collapse navbar-collapse nav-collapse">
@@ -112,12 +110,13 @@
 
             <li class="dropdown">
               <button type="button" class="btn btn-primary btn-sm navbar-btn dropdown-toggle" id="dLabelMore" data-toggle="dropdown" style="margin-left: 10px">
-              v0.21.2
+              v0.22.1
               <span class="caret"></span>
             </button>
               <ul class="dropdown-menu" aria-labelledby="dLabelMore">
                 <li><a href="https://mne-tools.github.io/dev/index.html">Development</a></li>
-                <li><a href="https://mne-tools.github.io/stable/index.html">v0.21 (stable)</a></li>
+                <li><a href="https://mne-tools.github.io/stable/index.html">v0.22 (stable)</a></li>
+                <li><a href="https://mne-tools.github.io/0.21/index.html">v0.21</a></li>
                 <li><a href="https://mne-tools.github.io/0.20/index.html">v0.20</a></li>
                 <li><a href="https://mne-tools.github.io/0.19/index.html">v0.19</a></li>
                 <li><a href="https://mne-tools.github.io/0.18/index.html">v0.18</a></li>
@@ -162,7 +161,7 @@
 <p>Click <a class="reference internal" href="#sphx-glr-download-auto-tutorials-source-modeling-plot-background-freesurfer-mne-py"><span class="std std-ref">here</span></a>
 to download the full example code</p>
 </div>
-<div class="sphx-glr-example-title section" id="how-mne-uses-freesurfer-s-outputs">
+<section class="sphx-glr-example-title" id="how-mne-uses-freesurfer-s-outputs">
 <span id="tut-freesurfer-mne"></span><span id="sphx-glr-auto-tutorials-source-modeling-plot-background-freesurfer-mne-py"></span><h1>How MNE uses FreeSurfer’s outputs<a class="headerlink" href="#how-mne-uses-freesurfer-s-outputs" title="Permalink to this headline">¶</a></h1>
 <p>This tutorial explains how MRI coordinate frames are handled in MNE-Python,
 and how MNE-Python integrates with FreeSurfer for handling MRI data and
@@ -178,13 +177,14 @@ source space data in general.</p>
 <ul>
 <li><p><a class="reference internal" href="#cortical-alignment-spherical" id="id4">Cortical alignment (spherical)</a></p></li>
 <li><p><a class="reference internal" href="#surface-decimation" id="id5">Surface decimation</a></p></li>
+<li><p><a class="reference internal" href="#freesurfer-s-mni-affine-transformation" id="id6">FreeSurfer’s MNI affine transformation</a></p></li>
 </ul>
 </li>
 </ul>
 </div>
 <p>As usual we’ll start by importing the necessary packages; for this tutorial
 that includes <a class="reference external" href="https://nipy.org/nibabel/reference/nibabel.html#module-nibabel" title="(in NiBabel v3.2.0)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">nibabel</span></code></a> to handle loading the MRI images (MNE-Python also
-uses <a class="reference external" href="https://nipy.org/nibabel/reference/nibabel.html#module-nibabel" title="(in NiBabel v3.2.0)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">nibabel</span></code></a> under the hood). We’ll also use a special <a class="reference external" href="https://matplotlib.org/api/patheffects_api.html#module-matplotlib.patheffects" title="(in Matplotlib v3.3.3)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">Matplotlib</span></code></a> function for adding outlines to text, so that text is
+uses <a class="reference external" href="https://nipy.org/nibabel/reference/nibabel.html#module-nibabel" title="(in NiBabel v3.2.0)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">nibabel</span></code></a> under the hood). We’ll also use a special <a class="reference external" href="https://matplotlib.org/api/patheffects_api.html#module-matplotlib.patheffects" title="(in Matplotlib v3.4.1)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">Matplotlib</span></code></a> function for adding outlines to text, so that text is
 readable on top of an MRI image.</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
 
@@ -198,7 +198,7 @@ readable on top of an MRI image.</p>
 <span class="kn">from</span> <span class="nn">mne.io.constants</span> <span class="kn">import</span> <span class="n">FIFF</span>
 </pre></div>
 </div>
-<div class="section" id="mri-coordinate-frames">
+<section id="mri-coordinate-frames">
 <h2><a class="toc-backref" href="#id1">MRI coordinate frames</a><a class="headerlink" href="#mri-coordinate-frames" title="Permalink to this headline">¶</a></h2>
 <p>Let’s start out by looking at the <code class="docutils literal notranslate"><span class="pre">sample</span></code> subject MRI. Following standard
 FreeSurfer convention, we look at <code class="file docutils literal notranslate"><span class="pre">T1.mgz</span></code>, which gets created from the
@@ -250,13 +250,13 @@ the scanner itself and/or the subject within it. During acquisition the
 relationship between the voxel indices <code class="docutils literal notranslate"><span class="pre">(i,</span> <span class="pre">j,</span> <span class="pre">k)</span></code> and the physical
 location <code class="docutils literal notranslate"><span class="pre">(x,</span> <span class="pre">y,</span> <span class="pre">z)</span></code> in the <em>scanner’s native coordinate frame</em> is saved in
 the image’s <em>affine transformation</em>.</p>
-<div class="sidebar">
+<aside class="sidebar">
 <p class="sidebar-title">Under the hood</p>
 <p><code class="docutils literal notranslate"><span class="pre">mne.transforms.apply_trans</span></code> effectively does a matrix multiplication
-(i.e., <a class="reference external" href="https://numpy.org/devdocs/reference/generated/numpy.dot.html#numpy.dot" title="(in NumPy v1.20.dev0)"><code class="xref py py-func docutils literal notranslate"><span class="pre">numpy.dot()</span></code></a>), with a little extra work to handle the shape
+(i.e., <a class="reference external" href="https://numpy.org/devdocs/reference/generated/numpy.dot.html#numpy.dot" title="(in NumPy v1.21.dev0)"><code class="xref py py-func docutils literal notranslate"><span class="pre">numpy.dot()</span></code></a>), with a little extra work to handle the shape
 mismatch (the affine has shape <code class="docutils literal notranslate"><span class="pre">(4,</span> <span class="pre">4)</span></code> because it includes a
 <em>translation</em>, which is applied separately).</p>
-</div>
+</aside>
 <p>We can use <a class="reference external" href="https://nipy.org/nibabel/reference/nibabel.html#module-nibabel" title="(in NiBabel v3.2.0)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">nibabel</span></code></a> to examine this transformation, keeping in mind
 that it processes everything in units of millimeters, unlike MNE where things
 are always in SI units (meters).</p>
@@ -295,10 +295,10 @@ voxel if you’re not careful:</p>
 </div>
 <p>Let’s write a short function to visualize where our voxel lies in an
 image, and annotate it in RAS space (rounded to the nearest millimeter):</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">imshow_mri</span><span class="p">(</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">data</span></a><span class="p">,</span> <span class="n">img</span><span class="p">,</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">vox</span></a><span class="p">,</span> <span class="n">xyz</span><span class="p">,</span> <span class="n">suptitle</span><span class="p">):</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">imshow_mri</span><span class="p">(</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">data</span></a><span class="p">,</span> <span class="n">img</span><span class="p">,</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">vox</span></a><span class="p">,</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">xyz</span></a><span class="p">,</span> <span class="n">suptitle</span><span class="p">):</span>
     <span class="sd">&quot;&quot;&quot;Show an MRI slice with a voxel annotated.&quot;&quot;&quot;</span>
     <span class="n">i</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">k</span> <span class="o">=</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">vox</span></a>
-    <a href="https://matplotlib.org/api/_as_gen/matplotlib.figure.Figure.html#matplotlib.figure.Figure" title="matplotlib.figure.Figure" class="sphx-glr-backref-module-matplotlib-figure sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">fig</span></a><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.subplots.html#matplotlib.pyplot.subplots" title="matplotlib.pyplot.subplots" class="sphx-glr-backref-module-matplotlib-pyplot sphx-glr-backref-type-py-function"><span class="n">plt</span><span class="o">.</span><span class="n">subplots</span></a><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+    <a href="https://matplotlib.org/api/figure_api.html#matplotlib.figure.Figure" title="matplotlib.figure.Figure" class="sphx-glr-backref-module-matplotlib-figure sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">fig</span></a><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.subplots.html#matplotlib.pyplot.subplots" title="matplotlib.pyplot.subplots" class="sphx-glr-backref-module-matplotlib-pyplot sphx-glr-backref-type-py-function"><span class="n">plt</span><span class="o">.</span><span class="n">subplots</span></a><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
     <span class="n">codes</span> <span class="o">=</span> <a href="https://nipy.org/nibabel/reference/nibabel.orientations.html#nibabel.orientations.aff2axcodes" title="nibabel.orientations.aff2axcodes" class="sphx-glr-backref-module-nibabel-orientations sphx-glr-backref-type-py-function"><span class="n">nibabel</span><span class="o">.</span><span class="n">orientations</span><span class="o">.</span><span class="n">aff2axcodes</span></a><span class="p">(</span><span class="n">img</span><span class="o">.</span><span class="n">affine</span><span class="p">)</span>
     <span class="c1"># Figure out the title based on the code of this axis</span>
     <span class="n">ori_slice</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">P</span><span class="o">=</span><span class="s1">&#39;Coronal&#39;</span><span class="p">,</span> <span class="n">A</span><span class="o">=</span><span class="s1">&#39;Coronal&#39;</span><span class="p">,</span>
@@ -311,7 +311,7 @@ image, and annotate it in RAS space (rounded to the nearest millimeter):</p>
     <span class="n">ax</span><span class="o">.</span><span class="n">imshow</span><span class="p">(</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">data</span></a><span class="p">[</span><span class="n">i</span><span class="p">],</span> <span class="n">vmin</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span> <span class="n">vmax</span><span class="o">=</span><span class="mi">120</span><span class="p">,</span> <span class="n">cmap</span><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="n">origin</span><span class="o">=</span><span class="s1">&#39;lower&#39;</span><span class="p">)</span>
     <span class="n">ax</span><span class="o">.</span><span class="n">axvline</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">color</span></a><span class="o">=</span><span class="s1">&#39;y&#39;</span><span class="p">)</span>
     <span class="n">ax</span><span class="o">.</span><span class="n">axhline</span><span class="p">(</span><span class="n">j</span><span class="p">,</span> <a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">color</span></a><span class="o">=</span><span class="s1">&#39;y&#39;</span><span class="p">)</span>
-    <span class="k">for</span> <span class="n">kind</span><span class="p">,</span> <span class="n">coords</span> <span class="ow">in</span> <span class="n">xyz</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="k">for</span> <span class="n">kind</span><span class="p">,</span> <span class="n">coords</span> <span class="ow">in</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">xyz</span><span class="o">.</span><span class="n">items</span></a><span class="p">():</span>
         <span class="n">annotation</span> <span class="o">=</span> <span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">: </span><span class="si">{}</span><span class="s1">, </span><span class="si">{}</span><span class="s1">, </span><span class="si">{}</span><span class="s1"> mm&#39;</span>
                       <span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">kind</span><span class="p">,</span> <span class="o">*</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="n">coords</span><span class="p">)</span><span class="o">.</span><span class="n">astype</span><span class="p">(</span><span class="nb">int</span><span class="p">)))</span>
         <span class="n">text</span> <span class="o">=</span> <span class="n">ax</span><span class="o">.</span><span class="n">text</span><span class="p">(</span><span class="n">k</span><span class="p">,</span> <span class="n">j</span><span class="p">,</span> <span class="n">annotation</span><span class="p">,</span> <span class="n">va</span><span class="o">=</span><span class="s1">&#39;baseline&#39;</span><span class="p">,</span> <span class="n">ha</span><span class="o">=</span><span class="s1">&#39;right&#39;</span><span class="p">,</span>
@@ -327,9 +327,9 @@ image, and annotate it in RAS space (rounded to the nearest millimeter):</p>
            <span class="n">xlabel</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;k (</span><span class="si">{</span><span class="n">ori_names</span><span class="p">[</span><span class="n">codes</span><span class="p">[</span><span class="mi">2</span><span class="p">]]</span><span class="si">}</span><span class="s1">+)&#39;</span><span class="p">,</span>
            <span class="n">ylabel</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;j (</span><span class="si">{</span><span class="n">ori_names</span><span class="p">[</span><span class="n">codes</span><span class="p">[</span><span class="mi">1</span><span class="p">]]</span><span class="si">}</span><span class="s1">+)&#39;</span><span class="p">,</span>
            <span class="n">title</span><span class="o">=</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><span class="n">title</span><span class="si">}</span><span class="s1"> view: i=</span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s1"> (</span><span class="si">{</span><span class="n">ori_names</span><span class="p">[</span><span class="n">codes</span><span class="p">[</span><span class="mi">0</span><span class="p">]]</span><span class="si">}</span><span class="s1">+)&#39;</span><span class="p">)</span>
-    <a href="https://matplotlib.org/api/_as_gen/matplotlib.figure.Figure.html#matplotlib.figure.Figure.suptitle" title="matplotlib.figure.Figure.suptitle" class="sphx-glr-backref-module-matplotlib-figure sphx-glr-backref-type-py-method"><span class="n">fig</span><span class="o">.</span><span class="n">suptitle</span></a><span class="p">(</span><span class="n">suptitle</span><span class="p">)</span>
-    <a href="https://matplotlib.org/api/_as_gen/matplotlib.figure.Figure.html#matplotlib.figure.Figure.subplots_adjust" title="matplotlib.figure.Figure.subplots_adjust" class="sphx-glr-backref-module-matplotlib-figure sphx-glr-backref-type-py-method"><span class="n">fig</span><span class="o">.</span><span class="n">subplots_adjust</span></a><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">,</span> <span class="mf">0.85</span><span class="p">)</span>
-    <span class="k">return</span> <a href="https://matplotlib.org/api/_as_gen/matplotlib.figure.Figure.html#matplotlib.figure.Figure" title="matplotlib.figure.Figure" class="sphx-glr-backref-module-matplotlib-figure sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">fig</span></a>
+    <a href="https://matplotlib.org/api/figure_api.html#matplotlib.figure.Figure.suptitle" title="matplotlib.figure.Figure.suptitle" class="sphx-glr-backref-module-matplotlib-figure sphx-glr-backref-type-py-method"><span class="n">fig</span><span class="o">.</span><span class="n">suptitle</span></a><span class="p">(</span><span class="n">suptitle</span><span class="p">)</span>
+    <a href="https://matplotlib.org/api/figure_api.html#matplotlib.figure.Figure.subplots_adjust" title="matplotlib.figure.Figure.subplots_adjust" class="sphx-glr-backref-module-matplotlib-figure sphx-glr-backref-type-py-method"><span class="n">fig</span><span class="o">.</span><span class="n">subplots_adjust</span></a><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.95</span><span class="p">,</span> <span class="mf">0.85</span><span class="p">)</span>
+    <span class="k">return</span> <a href="https://matplotlib.org/api/figure_api.html#matplotlib.figure.Figure" title="matplotlib.figure.Figure" class="sphx-glr-backref-module-matplotlib-figure sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">fig</span></a>
 
 
 <span class="n">imshow_mri</span><span class="p">(</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">data</span></a><span class="p">,</span> <a href="https://nipy.org/nibabel/reference/nibabel.freesurfer.html#nibabel.freesurfer.mghformat.MGHImage" title="nibabel.freesurfer.mghformat.MGHImage" class="sphx-glr-backref-module-nibabel-freesurfer-mghformat sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">t1</span></a><span class="p">,</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">vox</span></a><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;Scanner RAS&#39;</span><span class="p">:</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">xyz_ras</span></a><span class="p">},</span> <span class="s1">&#39;MRI slice&#39;</span><span class="p">)</span>
@@ -339,7 +339,7 @@ image, and annotate it in RAS space (rounded to the nearest millimeter):</p>
 <p>Notice that the axis scales (<code class="docutils literal notranslate"><span class="pre">i</span></code>, <code class="docutils literal notranslate"><span class="pre">j</span></code>, and <code class="docutils literal notranslate"><span class="pre">k</span></code>) are still in voxels
 (ranging from 0-255); it’s only the annotation text that we’ve translated
 into real-world RAS in millimeters.</p>
-<div class="section" id="mri-coordinates-in-mne-python-freesurfer-surface-ras">
+<section id="mri-coordinates-in-mne-python-freesurfer-surface-ras">
 <h3><a class="toc-backref" href="#id2">“MRI coordinates” in MNE-Python: FreeSurfer surface RAS</a><a class="headerlink" href="#mri-coordinates-in-mne-python-freesurfer-surface-ras" title="Permalink to this headline">¶</a></h3>
 <p>While <a class="reference external" href="https://nipy.org/nibabel/reference/nibabel.html#module-nibabel" title="(in NiBabel v3.2.0)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">nibabel</span></code></a> uses <strong>scanner RAS</strong> <code class="docutils literal notranslate"><span class="pre">(x,</span> <span class="pre">y,</span> <span class="pre">z)</span></code> coordinates,
 FreeSurfer uses a slightly different coordinate frame: <strong>MRI surface RAS</strong>.
@@ -350,6 +350,20 @@ transformation sets the center of its coordinate frame in the middle of the
 conformed volume dimensions (<code class="docutils literal notranslate"><span class="pre">N</span> <span class="pre">/</span> <span class="pre">2.</span></code>) with the axes oriented along the
 axes of the volume itself. For more information, see
 <a class="reference internal" href="../../overview/implementation.html#coordinate-systems"><span class="std std-ref">MEG/EEG and MRI coordinate systems</span></a>.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>In general, you should assume that the MRI coordinate system for
+a given subject is specific to that subject, i.e., it is not the
+same coordinate MRI coordinate system that is used for any other
+FreeSurfer subject. Even though during processing FreeSurfer will
+align each subject’s MRI to <code class="docutils literal notranslate"><span class="pre">fsaverage</span></code> to do reconstruction,
+all data (surfaces, MRIs, etc.) get stored in the coordinate frame
+specific to that subject. This is why it’s important for group
+analyses to transform data to a common coordinate frame for example
+by <a class="reference internal" href="../../auto_examples/inverse/plot_morph_surface_stc.html#ex-morph-surface"><span class="std std-ref">surface</span></a> or
+<a class="reference internal" href="../../auto_examples/inverse/plot_morph_volume_stc.html#ex-morph-volume"><span class="std std-ref">volumetric</span></a> morphing, or even by just
+applying <a class="reference internal" href="#mni-affine-transformation"><span class="std std-ref">FreeSurfer’s MNI affine transformation</span></a> to points.</p>
+</div>
 <p>Since MNE-Python uses FreeSurfer extensively for surface computations (e.g.,
 white matter, inner/outer skull meshes), internally MNE-Python uses the
 Freeurfer surface RAS coordinate system (not the <a class="reference external" href="https://nipy.org/nibabel/reference/nibabel.html#module-nibabel" title="(in NiBabel v3.2.0)"><code class="xref py py-mod docutils literal notranslate"><span class="pre">nibabel</span></code></a> scanner RAS
@@ -424,7 +438,7 @@ so before transforming and plotting we’ll convert to millimeters:</p>
 &lt;DigPoint |     Nasion : (0.0, 102.6, 0.0) mm      : head frame&gt;
 </pre></div>
 </div>
-<div class="sidebar">
+<aside class="sidebar">
 <p class="sidebar-title">Head coordinate frame</p>
 <p>The head coordinate frame in MNE is the “Neuromag” head coordinate
 frame. The origin is given by the intersection between a line connecting
@@ -432,7 +446,7 @@ the LPA and RPA and the line orthogonal to it that runs through the
 nasion. It is also in RAS orientation, meaning that +X runs through
 the RPA, +Y goes through the nasion, and +Z is orthogonal to these
 pointing upward. See <a class="reference internal" href="../../overview/implementation.html#coordinate-systems"><span class="std std-ref">MEG/EEG and MRI coordinate systems</span></a> for more information.</p>
-</div>
+</aside>
 <p>Notice that in “head” coordinate frame the nasion has values of 0 for the
 <code class="docutils literal notranslate"><span class="pre">x</span></code> and <code class="docutils literal notranslate"><span class="pre">z</span></code> directions (which makes sense given that the nasion is used
 to define the <code class="docutils literal notranslate"><span class="pre">y</span></code> axis in that system).
@@ -458,9 +472,9 @@ make extensive use of these coordinate frames.</p>
 </pre></div>
 </div>
 <img alt="Nasion transformed from digitization, Sagittal view: i=125 (left+)" class="sphx-glr-single-img" src="../../_images/sphx_glr_plot_background_freesurfer_mne_005.png" />
-</div>
-</div>
-<div class="section" id="using-freesurfer-s-surface-reconstructions">
+</section>
+</section>
+<section id="using-freesurfer-s-surface-reconstructions">
 <h2><a class="toc-backref" href="#id3">Using FreeSurfer’s surface reconstructions</a><a class="headerlink" href="#using-freesurfer-s-surface-reconstructions" title="Permalink to this headline">¶</a></h2>
 <p>An important part of what FreeSurfer does is provide cortical surface
 reconstructions. For example, let’s load and view the <code class="docutils literal notranslate"><span class="pre">white</span></code> surface
@@ -499,19 +513,19 @@ defined in millimeters in the MRI (FreeSurfer surface RAS) coordinate frame,
 so we can convert them to voxels by applying the inverse of the <code class="docutils literal notranslate"><span class="pre">Torig</span></code>
 transform:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">rr_vox</span></a> <span class="o">=</span> <span class="n">apply_trans</span><span class="p">(</span><a href="https://numpy.org/devdocs/reference/generated/numpy.linalg.inv.html#numpy.linalg.inv" title="numpy.linalg.inv" class="sphx-glr-backref-module-numpy-linalg sphx-glr-backref-type-py-function"><span class="n">np</span><span class="o">.</span><span class="n">linalg</span><span class="o">.</span><span class="n">inv</span></a><span class="p">(</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">Torig</span></a><span class="p">),</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">rr_mm</span></a><span class="p">)</span>
-<a href="https://matplotlib.org/api/_as_gen/matplotlib.figure.Figure.html#matplotlib.figure.Figure" title="matplotlib.figure.Figure" class="sphx-glr-backref-module-matplotlib-figure sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">fig</span></a> <span class="o">=</span> <span class="n">imshow_mri</span><span class="p">(</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">data</span></a><span class="p">,</span> <a href="https://nipy.org/nibabel/reference/nibabel.freesurfer.html#nibabel.freesurfer.mghformat.MGHImage" title="nibabel.freesurfer.mghformat.MGHImage" class="sphx-glr-backref-module-nibabel-freesurfer-mghformat sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">t1</span></a><span class="p">,</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">vox</span></a><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;Scanner RAS&#39;</span><span class="p">:</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">xyz_ras</span></a><span class="p">},</span> <span class="s1">&#39;MRI slice&#39;</span><span class="p">)</span>
+<a href="https://matplotlib.org/api/figure_api.html#matplotlib.figure.Figure" title="matplotlib.figure.Figure" class="sphx-glr-backref-module-matplotlib-figure sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">fig</span></a> <span class="o">=</span> <span class="n">imshow_mri</span><span class="p">(</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">data</span></a><span class="p">,</span> <a href="https://nipy.org/nibabel/reference/nibabel.freesurfer.html#nibabel.freesurfer.mghformat.MGHImage" title="nibabel.freesurfer.mghformat.MGHImage" class="sphx-glr-backref-module-nibabel-freesurfer-mghformat sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">t1</span></a><span class="p">,</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">vox</span></a><span class="p">,</span> <span class="p">{</span><span class="s1">&#39;Scanner RAS&#39;</span><span class="p">:</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">xyz_ras</span></a><span class="p">},</span> <span class="s1">&#39;MRI slice&#39;</span><span class="p">)</span>
 <span class="c1"># Based on how imshow_mri works, the &quot;X&quot; here is the last dim of the MRI vol,</span>
 <span class="c1"># the &quot;Y&quot; is the middle dim, and the &quot;Z&quot; is the first dim, so now that our</span>
 <span class="c1"># points are in the correct coordinate frame, we need to ask matplotlib to</span>
 <span class="c1"># do a tricontour slice like:</span>
-<a href="https://matplotlib.org/api/_as_gen/matplotlib.figure.Figure.html#matplotlib.figure.Figure.axes" title="matplotlib.figure.Figure.axes" class="sphx-glr-backref-module-matplotlib-figure sphx-glr-backref-type-py-method"><span class="n">fig</span><span class="o">.</span><span class="n">axes</span></a><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">tricontour</span><span class="p">(</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">rr_vox</span></a><span class="p">[:,</span> <span class="mi">2</span><span class="p">],</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">rr_vox</span></a><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tris</span></a><span class="p">,</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">rr_vox</span></a><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span>
+<a href="https://matplotlib.org/api/figure_api.html#matplotlib.figure.Figure.axes" title="matplotlib.figure.Figure.axes" class="sphx-glr-backref-module-matplotlib-figure sphx-glr-backref-type-py-method"><span class="n">fig</span><span class="o">.</span><span class="n">axes</span></a><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">tricontour</span><span class="p">(</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">rr_vox</span></a><span class="p">[:,</span> <span class="mi">2</span><span class="p">],</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">rr_vox</span></a><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tris</span></a><span class="p">,</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">rr_vox</span></a><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span>
                        <span class="n">levels</span><span class="o">=</span><span class="p">[</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">vox</span></a><span class="p">[</span><span class="mi">0</span><span class="p">]],</span> <a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">colors</span></a><span class="o">=</span><span class="s1">&#39;r&#39;</span><span class="p">,</span> <span class="n">linewidths</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
                        <span class="n">zorder</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
 </pre></div>
 </div>
 <img alt="MRI slice, Sagittal view: i=122 (left+)" class="sphx-glr-single-img" src="../../_images/sphx_glr_plot_background_freesurfer_mne_007.png" />
 <p>This is the method used by <a class="reference internal" href="../../generated/mne.viz.plot_bem.html#mne.viz.plot_bem" title="mne.viz.plot_bem"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.viz.plot_bem()</span></code></a> to show the BEM surfaces.</p>
-<div class="section" id="cortical-alignment-spherical">
+<section id="cortical-alignment-spherical">
 <h3><a class="toc-backref" href="#id4">Cortical alignment (spherical)</a><a class="headerlink" href="#cortical-alignment-spherical" title="Permalink to this headline">¶</a></h3>
 <p>A critical function provided by FreeSurfer is spherical surface alignment
 of cortical surfaces, maximizing sulcal-gyral alignment. FreeSurfer first
@@ -573,8 +587,8 @@ mesh for subject “sample” (in cyan) has been deformed along the spherical
 surface by
 FreeSurfer. This deformation is designed to optimize the sulcal-gyral
 alignment.</p>
-</div>
-<div class="section" id="surface-decimation">
+</section>
+<section id="surface-decimation">
 <h3><a class="toc-backref" href="#id5">Surface decimation</a><a class="headerlink" href="#surface-decimation" title="Permalink to this headline">¶</a></h3>
 <p>These surfaces have a lot of vertices, and in general we only need to use
 a subset of these vertices for creating source spaces. A uniform sampling can
@@ -610,7 +624,7 @@ visualize how it subsampled the dense mesh:</p>
     Distance information added...
     [done]
     2 source spaces read
-&lt;SourceSpaces: [&lt;surface (lh), n_vertices=155407, n_used=4098&gt;, &lt;surface (rh), n_vertices=156866, n_used=4098&gt;] MRI (surface RAS) coords, subject &#39;sample&#39;, ~27.3 MB&gt;
+&lt;SourceSpaces: [&lt;surface (lh), n_vertices=155407, n_used=4098&gt;, &lt;surface (rh), n_vertices=156866, n_used=4098&gt;] MRI (surface RAS) coords, subject &#39;sample&#39;, ~27.4 MB&gt;
 </pre></div>
 </div>
 <p>We can also then look at how these two meshes compare by plotting the
@@ -634,8 +648,48 @@ original, high-density mesh as well as our decimated mesh white surfaces.</p>
 <p>Some source space vertices can be removed during forward computation.
 See <a class="reference internal" href="plot_forward.html#tut-forward"><span class="std std-ref">Head model and forward computation</span></a> for more information.</p>
 </div>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  23.407 seconds)</p>
-<p><strong>Estimated memory usage:</strong>  19 MB</p>
+</section>
+<section id="freesurfer-s-mni-affine-transformation">
+<span id="mni-affine-transformation"></span><h3><a class="toc-backref" href="#id6">FreeSurfer’s MNI affine transformation</a><a class="headerlink" href="#freesurfer-s-mni-affine-transformation" title="Permalink to this headline">¶</a></h3>
+<p>In addition to surface-based approaches, FreeSurfer also provides a simple
+affine coregistration of each subject’s data to the <code class="docutils literal notranslate"><span class="pre">fsaverage</span></code> subject.
+Let’s pick a point for <code class="docutils literal notranslate"><span class="pre">sample</span></code> and plot it on the brain:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="../../generated/mne.viz.Brain.html#mne.viz.Brain" title="mne.viz.Brain" class="sphx-glr-backref-module-mne-viz sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">brain</span></a> <span class="o">=</span> <a href="../../generated/mne.viz.Brain.html#mne.viz.Brain" title="mne.viz.Brain" class="sphx-glr-backref-module-mne-viz sphx-glr-backref-type-py-class"><span class="n">mne</span><span class="o">.</span><span class="n">viz</span><span class="o">.</span><span class="n">Brain</span></a><span class="p">(</span><span class="s1">&#39;sample&#39;</span><span class="p">,</span> <span class="s1">&#39;lh&#39;</span><span class="p">,</span> <span class="s1">&#39;white&#39;</span><span class="p">,</span> <a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">subjects_dir</span></a><span class="o">=</span><a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">subjects_dir</span></a><span class="p">,</span>
+                      <span class="n">background</span><span class="o">=</span><span class="s1">&#39;w&#39;</span><span class="p">)</span>
+<a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">xyz</span></a> <span class="o">=</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.array.html#numpy.array" title="numpy.array" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-function"><span class="n">np</span><span class="o">.</span><span class="n">array</span></a><span class="p">([[</span><span class="o">-</span><span class="mi">55</span><span class="p">,</span> <span class="o">-</span><span class="mi">10</span><span class="p">,</span> <span class="mi">35</span><span class="p">]])</span>
+<a href="../../generated/mne.viz.Brain.html#mne.viz.Brain.add_foci" title="mne.viz.Brain.add_foci" class="sphx-glr-backref-module-mne-viz sphx-glr-backref-type-py-method"><span class="n">brain</span><span class="o">.</span><span class="n">add_foci</span></a><span class="p">(</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">xyz</span></a><span class="p">,</span> <span class="n">hemi</span><span class="o">=</span><span class="s1">&#39;lh&#39;</span><span class="p">,</span> <a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">color</span></a><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">)</span>
+<a href="../../generated/mne.viz.Brain.html#mne.viz.Brain.show_view" title="mne.viz.Brain.show_view" class="sphx-glr-backref-module-mne-viz sphx-glr-backref-type-py-method"><span class="n">brain</span><span class="o">.</span><span class="n">show_view</span></a><span class="p">(</span><span class="s1">&#39;lat&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="plot background freesurfer mne" class="sphx-glr-single-img" src="../../_images/sphx_glr_plot_background_freesurfer_mne_012.png" />
+<p>We can take this point and transform it to MNI space:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">mri_mni_trans</span> <span class="o">=</span> <a href="../../generated/mne.read_talxfm.html#mne.read_talxfm" title="mne.read_talxfm" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">read_talxfm</span></a><span class="p">(</span><a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">subject</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">subjects_dir</span></a><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">mri_mni_trans</span><span class="p">)</span>
+<a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">xyz_mni</span></a> <span class="o">=</span> <span class="n">apply_trans</span><span class="p">(</span><span class="n">mri_mni_trans</span><span class="p">,</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">xyz</span></a> <span class="o">/</span> <span class="mf">1000.</span><span class="p">)</span> <span class="o">*</span> <span class="mf">1000.</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">xyz_mni</span></a><span class="p">,</span> <span class="mi">1</span><span class="p">))</span>
+</pre></div>
+</div>
+<p class="sphx-glr-script-out">Out:</p>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;Transform | MRI (surface RAS)-&gt;MNI Talairach&gt;
+[[ 1.02248488 -0.00844919 -0.03621711  0.00111715]
+ [ 0.07107091  0.91486582  0.40609791 -0.02300193]
+ [ 0.00875602 -0.43369992  1.02811882 -0.03356932]
+ [ 0.          0.          0.          1.        ]]
+[[-56.3 -21.8   6.3]]
+</pre></div>
+</div>
+<p>And because <code class="docutils literal notranslate"><span class="pre">fsaverage</span></code> is special in that it’s already in MNI space
+(its MRI-to-MNI transform is identity), it should land in the equivalent
+anatomical location:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="../../generated/mne.viz.Brain.html#mne.viz.Brain" title="mne.viz.Brain" class="sphx-glr-backref-module-mne-viz sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">brain</span></a> <span class="o">=</span> <a href="../../generated/mne.viz.Brain.html#mne.viz.Brain" title="mne.viz.Brain" class="sphx-glr-backref-module-mne-viz sphx-glr-backref-type-py-class"><span class="n">mne</span><span class="o">.</span><span class="n">viz</span><span class="o">.</span><span class="n">Brain</span></a><span class="p">(</span><span class="s1">&#39;fsaverage&#39;</span><span class="p">,</span> <span class="s1">&#39;lh&#39;</span><span class="p">,</span> <span class="s1">&#39;white&#39;</span><span class="p">,</span> <a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">subjects_dir</span></a><span class="o">=</span><a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">subjects_dir</span></a><span class="p">,</span>
+                      <span class="n">background</span><span class="o">=</span><span class="s1">&#39;w&#39;</span><span class="p">)</span>
+<a href="../../generated/mne.viz.Brain.html#mne.viz.Brain.add_foci" title="mne.viz.Brain.add_foci" class="sphx-glr-backref-module-mne-viz sphx-glr-backref-type-py-method"><span class="n">brain</span><span class="o">.</span><span class="n">add_foci</span></a><span class="p">(</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">xyz_mni</span></a><span class="p">,</span> <span class="n">hemi</span><span class="o">=</span><span class="s1">&#39;lh&#39;</span><span class="p">,</span> <a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">color</span></a><span class="o">=</span><span class="s1">&#39;k&#39;</span><span class="p">)</span>
+<a href="../../generated/mne.viz.Brain.html#mne.viz.Brain.show_view" title="mne.viz.Brain.show_view" class="sphx-glr-backref-module-mne-viz sphx-glr-backref-type-py-method"><span class="n">brain</span><span class="o">.</span><span class="n">show_view</span></a><span class="p">(</span><span class="s1">&#39;lat&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="plot background freesurfer mne" class="sphx-glr-single-img" src="../../_images/sphx_glr_plot_background_freesurfer_mne_013.png" />
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  27.800 seconds)</p>
+<p><strong>Estimated memory usage:</strong>  26 MB</p>
 <div class="sphx-glr-footer class sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-tutorials-source-modeling-plot-background-freesurfer-mne-py">
 <div class="sphx-glr-download sphx-glr-download-python docutils container">
 <p><a class="reference download internal" download="" href="../../_downloads/657a22958af9ade1e8fe011ac3046054/plot_background_freesurfer_mne.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">plot_background_freesurfer_mne.py</span></code></a></p>
@@ -645,9 +699,9 @@ See <a class="reference internal" href="plot_forward.html#tut-forward"><span cla
 </div>
 </div>
 <p class="sphx-glr-signature"><a class="reference external" href="https://sphinx-gallery.github.io">Gallery generated by Sphinx-Gallery</a></p>
-</div>
-</div>
-</div>
+</section>
+</section>
+</section>
 
 
     </div>
@@ -677,7 +731,8 @@ See <a class="reference internal" href="plot_forward.html#tut-forward"><span cla
         <li><a href="https://www.au.dk/"><img class="institution" src="../../_static/institution_logos/Aarhus.png" title="Aarhus Universitet" alt="Aarhus Universitet"/></a></li>
         <li><a href="https://www.uni-graz.at/"><img class="institution" src="../../_static/institution_logos/Graz.jpg" title="Karl-Franzens-Universität Graz" alt="Karl-Franzens-Universität Graz"/></a></li>
       </ul>
-      <p class="text-center text-muted small">&copy; Copyright 2012-2020, MNE Developers. Last updated on 2020-03-27.</p>
+      <p class="text-center text-muted small">&copy; Copyright 2012-2021, MNE Developers. Last updated <time datetime="2021-04-02T17:37:54.428702+00:00" class="localized">2021-04-02 17:37 UTC</time>
+<script type="text/javascript">$(function () { $("time.localized").each(function () { var el = $(this); el.text(new Date(el.attr("datetime")).toLocaleString([], {dateStyle: "medium", timeStyle: "long"})); }); } )</script></p>
     </div></div></div>
   </footer>
   <script src="https://mne.tools/versionwarning.js"></script>
