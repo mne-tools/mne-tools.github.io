@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>EEG processing and Event Related Potentials (ERPs) &#8212; MNE 0.23.dev0 documentation</title>
+    <title>EEG processing and Event Related Potentials (ERPs) &#8212; MNE 0.23.0 documentation</title>
     
   <link href="../../_static/css/theme.css" rel="stylesheet" />
   <link href="../../_static/css/index.c5995385ac14fb8791e8eb36b4908be2.css" rel="stylesheet" />
@@ -124,12 +124,13 @@
       <div class="navbar-end-item">
         <div class="dropdown">
     <button type="button" class="btn btn-danger btn-sm navbar-btn dropdown-toggle" id="dLabelMore" data-toggle="dropdown">
-        v0.23.dev0
+        v0.23.0
         <span class="caret"></span>
     </button>
     <div class="dropdown-menu list-group-flush py-0" aria-labelledby="dLabelMore">
-        <a class="list-group-item list-group-item-action py-1" href="https://mne-tools.github.io/dev/index.html">v0.23 (devel)</a>
-        <a class="list-group-item list-group-item-action py-1" href="https://mne-tools.github.io/stable/index.html">v0.22 (stable)</a>
+        <a class="list-group-item list-group-item-action py-1" href="https://mne-tools.github.io/dev/index.html">v0.24 (devel)</a>
+        <a class="list-group-item list-group-item-action py-1" href="https://mne-tools.github.io/stable/index.html">v0.23 (stable)</a>
+        <a class="list-group-item list-group-item-action py-1" href="https://mne-tools.github.io/0.22/index.html">v0.22</a>
         <a class="list-group-item list-group-item-action py-1" href="https://mne-tools.github.io/0.21/index.html">v0.21</a>
         <a class="list-group-item list-group-item-action py-1" href="https://mne-tools.github.io/0.20/index.html">v0.20</a>
         <a class="list-group-item list-group-item-action py-1" href="https://mne-tools.github.io/0.19/index.html">v0.19</a>
@@ -1238,8 +1239,28 @@
 <nav id="bd-toc-nav">
     <ul class="visible nav section-nav flex-column">
  <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#setting-eeg-reference">
-   Setting EEG reference
+  <a class="reference internal nav-link" href="#channel-names-and-types">
+   Channel names and types
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#channel-locations">
+   Channel locations
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#setting-the-eeg-reference">
+   Setting the EEG reference
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#filtering">
+   Filtering
+  </a>
+ </li>
+ <li class="toc-h2 nav-item toc-entry">
+  <a class="reference internal nav-link" href="#evoked-responses-epoching-and-averaging">
+   Evoked responses: epoching and averaging
   </a>
  </li>
  <li class="toc-h2 nav-item toc-entry">
@@ -1248,19 +1269,26 @@
   </a>
  </li>
  <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#evoked-response-averaged-across-channels-by-roi">
-   Evoked response averaged across channels by ROI
+  <a class="reference internal nav-link" href="#analyzing-regions-of-interest-rois-averaging-across-channels">
+   Analyzing regions of interest (ROIs): averaging across channels
   </a>
  </li>
  <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#evoked-arithmetic-e-g-differences">
-   Evoked arithmetic (e.g. differences)
+  <a class="reference internal nav-link" href="#comparing-conditions">
+   Comparing conditions
   </a>
  </li>
  <li class="toc-h2 nav-item toc-entry">
-  <a class="reference internal nav-link" href="#references">
-   References
+  <a class="reference internal nav-link" href="#grand-averages">
+   Grand averages
   </a>
+  <ul class="nav section-nav flex-column">
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#references">
+     References
+    </a>
+   </li>
+  </ul>
  </li>
 </ul>
 
@@ -1290,18 +1318,33 @@ to download the full example code</p>
 </div>
 <div class="sphx-glr-example-title section" id="eeg-processing-and-event-related-potentials-erps">
 <span id="tut-erp"></span><span id="sphx-glr-auto-tutorials-evoked-30-eeg-erp-py"></span><h1>EEG processing and Event Related Potentials (ERPs)<a class="headerlink" href="#eeg-processing-and-event-related-potentials-erps" title="Permalink to this headline">¶</a></h1>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
-
+<p>This tutorial shows how to perform standard ERP analyses in MNE-Python. Most of
+the material here is covered in other tutorials too, but for convenience the
+functions and methods most useful for ERP analyses are collected here, with
+links to other tutorials where more detailed information is given.</p>
+<p>As usual we’ll start by importing the modules we need and loading some example
+data. Instead of parsing the events from the raw data’s <a class="reference internal" href="../../glossary.html#term-stim-channel"><span class="xref std std-term">stim channel</span></a>
+(like we do in <a class="reference internal" href="../intro/20_events_from_raw.html#tut-events-vs-annotations"><span class="std std-ref">this tutorial</span></a>), we’ll load
+the events from an external events file. Finally, to speed up computations so
+our documentation server can handle them, we’ll crop the raw data from ~4.5
+minutes down to 90 seconds.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">os</span>
+<span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 <span class="kn">import</span> <span class="nn">mne</span>
-<span class="kn">from</span> <span class="nn">mne.datasets</span> <span class="kn">import</span> <span class="n">sample</span>
-<span class="kn">from</span> <span class="nn">mne.channels</span> <span class="kn">import</span> <a href="../../generated/mne.channels.combine_channels.html#mne.channels.combine_channels" title="mne.channels.combine_channels" class="sphx-glr-backref-module-mne-channels sphx-glr-backref-type-py-function"><span class="n">combine_channels</span></a>
-</pre></div>
-</div>
-<p>Setup for reading the raw data</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">data_path</span></a> <span class="o">=</span> <a href="../../generated/mne.datasets.sample.data_path.html#mne.datasets.sample.data_path" title="mne.datasets.sample.data_path" class="sphx-glr-backref-module-mne-datasets-sample sphx-glr-backref-type-py-function"><span class="n">sample</span><span class="o">.</span><span class="n">data_path</span></a><span class="p">()</span>
-<a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw_fname</span></a> <span class="o">=</span> <a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">data_path</span></a> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis_filt-0-40_raw.fif&#39;</span>
-<a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">event_fname</span></a> <span class="o">=</span> <a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">data_path</span></a> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis_filt-0-40_raw-eve.fif&#39;</span>
-<a href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw</span></a> <span class="o">=</span> <a href="../../generated/mne.io.read_raw_fif.html#mne.io.read_raw_fif" title="mne.io.read_raw_fif" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read_raw_fif</span></a><span class="p">(</span><a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw_fname</span></a><span class="p">)</span>
+
+<a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">sample_data_folder</span></a> <span class="o">=</span> <a href="../../generated/mne.datasets.sample.data_path.html#mne.datasets.sample.data_path" title="mne.datasets.sample.data_path" class="sphx-glr-backref-module-mne-datasets-sample sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">sample</span><span class="o">.</span><span class="n">data_path</span></a><span class="p">()</span>
+<a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">sample_data_raw_file</span></a> <span class="o">=</span> <a href="https://docs.python.org/3/library/os.path.html#os.path.join" title="os.path.join" class="sphx-glr-backref-module-os-path sphx-glr-backref-type-py-function"><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span></a><span class="p">(</span><a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">sample_data_folder</span></a><span class="p">,</span> <span class="s1">&#39;MEG&#39;</span><span class="p">,</span> <span class="s1">&#39;sample&#39;</span><span class="p">,</span>
+                                    <span class="s1">&#39;sample_audvis_filt-0-40_raw.fif&#39;</span><span class="p">)</span>
+<a href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw</span></a> <span class="o">=</span> <a href="../../generated/mne.io.read_raw_fif.html#mne.io.read_raw_fif" title="mne.io.read_raw_fif" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read_raw_fif</span></a><span class="p">(</span><a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">sample_data_raw_file</span></a><span class="p">,</span> <span class="n">preload</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+
+<a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">sample_data_events_file</span></a> <span class="o">=</span> <a href="https://docs.python.org/3/library/os.path.html#os.path.join" title="os.path.join" class="sphx-glr-backref-module-os-path sphx-glr-backref-type-py-function"><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span></a><span class="p">(</span><a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">sample_data_folder</span></a><span class="p">,</span> <span class="s1">&#39;MEG&#39;</span><span class="p">,</span> <span class="s1">&#39;sample&#39;</span><span class="p">,</span>
+                                       <span class="s1">&#39;sample_audvis_filt-0-40_raw-eve.fif&#39;</span><span class="p">)</span>
+<a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">events</span></a> <span class="o">=</span> <a href="../../generated/mne.read_events.html#mne.read_events" title="mne.read_events" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">read_events</span></a><span class="p">(</span><a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">sample_data_events_file</span></a><span class="p">)</span>
+
+<a href="../../generated/mne.io.Raw.html#mne.io.Raw.crop" title="mne.io.Raw.crop" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-method"><span class="n">raw</span><span class="o">.</span><span class="n">crop</span></a><span class="p">(</span><span class="n">tmax</span><span class="o">=</span><span class="mi">90</span><span class="p">)</span>  <span class="c1"># in seconds; happens in-place</span>
+<span class="c1"># discard events &gt;90 seconds (not strictly necessary: avoids some warnings)</span>
+<a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">events</span></a> <span class="o">=</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">events</span></a><span class="p">[</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">events</span></a><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">&lt;=</span> <a href="../../generated/mne.io.Raw.html#mne.io.Raw.last_samp" title="mne.io.Raw.last_samp" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-property"><span class="n">raw</span><span class="o">.</span><span class="n">last_samp</span></a><span class="p">]</span>
 </pre></div>
 </div>
 <p class="sphx-glr-script-out">Out:</p>
@@ -1315,26 +1358,29 @@ to download the full example code</p>
 Ready.
 </pre></div>
 </div>
-<p>Let’s restrict the data to the EEG channels</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="../../generated/mne.io.Raw.html#mne.io.Raw.pick_types" title="mne.io.Raw.pick_types" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-method"><span class="n">raw</span><span class="o">.</span><span class="n">pick_types</span></a><span class="p">(</span><span class="n">meg</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">eeg</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">eog</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span><span class="o">.</span><span class="n">load_data</span><span class="p">()</span>
-
-<span class="c1"># This particular dataset already has an average reference projection added</span>
-<span class="c1"># that we now want to remove it for the sake of this example.</span>
-<a href="../../generated/mne.io.Raw.html#mne.io.Raw.set_eeg_reference" title="mne.io.Raw.set_eeg_reference" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-method"><span class="n">raw</span><span class="o">.</span><span class="n">set_eeg_reference</span></a><span class="p">([])</span>
+<p>The file that we loaded has already been partially processed: 3D sensor
+locations have been saved as part of the <code class="docutils literal notranslate"><span class="pre">.fif</span></code> file, the data have been
+low-pass filtered at 40 Hz, and a common average reference is set for the
+EEG channels, stored as a projector (see <a class="reference internal" href="../preprocessing/55_setting_eeg_reference.html#section-avg-ref-proj"><span class="std std-ref">Creating the average reference as a projector</span></a> in the
+<a class="reference internal" href="../preprocessing/55_setting_eeg_reference.html#tut-set-eeg-ref"><span class="std std-ref">Setting the EEG reference</span></a> tutorial for more info about when you may want to do
+this). We’ll discuss how to do each of these below.</p>
+<p>Since this is a combined EEG+MEG dataset, let’s start by restricting the data
+to just the EEG and EOG channels. This will cause the other projectors saved
+in the file (which apply only to magnetometer channels) to be removed. By
+looking at the measurement info we can see that we now have 59 EEG channels
+and 1 EOG channel.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="../../generated/mne.io.Raw.html#mne.io.Raw.pick" title="mne.io.Raw.pick" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-method"><span class="n">raw</span><span class="o">.</span><span class="n">pick</span></a><span class="p">([</span><span class="s1">&#39;eeg&#39;</span><span class="p">,</span> <span class="s1">&#39;eog&#39;</span><span class="p">])</span><span class="o">.</span><span class="n">load_data</span><span class="p">()</span>
+<a href="../../generated/mne.Info.html#mne.Info" title="mne.Info" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw</span><span class="o">.</span><span class="n">info</span></a>
 </pre></div>
 </div>
 <p class="sphx-glr-script-out">Out:</p>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Removing projector &lt;Projection | PCA-v1, active : False, n_channels : 102&gt;
 Removing projector &lt;Projection | PCA-v2, active : False, n_channels : 102&gt;
 Removing projector &lt;Projection | PCA-v3, active : False, n_channels : 102&gt;
-Reading 0 ... 41699  =      0.000 ...   277.709 secs...
-EEG channel type selected for re-referencing
-EEG data marked as already having the desired reference.
-Removing existing average EEG reference projection.
+Reading 0 ... 13514  =      0.000 ...    90.001 secs...
 </pre></div>
 </div>
 <div class="output_subarea output_html rendered_html output_result">
-
 
 <table class="table table-hover">
     <tr>
@@ -1360,7 +1406,7 @@ Removing existing average EEG reference projection.
     </tr>
     <tr>
         <th>Bad channels</th>
-        <td></td>
+        <td>EEG 053</td>
 
     </tr>
     <tr>
@@ -1382,142 +1428,108 @@ Removing existing average EEG reference projection.
         <th>Lowpass</th>
         <td>40.00 Hz</td>
     </tr>
-
-    <tr>
-        <th>Filenames</th>
-        <td>sample_audvis_filt-0-40_raw.fif</td>
-    </tr>
-    <tr>
-        <th>Duration</th>
-        <td>00:04:37 (HH:MM:SS)</td>
-    </tr>
 </table>
 
 </div>
 <br />
-<br /><p>By looking at the measurement info you will see that we have now
-59 EEG channels and 1 EOG channel</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><a href="../../generated/mne.Info.html#mne.Info" title="mne.Info" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw</span><span class="o">.</span><span class="n">info</span></a><span class="p">)</span>
+<br /><div class="section" id="channel-names-and-types">
+<h2>Channel names and types<a class="headerlink" href="#channel-names-and-types" title="Permalink to this headline">¶</a></h2>
+<p>In practice it’s quite common to have some channels labelled as EEG that are
+actually EOG channels. <a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Raw</span></code></a> objects have a
+<a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw.set_channel_types" title="mne.io.Raw.set_channel_types"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_channel_types</span></code></a> method that you can use to change a channel
+that is labeled as <code class="docutils literal notranslate"><span class="pre">eeg</span></code> into an <code class="docutils literal notranslate"><span class="pre">eog</span></code> type. You can also rename channels
+using the <a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw.rename_channels" title="mne.io.Raw.rename_channels"><code class="xref py py-obj docutils literal notranslate"><span class="pre">rename_channels</span></code></a> method. Detailed examples of both of
+these methods can be found in the tutorial <a class="reference internal" href="../raw/10_raw_overview.html#tut-raw-class"><span class="std std-ref">The Raw data structure: continuous data</span></a>. In this data
+the channel types are all correct already, so for now we’ll just rename the
+channels to remove a space and a leading zero in the channel names, and
+convert to lowercase:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">channel_renaming_dict</span></a> <span class="o">=</span> <span class="p">{</span><span class="n">name</span><span class="p">:</span> <span class="n">name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39; 0&#39;</span><span class="p">,</span> <span class="s1">&#39;&#39;</span><span class="p">)</span><span class="o">.</span><span class="n">lower</span><span class="p">()</span>
+                         <span class="k">for</span> <span class="n">name</span> <span class="ow">in</span> <a href="../../generated/mne.io.Raw.html#mne.io.Raw.ch_names" title="mne.io.Raw.ch_names" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-property"><span class="n">raw</span><span class="o">.</span><span class="n">ch_names</span></a><span class="p">}</span>
+<a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">_</span></a> <span class="o">=</span> <a href="../../generated/mne.io.Raw.html#mne.io.Raw.rename_channels" title="mne.io.Raw.rename_channels" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-method"><span class="n">raw</span><span class="o">.</span><span class="n">rename_channels</span></a><span class="p">(</span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">channel_renaming_dict</span></a><span class="p">)</span>  <span class="c1"># happens in-place</span>
+</pre></div>
+</div>
+</div>
+<div class="section" id="channel-locations">
+<h2>Channel locations<a class="headerlink" href="#channel-locations" title="Permalink to this headline">¶</a></h2>
+<p>The tutorial <a class="reference internal" href="../intro/40_sensor_locations.html#tut-sensor-locations"><span class="std std-ref">Working with sensor locations</span></a> describes MNE-Python’s handling of
+sensor positions in great detail. To briefly summarize: MNE-Python
+distinguishes <a class="reference internal" href="../../glossary.html#term-montage"><span class="xref std std-term">montages</span></a> (which contain sensor positions in
+3D: <code class="docutils literal notranslate"><span class="pre">x</span></code>, <code class="docutils literal notranslate"><span class="pre">y</span></code>, <code class="docutils literal notranslate"><span class="pre">z</span></code>, in meters) from <a class="reference internal" href="../../glossary.html#term-layout"><span class="xref std std-term">layouts</span></a> (which
+define 2D arrangements of sensors for plotting approximate overhead diagrams
+of sensor positions). Additionally, montages may specify <em>idealized</em> sensor
+positions (based on, e.g., an idealized spherical headshape model) or they
+may contain <em>realistic</em> sensor positions obtained by digitizing the 3D
+locations of the sensors when placed on the actual subject’s head.</p>
+<p>This dataset has realistic digitized 3D sensor locations saved as part of the
+<code class="docutils literal notranslate"><span class="pre">.fif</span></code> file, so we can view the sensor locations in 2D or 3D using the
+<a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw.plot_sensors" title="mne.io.Raw.plot_sensors"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_sensors</span></code></a> method:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="../../generated/mne.io.Raw.html#mne.io.Raw.plot_sensors" title="mne.io.Raw.plot_sensors" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-method"><span class="n">raw</span><span class="o">.</span><span class="n">plot_sensors</span></a><span class="p">(</span><span class="n">show_names</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a href="https://matplotlib.org/api/figure_api.html#matplotlib.figure.Figure" title="matplotlib.figure.Figure" class="sphx-glr-backref-module-matplotlib-figure sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">fig</span></a> <span class="o">=</span> <a href="../../generated/mne.io.Raw.html#mne.io.Raw.plot_sensors" title="mne.io.Raw.plot_sensors" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-method"><span class="n">raw</span><span class="o">.</span><span class="n">plot_sensors</span></a><span class="p">(</span><span class="s1">&#39;3d&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<ul class="sphx-glr-horizontal">
+<li><img alt="30 eeg erp" class="sphx-glr-multi-img" src="../../_images/sphx_glr_30_eeg_erp_001.png" />
+</li>
+<li><img alt="30 eeg erp" class="sphx-glr-multi-img" src="../../_images/sphx_glr_30_eeg_erp_002.png" />
+</li>
+</ul>
+<p>If you’re working with a standard montage like the <a class="reference external" href="https://en.wikipedia.org/wiki/10%E2%80%9320_system_(EEG)">10-20</a>
+system, you can add sensor locations to the data like this:
+<code class="docutils literal notranslate"><span class="pre">raw.set_montage('standard_1020')</span></code>.  See <a class="reference internal" href="../intro/40_sensor_locations.html#tut-sensor-locations"><span class="std std-ref">Working with sensor locations</span></a> for
+info on what other standard montages are built-in to MNE-Python.</p>
+<p>If you have digitized realistic sensor locations, there are dedicated
+functions for loading those digitization files into MNE-Python; see
+<a class="reference internal" href="../intro/40_sensor_locations.html#reading-dig-montages"><span class="std std-ref">Reading sensor digitization files</span></a> for discussion and <a class="reference internal" href="../../overview/implementation.html#dig-formats"><span class="std std-ref">Supported formats for digitized 3D locations</span></a> for a list
+of supported formats. Once loaded, the digitized sensor locations can be
+added to the data by passing the loaded montage object to
+<code class="docutils literal notranslate"><span class="pre">raw.set_montage()</span></code>.</p>
+</div>
+<div class="section" id="setting-the-eeg-reference">
+<h2>Setting the EEG reference<a class="headerlink" href="#setting-the-eeg-reference" title="Permalink to this headline">¶</a></h2>
+<p>As mentioned above, this data already has an EEG common average reference
+added as a <a class="reference internal" href="../../glossary.html#term-projector"><span class="xref std std-term">projector</span></a>. We can view the effect of this on the raw data
+by plotting with and without the projector applied:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <a href="https://docs.python.org/3/library/functions.html#bool" title="builtins.bool" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">proj</span></a> <span class="ow">in</span> <span class="p">(</span><span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">):</span>
+    <a href="https://matplotlib.org/api/figure_api.html#matplotlib.figure.Figure" title="matplotlib.figure.Figure" class="sphx-glr-backref-module-matplotlib-figure sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">fig</span></a> <span class="o">=</span> <a href="../../generated/mne.io.Raw.html#mne.io.Raw.plot" title="mne.io.Raw.plot" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-method"><span class="n">raw</span><span class="o">.</span><span class="n">plot</span></a><span class="p">(</span><span class="n">n_channels</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <a href="https://docs.python.org/3/library/functions.html#bool" title="builtins.bool" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">proj</span></a><span class="o">=</span><a href="https://docs.python.org/3/library/functions.html#bool" title="builtins.bool" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">proj</span></a><span class="p">,</span> <span class="n">scalings</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">eeg</span><span class="o">=</span><span class="mf">50e-6</span><span class="p">))</span>
+    <a href="https://matplotlib.org/api/figure_api.html#matplotlib.figure.Figure.subplots_adjust" title="matplotlib.figure.Figure.subplots_adjust" class="sphx-glr-backref-module-matplotlib-figure sphx-glr-backref-type-py-method"><span class="n">fig</span><span class="o">.</span><span class="n">subplots_adjust</span></a><span class="p">(</span><span class="n">top</span><span class="o">=</span><span class="mf">0.9</span><span class="p">)</span>  <span class="c1"># make room for title</span>
+    <a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">ref</span></a> <span class="o">=</span> <span class="s1">&#39;Average&#39;</span> <span class="k">if</span> <a href="https://docs.python.org/3/library/functions.html#bool" title="builtins.bool" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">proj</span></a> <span class="k">else</span> <span class="s1">&#39;No&#39;</span>
+    <a href="https://matplotlib.org/api/figure_api.html#matplotlib.figure.Figure.suptitle" title="matplotlib.figure.Figure.suptitle" class="sphx-glr-backref-module-matplotlib-figure sphx-glr-backref-type-py-method"><span class="n">fig</span><span class="o">.</span><span class="n">suptitle</span></a><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;</span><span class="si">{</span><a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">ref</span></a><span class="si">}</span><span class="s1"> reference&#39;</span><span class="p">,</span> <span class="n">size</span><span class="o">=</span><span class="s1">&#39;xx-large&#39;</span><span class="p">,</span> <span class="n">weight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<ul class="sphx-glr-horizontal">
+<li><img alt="No reference" class="sphx-glr-multi-img" src="../../_images/sphx_glr_30_eeg_erp_003.png" />
+</li>
+<li><img alt="Average reference" class="sphx-glr-multi-img" src="../../_images/sphx_glr_30_eeg_erp_004.png" />
+</li>
+</ul>
+<p>The referencing scheme can be changed with the function
+<a class="reference internal" href="../../generated/mne.set_eeg_reference.html#mne.set_eeg_reference" title="mne.set_eeg_reference"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mne.set_eeg_reference</span></code></a> (which by default operates on a <em>copy</em> of the data)
+or the <a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw.set_eeg_reference" title="mne.io.Raw.set_eeg_reference"><code class="xref py py-obj docutils literal notranslate"><span class="pre">raw.set_eeg_reference()</span></code></a> method (which
+always modifies the data in-place). The tutorial <a class="reference internal" href="../preprocessing/55_setting_eeg_reference.html#tut-set-eeg-ref"><span class="std std-ref">Setting the EEG reference</span></a> shows
+several examples of this.</p>
+</div>
+<div class="section" id="filtering">
+<h2>Filtering<a class="headerlink" href="#filtering" title="Permalink to this headline">¶</a></h2>
+<p>MNE-Python has extensive support for different ways of filtering data. For a
+general discussion of filter characteristics and MNE-Python defaults, see
+<a class="reference internal" href="../preprocessing/25_background_filtering.html#disc-filtering"><span class="std std-ref">Background information on filtering</span></a>. For practical examples of how to apply filters to your
+data, see <a class="reference internal" href="../preprocessing/30_filtering_resampling.html#tut-filter-resample"><span class="std std-ref">Filtering and resampling data</span></a>. Here, we’ll apply a simple high-pass
+filter for illustration:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="../../generated/mne.io.Raw.html#mne.io.Raw.filter" title="mne.io.Raw.filter" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-method"><span class="n">raw</span><span class="o">.</span><span class="n">filter</span></a><span class="p">(</span><span class="n">l_freq</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">h_freq</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
 </pre></div>
 </div>
 <p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;Info | 14 non-empty values
- bads: []
- ch_names: EEG 001, EEG 002, EEG 003, EEG 004, EEG 005, EEG 006, EEG 007, ...
- chs: 59 EEG, 1 EOG
- custom_ref_applied: True
- dev_head_t: MEG device -&gt; head transform
- dig: 146 items (3 Cardinal, 4 HPI, 61 EEG, 78 Extra)
- file_id: 4 items (dict)
- highpass: 0.1 Hz
- hpi_meas: 1 item (list)
- hpi_results: 1 item (list)
- lowpass: 40.0 Hz
- meas_date: 2002-12-03 19:01:10 UTC
- meas_id: 4 items (dict)
- nchan: 60
- projs: []
- sfreq: 150.2 Hz
-&gt;
-</pre></div>
-</div>
-<p>In practice it’s quite common to have some EEG channels that are actually
-EOG channels. To change a channel type you can use the
-<a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw.set_channel_types" title="mne.io.Raw.set_channel_types"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.io.Raw.set_channel_types()</span></code></a> method. For example
-to treat an EOG channel as EEG you can change its type using</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="../../generated/mne.io.Raw.html#mne.io.Raw.set_channel_types" title="mne.io.Raw.set_channel_types" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-method"><span class="n">raw</span><span class="o">.</span><span class="n">set_channel_types</span></a><span class="p">(</span><span class="n">mapping</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;EOG 061&#39;</span><span class="p">:</span> <span class="s1">&#39;eeg&#39;</span><span class="p">})</span>
-<span class="nb">print</span><span class="p">(</span><a href="../../generated/mne.Info.html#mne.Info" title="mne.Info" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw</span><span class="o">.</span><span class="n">info</span></a><span class="p">)</span>
-</pre></div>
-</div>
-<p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;Info | 14 non-empty values
- bads: []
- ch_names: EEG 001, EEG 002, EEG 003, EEG 004, EEG 005, EEG 006, EEG 007, ...
- chs: 60 EEG
- custom_ref_applied: True
- dev_head_t: MEG device -&gt; head transform
- dig: 146 items (3 Cardinal, 4 HPI, 61 EEG, 78 Extra)
- file_id: 4 items (dict)
- highpass: 0.1 Hz
- hpi_meas: 1 item (list)
- hpi_results: 1 item (list)
- lowpass: 40.0 Hz
- meas_date: 2002-12-03 19:01:10 UTC
- meas_id: 4 items (dict)
- nchan: 60
- projs: []
- sfreq: 150.2 Hz
-&gt;
-</pre></div>
-</div>
-<p>And to change the name of the EOG channel</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="../../generated/mne.io.Raw.html#mne.io.Raw.rename_channels" title="mne.io.Raw.rename_channels" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-method"><span class="n">raw</span><span class="o">.</span><span class="n">rename_channels</span></a><span class="p">(</span><span class="n">mapping</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;EOG 061&#39;</span><span class="p">:</span> <span class="s1">&#39;EOG&#39;</span><span class="p">})</span>
-</pre></div>
-</div>
-<div class="output_subarea output_html rendered_html output_result">
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Filtering raw data in 1 contiguous segment
+Setting up high-pass filter at 0.1 Hz
 
-
-<table class="table table-hover">
-    <tr>
-        <th>Measurement date</th>
-        <td>December 03, 2002  19:01:10 GMT</td>
-
-    </tr>
-    <tr>
-        <th>Experimenter</th>
-<td>Unknown</td>
-    </tr>
-        <th>Participant</th>
-<td>Unknown</td>
-    </tr>
-    <tr>
-        <th>Digitized points</th>
-        <td>146 points</td>
-    </tr>
-    <tr>
-        <th>Good channels</th>
-        <td>0 magnetometer, 0 gradiometer,
-            and 60 EEG channels</td>
-    </tr>
-    <tr>
-        <th>Bad channels</th>
-        <td></td>
-
-    </tr>
-    <tr>
-        <th>EOG channels</th>
-        <td>Not available</td>
-    </tr>
-    <tr>
-        <th>ECG channels</th>
-        <td>Not available</td>
-    <tr>
-        <th>Sampling frequency</th>
-        <td>150.15 Hz</td>
-    </tr>
-    <tr>
-        <th>Highpass</th>
-        <td>0.10 Hz</td>
-    </tr>
-     <tr>
-        <th>Lowpass</th>
-        <td>40.00 Hz</td>
-    </tr>
-
-    <tr>
-        <th>Filenames</th>
-        <td>sample_audvis_filt-0-40_raw.fif</td>
-    </tr>
-    <tr>
-        <th>Duration</th>
-        <td>00:04:37 (HH:MM:SS)</td>
-    </tr>
-</table>
-
-</div>
-<br />
-<br /><p>Let’s reset the EOG channel back to EOG type.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="../../generated/mne.io.Raw.html#mne.io.Raw.set_channel_types" title="mne.io.Raw.set_channel_types" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-method"><span class="n">raw</span><span class="o">.</span><span class="n">set_channel_types</span></a><span class="p">(</span><span class="n">mapping</span><span class="o">=</span><span class="p">{</span><span class="s1">&#39;EOG&#39;</span><span class="p">:</span> <span class="s1">&#39;eog&#39;</span><span class="p">})</span>
+FIR filter parameters
+---------------------
+Designing a one-pass, zero-phase, non-causal highpass filter:
+- Windowed time-domain design (firwin) method
+- Hamming window with 0.0194 passband ripple and 53 dB stopband attenuation
+- Lower passband edge: 0.10
+- Lower transition bandwidth: 0.10 Hz (-6 dB cutoff frequency: 0.05 Hz)
+- Filter length: 4957 samples (33.013 sec)
 </pre></div>
 </div>
 <div class="output_subarea output_html rendered_html output_result">
@@ -1547,12 +1559,12 @@ to treat an EOG channel as EEG you can change its type using</p>
     </tr>
     <tr>
         <th>Bad channels</th>
-        <td></td>
+        <td>eeg53</td>
 
     </tr>
     <tr>
         <th>EOG channels</th>
-        <td>EOG</td>
+        <td>eog61</td>
     </tr>
     <tr>
         <th>ECG channels</th>
@@ -1576,177 +1588,146 @@ to treat an EOG channel as EEG you can change its type using</p>
     </tr>
     <tr>
         <th>Duration</th>
-        <td>00:04:37 (HH:MM:SS)</td>
+        <td>00:01:30 (HH:MM:SS)</td>
     </tr>
 </table>
 
 </div>
 <br />
-<br /><p>The EEG channels in the sample dataset already have locations.
-These locations are available in the ‘loc’ of each channel description.
-For the first channel we get</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><a href="../../generated/mne.Info.html#mne.Info" title="mne.Info" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw</span><span class="o">.</span><span class="n">info</span></a><span class="p">[</span><span class="s1">&#39;chs&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">][</span><span class="s1">&#39;loc&#39;</span><span class="p">])</span>
+<br /></div>
+<div class="section" id="evoked-responses-epoching-and-averaging">
+<h2>Evoked responses: epoching and averaging<a class="headerlink" href="#evoked-responses-epoching-and-averaging" title="Permalink to this headline">¶</a></h2>
+<p>The general process for extracting evoked responses from continuous data is
+to use the <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Epochs</span></code></a> constructor, and then average the resulting epochs
+to create an <a class="reference internal" href="../../generated/mne.Evoked.html#mne.Evoked" title="mne.Evoked"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Evoked</span></code></a> object. In MNE-Python, events are represented as
+a <a class="reference external" href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.21.dev0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">NumPy</span> <span class="pre">array</span></code></a> of sample numbers and integer event
+codes. The event codes are stored in the last column of the events array:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="https://numpy.org/devdocs/reference/generated/numpy.unique.html#numpy.unique" title="numpy.unique" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-function"><span class="n">np</span><span class="o">.</span><span class="n">unique</span></a><span class="p">(</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">events</span></a><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">])</span>
 </pre></div>
 </div>
-<p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>[-0.03737009  0.10568011  0.07333875  0.00235201  0.11096951 -0.03500458
-  0.          1.          0.          0.          0.          1.        ]
+<p>The <a class="reference internal" href="../raw/20_event_arrays.html#tut-event-arrays"><span class="std std-ref">Working with events</span></a> tutorial discusses event arrays in more detail.
+Integer event codes are mapped to more descriptive text using a Python
+<a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dictionary</span></code></a> usually called <code class="docutils literal notranslate"><span class="pre">event_id</span></code>. This mapping is
+determined by your experiment code (i.e., it reflects which event codes you
+chose to use to represent different experimental events or conditions). For
+the <a class="reference internal" href="../../overview/datasets_index.html#sample-dataset"><span class="std std-ref">Sample</span></a> data has the following mapping:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">event_dict</span></a> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;auditory/left&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;auditory/right&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span> <span class="s1">&#39;visual/left&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+              <span class="s1">&#39;visual/right&#39;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span> <span class="s1">&#39;face&#39;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span> <span class="s1">&#39;buttonpress&#39;</span><span class="p">:</span> <span class="mi">32</span><span class="p">}</span>
 </pre></div>
 </div>
-<p>And it’s actually possible to plot the channel locations using
-<a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw.plot_sensors" title="mne.io.Raw.plot_sensors"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.io.Raw.plot_sensors()</span></code></a>.
-In the case where your data don’t have locations you can use one of the
-standard <a class="reference internal" href="../../generated/mne.channels.DigMontage.html#mne.channels.DigMontage" title="mne.channels.DigMontage"><code class="xref py py-class docutils literal notranslate"><span class="pre">Montages</span></code></a> shipped with MNE.
-See <a class="reference internal" href="../../auto_examples/visualization/montage_sgskip.html#plot-montage"><span class="std std-ref">Plotting sensor layouts of EEG systems</span></a> and <a class="reference internal" href="../forward/35_eeg_no_mri.html#tut-eeg-fsaverage-source-modeling"><span class="std std-ref">EEG forward operator with a template MRI</span></a>.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="../../generated/mne.io.Raw.html#mne.io.Raw.plot_sensors" title="mne.io.Raw.plot_sensors" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-method"><span class="n">raw</span><span class="o">.</span><span class="n">plot_sensors</span></a><span class="p">()</span>
-<a href="../../generated/mne.io.Raw.html#mne.io.Raw.plot_sensors" title="mne.io.Raw.plot_sensors" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-method"><span class="n">raw</span><span class="o">.</span><span class="n">plot_sensors</span></a><span class="p">(</span><span class="s1">&#39;3d&#39;</span><span class="p">)</span>  <span class="c1"># in 3D</span>
+<p>Now we can extract epochs from the continuous data. An interactive plot
+allows you to click on epochs to mark them as “bad” and drop them from the
+analysis (it is not interactive on the documentation website, but will be
+when you run <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs.plot" title="mne.Epochs.plot"><code class="xref py py-obj docutils literal notranslate"><span class="pre">epochs.plot()</span></code></a> in a Python console).</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class"><span class="n">mne</span><span class="o">.</span><span class="n">Epochs</span></a><span class="p">(</span><a href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw</span></a><span class="p">,</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">events</span></a><span class="p">,</span> <span class="n">event_id</span><span class="o">=</span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">event_dict</span></a><span class="p">,</span> <span class="n">tmin</span><span class="o">=-</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">tmax</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span>
+                    <span class="n">preload</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a href="https://matplotlib.org/api/figure_api.html#matplotlib.figure.Figure" title="matplotlib.figure.Figure" class="sphx-glr-backref-module-matplotlib-figure sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">fig</span></a> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs.plot" title="mne.Epochs.plot" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">epochs</span><span class="o">.</span><span class="n">plot</span></a><span class="p">()</span>
 </pre></div>
 </div>
-<ul class="sphx-glr-horizontal">
-<li><img alt="30 eeg erp" class="sphx-glr-multi-img" src="../../_images/sphx_glr_30_eeg_erp_001.png" />
-</li>
-<li><img alt="30 eeg erp" class="sphx-glr-multi-img" src="../../_images/sphx_glr_30_eeg_erp_002.png" />
-</li>
-</ul>
-<div class="section" id="setting-eeg-reference">
-<h2>Setting EEG reference<a class="headerlink" href="#setting-eeg-reference" title="Permalink to this headline">¶</a></h2>
-<p>Let’s first inspect our Raw object with its original reference that was
-applied during the recording of the data.
-We define Epochs and compute an ERP for the left auditory condition.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">reject</span></a> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">eeg</span><span class="o">=</span><span class="mf">180e-6</span><span class="p">,</span> <span class="n">eog</span><span class="o">=</span><span class="mf">150e-6</span><span class="p">)</span>
-<a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">event_id</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmin</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmax</span></a> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;left/auditory&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">},</span> <span class="o">-</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.5</span>
-<a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">events</span></a> <span class="o">=</span> <a href="../../generated/mne.read_events.html#mne.read_events" title="mne.read_events" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">read_events</span></a><span class="p">(</span><a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">event_fname</span></a><span class="p">)</span>
-<a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs_params</span></a> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">events</span></a><span class="o">=</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">events</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">event_id</span></a><span class="o">=</span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">event_id</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmin</span></a><span class="o">=</span><a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmin</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmax</span></a><span class="o">=</span><a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmax</span></a><span class="p">,</span>
-                     <a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">reject</span></a><span class="o">=</span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">reject</span></a><span class="p">)</span>
-
-<a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="mne.EvokedArray" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">evoked_no_ref</span></a> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class"><span class="n">mne</span><span class="o">.</span><span class="n">Epochs</span></a><span class="p">(</span><a href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw</span></a><span class="p">,</span> <span class="o">**</span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs_params</span></a><span class="p">)</span><span class="o">.</span><span class="n">average</span><span class="p">()</span>
-
-<a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">title</span></a> <span class="o">=</span> <span class="s1">&#39;EEG Original reference&#39;</span>
-<a href="../../generated/mne.EvokedArray.html#mne.EvokedArray.plot" title="mne.EvokedArray.plot" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">evoked_no_ref</span><span class="o">.</span><span class="n">plot</span></a><span class="p">(</span><span class="n">titles</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">eeg</span><span class="o">=</span><a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">title</span></a><span class="p">),</span> <span class="n">time_unit</span><span class="o">=</span><span class="s1">&#39;s&#39;</span><span class="p">)</span>
-<a href="../../generated/mne.EvokedArray.html#mne.EvokedArray.plot_topomap" title="mne.EvokedArray.plot_topomap" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">evoked_no_ref</span><span class="o">.</span><span class="n">plot_topomap</span></a><span class="p">(</span><span class="n">times</span><span class="o">=</span><span class="p">[</span><span class="mf">0.1</span><span class="p">],</span> <span class="n">size</span><span class="o">=</span><span class="mf">3.</span><span class="p">,</span> <a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">title</span></a><span class="o">=</span><a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">title</span></a><span class="p">,</span> <span class="n">time_unit</span><span class="o">=</span><span class="s1">&#39;s&#39;</span><span class="p">)</span>
-</pre></div>
-</div>
-<ul class="sphx-glr-horizontal">
-<li><img alt="EEG Original reference (59 channels)" class="sphx-glr-multi-img" src="../../_images/sphx_glr_30_eeg_erp_003.png" />
-</li>
-<li><img alt="EEG Original reference, 0.100 s, µV" class="sphx-glr-multi-img" src="../../_images/sphx_glr_30_eeg_erp_004.png" />
-</li>
-</ul>
+<img alt="30 eeg erp" class="sphx-glr-single-img" src="../../_images/sphx_glr_30_eeg_erp_005.png" />
 <p class="sphx-glr-script-out">Out:</p>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Not setting metadata
 Not setting metadata
-72 matching events found
-Setting baseline interval to [-0.19979521315838786, 0.0] sec
-Applying baseline correction (mode: mean)
-0 projection items activated
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EEG : [&#39;EEG 007&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EEG : [&#39;EEG 001&#39;, &#39;EEG 002&#39;, &#39;EEG 003&#39;, &#39;EEG 007&#39;]
-    Rejecting  epoch based on EEG : [&#39;EEG 001&#39;, &#39;EEG 002&#39;, &#39;EEG 003&#39;, &#39;EEG 007&#39;]
-</pre></div>
-</div>
-<p><strong>Common average reference (car)</strong>: We add back the average reference
-projection that we removed at the beginning of this example (right after
-loading the data).</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">raw_car</span><span class="p">,</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">_</span></a> <span class="o">=</span> <a href="../../generated/mne.set_eeg_reference.html#mne.set_eeg_reference" title="mne.set_eeg_reference" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">set_eeg_reference</span></a><span class="p">(</span><a href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw</span></a><span class="p">,</span> <span class="s1">&#39;average&#39;</span><span class="p">,</span> <span class="n">projection</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="mne.EvokedArray" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">evoked_car</span></a> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class"><span class="n">mne</span><span class="o">.</span><span class="n">Epochs</span></a><span class="p">(</span><span class="n">raw_car</span><span class="p">,</span> <span class="o">**</span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs_params</span></a><span class="p">)</span><span class="o">.</span><span class="n">average</span><span class="p">()</span>
-<span class="k">del</span> <span class="n">raw_car</span>  <span class="c1"># save memory</span>
-
-<a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">title</span></a> <span class="o">=</span> <span class="s1">&#39;EEG Average reference&#39;</span>
-<a href="../../generated/mne.EvokedArray.html#mne.EvokedArray.plot" title="mne.EvokedArray.plot" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">evoked_car</span><span class="o">.</span><span class="n">plot</span></a><span class="p">(</span><span class="n">titles</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">eeg</span><span class="o">=</span><a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">title</span></a><span class="p">),</span> <span class="n">time_unit</span><span class="o">=</span><span class="s1">&#39;s&#39;</span><span class="p">)</span>
-<a href="../../generated/mne.EvokedArray.html#mne.EvokedArray.plot_topomap" title="mne.EvokedArray.plot_topomap" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">evoked_car</span><span class="o">.</span><span class="n">plot_topomap</span></a><span class="p">(</span><span class="n">times</span><span class="o">=</span><span class="p">[</span><span class="mf">0.1</span><span class="p">],</span> <span class="n">size</span><span class="o">=</span><span class="mf">3.</span><span class="p">,</span> <a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">title</span></a><span class="o">=</span><a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">title</span></a><span class="p">,</span> <span class="n">time_unit</span><span class="o">=</span><span class="s1">&#39;s&#39;</span><span class="p">)</span>
-</pre></div>
-</div>
-<ul class="sphx-glr-horizontal">
-<li><img alt="EEG Average reference (59 channels)" class="sphx-glr-multi-img" src="../../_images/sphx_glr_30_eeg_erp_005.png" />
-</li>
-<li><img alt="EEG Average reference, 0.100 s, µV" class="sphx-glr-multi-img" src="../../_images/sphx_glr_30_eeg_erp_006.png" />
-</li>
-</ul>
-<p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Adding average EEG reference projection.
-1 projection items deactivated
-Average reference projection was added, but has not been applied yet. Use the apply_proj method to apply it.
-Not setting metadata
-Not setting metadata
-72 matching events found
-Setting baseline interval to [-0.19979521315838786, 0.0] sec
+132 matching events found
+Setting baseline interval to [-0.2996928197375818, 0.0] sec
 Applying baseline correction (mode: mean)
 Created an SSP operator (subspace dimension = 1)
 1 projection items activated
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+Loading data for 132 events and 151 original time points ...
+1 bad epochs dropped
 </pre></div>
 </div>
-<p><strong>Custom reference</strong>: Use the mean of channels EEG 001 and EEG 002 as
-a reference</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">raw_custom</span><span class="p">,</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">_</span></a> <span class="o">=</span> <a href="../../generated/mne.set_eeg_reference.html#mne.set_eeg_reference" title="mne.set_eeg_reference" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">set_eeg_reference</span></a><span class="p">(</span><a href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw</span></a><span class="p">,</span> <span class="p">[</span><span class="s1">&#39;EEG 001&#39;</span><span class="p">,</span> <span class="s1">&#39;EEG 002&#39;</span><span class="p">])</span>
-<a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="mne.EvokedArray" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">evoked_custom</span></a> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class"><span class="n">mne</span><span class="o">.</span><span class="n">Epochs</span></a><span class="p">(</span><span class="n">raw_custom</span><span class="p">,</span> <span class="o">**</span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs_params</span></a><span class="p">)</span><span class="o">.</span><span class="n">average</span><span class="p">()</span>
-<span class="k">del</span> <span class="n">raw_custom</span>  <span class="c1"># save memory</span>
-
-<a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">title</span></a> <span class="o">=</span> <span class="s1">&#39;EEG Custom reference&#39;</span>
-<a href="../../generated/mne.EvokedArray.html#mne.EvokedArray.plot" title="mne.EvokedArray.plot" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">evoked_custom</span><span class="o">.</span><span class="n">plot</span></a><span class="p">(</span><span class="n">titles</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">eeg</span><span class="o">=</span><a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">title</span></a><span class="p">),</span> <span class="n">time_unit</span><span class="o">=</span><span class="s1">&#39;s&#39;</span><span class="p">)</span>
-<a href="../../generated/mne.EvokedArray.html#mne.EvokedArray.plot_topomap" title="mne.EvokedArray.plot_topomap" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">evoked_custom</span><span class="o">.</span><span class="n">plot_topomap</span></a><span class="p">(</span><span class="n">times</span><span class="o">=</span><span class="p">[</span><span class="mf">0.1</span><span class="p">],</span> <span class="n">size</span><span class="o">=</span><span class="mf">3.</span><span class="p">,</span> <a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">title</span></a><span class="o">=</span><a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">title</span></a><span class="p">,</span> <span class="n">time_unit</span><span class="o">=</span><span class="s1">&#39;s&#39;</span><span class="p">)</span>
+<p>It is also possible to automatically drop epochs, when first creating them or
+later on, by providing maximum peak-to-peak signal value thresholds (pass to
+the <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Epochs</span></code></a> constructor as the <code class="docutils literal notranslate"><span class="pre">reject</span></code> parameter; see
+<a class="reference internal" href="../preprocessing/20_rejecting_bad_data.html#tut-reject-epochs-section"><span class="std std-ref">Rejecting Epochs based on channel amplitude</span></a> for details).  You can also do this after
+the epochs are already created, using the <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs.drop_bad" title="mne.Epochs.drop_bad"><code class="xref py py-obj docutils literal notranslate"><span class="pre">drop_bad</span></code></a> method:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">reject_criteria</span></a> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">eeg</span><span class="o">=</span><span class="mf">100e-6</span><span class="p">,</span>  <span class="c1"># 100 µV</span>
+                       <span class="n">eog</span><span class="o">=</span><span class="mf">200e-6</span><span class="p">)</span>  <span class="c1"># 200 µV</span>
+<a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">_</span></a> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs.drop_bad" title="mne.Epochs.drop_bad" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">epochs</span><span class="o">.</span><span class="n">drop_bad</span></a><span class="p">(</span><span class="n">reject</span><span class="o">=</span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">reject_criteria</span></a><span class="p">)</span>
+</pre></div>
+</div>
+<p class="sphx-glr-script-out">Out:</p>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>    Rejecting  epoch based on EEG : [&#39;eeg03&#39;]
+    Rejecting  epoch based on EEG : [&#39;eeg01&#39;, &#39;eeg02&#39;, &#39;eeg03&#39;, &#39;eeg04&#39;, &#39;eeg06&#39;, &#39;eeg07&#39;]
+    Rejecting  epoch based on EEG : [&#39;eeg01&#39;, &#39;eeg02&#39;, &#39;eeg03&#39;, &#39;eeg04&#39;, &#39;eeg06&#39;, &#39;eeg07&#39;]
+    Rejecting  epoch based on EEG : [&#39;eeg01&#39;, &#39;eeg02&#39;, &#39;eeg03&#39;, &#39;eeg04&#39;, &#39;eeg06&#39;, &#39;eeg07&#39;]
+    Rejecting  epoch based on EEG : [&#39;eeg01&#39;, &#39;eeg02&#39;, &#39;eeg03&#39;, &#39;eeg07&#39;]
+    Rejecting  epoch based on EEG : [&#39;eeg01&#39;, &#39;eeg02&#39;, &#39;eeg03&#39;, &#39;eeg07&#39;]
+    Rejecting  epoch based on EEG : [&#39;eeg01&#39;]
+    Rejecting  epoch based on EEG : [&#39;eeg03&#39;, &#39;eeg07&#39;]
+    Rejecting  epoch based on EEG : [&#39;eeg03&#39;, &#39;eeg07&#39;]
+    Rejecting  epoch based on EEG : [&#39;eeg07&#39;]
+    Rejecting  epoch based on EEG : [&#39;eeg03&#39;, &#39;eeg07&#39;]
+    Rejecting  epoch based on EEG : [&#39;eeg03&#39;, &#39;eeg07&#39;]
+    Rejecting  epoch based on EEG : [&#39;eeg07&#39;]
+    Rejecting  epoch based on EEG : [&#39;eeg07&#39;]
+    Rejecting  epoch based on EEG : [&#39;eeg03&#39;]
+    Rejecting  epoch based on EEG : [&#39;eeg25&#39;]
+    Rejecting  epoch based on EEG : [&#39;eeg25&#39;]
+17 bad epochs dropped
+</pre></div>
+</div>
+<p>Next we generate a barplot of which channels contributed most to epochs
+getting rejected. If one channel is responsible for lots of epoch rejections,
+it may be worthwhile to mark that channel as “bad” in the <a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Raw</span></code></a>
+object and then re-run epoching (fewer channels w/ more good epochs may be
+preferable to keeping all channels but losing many epochs). See
+<a class="reference internal" href="../preprocessing/15_handling_bad_channels.html#tut-bad-channels"><span class="std std-ref">Handling bad channels</span></a> for more info.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="../../generated/mne.Epochs.html#mne.Epochs.plot_drop_log" title="mne.Epochs.plot_drop_log" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">epochs</span><span class="o">.</span><span class="n">plot_drop_log</span></a><span class="p">()</span>
+</pre></div>
+</div>
+<img alt="Unknown subj: 13.6% of all epochs rejected" class="sphx-glr-single-img" src="../../_images/sphx_glr_30_eeg_erp_006.png" />
+<p>Another way in which epochs can be automatically dropped is if the
+<a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Raw</span></code></a> object they’re extracted from contains <a class="reference internal" href="../../glossary.html#term-annotations"><span class="xref std std-term">annotations</span></a> that
+begin with either <code class="docutils literal notranslate"><span class="pre">bad</span></code> or <code class="docutils literal notranslate"><span class="pre">edge</span></code> (“edge” annotations are automatically
+inserted when concatenating two separate <a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Raw</span></code></a> objects together). See
+<a class="reference internal" href="../preprocessing/20_rejecting_bad_data.html#tut-reject-data-spans"><span class="std std-ref">Rejecting bad data spans</span></a> for more information about annotation-based
+epoch rejection.</p>
+<p>Now that we’ve dropped the bad epochs, let’s look at our evoked responses for
+some conditions we care about. Here the <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs.average" title="mne.Epochs.average"><code class="xref py py-obj docutils literal notranslate"><span class="pre">average</span></code></a> method will
+create and <a class="reference internal" href="../../generated/mne.Evoked.html#mne.Evoked" title="mne.Evoked"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Evoked</span></code></a> object, which we can then plot. Notice that weselect which condition we want to average using the square-bracket indexing
+(like a <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.9)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dictionary</span></code></a>); that returns a smaller epochs object
+containing just the epochs from that condition, to which we then apply the
+<a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs.average" title="mne.Epochs.average"><code class="xref py py-obj docutils literal notranslate"><span class="pre">average</span></code></a> method:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="mne.EvokedArray" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">l_aud</span></a> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a><span class="p">[</span><span class="s1">&#39;auditory/left&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">average</span><span class="p">()</span>
+<a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="mne.EvokedArray" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">l_vis</span></a> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a><span class="p">[</span><span class="s1">&#39;visual/left&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">average</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>These <a class="reference internal" href="../../generated/mne.Evoked.html#mne.Evoked" title="mne.Evoked"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Evoked</span></code></a> objects have their own interactive plotting method
+(though again, it won’t be interactive on the documentation website):
+click-dragging a span of time will generate a scalp field topography for that
+time span. Here we also demonstrate built-in color-coding the channel traces
+by location:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="https://matplotlib.org/api/figure_api.html#matplotlib.figure.Figure" title="matplotlib.figure.Figure" class="sphx-glr-backref-module-matplotlib-figure sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">fig1</span></a> <span class="o">=</span> <a href="../../generated/mne.EvokedArray.html#mne.EvokedArray.plot" title="mne.EvokedArray.plot" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">l_aud</span><span class="o">.</span><span class="n">plot</span></a><span class="p">()</span>
+<a href="https://matplotlib.org/api/figure_api.html#matplotlib.figure.Figure" title="matplotlib.figure.Figure" class="sphx-glr-backref-module-matplotlib-figure sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">fig2</span></a> <span class="o">=</span> <a href="../../generated/mne.EvokedArray.html#mne.EvokedArray.plot" title="mne.EvokedArray.plot" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">l_vis</span><span class="o">.</span><span class="n">plot</span></a><span class="p">(</span><span class="n">spatial_colors</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 </pre></div>
 </div>
 <ul class="sphx-glr-horizontal">
-<li><img alt="EEG Custom reference (59 channels)" class="sphx-glr-multi-img" src="../../_images/sphx_glr_30_eeg_erp_007.png" />
+<li><img alt="EEG (59 channels)" class="sphx-glr-multi-img" src="../../_images/sphx_glr_30_eeg_erp_007.png" />
 </li>
-<li><img alt="EEG Custom reference, 0.100 s, µV" class="sphx-glr-multi-img" src="../../_images/sphx_glr_30_eeg_erp_008.png" />
+<li><img alt="EEG (59 channels)" class="sphx-glr-multi-img" src="../../_images/sphx_glr_30_eeg_erp_008.png" />
 </li>
 </ul>
+<p>Scalp topographies can also be obtained non-interactively with the
+<a class="reference internal" href="../../generated/mne.Evoked.html#mne.Evoked.plot_topomap" title="mne.Evoked.plot_topomap"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_topomap</span></code></a> method. Here we display topomaps of the average
+field in 50 ms time windows centered at -200 ms, 100 ms, and 400 ms.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="../../generated/mne.EvokedArray.html#mne.EvokedArray.plot_topomap" title="mne.EvokedArray.plot_topomap" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">l_aud</span><span class="o">.</span><span class="n">plot_topomap</span></a><span class="p">(</span><span class="n">times</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.4</span><span class="p">],</span> <span class="n">average</span><span class="o">=</span><span class="mf">0.05</span><span class="p">)</span>
+</pre></div>
+</div>
+<img alt="-0.200 s, 0.100 s, 0.400 s, µV" class="sphx-glr-single-img" src="../../_images/sphx_glr_30_eeg_erp_009.png" />
+<p>Considerable customization of these plots is possible, see the docstring of
+<a class="reference internal" href="../../generated/mne.Evoked.html#mne.Evoked.plot_topomap" title="mne.Evoked.plot_topomap"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_topomap</span></code></a> for details.</p>
+<p>There is also a built-in method for combining “butterfly” plots of the
+signals with scalp topographies, called <a class="reference internal" href="../../generated/mne.Evoked.html#mne.Evoked.plot_joint" title="mne.Evoked.plot_joint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_joint</span></code></a>. Like
+<a class="reference internal" href="../../generated/mne.Evoked.html#mne.Evoked.plot_topomap" title="mne.Evoked.plot_topomap"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_topomap</span></code></a> you can specify times for the scalp topographies
+or you can let the method choose times automatically, as is done here:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="../../generated/mne.EvokedArray.html#mne.EvokedArray.plot_joint" title="mne.EvokedArray.plot_joint" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">l_aud</span><span class="o">.</span><span class="n">plot_joint</span></a><span class="p">()</span>
+</pre></div>
+</div>
+<img alt="0.093 s, 0.206 s, 0.306 s" class="sphx-glr-single-img" src="../../_images/sphx_glr_30_eeg_erp_010.png" />
 <p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>EEG channel type selected for re-referencing
-Applying a custom EEG reference.
-Removing existing average EEG reference projection.
-Not setting metadata
-Not setting metadata
-72 matching events found
-Setting baseline interval to [-0.19979521315838786, 0.0] sec
-Applying baseline correction (mode: mean)
-0 projection items activated
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Projections have already been applied. Setting proj attribute to True.
 </pre></div>
 </div>
 </div>
@@ -1762,392 +1743,155 @@ investigation. Mathematically, the GFP is the population standard
 deviation across all sensors, calculated separately for every time point.</p>
 <p>You can plot the GFP using <a class="reference internal" href="../../generated/mne.Evoked.html#mne.Evoked.plot" title="mne.Evoked.plot"><code class="xref py py-obj docutils literal notranslate"><span class="pre">evoked.plot(gfp=True)</span></code></a>. The GFP
 trace will be black if <code class="docutils literal notranslate"><span class="pre">spatial_colors=True</span></code> and green otherwise. The EEG
-reference will not affect the GFP:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="mne.EvokedArray" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">evk</span></a> <span class="ow">in</span> <span class="p">(</span><a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="mne.EvokedArray" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">evoked_car</span></a><span class="p">,</span> <a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="mne.EvokedArray" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">evoked_no_ref</span></a><span class="p">):</span>
-    <a href="../../generated/mne.EvokedArray.html#mne.EvokedArray.plot" title="mne.EvokedArray.plot" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">evk</span><span class="o">.</span><span class="n">plot</span></a><span class="p">(</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">gfp</span></a><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">spatial_colors</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ylim</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">eeg</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">10</span><span class="p">,</span> <span class="mi">10</span><span class="p">]))</span>
+reference does not affect the GFP:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="mne.EvokedArray" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">evk</span></a> <span class="ow">in</span> <span class="p">(</span><a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="mne.EvokedArray" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">l_aud</span></a><span class="p">,</span> <a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="mne.EvokedArray" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">l_vis</span></a><span class="p">):</span>
+    <a href="../../generated/mne.EvokedArray.html#mne.EvokedArray.plot" title="mne.EvokedArray.plot" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">evk</span><span class="o">.</span><span class="n">plot</span></a><span class="p">(</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">gfp</span></a><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">spatial_colors</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">ylim</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">eeg</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">12</span><span class="p">,</span> <span class="mi">12</span><span class="p">]))</span>
 </pre></div>
 </div>
 <ul class="sphx-glr-horizontal">
-<li><img alt="EEG (59 channels)" class="sphx-glr-multi-img" src="../../_images/sphx_glr_30_eeg_erp_009.png" />
+<li><img alt="EEG (59 channels)" class="sphx-glr-multi-img" src="../../_images/sphx_glr_30_eeg_erp_011.png" />
 </li>
-<li><img alt="EEG (59 channels)" class="sphx-glr-multi-img" src="../../_images/sphx_glr_30_eeg_erp_010.png" />
+<li><img alt="EEG (59 channels)" class="sphx-glr-multi-img" src="../../_images/sphx_glr_30_eeg_erp_012.png" />
 </li>
 </ul>
 <p>To plot the GFP by itself you can pass <code class="docutils literal notranslate"><span class="pre">gfp='only'</span></code> (this makes it easier
 to read off the GFP data values, because the scale is aligned):</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="../../generated/mne.EvokedArray.html#mne.EvokedArray.plot" title="mne.EvokedArray.plot" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">evoked_car</span><span class="o">.</span><span class="n">plot</span></a><span class="p">(</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">gfp</span></a><span class="o">=</span><span class="s1">&#39;only&#39;</span><span class="p">)</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="../../generated/mne.EvokedArray.html#mne.EvokedArray.plot" title="mne.EvokedArray.plot" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">l_aud</span><span class="o">.</span><span class="n">plot</span></a><span class="p">(</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">gfp</span></a><span class="o">=</span><span class="s1">&#39;only&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<img alt="EEG (59 channels)" class="sphx-glr-single-img" src="../../_images/sphx_glr_30_eeg_erp_011.png" />
+<img alt="EEG (59 channels)" class="sphx-glr-single-img" src="../../_images/sphx_glr_30_eeg_erp_013.png" />
 <p>As stated above, the GFP is the population standard deviation of the signal
-across channels. To compute it manually, we can leverage
-the fact that <a class="reference internal" href="../../generated/mne.Evoked.html#mne.Evoked.data" title="mne.Evoked.data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">evoked.data</span></code></a> is a NumPy array:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">gfp</span></a> <span class="o">=</span> <a href="../../generated/mne.EvokedArray.html#mne.EvokedArray.data" title="mne.EvokedArray.data" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-property"><span class="n">evoked_car</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">std</span></a><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ddof</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+across channels. To compute it manually, we can leverage the fact that
+<a class="reference internal" href="../../generated/mne.Evoked.html#mne.Evoked.data" title="mne.Evoked.data"><code class="xref py py-obj docutils literal notranslate"><span class="pre">evoked.data</span></code></a> is a <a class="reference external" href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.21.dev0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">NumPy</span> <span class="pre">array</span></code></a>,
+and verify by plotting it using matplotlib commands:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">gfp</span></a> <span class="o">=</span> <a href="../../generated/mne.EvokedArray.html#mne.EvokedArray.data" title="mne.EvokedArray.data" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-property"><span class="n">l_aud</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">std</span></a><span class="p">(</span><span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">ddof</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
-<span class="c1"># Reproducing the plot style from above:</span>
+<span class="c1"># Reproducing the MNE-Python plot style seen above</span>
 <a href="https://matplotlib.org/api/figure_api.html#matplotlib.figure.Figure" title="matplotlib.figure.Figure" class="sphx-glr-backref-module-matplotlib-figure sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">fig</span></a><span class="p">,</span> <span class="n">ax</span> <span class="o">=</span> <a href="https://matplotlib.org/api/_as_gen/matplotlib.pyplot.subplots.html#matplotlib.pyplot.subplots" title="matplotlib.pyplot.subplots" class="sphx-glr-backref-module-matplotlib-pyplot sphx-glr-backref-type-py-function"><span class="n">plt</span><span class="o">.</span><span class="n">subplots</span></a><span class="p">()</span>
-<a href="https://matplotlib.org/api/_as_gen/matplotlib.axes.Axes.plot.html#matplotlib.axes.Axes.plot" title="matplotlib.axes.Axes.plot" class="sphx-glr-backref-module-matplotlib-axes sphx-glr-backref-type-py-method"><span class="n">ax</span><span class="o">.</span><span class="n">plot</span></a><span class="p">(</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">evoked_car</span><span class="o">.</span><span class="n">times</span></a><span class="p">,</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">gfp</span></a> <span class="o">*</span> <span class="mf">1e6</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;lime&#39;</span><span class="p">)</span>
-<a href="https://matplotlib.org/api/_as_gen/matplotlib.axes.Axes.fill_between.html#matplotlib.axes.Axes.fill_between" title="matplotlib.axes.Axes.fill_between" class="sphx-glr-backref-module-matplotlib-axes sphx-glr-backref-type-py-method"><span class="n">ax</span><span class="o">.</span><span class="n">fill_between</span></a><span class="p">(</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">evoked_car</span><span class="o">.</span><span class="n">times</span></a><span class="p">,</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">gfp</span></a> <span class="o">*</span> <span class="mf">1e6</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;lime&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
-<a href="https://matplotlib.org/api/_as_gen/matplotlib.artist.Artist.set.html#matplotlib.artist.Artist.set" title="matplotlib.artist.Artist.set" class="sphx-glr-backref-module-matplotlib-artist sphx-glr-backref-type-py-method"><span class="n">ax</span><span class="o">.</span><span class="n">set</span></a><span class="p">(</span><span class="n">xlabel</span><span class="o">=</span><span class="s1">&#39;Time (s)&#39;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s1">&#39;GFP (µV)&#39;</span><span class="p">,</span> <a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">title</span></a><span class="o">=</span><span class="s1">&#39;EEG&#39;</span><span class="p">)</span>
+<a href="https://matplotlib.org/api/_as_gen/matplotlib.axes.Axes.plot.html#matplotlib.axes.Axes.plot" title="matplotlib.axes.Axes.plot" class="sphx-glr-backref-module-matplotlib-axes sphx-glr-backref-type-py-method"><span class="n">ax</span><span class="o">.</span><span class="n">plot</span></a><span class="p">(</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">l_aud</span><span class="o">.</span><span class="n">times</span></a><span class="p">,</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">gfp</span></a> <span class="o">*</span> <span class="mf">1e6</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;lime&#39;</span><span class="p">)</span>
+<a href="https://matplotlib.org/api/_as_gen/matplotlib.axes.Axes.fill_between.html#matplotlib.axes.Axes.fill_between" title="matplotlib.axes.Axes.fill_between" class="sphx-glr-backref-module-matplotlib-axes sphx-glr-backref-type-py-method"><span class="n">ax</span><span class="o">.</span><span class="n">fill_between</span></a><span class="p">(</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">l_aud</span><span class="o">.</span><span class="n">times</span></a><span class="p">,</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">gfp</span></a> <span class="o">*</span> <span class="mf">1e6</span><span class="p">,</span> <span class="n">color</span><span class="o">=</span><span class="s1">&#39;lime&#39;</span><span class="p">,</span> <span class="n">alpha</span><span class="o">=</span><span class="mf">0.2</span><span class="p">)</span>
+<a href="https://matplotlib.org/api/_as_gen/matplotlib.artist.Artist.set.html#matplotlib.artist.Artist.set" title="matplotlib.artist.Artist.set" class="sphx-glr-backref-module-matplotlib-artist sphx-glr-backref-type-py-method"><span class="n">ax</span><span class="o">.</span><span class="n">set</span></a><span class="p">(</span><span class="n">xlabel</span><span class="o">=</span><span class="s1">&#39;Time (s)&#39;</span><span class="p">,</span> <span class="n">ylabel</span><span class="o">=</span><span class="s1">&#39;GFP (µV)&#39;</span><span class="p">,</span> <span class="n">title</span><span class="o">=</span><span class="s1">&#39;EEG&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
-<img alt="EEG" class="sphx-glr-single-img" src="../../_images/sphx_glr_30_eeg_erp_012.png" />
+<img alt="EEG" class="sphx-glr-single-img" src="../../_images/sphx_glr_30_eeg_erp_014.png" />
 </div>
-<div class="section" id="evoked-response-averaged-across-channels-by-roi">
-<h2>Evoked response averaged across channels by ROI<a class="headerlink" href="#evoked-response-averaged-across-channels-by-roi" title="Permalink to this headline">¶</a></h2>
-<p>It is possible to average channels by region of interest (for example left
-and right) when studying the response to this left auditory stimulus. Here we
-use our Raw object on which the average reference projection has been added
-back.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="mne.EvokedArray" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">evoked</span></a> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class"><span class="n">mne</span><span class="o">.</span><span class="n">Epochs</span></a><span class="p">(</span><a href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw</span></a><span class="p">,</span> <span class="o">**</span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs_params</span></a><span class="p">)</span><span class="o">.</span><span class="n">average</span><span class="p">()</span>
+<div class="section" id="analyzing-regions-of-interest-rois-averaging-across-channels">
+<h2>Analyzing regions of interest (ROIs): averaging across channels<a class="headerlink" href="#analyzing-regions-of-interest-rois-averaging-across-channels" title="Permalink to this headline">¶</a></h2>
+<p>Since our sample data is responses to left and right auditory and visual
+stimuli, we may want to compare left versus right ROIs. To average across
+channels in a region of interest, we first find the channel indices we want.
+Looking back at the 2D sensor plot above, we might choose the following for
+left and right ROIs:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">left</span></a> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;eeg17&#39;</span><span class="p">,</span> <span class="s1">&#39;eeg18&#39;</span><span class="p">,</span> <span class="s1">&#39;eeg25&#39;</span><span class="p">,</span> <span class="s1">&#39;eeg26&#39;</span><span class="p">]</span>
+<a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">right</span></a> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;eeg23&#39;</span><span class="p">,</span> <span class="s1">&#39;eeg24&#39;</span><span class="p">,</span> <span class="s1">&#39;eeg34&#39;</span><span class="p">,</span> <span class="s1">&#39;eeg35&#39;</span><span class="p">]</span>
 
-<a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">left_idx</span></a> <span class="o">=</span> <a href="../../generated/mne.pick_channels.html#mne.pick_channels" title="mne.pick_channels" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">pick_channels</span></a><span class="p">(</span><a href="../../generated/mne.Info.html#mne.Info" title="mne.Info" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">evoked</span><span class="o">.</span><span class="n">info</span></a><span class="p">[</span><span class="s1">&#39;ch_names&#39;</span><span class="p">],</span>
-                             <span class="p">[</span><span class="s1">&#39;EEG 017&#39;</span><span class="p">,</span> <span class="s1">&#39;EEG 018&#39;</span><span class="p">,</span> <span class="s1">&#39;EEG 025&#39;</span><span class="p">,</span> <span class="s1">&#39;EEG 026&#39;</span><span class="p">])</span>
-<a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">right_idx</span></a> <span class="o">=</span> <a href="../../generated/mne.pick_channels.html#mne.pick_channels" title="mne.pick_channels" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">pick_channels</span></a><span class="p">(</span><a href="../../generated/mne.Info.html#mne.Info" title="mne.Info" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">evoked</span><span class="o">.</span><span class="n">info</span></a><span class="p">[</span><span class="s1">&#39;ch_names&#39;</span><span class="p">],</span>
-                              <span class="p">[</span><span class="s1">&#39;EEG 023&#39;</span><span class="p">,</span> <span class="s1">&#39;EEG 024&#39;</span><span class="p">,</span> <span class="s1">&#39;EEG 034&#39;</span><span class="p">,</span> <span class="s1">&#39;EEG 035&#39;</span><span class="p">])</span>
-<a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">roi_dict</span></a> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">Left</span><span class="o">=</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">left_idx</span></a><span class="p">,</span> <span class="n">Right</span><span class="o">=</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">right_idx</span></a><span class="p">)</span>
-<a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="mne.EvokedArray" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">evoked_combined</span></a> <span class="o">=</span> <a href="../../generated/mne.channels.combine_channels.html#mne.channels.combine_channels" title="mne.channels.combine_channels" class="sphx-glr-backref-module-mne-channels sphx-glr-backref-type-py-function"><span class="n">combine_channels</span></a><span class="p">(</span><a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="mne.EvokedArray" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">evoked</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">roi_dict</span></a><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;mean&#39;</span><span class="p">)</span>
-
-<a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">title</span></a> <span class="o">=</span> <span class="s1">&#39;Evoked response averaged by side&#39;</span>
-<a href="../../generated/mne.EvokedArray.html#mne.EvokedArray.plot" title="mne.EvokedArray.plot" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">evoked_combined</span><span class="o">.</span><span class="n">plot</span></a><span class="p">(</span><span class="n">titles</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">eeg</span><span class="o">=</span><a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">title</span></a><span class="p">),</span> <span class="n">time_unit</span><span class="o">=</span><span class="s1">&#39;s&#39;</span><span class="p">)</span>
+<a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">left_ix</span></a> <span class="o">=</span> <a href="../../generated/mne.pick_channels.html#mne.pick_channels" title="mne.pick_channels" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">pick_channels</span></a><span class="p">(</span><a href="../../generated/mne.Info.html#mne.Info" title="mne.Info" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">l_aud</span><span class="o">.</span><span class="n">info</span></a><span class="p">[</span><span class="s1">&#39;ch_names&#39;</span><span class="p">],</span> <span class="n">include</span><span class="o">=</span><a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">left</span></a><span class="p">)</span>
+<a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">right_ix</span></a> <span class="o">=</span> <a href="../../generated/mne.pick_channels.html#mne.pick_channels" title="mne.pick_channels" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">pick_channels</span></a><span class="p">(</span><a href="../../generated/mne.Info.html#mne.Info" title="mne.Info" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">l_aud</span><span class="o">.</span><span class="n">info</span></a><span class="p">[</span><span class="s1">&#39;ch_names&#39;</span><span class="p">],</span> <span class="n">include</span><span class="o">=</span><a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">right</span></a><span class="p">)</span>
 </pre></div>
 </div>
-<img alt="Evoked response averaged by side (2 channels)" class="sphx-glr-single-img" src="../../_images/sphx_glr_30_eeg_erp_013.png" />
+<p>Now we can create a new Evoked with 2 virtual channels (one for each ROI):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">roi_dict</span></a> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">left_ROI</span><span class="o">=</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">left_ix</span></a><span class="p">,</span> <span class="n">right_ROI</span><span class="o">=</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">right_ix</span></a><span class="p">)</span>
+<a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="mne.EvokedArray" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">roi_evoked</span></a> <span class="o">=</span> <a href="../../generated/mne.channels.combine_channels.html#mne.channels.combine_channels" title="mne.channels.combine_channels" class="sphx-glr-backref-module-mne-channels sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">channels</span><span class="o">.</span><span class="n">combine_channels</span></a><span class="p">(</span><a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="mne.EvokedArray" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">l_aud</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">roi_dict</span></a><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;mean&#39;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><a href="../../generated/mne.Info.html#mne.Info" title="mne.Info" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">roi_evoked</span><span class="o">.</span><span class="n">info</span></a><span class="p">[</span><span class="s1">&#39;ch_names&#39;</span><span class="p">])</span>
+<a href="../../generated/mne.EvokedArray.html#mne.EvokedArray.plot" title="mne.EvokedArray.plot" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">roi_evoked</span><span class="o">.</span><span class="n">plot</span></a><span class="p">()</span>
+</pre></div>
+</div>
+<img alt="EEG (2 channels)" class="sphx-glr-single-img" src="../../_images/sphx_glr_30_eeg_erp_015.png" />
 <p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Not setting metadata
-Not setting metadata
-72 matching events found
-Setting baseline interval to [-0.19979521315838786, 0.0] sec
-Applying baseline correction (mode: mean)
-Created an SSP operator (subspace dimension = 1)
-1 projection items activated
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>[&#39;left_ROI&#39;, &#39;right_ROI&#39;]
 </pre></div>
 </div>
 </div>
-<div class="section" id="evoked-arithmetic-e-g-differences">
-<h2>Evoked arithmetic (e.g. differences)<a class="headerlink" href="#evoked-arithmetic-e-g-differences" title="Permalink to this headline">¶</a></h2>
-<p>Trial subsets from Epochs can be selected using ‘tags’ separated by ‘/’.
-Evoked objects support basic arithmetic.
-First, we create an Epochs object containing 4 conditions.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">event_id</span></a> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;left/auditory&#39;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s1">&#39;right/auditory&#39;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
-            <span class="s1">&#39;left/visual&#39;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s1">&#39;right/visual&#39;</span><span class="p">:</span> <span class="mi">4</span><span class="p">}</span>
-<a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs_params</span></a> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">events</span></a><span class="o">=</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">events</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">event_id</span></a><span class="o">=</span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">event_id</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmin</span></a><span class="o">=</span><a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmin</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmax</span></a><span class="o">=</span><a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmax</span></a><span class="p">,</span>
-                     <a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">reject</span></a><span class="o">=</span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">reject</span></a><span class="p">)</span>
-<a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class"><span class="n">mne</span><span class="o">.</span><span class="n">Epochs</span></a><span class="p">(</span><a href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw</span></a><span class="p">,</span> <span class="o">**</span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs_params</span></a><span class="p">)</span>
-
-<span class="nb">print</span><span class="p">(</span><a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a><span class="p">)</span>
+<div class="section" id="comparing-conditions">
+<h2>Comparing conditions<a class="headerlink" href="#comparing-conditions" title="Permalink to this headline">¶</a></h2>
+<p>If we wanted to compare our auditory and visual stimuli, a useful function is
+<a class="reference internal" href="../../generated/mne.viz.plot_compare_evokeds.html#mne.viz.plot_compare_evokeds" title="mne.viz.plot_compare_evokeds"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mne.viz.plot_compare_evokeds</span></code></a>. By default this will combine all channels in
+each evoked object using global field power (or RMS for MEG channels); here
+instead we specify to combine by averaging, and restrict it to a subset of
+channels by passing <code class="docutils literal notranslate"><span class="pre">picks</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">evokeds</span></a> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">auditory</span><span class="o">=</span><a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="mne.EvokedArray" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">l_aud</span></a><span class="p">,</span> <span class="n">visual</span><span class="o">=</span><a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="mne.EvokedArray" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">l_vis</span></a><span class="p">)</span>
+<a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">picks</span></a> <span class="o">=</span> <span class="p">[</span><span class="sa">f</span><span class="s1">&#39;eeg</span><span class="si">{</span><span class="n">n</span><span class="si">}</span><span class="s1">&#39;</span> <span class="k">for</span> <span class="n">n</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">15</span><span class="p">)]</span>
+<a href="../../generated/mne.viz.plot_compare_evokeds.html#mne.viz.plot_compare_evokeds" title="mne.viz.plot_compare_evokeds" class="sphx-glr-backref-module-mne-viz sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">viz</span><span class="o">.</span><span class="n">plot_compare_evokeds</span></a><span class="p">(</span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">evokeds</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">picks</span></a><span class="o">=</span><a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">picks</span></a><span class="p">,</span> <span class="n">combine</span><span class="o">=</span><span class="s1">&#39;mean&#39;</span><span class="p">)</span>
 </pre></div>
 </div>
+<img alt="eeg10, eeg11, eeg12, eeg13, eeg14 (mean)" class="sphx-glr-single-img" src="../../_images/sphx_glr_30_eeg_erp_016.png" />
 <p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Not setting metadata
-Not setting metadata
-288 matching events found
-Setting baseline interval to [-0.19979521315838786, 0.0] sec
-Applying baseline correction (mode: mean)
-Created an SSP operator (subspace dimension = 1)
-1 projection items activated
-&lt;Epochs |  288 events (good &amp; bad), -0.199795 - 0.499488 sec, baseline -0.199795 – 0 sec, ~2.9 MB, data not loaded,
- &#39;left/auditory&#39;: 72
- &#39;left/visual&#39;: 73
- &#39;right/auditory&#39;: 73
- &#39;right/visual&#39;: 70&gt;
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>combining channels using &quot;mean&quot;
+combining channels using &quot;mean&quot;
 </pre></div>
 </div>
-<p>Next, we create averages of stimulation-left vs stimulation-right trials.
-We can use negative weights in <a class="reference internal" href="../../generated/mne.combine_evoked.html#mne.combine_evoked" title="mne.combine_evoked"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mne.combine_evoked</span></code></a> to construct difference
-ERPs.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="mne.EvokedArray" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">left</span></a><span class="p">,</span> <a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="mne.EvokedArray" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">right</span></a> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a><span class="p">[</span><span class="s2">&quot;left&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">average</span><span class="p">(),</span> <a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a><span class="p">[</span><span class="s2">&quot;right&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">average</span><span class="p">()</span>
-
-<span class="c1"># create and plot difference ERP</span>
-<a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">joint_kwargs</span></a> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">ts_args</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">time_unit</span><span class="o">=</span><span class="s1">&#39;s&#39;</span><span class="p">),</span>
-                    <span class="n">topomap_args</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">time_unit</span><span class="o">=</span><span class="s1">&#39;s&#39;</span><span class="p">))</span>
-<a href="../../generated/mne.combine_evoked.html#mne.combine_evoked" title="mne.combine_evoked" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">combine_evoked</span></a><span class="p">([</span><a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="mne.EvokedArray" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">left</span></a><span class="p">,</span> <a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="mne.EvokedArray" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">right</span></a><span class="p">],</span> <span class="n">weights</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">])</span><span class="o">.</span><span class="n">plot_joint</span><span class="p">(</span><span class="o">**</span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">joint_kwargs</span></a><span class="p">)</span>
+<p>We can also easily get confidence intervals by treating each epoch as a
+separate observation using the <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs.iter_evoked" title="mne.Epochs.iter_evoked"><code class="xref py py-obj docutils literal notranslate"><span class="pre">iter_evoked</span></code></a> method. A confidence
+interval across subjects could also be obtained, by passing a list of
+<a class="reference internal" href="../../generated/mne.Evoked.html#mne.Evoked" title="mne.Evoked"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Evoked</span></code></a> objects (one per subject) to the
+<a class="reference internal" href="../../generated/mne.viz.plot_compare_evokeds.html#mne.viz.plot_compare_evokeds" title="mne.viz.plot_compare_evokeds"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_compare_evokeds</span></code></a> function.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">evokeds</span></a> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">auditory</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a><span class="p">[</span><span class="s1">&#39;auditory/left&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">iter_evoked</span><span class="p">()),</span>
+               <span class="n">visual</span><span class="o">=</span><span class="nb">list</span><span class="p">(</span><a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a><span class="p">[</span><span class="s1">&#39;visual/left&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">iter_evoked</span><span class="p">()))</span>
+<a href="../../generated/mne.viz.plot_compare_evokeds.html#mne.viz.plot_compare_evokeds" title="mne.viz.plot_compare_evokeds" class="sphx-glr-backref-module-mne-viz sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">viz</span><span class="o">.</span><span class="n">plot_compare_evokeds</span></a><span class="p">(</span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">evokeds</span></a><span class="p">,</span> <span class="n">combine</span><span class="o">=</span><span class="s1">&#39;mean&#39;</span><span class="p">,</span> <a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">picks</span></a><span class="o">=</span><a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">picks</span></a><span class="p">)</span>
 </pre></div>
 </div>
-<img alt="0.093 s, 0.160 s, 0.213 s" class="sphx-glr-single-img" src="../../_images/sphx_glr_30_eeg_erp_014.png" />
+<img alt="eeg10, eeg11, eeg12, eeg13, eeg14 (mean)" class="sphx-glr-single-img" src="../../_images/sphx_glr_30_eeg_erp_017.png" />
 <p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EEG : [&#39;EEG 001&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-Projections have already been applied. Setting proj attribute to True.
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>combining channels using &quot;mean&quot;
+combining channels using &quot;mean&quot;
 </pre></div>
 </div>
-<p>This is an equal-weighting difference. If you have imbalanced trial numbers,
-you could also consider either equalizing the number of events per
-condition (using
-<a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs.equalize_event_counts" title="mne.Epochs.equalize_event_counts"><code class="xref py py-obj docutils literal notranslate"><span class="pre">epochs.equalize_event_counts</span></code></a>) or
-use weights proportional to the number of trials averaged together to create
-each <a class="reference internal" href="../../generated/mne.Evoked.html#mne.Evoked" title="mne.Evoked"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Evoked</span></code></a> (by passing <code class="docutils literal notranslate"><span class="pre">weights='nave'</span></code> to <a class="reference internal" href="../../generated/mne.combine_evoked.html#mne.combine_evoked" title="mne.combine_evoked"><code class="xref py py-obj docutils literal notranslate"><span class="pre">combine_evoked</span></code></a>).
-As an example, first, we create individual ERPs for each condition.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="mne.EvokedArray" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">aud_l</span></a> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a><span class="p">[</span><span class="s2">&quot;auditory/left&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">average</span><span class="p">()</span>
-<a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="mne.EvokedArray" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">aud_r</span></a> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a><span class="p">[</span><span class="s2">&quot;auditory/right&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">average</span><span class="p">()</span>
-<a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="mne.EvokedArray" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">vis_l</span></a> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a><span class="p">[</span><span class="s2">&quot;visual/left&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">average</span><span class="p">()</span>
-<a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="mne.EvokedArray" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">vis_r</span></a> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a><span class="p">[</span><span class="s2">&quot;visual/right&quot;</span><span class="p">]</span><span class="o">.</span><span class="n">average</span><span class="p">()</span>
-
-<a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">all_evokeds</span></a> <span class="o">=</span> <span class="p">[</span><a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="mne.EvokedArray" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">aud_l</span></a><span class="p">,</span> <a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="mne.EvokedArray" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">aud_r</span></a><span class="p">,</span> <a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="mne.EvokedArray" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">vis_l</span></a><span class="p">,</span> <a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="mne.EvokedArray" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">vis_r</span></a><span class="p">]</span>
-<span class="nb">print</span><span class="p">(</span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">all_evokeds</span></a><span class="p">)</span>
+<p>We can also compare conditions by subtracting one <a class="reference internal" href="../../generated/mne.Evoked.html#mne.Evoked" title="mne.Evoked"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Evoked</span></code></a> object from
+another using the <a class="reference internal" href="../../generated/mne.combine_evoked.html#mne.combine_evoked" title="mne.combine_evoked"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mne.combine_evoked</span></code></a> function (this function also allows
+pooling of epochs without subtraction).</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="mne.EvokedArray" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">aud_minus_vis</span></a> <span class="o">=</span> <a href="../../generated/mne.combine_evoked.html#mne.combine_evoked" title="mne.combine_evoked" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">combine_evoked</span></a><span class="p">([</span><a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="mne.EvokedArray" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">l_aud</span></a><span class="p">,</span> <a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="mne.EvokedArray" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">l_vis</span></a><span class="p">],</span> <span class="n">weights</span><span class="o">=</span><span class="p">[</span><span class="mi">1</span><span class="p">,</span> <span class="o">-</span><span class="mi">1</span><span class="p">])</span>
+<a href="../../generated/mne.EvokedArray.html#mne.EvokedArray.plot_joint" title="mne.EvokedArray.plot_joint" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">aud_minus_vis</span><span class="o">.</span><span class="n">plot_joint</span></a><span class="p">()</span>
+</pre></div>
+</div>
+<img alt="0.127 s, 0.206 s, 0.273 s" class="sphx-glr-single-img" src="../../_images/sphx_glr_30_eeg_erp_018.png" />
+<p class="sphx-glr-script-out">Out:</p>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Projections have already been applied. Setting proj attribute to True.
+</pre></div>
+</div>
+<div class="admonition warning">
+<p class="admonition-title">Warning</p>
+<p>The code above yields an <strong>equal-weighted difference</strong>. If you have
+imbalanced trial numbers, you might want to equalize the number of events
+per condition first by using <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs.equalize_event_counts" title="mne.Epochs.equalize_event_counts"><code class="xref py py-obj docutils literal notranslate"><span class="pre">epochs.equalize_event_counts()</span></code></a> before averaging.</p>
+</div>
+</div>
+<div class="section" id="grand-averages">
+<h2>Grand averages<a class="headerlink" href="#grand-averages" title="Permalink to this headline">¶</a></h2>
+<p>To compute grand averages across conditions (or subjects), you can pass a
+list of <a class="reference internal" href="../../generated/mne.Evoked.html#mne.Evoked" title="mne.Evoked"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Evoked</span></code></a> objects to <a class="reference internal" href="../../generated/mne.grand_average.html#mne.grand_average" title="mne.grand_average"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mne.grand_average</span></code></a>. The result is another
+<a class="reference internal" href="../../generated/mne.Evoked.html#mne.Evoked" title="mne.Evoked"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Evoked</span></code></a> object.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="mne.EvokedArray" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">grand_average</span></a> <span class="o">=</span> <a href="../../generated/mne.grand_average.html#mne.grand_average" title="mne.grand_average" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">grand_average</span></a><span class="p">([</span><a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="mne.EvokedArray" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">l_aud</span></a><span class="p">,</span> <a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="mne.EvokedArray" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">l_vis</span></a><span class="p">])</span>
+<span class="nb">print</span><span class="p">(</span><a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="mne.EvokedArray" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">grand_average</span></a><span class="p">)</span>
 </pre></div>
 </div>
 <p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EEG : [&#39;EEG 001&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-[&lt;Evoked | &#39;left/auditory&#39; (average, N=56), -0.1998 – 0.49949 sec, baseline -0.199795 – 0 sec, 59 ch, ~3.0 MB&gt;, &lt;Evoked | &#39;right/auditory&#39; (average, N=62), -0.1998 – 0.49949 sec, baseline -0.199795 – 0 sec, 59 ch, ~3.0 MB&gt;, &lt;Evoked | &#39;left/visual&#39; (average, N=67), -0.1998 – 0.49949 sec, baseline -0.199795 – 0 sec, 59 ch, ~3.0 MB&gt;, &lt;Evoked | &#39;right/visual&#39; (average, N=56), -0.1998 – 0.49949 sec, baseline -0.199795 – 0 sec, 59 ch, ~3.0 MB&gt;]
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Interpolating bad channels
+    Automatic origin fit: head of radius 91.0 mm
+Computing interpolation matrix from 59 sensor positions
+Interpolating 1 sensors
+Interpolating bad channels
+    Automatic origin fit: head of radius 91.0 mm
+Computing interpolation matrix from 59 sensor positions
+Interpolating 1 sensors
+Identifying common channels ...
+&lt;Evoked | &#39;Grand average (n = 2)&#39; (average, N=2), -0.29969 – 0.69928 sec, baseline -0.299693 – 0 sec, 60 ch, ~3.0 MB&gt;
 </pre></div>
 </div>
-<p>This can be simplified with a Python list comprehension:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">all_evokeds</span></a> <span class="o">=</span> <span class="p">[</span><a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a><span class="p">[</span><a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">cond</span></a><span class="p">]</span><span class="o">.</span><span class="n">average</span><span class="p">()</span> <span class="k">for</span> <a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">cond</span></a> <span class="ow">in</span> <span class="nb">sorted</span><span class="p">(</span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">event_id</span></a><span class="o">.</span><span class="n">keys</span><span class="p">())]</span>
-<span class="nb">print</span><span class="p">(</span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">all_evokeds</span></a><span class="p">)</span>
-
-<span class="c1"># Then, we can construct and plot an unweighted average of left vs. right</span>
-<span class="c1"># trials this way, too:</span>
-<a href="../../generated/mne.combine_evoked.html#mne.combine_evoked" title="mne.combine_evoked" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">combine_evoked</span></a><span class="p">(</span>
-    <a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">all_evokeds</span></a><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">,</span> <span class="o">-</span><span class="mf">0.5</span><span class="p">])</span><span class="o">.</span><span class="n">plot_joint</span><span class="p">(</span><span class="o">**</span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">joint_kwargs</span></a><span class="p">)</span>
+<p>For combining <em>conditions</em> it is also possible to make use of <a class="reference internal" href="../../glossary.html#term-HED"><span class="xref std std-term">HED</span></a>
+tags in the condition names when selecting which epochs to average. For
+example, we have the condition names:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">list</span><span class="p">(</span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">event_dict</span></a><span class="p">)</span>
 </pre></div>
 </div>
-<img alt="0.093 s, 0.160 s, 0.213 s" class="sphx-glr-single-img" src="../../_images/sphx_glr_30_eeg_erp_015.png" />
-<p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EEG : [&#39;EEG 001&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-[&lt;Evoked | &#39;left/auditory&#39; (average, N=56), -0.1998 – 0.49949 sec, baseline -0.199795 – 0 sec, 59 ch, ~3.0 MB&gt;, &lt;Evoked | &#39;left/visual&#39; (average, N=67), -0.1998 – 0.49949 sec, baseline -0.199795 – 0 sec, 59 ch, ~3.0 MB&gt;, &lt;Evoked | &#39;right/auditory&#39; (average, N=62), -0.1998 – 0.49949 sec, baseline -0.199795 – 0 sec, 59 ch, ~3.0 MB&gt;, &lt;Evoked | &#39;right/visual&#39; (average, N=56), -0.1998 – 0.49949 sec, baseline -0.199795 – 0 sec, 59 ch, ~3.0 MB&gt;]
-Projections have already been applied. Setting proj attribute to True.
+<p>We can select the auditory conditions (left and right together) by passing:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a><span class="p">[</span><span class="s1">&#39;auditory&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">average</span><span class="p">()</span>
 </pre></div>
 </div>
-<p>Often, it makes sense to store Evoked objects in a dictionary or a list -
-either different conditions, or different subjects.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># If they are stored in a list, they can be easily averaged, for example,</span>
-<span class="c1"># for a grand average across subjects (or conditions).</span>
-<a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="mne.EvokedArray" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">grand_average</span></a> <span class="o">=</span> <a href="../../generated/mne.grand_average.html#mne.grand_average" title="mne.grand_average" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">grand_average</span></a><span class="p">(</span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">all_evokeds</span></a><span class="p">)</span>
-<span class="c1"># And they can be written to disk like any other evoked data, e.g.:</span>
-<span class="c1"># mne.write_evokeds(&#39;tmp-ave.fif&#39;, all_evokeds)</span>
-
-<span class="c1"># If Evokeds objects are stored in a dictionary, they can be retrieved by name.</span>
-<a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">all_evokeds</span></a> <span class="o">=</span> <span class="nb">dict</span><span class="p">((</span><a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">cond</span></a><span class="p">,</span> <a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a><span class="p">[</span><a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">cond</span></a><span class="p">]</span><span class="o">.</span><span class="n">average</span><span class="p">())</span> <span class="k">for</span> <a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">cond</span></a> <span class="ow">in</span> <a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">event_id</span></a><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">all_evokeds</span></a><span class="p">[</span><span class="s1">&#39;left/auditory&#39;</span><span class="p">])</span>
-
-<span class="c1"># Besides for explicit access, this can be used for example to set titles.</span>
-<span class="k">for</span> <a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">cond</span></a> <span class="ow">in</span> <a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">all_evokeds</span></a><span class="p">:</span>
-    <a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">all_evokeds</span></a><span class="p">[</span><a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">cond</span></a><span class="p">]</span><span class="o">.</span><span class="n">plot_joint</span><span class="p">(</span><a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">title</span></a><span class="o">=</span><a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">cond</span></a><span class="p">,</span> <span class="o">**</span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">joint_kwargs</span></a><span class="p">)</span>
-</pre></div>
-</div>
-<ul class="sphx-glr-horizontal">
-<li><img alt="0.093 s, 0.206 s, 0.306 s" class="sphx-glr-multi-img" src="../../_images/sphx_glr_30_eeg_erp_016.png" />
-</li>
-<li><img alt="0.087 s, 0.206 s, 0.333 s" class="sphx-glr-multi-img" src="../../_images/sphx_glr_30_eeg_erp_017.png" />
-</li>
-<li><img alt="0.180 s, 0.260 s, 0.333 s" class="sphx-glr-multi-img" src="../../_images/sphx_glr_30_eeg_erp_018.png" />
-</li>
-<li><img alt="0.093 s, 0.173 s, 0.260 s" class="sphx-glr-multi-img" src="../../_images/sphx_glr_30_eeg_erp_019.png" />
-</li>
-</ul>
-<p class="sphx-glr-script-out">Out:</p>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Identifying common channels ...
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EEG : [&#39;EEG 001&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-    Rejecting  epoch based on EOG : [&#39;EOG&#39;]
-&lt;Evoked | &#39;left/auditory&#39; (average, N=56), -0.1998 – 0.49949 sec, baseline -0.199795 – 0 sec, 59 ch, ~3.0 MB&gt;
-Projections have already been applied. Setting proj attribute to True.
-Projections have already been applied. Setting proj attribute to True.
-Projections have already been applied. Setting proj attribute to True.
-Projections have already been applied. Setting proj attribute to True.
-</pre></div>
-</div>
-</div>
+<p>see <a class="reference internal" href="../epochs/10_epochs_overview.html#tut-section-subselect-epochs"><span class="std std-ref">Subselecting epochs</span></a> for details.</p>
+<p>The tutorials <a class="reference internal" href="../epochs/10_epochs_overview.html#tut-epochs-class"><span class="std std-ref">The Epochs data structure: discontinuous data</span></a> and <a class="reference internal" href="10_evoked_overview.html#tut-evoked-class"><span class="std std-ref">The Evoked data structure: evoked/averaged data</span></a> have many
+more details about working with the <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Epochs</span></code></a> and <a class="reference internal" href="../../generated/mne.Evoked.html#mne.Evoked" title="mne.Evoked"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Evoked</span></code></a> classes.</p>
 <div class="section" id="references">
-<h2>References<a class="headerlink" href="#references" title="Permalink to this headline">¶</a></h2>
+<h3>References<a class="headerlink" href="#references" title="Permalink to this headline">¶</a></h3>
 <p><dl class="footnote brackets">
 <dt class="label" id="lehmann1980"><span class="brackets"><a class="fn-backref" href="#id1">1</a></span></dt>
 <dd><p>Dietrich Lehmann and Wolfgang Skrandies. Reference-free identification of components of checkerboard-evoked multichannel potential fields. <em>Electroencephalography and Clinical Neurophysiology</em>, 48(6):609–621, 1980. <a class="reference external" href="https://doi.org/10.1016/0013-4694(80)90419-8">doi:10.1016/0013-4694(80)90419-8</a>.</p>
@@ -2160,8 +1904,8 @@ Projections have already been applied. Setting proj attribute to True.
 </dd>
 </dl>
 </p>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  33.438 seconds)</p>
-<p><strong>Estimated memory usage:</strong>  40 MB</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  24.489 seconds)</p>
+<p><strong>Estimated memory usage:</strong>  8 MB</p>
 <div class="sphx-glr-footer class sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-tutorials-evoked-30-eeg-erp-py">
 <div class="sphx-glr-download sphx-glr-download-python docutils container">
 <p><a class="reference download internal" download="" href="../../_downloads/bbdb179d054993ce5cf62267812bef74/30_eeg_erp.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">30_eeg_erp.py</span></code></a></p>
@@ -2171,6 +1915,7 @@ Projections have already been applied. Setting proj attribute to True.
 </div>
 </div>
 <p class="sphx-glr-signature"><a class="reference external" href="https://sphinx-gallery.github.io">Gallery generated by Sphinx-Gallery</a></p>
+</div>
 </div>
 </div>
 
@@ -2211,7 +1956,7 @@ Projections have already been applied. Setting proj attribute to True.
   <div class="container">
     
     <div class="footer-item">
-      <p class="text-center text-muted small">&copy; Copyright 2012–2021, MNE Developers. Last updated <time datetime="2021-04-26T14:04:07.165890+00:00" class="localized">2021-04-26 14:04 UTC</time>
+      <p class="text-center text-muted small">&copy; Copyright 2012–2021, MNE Developers. Last updated <time datetime="2021-04-27T17:17:19.748720+00:00" class="localized">2021-04-27 17:17 UTC</time>
 <script type="text/javascript">$(function () { $("time.localized").each(function () { var el = $(this); el.text(new Date(el.attr("datetime")).toLocaleString([], {dateStyle: "medium", timeStyle: "long"})); }); } )</script></p>
     </div>
     
