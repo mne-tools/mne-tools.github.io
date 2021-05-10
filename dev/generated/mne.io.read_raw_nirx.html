@@ -1330,6 +1330,11 @@
     </a>
    </li>
    <li class="toctree-l2">
+    <a class="reference internal" href="mne.preprocessing.annotate_nan.html">
+     mne.preprocessing.annotate_nan
+    </a>
+   </li>
+   <li class="toctree-l2">
     <a class="reference internal" href="mne.preprocessing.compute_average_dev_head_t.html">
      mne.preprocessing.compute_average_dev_head_t
     </a>
@@ -3224,13 +3229,30 @@
 <h1>mne.io.read_raw_nirx<a class="headerlink" href="#mne-io-read-raw-nirx" title="Permalink to this headline">¶</a></h1>
 <dl class="py function">
 <dt class="sig sig-object py" id="mne.io.read_raw_nirx">
-<span class="sig-prename descclassname"><span class="pre">mne.io.</span></span><span class="sig-name descname"><span class="pre">read_raw_nirx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preload</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/main/mne/io/nirx/nirx.py#L23-L45"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mne.io.read_raw_nirx" title="Permalink to this definition">¶</a></dt>
+<span class="sig-prename descclassname"><span class="pre">mne.io.</span></span><span class="sig-name descname"><span class="pre">read_raw_nirx</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">fname</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">saturated</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'annotate'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">preload</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">verbose</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="http://github.com/mne-tools/mne-python/blob/main/mne/io/nirx/nirx.py#L23-L48"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#mne.io.read_raw_nirx" title="Permalink to this definition">¶</a></dt>
 <dd><p>Reader for a NIRX fNIRS recording.</p>
-<p>This function has only been tested with NIRScout devices.</p>
 <dl class="field-list">
 <dt class="field-odd">Parameters</dt>
 <dd class="field-odd"><dl>
 <dt><strong>fname</strong><span class="classifier"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><code class="docutils literal notranslate"><span class="pre">str</span></code></a></span></dt><dd><p>Path to the NIRX data folder or header file.</p>
+</dd>
+<dt><strong>saturated</strong><span class="classifier"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><code class="docutils literal notranslate"><span class="pre">str</span></code></a></span></dt><dd><p>Replace saturated segments of data with NaNs, can be:</p>
+<dl class="simple">
+<dt><code class="docutils literal notranslate"><span class="pre">&quot;ignore&quot;</span></code></dt><dd><p>The measured data is returned, even if it contains measurements
+while the amplifier was saturated.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">&quot;nan&quot;</span></code></dt><dd><p>The returned data will contain NaNs during time segments
+when the amplifier was saturated.</p>
+</dd>
+<dt><code class="docutils literal notranslate"><span class="pre">&quot;annotate&quot;</span></code> (default)</dt><dd><p>The returned data will contain annotations specifying
+sections the saturate segments.</p>
+</dd>
+</dl>
+<p>This argument will only be used if there is no .nosatflags file
+(only if a NIRSport device is used and saturation occurred).</p>
+<div class="versionadded">
+<p><span class="versionmodified added">New in version 0.24.</span></p>
+</div>
 </dd>
 <dt><strong>preload</strong><span class="classifier"><a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#bltin-boolean-values" title="(in Python v3.9)"><span class="xref std std-ref">bool</span></a> or <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#str" title="(in Python v3.9)"><code class="docutils literal notranslate"><span class="pre">str</span></code></a> (default <a class="reference external" href="https://docs.python.org/3/library/constants.html#False" title="(in Python v3.9)"><code class="docutils literal notranslate"><span class="pre">False</span></code></a>)</span></dt><dd><p>Preload data into memory for data manipulation and faster indexing.
 If True, the data will be preloaded into memory (fast, requires
@@ -3258,6 +3280,15 @@ If used, it should be passed as a keyword-argument only.</p>
 </dd>
 </dl>
 </div>
+<p class="rubric">Notes</p>
+<p>This function has only been tested with NIRScout and NIRSport1 devices.</p>
+<p>The NIRSport device can detect if the amplifier is saturated.
+Starting from NIRStar 14.2, those saturated values are replaced by NaNs
+in the standard .wlX files.
+The raw unmodified measured values are stored in another file
+called .nosatflags_wlX. As NaN values can cause unexpected behaviour with
+mathematical functions the default behaviour is to return the
+saturated data.</p>
 </dd></dl>
 
 <div class="section" id="examples-using-mne-io-read-raw-nirx">
@@ -3313,7 +3344,7 @@ If used, it should be passed as a keyword-argument only.</p>
   <div class="container">
     
     <div class="footer-item">
-      <p class="text-center text-muted small">&copy; Copyright 2012–2021, MNE Developers. Last updated <time datetime="2021-05-04T20:18:16.268019+00:00" class="localized">2021-05-04 20:18 UTC</time>
+      <p class="text-center text-muted small">&copy; Copyright 2012–2021, MNE Developers. Last updated <time datetime="2021-05-10T11:55:19.990970+00:00" class="localized">2021-05-10 11:55 UTC</time>
 <script type="text/javascript">$(function () { $("time.localized").each(function () { var el = $(this); el.text(new Date(el.attr("datetime")).toLocaleString([], {dateStyle: "medium", timeStyle: "long"})); }); } )</script></p>
     </div>
     
