@@ -5,7 +5,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Rejecting bad data spans &#8212; MNE 0.24.dev0 documentation</title>
+    <title>Rejecting bad data spans and breaks &#8212; MNE 0.24.dev0 documentation</title>
     
   <link href="../../_static/css/theme.css" rel="stylesheet" />
   <link href="../../_static/css/index.c5995385ac14fb8791e8eb36b4908be2.css" rel="stylesheet" />
@@ -294,7 +294,7 @@
    </li>
    <li class="toctree-l2 current active">
     <a class="current reference internal" href="#">
-     Rejecting bad data spans
+     Rejecting bad data spans and breaks
     </a>
    </li>
    <li class="toctree-l2">
@@ -1259,6 +1259,11 @@
      Generating annotations programmatically
     </a>
    </li>
+   <li class="toc-h3 nav-item toc-entry">
+    <a class="reference internal nav-link" href="#detecting-and-annotating-breaks">
+     Detecting and annotating breaks
+    </a>
+   </li>
   </ul>
  </li>
  <li class="toc-h2 nav-item toc-entry">
@@ -1292,10 +1297,14 @@
 <p>Click <a class="reference internal" href="#sphx-glr-download-auto-tutorials-preprocessing-20-rejecting-bad-data-py"><span class="std std-ref">here</span></a>
 to download the full example code</p>
 </div>
-<div class="sphx-glr-example-title section" id="rejecting-bad-data-spans">
-<span id="tut-reject-data-spans"></span><span id="sphx-glr-auto-tutorials-preprocessing-20-rejecting-bad-data-py"></span><h1>Rejecting bad data spans<a class="headerlink" href="#rejecting-bad-data-spans" title="Permalink to this headline">¶</a></h1>
-<p>This tutorial covers manual marking of bad spans of data, and automated
-rejection of data spans based on signal amplitude.</p>
+<div class="sphx-glr-example-title section" id="rejecting-bad-data-spans-and-breaks">
+<span id="tut-reject-data-spans"></span><span id="sphx-glr-auto-tutorials-preprocessing-20-rejecting-bad-data-py"></span><h1>Rejecting bad data spans and breaks<a class="headerlink" href="#rejecting-bad-data-spans-and-breaks" title="Permalink to this headline">¶</a></h1>
+<p>This tutorial covers:</p>
+<ul class="simple">
+<li><p>manual marking of bad spans of data,</p></li>
+<li><p>automated rejection of data spans based on signal amplitude, and</p></li>
+<li><p>automated detection of breaks during an experiment.</p></li>
+</ul>
 <p>We begin as always by importing the necessary Python modules and loading some
 <a class="reference internal" href="../../overview/datasets_index.html#sample-dataset"><span class="std std-ref">example data</span></a>; to save memory we’ll use a pre-filtered
 and downsampled version of the example data, and we’ll also load an events
@@ -1380,10 +1389,10 @@ an events array telling us where the blinks are, then automatically add
 how annotations are added non-interactively). We’ll start the annotations
 250 ms before the blink and end them 250 ms after it:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">eog_events</span></a> <span class="o">=</span> <a href="../../generated/mne.preprocessing.find_eog_events.html#mne.preprocessing.find_eog_events" title="mne.preprocessing.find_eog_events" class="sphx-glr-backref-module-mne-preprocessing sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">preprocessing</span><span class="o">.</span><span class="n">find_eog_events</span></a><span class="p">(</span><a href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw</span></a><span class="p">)</span>
-<a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">onsets</span></a> <span class="o">=</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">eog_events</span></a><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <a href="../../generated/mne.Info.html#mne.Info" title="mne.Info" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw</span><span class="o">.</span><span class="n">info</span></a><span class="p">[</span><span class="s1">&#39;sfreq&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="mf">0.25</span>
+<a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">onsets</span></a> <span class="o">=</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">eog_events</span></a><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <a href="../../generated/mne.Info.html#mne.Info" title="mne.Info" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw</span><span class="o">.</span><span class="n">info</span></a><span class="p">[</span><span class="s1">&#39;sfreq&#39;</span><span class="p">]</span> <span class="o">-</span> <span class="mf">0.25</span>
 <a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">durations</span></a> <span class="o">=</span> <span class="p">[</span><span class="mf">0.5</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">eog_events</span></a><span class="p">)</span>
 <a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">descriptions</span></a> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;bad blink&#39;</span><span class="p">]</span> <span class="o">*</span> <span class="nb">len</span><span class="p">(</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">eog_events</span></a><span class="p">)</span>
-<a href="../../generated/mne.Annotations.html#mne.Annotations" title="mne.Annotations" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">blink_annot</span></a> <span class="o">=</span> <a href="../../generated/mne.Annotations.html#mne.Annotations" title="mne.Annotations" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class"><span class="n">mne</span><span class="o">.</span><span class="n">Annotations</span></a><span class="p">(</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">onsets</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">durations</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">descriptions</span></a><span class="p">,</span>
+<a href="../../generated/mne.Annotations.html#mne.Annotations" title="mne.Annotations" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">blink_annot</span></a> <span class="o">=</span> <a href="../../generated/mne.Annotations.html#mne.Annotations" title="mne.Annotations" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class"><span class="n">mne</span><span class="o">.</span><span class="n">Annotations</span></a><span class="p">(</span><a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">onsets</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">durations</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">descriptions</span></a><span class="p">,</span>
                               <span class="n">orig_time</span><span class="o">=</span><a href="../../generated/mne.Info.html#mne.Info" title="mne.Info" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw</span><span class="o">.</span><span class="n">info</span></a><span class="p">[</span><span class="s1">&#39;meas_date&#39;</span><span class="p">])</span>
 <a href="../../generated/mne.io.Raw.html#mne.io.Raw.set_annotations" title="mne.io.Raw.set_annotations" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-method"><span class="n">raw</span><span class="o">.</span><span class="n">set_annotations</span></a><span class="p">(</span><a href="../../generated/mne.Annotations.html#mne.Annotations" title="mne.Annotations" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">blink_annot</span></a><span class="p">)</span>
 </pre></div>
@@ -1486,6 +1495,104 @@ here:</p>
 <img src="../../_images/sphx_glr_20_rejecting_bad_data_003.png" srcset="../../_images/sphx_glr_20_rejecting_bad_data_003.png" alt="20 rejecting bad data" class = "sphx-glr-single-img"/><p>See the section <a class="reference internal" href="../raw/30_annotate_raw.html#tut-section-programmatic-annotations"><span class="std std-ref">Creating annotations programmatically</span></a> for more details
 on creating annotations programmatically.</p>
 </div>
+<div class="section" id="detecting-and-annotating-breaks">
+<h3>Detecting and annotating breaks<a class="headerlink" href="#detecting-and-annotating-breaks" title="Permalink to this headline">¶</a></h3>
+<p>Another useful function, albeit not related to artifact detection <em>per se</em>,
+is <a class="reference internal" href="../../generated/mne.preprocessing.annotate_break.html#mne.preprocessing.annotate_break" title="mne.preprocessing.annotate_break"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mne.preprocessing.annotate_break</span></code></a>: It will generate annotations for
+segments of the data where no existing annotations (or, alternatively:
+events) can be found. It can therefore be used to automatically detect and
+mark breaks, e.g. between experimental blocks, when recording continued.</p>
+<p>For the sake of this example, let’s assume an experiment consisting of two
+blocks, the first one stretching from 30 to 90, and the second from 120 to
+180 seconds. We’ll mark these blocks by annotations, and then use
+<a class="reference internal" href="../../generated/mne.preprocessing.annotate_break.html#mne.preprocessing.annotate_break" title="mne.preprocessing.annotate_break"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mne.preprocessing.annotate_break</span></code></a> to detect and annotate any breaks.</p>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>We need to take <code class="docutils literal notranslate"><span class="pre">raw.first_time</span></code> into account, otherwise the
+onsets will be incorrect!</p>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">onsets</span></a> <span class="o">=</span> <span class="p">[</span>
+    <a href="../../generated/mne.io.Raw.html#mne.io.Raw.first_time" title="mne.io.Raw.first_time" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-property"><span class="n">raw</span><span class="o">.</span><span class="n">first_time</span></a> <span class="o">+</span> <span class="mi">30</span><span class="p">,</span>
+    <a href="../../generated/mne.io.Raw.html#mne.io.Raw.first_time" title="mne.io.Raw.first_time" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-property"><span class="n">raw</span><span class="o">.</span><span class="n">first_time</span></a> <span class="o">+</span> <span class="mi">180</span>
+<span class="p">]</span>
+<a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">durations</span></a> <span class="o">=</span> <span class="p">[</span><span class="mi">60</span><span class="p">,</span> <span class="mi">60</span><span class="p">]</span>
+<a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">descriptions</span></a> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;block_1&#39;</span><span class="p">,</span> <span class="s1">&#39;block_2&#39;</span><span class="p">]</span>
+
+<a href="../../generated/mne.Annotations.html#mne.Annotations" title="mne.Annotations" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">block_annots</span></a> <span class="o">=</span> <a href="../../generated/mne.Annotations.html#mne.Annotations" title="mne.Annotations" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class"><span class="n">mne</span><span class="o">.</span><span class="n">Annotations</span></a><span class="p">(</span><span class="n">onset</span><span class="o">=</span><a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">onsets</span></a><span class="p">,</span>
+                               <span class="n">duration</span><span class="o">=</span><a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">durations</span></a><span class="p">,</span>
+                               <span class="n">description</span><span class="o">=</span><a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">descriptions</span></a><span class="p">,</span>
+                               <span class="n">orig_time</span><span class="o">=</span><a href="../../generated/mne.Info.html#mne.Info" title="mne.Info" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw</span><span class="o">.</span><span class="n">info</span></a><span class="p">[</span><span class="s1">&#39;meas_date&#39;</span><span class="p">])</span>
+<a href="../../generated/mne.io.Raw.html#mne.io.Raw.set_annotations" title="mne.io.Raw.set_annotations" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-method"><span class="n">raw</span><span class="o">.</span><span class="n">set_annotations</span></a><span class="p">(</span><a href="../../generated/mne.io.Raw.html#mne.io.Raw.annotations" title="mne.io.Raw.annotations" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-property"><span class="n">raw</span><span class="o">.</span><span class="n">annotations</span></a> <span class="o">+</span> <a href="../../generated/mne.Annotations.html#mne.Annotations" title="mne.Annotations" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">block_annots</span></a><span class="p">)</span>  <span class="c1"># add to existing</span>
+<a href="../../generated/mne.io.Raw.html#mne.io.Raw.plot" title="mne.io.Raw.plot" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-method"><span class="n">raw</span><span class="o">.</span><span class="n">plot</span></a><span class="p">()</span>
+</pre></div>
+</div>
+<img src="../../_images/sphx_glr_20_rejecting_bad_data_004.png" srcset="../../_images/sphx_glr_20_rejecting_bad_data_004.png" alt="20 rejecting bad data" class = "sphx-glr-single-img"/><p>Now detect break periods. We can control how far the break annotations shall
+expand toward both ends of each break.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="../../generated/mne.Annotations.html#mne.Annotations" title="mne.Annotations" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">break_annots</span></a> <span class="o">=</span> <a href="../../generated/mne.preprocessing.annotate_break.html#mne.preprocessing.annotate_break" title="mne.preprocessing.annotate_break" class="sphx-glr-backref-module-mne-preprocessing sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">preprocessing</span><span class="o">.</span><span class="n">annotate_break</span></a><span class="p">(</span>
+    <a href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw</span></a><span class="o">=</span><a href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw</span></a><span class="p">,</span>
+    <span class="n">min_break_duration</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>  <span class="c1"># consider segments of at least 20 s duration</span>
+    <span class="n">t_start_after_previous</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span>  <span class="c1"># start annotation 5 s after end of previous one</span>
+    <span class="n">t_stop_before_next</span><span class="o">=</span><span class="mi">2</span>  <span class="c1"># stop annotation 2 s before beginning of next one</span>
+<span class="p">)</span>
+
+<a href="../../generated/mne.io.Raw.html#mne.io.Raw.set_annotations" title="mne.io.Raw.set_annotations" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-method"><span class="n">raw</span><span class="o">.</span><span class="n">set_annotations</span></a><span class="p">(</span><a href="../../generated/mne.io.Raw.html#mne.io.Raw.annotations" title="mne.io.Raw.annotations" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-property"><span class="n">raw</span><span class="o">.</span><span class="n">annotations</span></a> <span class="o">+</span> <a href="../../generated/mne.Annotations.html#mne.Annotations" title="mne.Annotations" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">break_annots</span></a><span class="p">)</span>  <span class="c1"># add to existing</span>
+<a href="../../generated/mne.io.Raw.html#mne.io.Raw.plot" title="mne.io.Raw.plot" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-method"><span class="n">raw</span><span class="o">.</span><span class="n">plot</span></a><span class="p">()</span>
+</pre></div>
+</div>
+<img src="../../_images/sphx_glr_20_rejecting_bad_data_005.png" srcset="../../_images/sphx_glr_20_rejecting_bad_data_005.png" alt="20 rejecting bad data" class = "sphx-glr-single-img"/><p class="sphx-glr-script-out">Out:</p>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Ignoring annotations with descriptions starting with: bad, edge
+
+Detected 3 break periods of &gt;= 20 sec duration:
+    0.0 – 28.0 sec [28.0 sec]
+    95.0 – 178.0 sec [83.0 sec]
+    245.0 – 277.7 sec [32.7 sec]
+In total, 51.7% of the data (143.7 sec) have been marked as a break.
+</pre></div>
+</div>
+<p>You can see that 3 segments have been annotated as <code class="docutils literal notranslate"><span class="pre">BAD_break</span></code>:</p>
+<ul class="simple">
+<li><p>the first one starting with the beginning of the recording and ending 2
+seconds before the beginning of block 1 (due to <code class="docutils literal notranslate"><span class="pre">t_stop_before_next=2</span></code>),</p></li>
+<li><p>the second one starting 5 seconds after block 1 has ended, and ending 2
+seconds before the beginning of block 2 (<code class="docutils literal notranslate"><span class="pre">t_start_after_previous=5</span></code>,
+<code class="docutils literal notranslate"><span class="pre">t_stop_before_next=2</span></code>),</p></li>
+<li><p>and the last one starting 5 seconds after block 2 has ended
+(<code class="docutils literal notranslate"><span class="pre">t_start_after_previous=5</span></code>) and continuing until the end of the
+recording.</p></li>
+</ul>
+<p>You can also see that only the <code class="docutils literal notranslate"><span class="pre">block_1</span></code> and <code class="docutils literal notranslate"><span class="pre">block_2</span></code> annotations
+were considered in the detection of the break periods – the EOG annotations
+were simply ignored. This is because, by default,
+<a class="reference internal" href="../../generated/mne.preprocessing.annotate_break.html#mne.preprocessing.annotate_break" title="mne.preprocessing.annotate_break"><code class="xref py py-obj docutils literal notranslate"><span class="pre">annotate_break</span></code></a> ignores all annotations starting with
+<code class="docutils literal notranslate"><span class="pre">'bad'</span></code>. You can control this behavior via the <code class="docutils literal notranslate"><span class="pre">ignore</span></code> parameter.</p>
+<p>It is also possible to perform break period detection based on an array
+of events: simply pass the array via the <code class="docutils literal notranslate"><span class="pre">events</span></code> parameter. Existing
+annotations in the raw data will be ignored in this case:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># only keep some button press events (code 32) for this demonstration</span>
+<a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">events_subset</span></a> <span class="o">=</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">events</span></a><span class="p">[</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">events</span></a><span class="p">[:,</span> <span class="o">-</span><span class="mi">1</span><span class="p">]</span> <span class="o">==</span> <span class="mi">32</span><span class="p">]</span>
+<span class="c1"># drop the first and last few events</span>
+<a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">events_subset</span></a> <span class="o">=</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">events_subset</span></a><span class="p">[</span><span class="mi">3</span><span class="p">:</span><span class="o">-</span><span class="mi">3</span><span class="p">]</span>
+
+<a href="../../generated/mne.Annotations.html#mne.Annotations" title="mne.Annotations" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">break_annots</span></a> <span class="o">=</span> <a href="../../generated/mne.preprocessing.annotate_break.html#mne.preprocessing.annotate_break" title="mne.preprocessing.annotate_break" class="sphx-glr-backref-module-mne-preprocessing sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">preprocessing</span><span class="o">.</span><span class="n">annotate_break</span></a><span class="p">(</span>
+    <a href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw</span></a><span class="o">=</span><a href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw</span></a><span class="p">,</span>
+    <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">events</span></a><span class="o">=</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">events_subset</span></a><span class="p">,</span>  <span class="c1"># passing events will ignore existing annotations</span>
+    <span class="n">min_break_duration</span><span class="o">=</span><span class="mi">25</span>  <span class="c1"># pick a longer break duration this time</span>
+<span class="p">)</span>
+
+<span class="c1"># replace existing annotations (otherwise it becomes difficult to see any</span>
+<span class="c1"># effects in the plot!)</span>
+<a href="../../generated/mne.io.Raw.html#mne.io.Raw.set_annotations" title="mne.io.Raw.set_annotations" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-method"><span class="n">raw</span><span class="o">.</span><span class="n">set_annotations</span></a><span class="p">(</span><a href="../../generated/mne.Annotations.html#mne.Annotations" title="mne.Annotations" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">break_annots</span></a><span class="p">)</span>
+<a href="../../generated/mne.io.Raw.html#mne.io.Raw.plot" title="mne.io.Raw.plot" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-method"><span class="n">raw</span><span class="o">.</span><span class="n">plot</span></a><span class="p">(</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">events</span></a><span class="o">=</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">events_subset</span></a><span class="p">)</span>
+</pre></div>
+</div>
+<img src="../../_images/sphx_glr_20_rejecting_bad_data_006.png" srcset="../../_images/sphx_glr_20_rejecting_bad_data_006.png" alt="20 rejecting bad data" class = "sphx-glr-single-img"/><p class="sphx-glr-script-out">Out:</p>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Detected 2 break periods of &gt;= 25 sec duration:
+    0.0 – 51.4 sec [51.4 sec]
+    185.6 – 277.7 sec [92.1 sec]
+In total, 51.7% of the data (143.5 sec) have been marked as a break.
+</pre></div>
+</div>
+</div>
 </div>
 <div class="section" id="rejecting-epochs-based-on-channel-amplitude">
 <span id="tut-reject-epochs-section"></span><h2>Rejecting Epochs based on channel amplitude<a class="headerlink" href="#rejecting-epochs-based-on-channel-amplitude" title="Permalink to this headline">¶</a></h2>
@@ -1518,13 +1625,14 @@ rejection thresholds to the portion of the epoch that occurs <em>before</em> the
 event marker around which the epoch is created, you could set
 <code class="docutils literal notranslate"><span class="pre">reject_tmax=0</span></code>. A summary of the causes of rejected epochs can be
 generated with the <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs.plot_drop_log" title="mne.Epochs.plot_drop_log"><code class="xref py py-meth docutils literal notranslate"><span class="pre">plot_drop_log()</span></code></a> method:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class"><span class="n">mne</span><span class="o">.</span><span class="n">Epochs</span></a><span class="p">(</span><a href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw</span></a><span class="p">,</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">events</span></a><span class="p">,</span> <span class="n">tmin</span><span class="o">=-</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">tmax</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">reject_tmax</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="../../generated/mne.io.Raw.html#mne.io.Raw.set_annotations" title="mne.io.Raw.set_annotations" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-method"><span class="n">raw</span><span class="o">.</span><span class="n">set_annotations</span></a><span class="p">(</span><a href="../../generated/mne.Annotations.html#mne.Annotations" title="mne.Annotations" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">blink_annot</span></a><span class="p">)</span>  <span class="c1"># restore the EOG annotations</span>
+<a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class"><span class="n">mne</span><span class="o">.</span><span class="n">Epochs</span></a><span class="p">(</span><a href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw</span></a><span class="p">,</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">events</span></a><span class="p">,</span> <span class="n">tmin</span><span class="o">=-</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">tmax</span><span class="o">=</span><span class="mf">0.5</span><span class="p">,</span> <span class="n">reject_tmax</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>
                     <span class="n">reject</span><span class="o">=</span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">reject_criteria</span></a><span class="p">,</span> <span class="n">flat</span><span class="o">=</span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">flat_criteria</span></a><span class="p">,</span>
                     <span class="n">reject_by_annotation</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">preload</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <a href="../../generated/mne.Epochs.html#mne.Epochs.plot_drop_log" title="mne.Epochs.plot_drop_log" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">epochs</span><span class="o">.</span><span class="n">plot_drop_log</span></a><span class="p">()</span>
 </pre></div>
 </div>
-<img src="../../_images/sphx_glr_20_rejecting_bad_data_004.png" srcset="../../_images/sphx_glr_20_rejecting_bad_data_004.png" alt="Unknown subj: 2.5% of all epochs rejected" class = "sphx-glr-single-img"/><p class="sphx-glr-script-out">Out:</p>
+<img src="../../_images/sphx_glr_20_rejecting_bad_data_007.png" srcset="../../_images/sphx_glr_20_rejecting_bad_data_007.png" alt="Unknown subj: 2.5% of all epochs rejected" class = "sphx-glr-single-img"/><p class="sphx-glr-script-out">Out:</p>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Not setting metadata
 Not setting metadata
 319 matching events found
@@ -1555,7 +1663,7 @@ based on the “bad blink” label).</p>
 <a href="../../generated/mne.Epochs.html#mne.Epochs.plot_drop_log" title="mne.Epochs.plot_drop_log" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">epochs</span><span class="o">.</span><span class="n">plot_drop_log</span></a><span class="p">()</span>
 </pre></div>
 </div>
-<img src="../../_images/sphx_glr_20_rejecting_bad_data_005.png" srcset="../../_images/sphx_glr_20_rejecting_bad_data_005.png" alt="Unknown subj: 12.2% of all epochs rejected" class = "sphx-glr-single-img"/><p class="sphx-glr-script-out">Out:</p>
+<img src="../../_images/sphx_glr_20_rejecting_bad_data_008.png" srcset="../../_images/sphx_glr_20_rejecting_bad_data_008.png" alt="Unknown subj: 12.2% of all epochs rejected" class = "sphx-glr-single-img"/><p class="sphx-glr-script-out">Out:</p>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Not setting metadata
 Not setting metadata
 319 matching events found
@@ -1693,8 +1801,8 @@ imposing progressively more stringent rejection criteria:</p>
 machine learning to find optimal rejection criteria, and is designed to
 integrate smoothly with MNE-Python workflows. This can be a considerable
 time-saver when working with heterogeneous datasets.</p>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  12.084 seconds)</p>
-<p><strong>Estimated memory usage:</strong>  93 MB</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  23.357 seconds)</p>
+<p><strong>Estimated memory usage:</strong>  102 MB</p>
 <div class="sphx-glr-footer class sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-tutorials-preprocessing-20-rejecting-bad-data-py">
 <div class="sphx-glr-download sphx-glr-download-python docutils container">
 <p><a class="reference download internal" download="" href="../../_downloads/d38a2dc8022be2f1cc7723764a8fb8e3/20_rejecting_bad_data.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">20_rejecting_bad_data.py</span></code></a></p>
@@ -1743,7 +1851,7 @@ time-saver when working with heterogeneous datasets.</p>
   <div class="container">
     
     <div class="footer-item">
-      <p class="text-center text-muted small">&copy; Copyright 2012–2021, MNE Developers. Last updated <time datetime="2021-05-23T01:30:37.435880+00:00" class="localized">2021-05-23 01:30 UTC</time>
+      <p class="text-center text-muted small">&copy; Copyright 2012–2021, MNE Developers. Last updated <time datetime="2021-06-10T17:56:41.077993+00:00" class="localized">2021-06-10 17:56 UTC</time>
 <script type="text/javascript">$(function () { $("time.localized").each(function () { var el = $(this); el.text(new Date(el.attr("datetime")).toLocaleString([], {dateStyle: "medium", timeStyle: "long"})); }); } )</script></p>
     </div>
     
