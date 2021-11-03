@@ -14,7 +14,9 @@ layout in MNE.
 """
 # Authors: Mikołaj Magnuski <mmagnuski@swps.edu.pl>
 #
-# License: BSD (3-clause)
+# License: BSD-3-Clause
+
+# %%
 import numpy as np
 from matplotlib import pyplot as plt
 
@@ -23,7 +25,7 @@ import mne
 
 print(__doc__)
 
-###############################################################################
+# %%
 # Create fake data
 # ----------------
 #
@@ -40,7 +42,7 @@ data = rng.normal(size=(n_channels, 1)) * 1e-6
 fake_evoked = mne.EvokedArray(data, fake_info)
 fake_evoked.set_montage(biosemi_montage)
 
-###############################################################################
+# %%
 # Calculate sphere origin and radius
 # ----------------------------------
 #
@@ -60,7 +62,12 @@ fake_evoked.set_montage(biosemi_montage)
 
 # first we obtain the 3d positions of selected channels
 chs = ['Oz', 'Fpz', 'T7', 'T8']
-pos = np.stack([biosemi_montage.get_positions()['ch_pos'][ch] for ch in chs])
+# when the montage is set, it is transformed to the "head" coordinate frame
+# that MNE uses internally, therefore we need to use
+# ``fake_evoked.get_montage()`` to get these properly transformed coordinates
+montage_head = fake_evoked.get_montage()
+ch_pos = montage_head.get_positions()['ch_pos']
+pos = np.stack([ch_pos[ch] for ch in chs])
 
 # now we calculate the radius from T7 and T8 x position
 # (we could use Oz and Fpz y positions as well)
@@ -79,7 +86,7 @@ z = pos[:, -1].mean()
 # lets print the values we got:
 print([f'{v:0.5f}' for v in [x, y, z, radius]])
 
-###############################################################################
+# %%
 # Compare MNE and EEGLAB channel layout
 # -------------------------------------
 #
@@ -101,7 +108,7 @@ fake_evoked.plot_sensors(sphere=(x, y, z, radius), axes=ax[1], show=False)
 ax[0].set_title('MNE channel projection', fontweight='bold')
 ax[1].set_title('EEGLAB channel projection', fontweight='bold')
 
-###############################################################################
+# %%
 # Topomaps (topoplots)
 # --------------------
 #

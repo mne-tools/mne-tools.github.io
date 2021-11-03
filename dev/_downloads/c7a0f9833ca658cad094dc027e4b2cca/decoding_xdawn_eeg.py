@@ -12,7 +12,9 @@ fed into a logistic regression.
 """
 # Authors: Alexandre Barachant <alexandre.barachant@gmail.com>
 #
-# License: BSD (3-clause)
+# License: BSD-3-Clause
+
+# %%
 
 import numpy as np
 import matplotlib.pyplot as plt
@@ -23,7 +25,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report, confusion_matrix
 from sklearn.preprocessing import MinMaxScaler
 
-from mne import io, pick_types, read_events, Epochs, EvokedArray
+from mne import io, pick_types, read_events, Epochs, EvokedArray, create_info
 from mne.datasets import sample
 from mne.preprocessing import Xdawn
 from mne.decoding import Vectorizer
@@ -33,7 +35,7 @@ print(__doc__)
 
 data_path = sample.data_path()
 
-###############################################################################
+# %%
 # Set parameters and read data
 raw_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw.fif'
 event_fname = data_path + '/MEG/sample/sample_audvis_filt-0-40_raw-eve.fif'
@@ -93,18 +95,18 @@ plt.yticks(tick_marks, target_names)
 fig.tight_layout()
 ax.set(ylabel='True label', xlabel='Predicted label')
 
-###############################################################################
+# %%
 # The ``patterns_`` attribute of a fitted Xdawn instance (here from the last
 # cross-validation fold) can be used for visualization.
 
 fig, axes = plt.subplots(nrows=len(event_id), ncols=n_filter,
                          figsize=(n_filter, len(event_id) * 2))
 fitted_xdawn = clf.steps[0][1]
-tmp_info = epochs.info.copy()
-tmp_info['sfreq'] = 1.
+info = create_info(epochs.ch_names, 1, epochs.get_channel_types())
+info.set_montage(epochs.get_montage())
 for ii, cur_class in enumerate(sorted(event_id)):
     cur_patterns = fitted_xdawn.patterns_[cur_class]
-    pattern_evoked = EvokedArray(cur_patterns[:n_filter].T, tmp_info, tmin=0)
+    pattern_evoked = EvokedArray(cur_patterns[:n_filter].T, info, tmin=0)
     pattern_evoked.plot_topomap(
         times=np.arange(n_filter),
         time_format='Component %d' if ii == 0 else '', colorbar=False,
@@ -112,7 +114,7 @@ for ii, cur_class in enumerate(sorted(event_id)):
     axes[ii, 0].set(ylabel=cur_class)
 fig.tight_layout(h_pad=1.0, w_pad=1.0, pad=0.1)
 
-###############################################################################
+# %%
 # References
 # ----------
 # .. footbibliography::

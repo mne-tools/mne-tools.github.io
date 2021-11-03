@@ -1,17 +1,22 @@
 """
 .. _tut-reject-data-spans:
 
-Rejecting bad data spans
-========================
+Rejecting bad data spans and breaks
+===================================
 
-This tutorial covers manual marking of bad spans of data, and automated
-rejection of data spans based on signal amplitude.
+This tutorial covers:
+
+- manual marking of bad spans of data,
+- automated rejection of data spans based on signal amplitude, and
+- automated detection of breaks during an experiment.
 
 We begin as always by importing the necessary Python modules and loading some
 :ref:`example data <sample-dataset>`; to save memory we'll use a pre-filtered
 and downsampled version of the example data, and we'll also load an events
 array to use when converting the continuous data to epochs:
 """
+
+# %%
 
 import os
 import mne
@@ -24,7 +29,7 @@ events_file = os.path.join(sample_data_folder, 'MEG', 'sample',
                            'sample_audvis_filt-0-40_raw-eve.fif')
 events = mne.read_events(events_file)
 
-###############################################################################
+# %%
 # Annotating bad spans of data
 # ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 #
@@ -46,7 +51,7 @@ events = mne.read_events(events_file)
 fig = raw.plot()
 fig.canvas.key_press_event('a')
 
-###############################################################################
+# %%
 # .. sidebar:: Annotating good spans
 #
 #     The default "BAD\_" prefix for new labels can be removed simply by
@@ -105,7 +110,7 @@ blink_annot = mne.Annotations(onsets, durations, descriptions,
                               orig_time=raw.info['meas_date'])
 raw.set_annotations(blink_annot)
 
-###############################################################################
+# %%
 # Now we can confirm that the annotations are centered on the EOG events. Since
 # blinks are usually easiest to see in the EEG channels, we'll only plot EEG
 # here:
@@ -113,11 +118,93 @@ raw.set_annotations(blink_annot)
 eeg_picks = mne.pick_types(raw.info, meg=False, eeg=True)
 raw.plot(events=eog_events, order=eeg_picks)
 
-###############################################################################
+# %%
 # See the section :ref:`tut-section-programmatic-annotations` for more details
 # on creating annotations programmatically.
 #
+# Detecting and annotating breaks
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# Another useful function, albeit not related to artifact detection *per se*,
+# is `mne.preprocessing.annotate_break`: It will generate annotations for
+# segments of the data where no existing annotations (or, alternatively:
+# events) can be found. It can therefore be used to automatically detect and
+# mark breaks, e.g. between experimental blocks, when recording continued.
 #
+# For the sake of this example, let's assume an experiment consisting of two
+# blocks, the first one stretching from 30 to 90, and the second from 120 to
+# 180 seconds. We'll mark these blocks by annotations, and then use
+# `mne.preprocessing.annotate_break` to detect and annotate any breaks.
+#
+# .. note:: We need to take ``raw.first_time`` into account, otherwise the
+#           onsets will be incorrect!
+
+onsets = [
+    raw.first_time + 30,
+    raw.first_time + 180
+]
+durations = [60, 60]
+descriptions = ['block_1', 'block_2']
+
+block_annots = mne.Annotations(onset=onsets,
+                               duration=durations,
+                               description=descriptions,
+                               orig_time=raw.info['meas_date'])
+raw.set_annotations(raw.annotations + block_annots)  # add to existing
+raw.plot()
+
+# %%
+# Now detect break periods. We can control how far the break annotations shall
+# expand toward both ends of each break.
+
+break_annots = mne.preprocessing.annotate_break(
+    raw=raw,
+    min_break_duration=20,  # consider segments of at least 20 s duration
+    t_start_after_previous=5,  # start annotation 5 s after end of previous one
+    t_stop_before_next=2  # stop annotation 2 s before beginning of next one
+)
+
+raw.set_annotations(raw.annotations + break_annots)  # add to existing
+raw.plot()
+
+# %%
+# You can see that 3 segments have been annotated as ``BAD_break``:
+#
+# - the first one starting with the beginning of the recording and ending 2
+#   seconds before the beginning of block 1 (due to ``t_stop_before_next=2``),
+# - the second one starting 5 seconds after block 1 has ended, and ending 2
+#   seconds before the beginning of block 2 (``t_start_after_previous=5``,
+#   ``t_stop_before_next=2``),
+# - and the last one starting 5 seconds after block 2 has ended
+#   (``t_start_after_previous=5``) and continuing until the end of the
+#   recording.
+#
+# You can also see that only the ``block_1`` and ``block_2`` annotations
+# were considered in the detection of the break periods – the EOG annotations
+# were simply ignored. This is because, by default,
+# `~mne.preprocessing.annotate_break` ignores all annotations starting with
+# ``'bad'``. You can control this behavior via the ``ignore`` parameter.
+#
+# It is also possible to perform break period detection based on an array
+# of events: simply pass the array via the ``events`` parameter. Existing
+# annotations in the raw data will be ignored in this case:
+
+# only keep some button press events (code 32) for this demonstration
+events_subset = events[events[:, -1] == 32]
+# drop the first and last few events
+events_subset = events_subset[3:-3]
+
+break_annots = mne.preprocessing.annotate_break(
+    raw=raw,
+    events=events_subset,  # passing events will ignore existing annotations
+    min_break_duration=25  # pick a longer break duration this time
+)
+
+# replace existing annotations (otherwise it becomes difficult to see any
+# effects in the plot!)
+raw.set_annotations(break_annots)
+raw.plot(events=events_subset)
+
+# %%
 # .. _`tut-reject-epochs-section`:
 #
 # Rejecting Epochs based on channel amplitude
@@ -141,7 +228,7 @@ flat_criteria = dict(mag=1e-15,          # 1 fT
                      grad=1e-13,         # 1 fT/cm
                      eeg=1e-6)           # 1 µV
 
-###############################################################################
+# %%
 # The values that are appropriate are dataset- and hardware-dependent, so some
 # trial-and-error may be necessary to find the correct balance between data
 # quality and loss of power due to too many dropped epochs. Here, we've set the
@@ -156,12 +243,13 @@ flat_criteria = dict(mag=1e-15,          # 1 fT
 # ``reject_tmax=0``. A summary of the causes of rejected epochs can be
 # generated with the :meth:`~mne.Epochs.plot_drop_log` method:
 
+raw.set_annotations(blink_annot)  # restore the EOG annotations
 epochs = mne.Epochs(raw, events, tmin=-0.2, tmax=0.5, reject_tmax=0,
                     reject=reject_criteria, flat=flat_criteria,
                     reject_by_annotation=False, preload=True)
 epochs.plot_drop_log()
 
-###############################################################################
+# %%
 # Notice that we've passed ``reject_by_annotation=False`` above, in order to
 # isolate the effects of the rejection thresholds. If we re-run the epoching
 # with ``reject_by_annotation=True`` (the default) we see that the rejections
@@ -173,7 +261,7 @@ epochs = mne.Epochs(raw, events, tmin=-0.2, tmax=0.5, reject_tmax=0,
                     reject=reject_criteria, flat=flat_criteria, preload=True)
 epochs.plot_drop_log()
 
-###############################################################################
+# %%
 # More importantly, note that *many* more epochs are rejected (~20% instead of
 # ~2.5%) when rejecting based on the blink labels, underscoring why it is
 # usually desirable to repair artifacts rather than exclude them.
@@ -185,7 +273,7 @@ epochs.plot_drop_log()
 
 print(epochs.drop_log)
 
-###############################################################################
+# %%
 # Finally, it should be noted that "dropped" epochs are not necessarily deleted
 # from the :class:`~mne.Epochs` object right away. Above, we forced the
 # dropping to happen when we created the :class:`~mne.Epochs` object by using
@@ -210,7 +298,7 @@ print(epochs.drop_log)
 
 epochs.drop_bad()
 
-###############################################################################
+# %%
 # Alternatively, if rejection thresholds were not originally given to the
 # :class:`~mne.Epochs` constructor, they can be passed to
 # :meth:`~mne.Epochs.drop_bad` later instead; this can also be a way of
@@ -224,7 +312,7 @@ stronger_reject_criteria = dict(mag=2000e-15,     # 2000 fT
 epochs.drop_bad(reject=stronger_reject_criteria)
 print(epochs.drop_log)
 
-###############################################################################
+# %%
 # Note that a complementary Python module, the `autoreject package`_, uses
 # machine learning to find optimal rejection criteria, and is designed to
 # integrate smoothly with MNE-Python workflows. This can be a considerable

@@ -10,8 +10,8 @@ This section describes how to read data for various MEG manufacturers.
 
 .. _import-neuromag:
 
-Elekta NeuroMag (.fif)
-======================
+MEGIN/Elekta Neuromag VectorView and TRIUX (.fif)
+=================================================
 
 Neuromag Raw FIF files can be loaded using :func:`mne.io.read_raw_fif`.
 
@@ -289,9 +289,11 @@ Arbitrary (e.g., simulated or manually read in) raw data can be constructed
 from memory by making use of :class:`mne.io.RawArray`, :class:`mne.EpochsArray`
 or :class:`mne.EvokedArray` in combination with :func:`mne.create_info`.
 
-This functionality is illustrated in :ref:`tut_creating_data_structures`.
+This functionality is illustrated in :ref:`tut-creating-data-structures`.
 Using 3rd party
 libraries such as `NEO <https://github.com/NeuralEnsemble/python-neo>`__ in
 combination with these functions abundant electrophysiological file formats can
 be easily loaded into MNE.
 """  # noqa:E501
+
+# %%

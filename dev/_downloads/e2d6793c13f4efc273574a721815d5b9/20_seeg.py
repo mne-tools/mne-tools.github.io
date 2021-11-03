@@ -1,5 +1,5 @@
 """
-.. _tut_working_with_seeg:
+.. _tut-working-with-seeg:
 
 ======================
 Working with sEEG data
@@ -23,111 +23,135 @@ more information.
 
 For an example that involves ECoG data, channel locations in a
 subject-specific MRI, or projection into a surface, see
-:ref:`tut_working_with_ecog`. In the ECoG example, we show
+:ref:`tut-working-with-ecog`. In the ECoG example, we show
 how to visualize surface grid channels on the brain.
 """
 
 # Authors: Eric Larson <larson.eric.d@gmail.com>
 #          Adam Li <adam2392@gmail.com>
+#          Alex Rockhill <aprockhill@mailbox.org>
 #
-# License: BSD (3-clause)
+# License: BSD-3-Clause
+
+# %%
 
 import os.path as op
 
 import numpy as np
-import pandas as pd
+import matplotlib.pyplot as plt
 
 import mne
 from mne.datasets import fetch_fsaverage
-
-print(__doc__)
 
 # paths to mne datasets - sample sEEG and FreeSurfer's fsaverage subject
 # which is in MNI space
 misc_path = mne.datasets.misc.data_path()
 sample_path = mne.datasets.sample.data_path()
-subject = 'fsaverage'
-subjects_dir = sample_path + '/subjects'
+subjects_dir = op.join(sample_path, 'subjects')
 
 # use mne-python's fsaverage data
 fetch_fsaverage(subjects_dir=subjects_dir, verbose=True)  # downloads if needed
 
-###############################################################################
-# Let's load some sEEG electrode locations and names, and turn them into
-# a :class:`mne.channels.DigMontage` class. First, use pandas to read in the
-# ``.tsv`` file.
+# %%
+# Let's load some sEEG data with channel locations and make epochs.
 
-# In mne-python, the electrode coordinates are required to be in meters
-elec_df = pd.read_csv(misc_path + '/seeg/sample_seeg_electrodes.tsv',
-                      sep='\t', header=0, index_col=None)
-ch_names = elec_df['name'].tolist()
-ch_coords = elec_df[['x', 'y', 'z']].to_numpy(dtype=float)
+raw = mne.io.read_raw(op.join(misc_path, 'seeg', 'sample_seeg_ieeg.fif'))
 
-# the test channel coordinates were in mm, so we convert them to meters
-ch_coords = ch_coords / 1000.
+events, event_id = mne.events_from_annotations(raw)
+epochs = mne.Epochs(raw, events, event_id, detrend=1, baseline=None)
+epochs = epochs['Response'][0]  # just process one epoch of data for speed
 
-# create dictionary of channels and their xyz coordinates (now in MNI space)
-ch_pos = dict(zip(ch_names, ch_coords))
+# %%
+# Let use the Talairach transform computed in the Freesurfer recon-all
+# to apply the Freesurfer surface RAS ('mri') to MNI ('mni_tal') transform.
 
-# Ideally the nasion/LPA/RPA will also be present from the digitization, here
-# we use fiducials estimated from the subject's FreeSurfer MNI transformation:
-lpa, nasion, rpa = mne.coreg.get_mni_fiducials(
-    subject, subjects_dir=subjects_dir)
-lpa, nasion, rpa = lpa['r'], nasion['r'], rpa['r']
+montage = epochs.get_montage()
 
-###############################################################################
-# Now we make a :class:`mne.channels.DigMontage` stating that the sEEG
-# contacts are in the FreeSurfer surface RAS (i.e., MRI) coordinate system
-# for the given subject. Keep in mind that ``fsaverage`` is special in that
-# it is already in MNI space.
+# first we need a head to mri transform since the data is stored in "head"
+# coordinates, let's load the mri to head transform and invert it
+this_subject_dir = op.join(misc_path, 'seeg')
+head_mri_t = mne.coreg.estimate_head_mri_t('sample_seeg', this_subject_dir)
+# apply the transform to our montage
+montage.apply_trans(head_mri_t)
 
-montage = mne.channels.make_dig_montage(
-    ch_pos, coord_frame='mri', nasion=nasion, lpa=lpa, rpa=rpa)
-print('Created %s channel positions' % len(ch_names))
+# now let's load our Talairach transform and apply it
+mri_mni_t = mne.read_talxfm('sample_seeg', op.join(misc_path, 'seeg'))
+montage.apply_trans(mri_mni_t)  # mri to mni_tal (MNI Taliarach)
 
-###############################################################################
-# Now we get the :term:`trans` that transforms from our MRI coordinate system
-# to the head coordinate frame. This transform will be applied to the
-# data when applying the montage so that standard plotting functions like
-# :func:`mne.viz.plot_evoked_topomap` will be aligned properly.
+# for fsaverage, "mri" and "mni_tal" are equivalent and, since
+# we want to plot in fsaverage "mri" space, we need use an identity
+# transform to equate these coordinate frames
+montage.apply_trans(
+    mne.transforms.Transform(fro='mni_tal', to='mri', trans=np.eye(4)))
 
-trans = mne.channels.compute_native_head_t(montage)
-print(trans)
+epochs.set_montage(montage)
 
-###############################################################################
-# Now that we have our montage, we can load in our corresponding
-# time-series data and set the montage to the raw data.
-
-# first we'll load in the sample dataset
-raw = mne.io.read_raw_edf(misc_path + '/seeg/sample_seeg.edf')
-
-# drop bad channels
-raw.info['bads'].extend([ch for ch in raw.ch_names if ch not in ch_names])
-raw.load_data()
-raw.drop_channels(raw.info['bads'])
-raw.crop(0, 2)  # just process 2 sec of data for speed
-
-# attach montage
-raw.set_montage(montage)
-
-# set channel types to sEEG (instead of EEG) that have actual positions
-raw.set_channel_types(
-    {ch_name: 'seeg' if np.isfinite(ch_pos[ch_name]).all() else 'misc'
-     for ch_name in raw.ch_names})
-
-###############################################################################
+# %%
 # Let's check to make sure everything is aligned.
+#
+# .. note::
+#    The most rostral electrode in the temporal lobe is outside the
+#    fsaverage template brain. This is not ideal but it is the best that
+#    the linear Talairach transform can accomplish. A more complex
+#    transform is necessary for more accurate warping, see
+#    :ref:`tut-ieeg-localize`.
 
-fig = mne.viz.plot_alignment(raw.info, trans, 'fsaverage',
+# compute the transform to head for plotting
+trans = mne.channels.compute_native_head_t(montage)
+# note that this is the same as:
+# ``mne.transforms.invert_transform(
+#      mne.transforms.combine_transforms(head_mri_t, mri_mni_t))``
+
+fig = mne.viz.plot_alignment(epochs.info, trans, 'fsaverage',
                              subjects_dir=subjects_dir, show_axes=True,
-                             surfaces=["pial", "head"])
+                             surfaces=['pial', 'head'], coord_frame='mri')
 
-###############################################################################
-# Next, we'll get the raw data and plot its amplitude over time.
+# %%
+# Let's also look at which regions of interest are nearby our electrode
+# contacts.
 
-raw.plot()
+aseg = 'aparc+aseg'  # parcellation/anatomical segmentation atlas
+labels, colors = mne.get_montage_volume_labels(
+    montage, 'fsaverage', subjects_dir=subjects_dir, aseg=aseg)
 
-###############################################################################
+# separate by electrodes which have names like LAMY 1
+electrodes = set([''.join([lttr for lttr in ch_name
+                           if not lttr.isdigit() and lttr != ' '])
+                  for ch_name in montage.ch_names])
+print(f'Electrodes in the dataset: {electrodes}')
+
+electrodes = ('LPM', 'LSMA')  # choose two for this example
+for elec in electrodes:
+    picks = [ch_name for ch_name in epochs.ch_names if elec in ch_name]
+    fig = plt.figure(num=None, figsize=(8, 8), facecolor='black')
+    mne.viz.plot_channel_labels_circle(labels, colors, picks=picks, fig=fig)
+    fig.text(0.3, 0.9, 'Anatomical Labels', color='white')
+
+# %%
+# Now, let's the electrodes and a few regions of interest that the contacts
+# of the electrode are proximal to.
+
+picks = [ch_name for ch_name in epochs.ch_names if
+         any([elec in ch_name for elec in electrodes])]
+labels = ('ctx-lh-caudalmiddlefrontal', 'ctx-lh-precentral',
+          'ctx-lh-superiorfrontal', 'Left-Putamen')
+
+fig = mne.viz.plot_alignment(epochs.info.copy().pick_channels(picks), trans,
+                             'fsaverage', subjects_dir=subjects_dir,
+                             surfaces=[], coord_frame='mri')
+
+brain = mne.viz.Brain('fsaverage', alpha=0.1, cortex='low_contrast',
+                      subjects_dir=subjects_dir, units='m', figure=fig)
+brain.add_volume_labels(aseg='aparc+aseg', labels=labels)
+brain.show_view(azimuth=120, elevation=90, distance=0.25)
+brain.enable_depth_peeling()
+
+# %%
+# Next, we'll get the epoch data and plot its amplitude over time.
+
+epochs.plot()
+
+# %%
 # We can visualize this raw data on the ``fsaverage`` brain (in MNI space) as
 # a heatmap. This works by first creating an ``Evoked`` data structure
 # from the data of interest (in this example, it is just the raw LFP).
@@ -139,14 +163,14 @@ fname_src = op.join(subjects_dir, 'fsaverage', 'bem',
                     'fsaverage-vol-5-src.fif')
 vol_src = mne.read_source_spaces(fname_src)
 
-evoked = mne.EvokedArray(raw.get_data(), raw.info).crop(0, 1)  # shorter
+evoked = epochs.average()
 stc = mne.stc_near_sensors(
-    evoked, trans, subject, subjects_dir=subjects_dir, src=vol_src,
+    evoked, trans, 'fsaverage', subjects_dir=subjects_dir, src=vol_src,
     verbose='error')  # ignore missing electrode warnings
 stc = abs(stc)  # just look at magnitude
 clim = dict(kind='value', lims=np.percentile(abs(evoked.data), [10, 50, 75]))
 
-###############################################################################
+# %%
 # Plot 3D source (brain region) visualization:
 #
 # By default, `stc.plot_3d() <mne.VolSourceEstimate.plot_3d>` will show a time
@@ -154,7 +178,7 @@ clim = dict(kind='value', lims=np.percentile(abs(evoked.data), [10, 50, 75]))
 # In this example, it is simply the source with the largest raw signal value.
 # Its location is marked on the brain by a small blue sphere.
 
-# sphinx_gallery_thumbnail_number = 4
+# sphinx_gallery_thumbnail_number = 6
 
 brain = stc.plot_3d(
     src=vol_src, subjects_dir=subjects_dir,
@@ -166,7 +190,7 @@ brain = stc.plot_3d(
 # brain.save_movie(time_dilation=3, interpolation='linear', framerate=10,
 #                  time_viewer=True, filename='./mne-test-seeg.m4')
 
-###############################################################################
+# %%
 # In this tutorial, we used a BEM surface for the ``fsaverage`` subject from
 # FreeSurfer.
 #
@@ -178,5 +202,5 @@ brain = stc.plot_3d(
 #   :ref:`tut-viz-stcs`.
 # - For extracting activation within a specific FreeSurfer volume and using
 #   different FreeSurfer volumes, see: :ref:`tut-freesurfer-mne`.
-# - For working with BEM surfaces and using FreeSurfer, or mne to generate
+# - For working with BEM surfaces and using FreeSurfer, or MNE to generate
 #   them, see: :ref:`tut-forward`.

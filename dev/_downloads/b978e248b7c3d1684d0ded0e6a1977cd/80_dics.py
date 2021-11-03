@@ -13,9 +13,9 @@ simulated sources.
 """
 # Author: Marijn van Vliet <w.m.vanvliet@gmail.com>
 #
-# License: BSD (3-clause)
+# License: BSD-3-Clause
 
-###############################################################################
+# %%
 # Setup
 # -----
 # We first import the required packages to run this tutorial and define a list
@@ -46,7 +46,7 @@ fwd = mne.read_forward_solution(fwd_fname)
 # Seed for the random number generator
 rand = np.random.RandomState(42)
 
-###############################################################################
+# %%
 # Data simulation
 # ---------------
 #
@@ -88,7 +88,7 @@ def coh_signal_gen():
     return signal
 
 
-###############################################################################
+# %%
 # Let's simulate two timeseries and plot some basic information about them.
 signal1 = coh_signal_gen()
 signal2 = coh_signal_gen()
@@ -120,7 +120,7 @@ ax.set(xlabel='Frequency (Hz)', xlim=f[[0, 49]], ylabel='Coherence',
        title='Coherence between the timeseries')
 fig.tight_layout()
 
-###############################################################################
+# %%
 # Now we put the signals at two locations on the cortex. We construct a
 # :class:`mne.SourceEstimate` object to store them in.
 #
@@ -139,13 +139,13 @@ stc_signal = mne.SourceEstimate(
     data, vertices, tmin=0, tstep=1. / sfreq, subject='sample')
 stc_noise = stc_signal * 0.
 
-###############################################################################
+# %%
 # Before we simulate the sensor-level data, let's define a signal-to-noise
 # ratio. You are encouraged to play with this parameter and see the effect of
 # noise on our results.
 snr = 1.  # Signal-to-noise ratio. Decrease to add more noise.
 
-###############################################################################
+# %%
 # Now we run the signal through the forward model to obtain simulated sensor
 # data. To save computation time, we'll only simulate gradiometer data. You can
 # try simulating other types of sensors as well.
@@ -155,8 +155,7 @@ snr = 1.  # Signal-to-noise ratio. Decrease to add more noise.
 
 # Read the info from the sample dataset. This defines the location of the
 # sensors and such.
-info = mne.io.read_info(raw_fname)
-info.update(sfreq=sfreq, bads=[])
+info = mne.io.read_raw(raw_fname).crop(0, 1).resample(50).info
 
 # Only use gradiometers
 picks = mne.pick_types(info, meg='grad', stim=True, exclude=())
@@ -175,7 +174,7 @@ raw = simulate_raw(info, stcs, forward=fwd)
 add_noise(raw, cov, iir_filter=[4, -4, 0.8], random_state=rand)
 
 
-###############################################################################
+# %%
 # We create an :class:`mne.Epochs` object containing two trials: one with
 # both noise and signal and one with just noise
 
@@ -191,7 +190,7 @@ picks = mne.pick_channels(epochs.ch_names,
                           mne.read_vectorview_selection('Left-frontal'))
 epochs.plot(picks=picks)
 
-###############################################################################
+# %%
 # Power mapping
 # -------------
 # With our simulated dataset ready, we can now pretend to be researchers that
@@ -202,7 +201,7 @@ epochs.plot(picks=picks)
 # straightforward MNE-dSPM inverse solution for this, and the DICS beamformer
 # which is specifically designed to work with oscillatory data.
 
-###############################################################################
+# %%
 # Computing the inverse using MNE-dSPM:
 
 # Compute the inverse operator
@@ -223,10 +222,9 @@ brain.add_foci(vertices[0][0], coords_as_verts=True, hemi='lh')
 brain.add_foci(vertices[1][0], coords_as_verts=True, hemi='rh')
 
 # Rotate the view and add a title.
-brain.show_view(view={'azimuth': 0, 'elevation': 0, 'distance': 550,
-                'focalpoint': [0, 0, 0]})
+brain.show_view(azimuth=0, elevation=0, distance=550, focalpoint=(0, 0, 0))
 
-###############################################################################
+# %%
 # We will now compute the cortical power map at 10 Hz. using a DICS beamformer.
 # A beamformer will construct for each vertex a spatial filter that aims to
 # pass activity originating from the vertex, while dampening activity from
@@ -251,12 +249,12 @@ csd_signal = csd_morlet(epochs['signal'], frequencies=[10])
 # Compute the spatial filters for each vertex, using two approaches.
 filters_approach1 = make_dics(
     info, fwd, csd_signal, reg=0.05, pick_ori='max-power', depth=1.,
-    inversion='single', weight_norm=None)
+    inversion='single', weight_norm=None, real_filter=True)
 print(filters_approach1)
 
 filters_approach2 = make_dics(
     info, fwd, csd_signal, reg=0.05, pick_ori='max-power', depth=None,
-    inversion='matrix', weight_norm='unit-noise-gain')
+    inversion='matrix', weight_norm='unit-noise-gain', real_filter=True)
 print(filters_approach2)
 
 # You can save these to disk with:
@@ -266,7 +264,7 @@ print(filters_approach2)
 power_approach1, f = apply_dics_csd(csd_signal, filters_approach1)
 power_approach2, f = apply_dics_csd(csd_signal, filters_approach2)
 
-###############################################################################
+# %%
 # Plot the DICS power maps for both approaches, starting with the first:
 
 
@@ -280,19 +278,18 @@ def plot_approach(power, n):
     brain.add_foci(vertices[0][0], coords_as_verts=True, hemi='lh', color='b')
     brain.add_foci(vertices[1][0], coords_as_verts=True, hemi='rh', color='b')
     # Rotate the view and add a title.
-    brain.show_view(view={'azimuth': 0, 'elevation': 0, 'distance': 550,
-                          'focalpoint': [0, 0, 0]})
+    brain.show_view(azimuth=0, elevation=0, distance=550, focalpoint=(0, 0, 0))
     return brain
 
 
 brain1 = plot_approach(power_approach1, 1)
 
-###############################################################################
+# %%
 # Now the second:
 
 brain2 = plot_approach(power_approach2, 2)
 
-###############################################################################
+# %%
 # Excellent! All methods found our two simulated sources. Of course, with a
 # signal-to-noise ratio (SNR) of 1, is isn't very hard to find them. You can
 # try playing with the SNR and see how the MNE-dSPM and DICS approaches hold up

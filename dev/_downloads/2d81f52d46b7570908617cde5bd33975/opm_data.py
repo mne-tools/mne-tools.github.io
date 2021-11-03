@@ -10,6 +10,8 @@ nine QuSpin SERF OPMs placed over the right-hand side somatomotor area.
 Here we demonstrate how to localize these custom OPM data in MNE.
 """
 
+# %%
+
 # sphinx_gallery_thumbnail_number = 4
 
 import os.path as op
@@ -26,7 +28,7 @@ bem_fname = op.join(subjects_dir, subject, 'bem',
 fwd_fname = op.join(data_path, 'MEG', 'OPM', 'OPM_sample-fwd.fif')
 coil_def_fname = op.join(data_path, 'MEG', 'OPM', 'coil_def.dat')
 
-###############################################################################
+# %%
 # Prepare data for localization
 # -----------------------------
 # First we filter and epoch the data:
@@ -54,7 +56,7 @@ evoked.plot()
 cov = mne.compute_covariance(epochs, tmax=0.)
 del epochs, raw
 
-###############################################################################
+# %%
 # Examine our coordinate alignment for source localization and compute a
 # forward operator:
 #
@@ -65,7 +67,7 @@ del epochs, raw
 #           but should be fine for these analyses.
 
 bem = mne.read_bem_solution(bem_fname)
-trans = None
+trans = mne.transforms.Transform('head', 'mri')  # identity transformation
 
 # To compute the forward solution, we must
 # provide our temporary/custom coil definitions, which can be done as::
@@ -87,13 +89,13 @@ with mne.use_coil_def(coil_def_fname):
 mne.viz.set_3d_view(figure=fig, azimuth=45, elevation=60, distance=0.4,
                     focalpoint=(0.02, 0, 0.04))
 
-###############################################################################
+# %%
 # Perform dipole fitting
 # ----------------------
 
 # Fit dipoles on a subset of time points
 with mne.use_coil_def(coil_def_fname):
-    dip_opm, _ = mne.fit_dipole(evoked.copy().crop(0.015, 0.080),
+    dip_opm, _ = mne.fit_dipole(evoked.copy().crop(0.040, 0.080),
                                 cov, bem, trans, verbose=True)
 idx = np.argmax(dip_opm.gof)
 print('Best dipole at t=%0.1f ms with %0.1f%% GOF'
@@ -103,7 +105,7 @@ print('Best dipole at t=%0.1f ms with %0.1f%% GOF'
 dip_opm.plot_locations(trans, subject, subjects_dir,
                        mode='orthoview', idx=idx)
 
-###############################################################################
+# %%
 # Perform minimum-norm localization
 # ---------------------------------
 # Due to the small number of sensors, there will be some leakage of activity
@@ -124,4 +126,5 @@ stc = mne.minimum_norm.apply_inverse(
 # Plot source estimate at time of best dipole fit
 brain = stc.plot(hemi='rh', views='lat', subjects_dir=subjects_dir,
                  initial_time=dip_opm.times[idx],
-                 clim=dict(kind='percent', lims=[99, 99.9, 99.99]))
+                 clim=dict(kind='percent', lims=[99, 99.9, 99.99]),
+                 size=(400, 300), background='w')

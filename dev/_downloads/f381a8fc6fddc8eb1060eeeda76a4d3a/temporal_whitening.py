@@ -9,7 +9,9 @@ to temporally whiten the signals.
 """
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #
-# License: BSD (3-clause)
+# License: BSD-3-Clause
+
+# %%
 
 import numpy as np
 from scipy import signal
@@ -28,7 +30,7 @@ proj_fname = data_path + '/MEG/sample/sample_audvis_ecg-proj.fif'
 
 raw = mne.io.read_raw_fif(raw_fname)
 proj = mne.read_proj(proj_fname)
-raw.info['projs'] += proj
+raw.add_proj(proj)
 raw.info['bads'] = ['MEG 2443', 'EEG 053']  # mark bad channels
 
 # Set up pick list: Gradiometers - bad channels
@@ -45,7 +47,7 @@ innovation = signal.convolve(d, a, 'valid')
 d_ = signal.lfilter(b, a, innovation)  # regenerate the signal
 d_ = np.r_[d_[0] * np.ones(order), d_]  # dummy samples to keep signal length
 
-###############################################################################
+# %%
 # Plot the different time series and PSDs
 plt.close('all')
 plt.figure()

@@ -10,7 +10,9 @@ functions.
 """
 # Author: Olaf Hauk <olaf.hauk@mrc-cbu.cam.ac.uk>
 #
-# License: BSD (3-clause)
+# License: BSD-3-Clause
+
+# %%
 
 import mne
 from mne.datasets import sample
@@ -93,18 +95,17 @@ filters_post = make_lcmv(info, forward, cov_post, reg=0.05,
 # Compute resolution matrices for the two LCMV beamformers
 # --------------------------------------------------------
 
-rm_pre = make_lcmv_resolution_matrix(filters_pre, forward, info)
-
-rm_post = make_lcmv_resolution_matrix(filters_post, forward, info)
-
 # compute cross-talk functions (CTFs) for one target vertex
 sources = [3000]
-
-stc_pre = get_cross_talk(rm_pre, forward['src'], sources, norm=True)
-
-stc_post = get_cross_talk(rm_post, forward['src'], sources, norm=True)
 verttrue = [forward['src'][0]['vertno'][sources[0]]]  # pick one vertex
-del forward
+rm_pre = make_lcmv_resolution_matrix(filters_pre, forward, info)
+stc_pre = get_cross_talk(rm_pre, forward['src'], sources, norm=True)
+del rm_pre
+
+##############################################################################
+rm_post = make_lcmv_resolution_matrix(filters_post, forward, info)
+stc_post = get_cross_talk(rm_post, forward['src'], sources, norm=True)
+del rm_post
 
 ##############################################################################
 # Visualize
@@ -121,7 +122,7 @@ brain_pre.add_text(0.1, 0.9, 'LCMV beamformer with pre-stimulus\ndata '
 brain_pre.add_foci(verttrue, coords_as_verts=True, scale_factor=1., hemi='lh',
                    color='green')
 
-###############################################################################
+# %%
 # Post:
 
 brain_post = stc_post.plot('sample', 'inflated', 'lh',
@@ -134,7 +135,7 @@ brain_post.add_text(0.1, 0.9, 'LCMV beamformer with post-stimulus\ndata '
 brain_post.add_foci(verttrue, coords_as_verts=True, scale_factor=1.,
                     hemi='lh', color='green')
 
-###############################################################################
+# %%
 # The pre-stimulus beamformer's CTF has lower values in parietal regions
 # suppressed alpha activity?) but larger values in occipital regions (less
 # suppression of visual activity?).

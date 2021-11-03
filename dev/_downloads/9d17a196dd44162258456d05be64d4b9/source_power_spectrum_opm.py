@@ -28,7 +28,9 @@ Preprocessing
 #          Luke Bloy <luke.bloy@gmail.com>
 #          Eric Larson <larson.eric.d@gmail.com>
 #
-# License: BSD (3-clause)
+# License: BSD-3-Clause
+
+# %%
 
 import os.path as op
 
@@ -52,7 +54,7 @@ vv_erm_fname = data_path + '/MEG/SQUID/SQUID_empty_room.fif'
 vv_trans_fname = data_path + '/MEG/SQUID/SQUID-trans.fif'
 opm_fname = data_path + '/MEG/OPM/OPM_resting_state_raw.fif'
 opm_erm_fname = data_path + '/MEG/OPM/OPM_empty_room_raw.fif'
-opm_trans_fname = None
+opm_trans = mne.transforms.Transform('head', 'mri')  # use identity transform
 opm_coil_def_fname = op.join(data_path, 'MEG', 'OPM', 'coil_def.dat')
 
 ##############################################################################
@@ -134,12 +136,12 @@ fwd['vv'] = mne.make_forward_solution(
 
 with mne.use_coil_def(opm_coil_def_fname):
     fig = mne.viz.plot_alignment(
-        raws['opm'].info, trans=opm_trans_fname, subject=subject,
+        raws['opm'].info, trans=opm_trans, subject=subject,
         subjects_dir=subjects_dir, dig=False, coord_frame='mri',
         surfaces=('head', 'white'))
     mne.viz.set_3d_view(figure=fig, **kwargs)
     fwd['opm'] = mne.make_forward_solution(
-        raws['opm'].info, opm_trans_fname, src, bem, eeg=False, verbose=True)
+        raws['opm'].info, opm_trans, src, bem, eeg=False, verbose=True)
 
 del src, bem
 
@@ -176,7 +178,7 @@ for kind in kinds:
 del fwd, raws, raw_erms
 
 
-###############################################################################
+# %%
 # Now we can make some plots of each frequency band. Note that the OPM head
 # coverage is only over right motor cortex, so only localization
 # of beta is likely to be worthwhile.
@@ -195,19 +197,19 @@ def plot_band(kind, band):
         time_label=title, title=title, colormap='inferno',
         time_viewer=False, show_traces=False,
         clim=dict(kind='percent', lims=(70, 85, 99)), smoothing_steps=10)
-    brain.show_view(dict(azimuth=0, elevation=0), roll=0)
+    brain.show_view(azimuth=0, elevation=0, roll=0)
     return fig, brain
 
 
 fig_theta, brain_theta = plot_band('vv', 'theta')
 
-###############################################################################
+# %%
 # Alpha
 # -----
 
 fig_alpha, brain_alpha = plot_band('vv', 'alpha')
 
-###############################################################################
+# %%
 # Beta
 # ----
 # Here we also show OPM data, which shows a profile similar to the VectorView
@@ -215,17 +217,17 @@ fig_alpha, brain_alpha = plot_band('vv', 'alpha')
 
 fig_beta, brain_beta = plot_band('vv', 'beta')
 
-###############################################################################
+# %%
 # Then OPM:
 fig_beta_opm, brain_beta_opm = plot_band('opm', 'beta')
 
-###############################################################################
+# %%
 # Gamma
 # -----
 
 fig_gamma, brain_gamma = plot_band('vv', 'gamma')
 
-###############################################################################
+# %%
 # References
 # ----------
 # .. footbibliography::
