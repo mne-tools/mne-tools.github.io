@@ -1,10 +1,13 @@
+# -*- coding: utf-8 -*-
 """
+.. _ex-mixed-source-space-inverse:
+
 =====================================================================
 Compute MNE inverse solution on evoked data with a mixed source space
 =====================================================================
 
-Create a mixed source space and compute an MNE inverse solution on an
-evoked dataset.
+Create a mixed source space and compute an MNE inverse solution on an evoked
+dataset.
 """
 # Author: Annalisa Pascarella <a.pascarella@iac.cnr.it>
 #
@@ -142,13 +145,13 @@ stc_vec = apply_inverse(evoked, inverse_operator, lambda2, inv_method,
 brain = stc_vec.plot(
     hemi='both', src=inverse_operator['src'], views='coronal',
     initial_time=initial_time, subjects_dir=subjects_dir,
-    brain_kwargs=dict(silhouette=True))
+    brain_kwargs=dict(silhouette=True), smoothing_steps=7)
 
 # %%
 # Plot the surface
 # ----------------
 brain = stc.surface().plot(initial_time=initial_time,
-                           subjects_dir=subjects_dir)
+                           subjects_dir=subjects_dir, smoothing_steps=7)
 # %%
 # Plot the volume
 # ---------------

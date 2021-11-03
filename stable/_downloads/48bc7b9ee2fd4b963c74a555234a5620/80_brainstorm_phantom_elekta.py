@@ -7,19 +7,17 @@ Brainstorm Elekta phantom dataset tutorial
 ==========================================
 
 Here we compute the evoked from raw for the Brainstorm Elekta phantom
-tutorial dataset. For comparison, see :footcite:`TadelEtAl2011` and:
-
-    https://neuroimage.usc.edu/brainstorm/Tutorials/PhantomElekta
-
-References
-----------
-.. footbibliography::
+tutorial dataset. For comparison, see :footcite:`TadelEtAl2011` and
+`the original Brainstorm tutorial
+<https://neuroimage.usc.edu/brainstorm/Tutorials/PhantomElekta>`__.
 """
 # sphinx_gallery_thumbnail_number = 9
 
 # Authors: Eric Larson <larson.eric.d@gmail.com>
 #
-# License: BSD (3-clause)
+# License: BSD-3-Clause
+
+# %%
 
 import os.path as op
 import numpy as np
@@ -27,22 +25,22 @@ import matplotlib.pyplot as plt
 
 import mne
 from mne import find_events, fit_dipole
+from mne.datasets import fetch_phantom
 from mne.datasets.brainstorm import bst_phantom_elekta
 from mne.io import read_raw_fif
 
 print(__doc__)
 
-###############################################################################
+# %%
 # The data were collected with an Elekta Neuromag VectorView system at 1000 Hz
 # and low-pass filtered at 330 Hz. Here the medium-amplitude (200 nAm) data
 # are read to construct instances of :class:`mne.io.Raw`.
 data_path = bst_phantom_elekta.data_path(verbose=True)
-subject = 'sample'
 
 raw_fname = op.join(data_path, 'kojak_all_200nAm_pp_no_chpi_no_ms_raw.fif')
 raw = read_raw_fif(raw_fname)
 
-###############################################################################
+# %%
 # Data channel array consisted of 204 MEG planor gradiometers,
 # 102 axial magnetometers, and 3 stimulus channels. Let's get the events
 # for the phantom, where each dipole (1-32) gets its own event:
@@ -51,19 +49,19 @@ events = find_events(raw, 'STI201')
 raw.plot(events=events)
 raw.info['bads'] = ['MEG1933', 'MEG2421']
 
-###############################################################################
+# %%
 # The data have strong line frequency (60 Hz and harmonics) and cHPI coil
 # noise (five peaks around 300 Hz). Here we plot only out to 60 seconds
 # to save memory:
 
 raw.plot_psd(tmax=30., average=False)
 
-###############################################################################
+# %%
 # Our phantom produces sinusoidal bursts at 20 Hz:
 
 raw.plot(events=events)
 
-###############################################################################
+# %%
 # Now we epoch our data, average it, and look at the first dipole response.
 # The first peak appears around 3 ms. Because we low-passed at 40 Hz,
 # we can also decimate our data to save memory.
@@ -75,18 +73,31 @@ epochs = mne.Epochs(raw, events, event_id, tmin, tmax, baseline=(None, bmax),
                     preload=False)
 epochs['1'].average().plot(time_unit='s')
 
-###############################################################################
+# %%
 # .. _plt_brainstorm_phantom_elekta_eeg_sphere_geometry:
 #
 # Let's use a :ref:`sphere head geometry model <eeg_sphere_model>`
 # and let's see the coordinate alignment and the sphere location. The phantom
 # is properly modeled by a single-shell sphere with origin (0., 0., 0.).
+#
+# Even though this is a VectorView/TRIUX phantom, we can use the Otaniemi
+# phantom subject as a surrogate because the "head" surface (hemisphere outer
+# shell) has the same geometry for both phantoms, even though the internal
+# dipole locations differ. The phantom_otaniemi scan was aligned to the
+# phantom's head coordinate frame, so an identity ``trans`` is appropriate
+# here.
+
+subjects_dir = data_path
+fetch_phantom('otaniemi', subjects_dir=subjects_dir)
 sphere = mne.make_sphere_model(r0=(0., 0., 0.), head_radius=0.08)
+subject = 'phantom_otaniemi'
+trans = mne.transforms.Transform('head', 'mri', np.eye(4))
+mne.viz.plot_alignment(
+    epochs.info, subject=subject, show_axes=True, bem=sphere, dig=True,
+    surfaces=('head-dense', 'inner_skull'), trans=trans, mri_fiducials=True,
+    subjects_dir=subjects_dir)
 
-mne.viz.plot_alignment(epochs.info, subject=subject, show_axes=True,
-                       bem=sphere, dig=True, surfaces='head')
-
-###############################################################################
+# %%
 # Let's do some dipole fits. We first compute the noise covariance,
 # then do the fits for each event_id taking the time instant that maximizes
 # the global field power.
@@ -106,7 +117,7 @@ evoked = mne.EvokedArray(np.array(data).T, evoked.info, tmin=0.)
 del epochs
 dip, residual = fit_dipole(evoked, cov, sphere, n_jobs=1)
 
-###############################################################################
+# %%
 # Do a quick visualization of how much variance we explained, putting the
 # data and residuals on the same scale (here the "time points" are the
 # 32 dipole peak values that we fit):
@@ -114,12 +125,13 @@ dip, residual = fit_dipole(evoked, cov, sphere, n_jobs=1)
 fig, axes = plt.subplots(2, 1)
 evoked.plot(axes=axes)
 for ax in axes:
-    ax.texts.clear()
+    for text in list(ax.texts):
+        text.remove()
     for line in ax.lines:
         line.set_color('#98df81')
 residual.plot(axes=axes)
 
-###############################################################################
+# %%
 # Now we can compare to the actual locations, taking the difference in mm:
 
 actual_pos, actual_ori = mne.dipole.get_phantom_dipoles()
@@ -148,7 +160,7 @@ ax3.set_ylabel('Amplitude error (nAm)')
 fig.tight_layout()
 plt.show()
 
-###############################################################################
+# %%
 # Let's plot the positions and the orientations of the actual and the estimated
 # dipoles
 
@@ -157,8 +169,10 @@ actual_gof = np.ones(len(dip))  # misc GOF to create Dipole instance
 dip_true = \
     mne.Dipole(dip.times, actual_pos, actual_amp, actual_ori, actual_gof)
 
-fig = mne.viz.plot_alignment(evoked.info, bem=sphere, surfaces='inner_skull',
-                             coord_frame='head', meg='helmet', show_axes=True)
+fig = mne.viz.plot_alignment(
+    evoked.info, trans, subject, bem=sphere, surfaces={'head-dense': 0.2},
+    coord_frame='head', meg='helmet', show_axes=True,
+    subjects_dir=subjects_dir)
 
 # Plot the position and the orientation of the actual dipole
 fig = mne.viz.plot_dipole_locations(dipoles=dip_true, mode='arrow',
@@ -170,3 +184,8 @@ fig = mne.viz.plot_dipole_locations(dipoles=dip, mode='arrow', subject=subject,
                                     color=(0.2, 1., 0.5), fig=fig)
 
 mne.viz.set_3d_view(figure=fig, azimuth=70, elevation=80, distance=0.5)
+
+# %%
+# References
+# ----------
+# .. footbibliography::

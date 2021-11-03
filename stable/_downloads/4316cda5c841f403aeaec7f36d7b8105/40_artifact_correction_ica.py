@@ -18,6 +18,8 @@ repeatedly typing ``mne.preprocessing`` we'll directly import a few functions
 and classes from that submodule:
 """
 
+# %%
+
 import os
 import mne
 from mne.preprocessing import (ICA, create_eog_epochs, create_ecg_epochs,
@@ -25,11 +27,13 @@ from mne.preprocessing import (ICA, create_eog_epochs, create_ecg_epochs,
 
 sample_data_folder = mne.datasets.sample.data_path()
 sample_data_raw_file = os.path.join(sample_data_folder, 'MEG', 'sample',
-                                    'sample_audvis_raw.fif')
+                                    'sample_audvis_filt-0-40_raw.fif')
 raw = mne.io.read_raw_fif(sample_data_raw_file)
-raw.crop(tmax=60.)
+# Here we'll crop to 60 seconds and drop gradiometer channels for speed
+raw.crop(tmax=60.).pick_types(meg='mag', eeg=True, stim=True, eog=True)
+raw.load_data()
 
-###############################################################################
+# %%
 # .. note::
 #     Before applying ICA (or any artifact repair strategy), be sure to observe
 #     the artifacts in your data to make sure you choose the right repair tool.
@@ -169,7 +173,7 @@ artifact_picks = mne.pick_channels_regexp(raw.ch_names, regexp=regexp)
 raw.plot(order=artifact_picks, n_channels=len(artifact_picks),
          show_scrollbars=False)
 
-###############################################################################
+# %%
 # We can get a summary of how the ocular artifact manifests across each channel
 # type using `~mne.preprocessing.create_eog_epochs` like we did in the
 # :ref:`tut-artifact-overview` tutorial:
@@ -178,7 +182,7 @@ eog_evoked = create_eog_epochs(raw).average()
 eog_evoked.apply_baseline(baseline=(None, -0.2))
 eog_evoked.plot_joint()
 
-###############################################################################
+# %%
 # Now we'll do the same for the heartbeat artifacts, using
 # `~mne.preprocessing.create_ecg_epochs`:
 
@@ -186,7 +190,7 @@ ecg_evoked = create_ecg_epochs(raw).average()
 ecg_evoked.apply_baseline(baseline=(None, -0.2))
 ecg_evoked.plot_joint()
 
-###############################################################################
+# %%
 # Filtering to remove slow drifts
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
@@ -204,10 +208,9 @@ ecg_evoked.plot_joint()
 # `~mne.io.Raw` object around so we can apply the ICA solution to it
 # later.
 
-filt_raw = raw.copy()
-filt_raw.load_data().filter(l_freq=1., h_freq=None)
+filt_raw = raw.copy().filter(l_freq=1., h_freq=None)
 
-###############################################################################
+# %%
 # Fitting and plotting the ICA solution
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
@@ -245,8 +248,9 @@ filt_raw.load_data().filter(l_freq=1., h_freq=None)
 
 ica = ICA(n_components=15, max_iter='auto', random_state=97)
 ica.fit(filt_raw)
+ica
 
-###############################################################################
+# %%
 # Some optional parameters that we could have passed to the
 # `~mne.preprocessing.ICA.fit` method include ``decim`` (to use only
 # every Nth sample in computing the ICs, which can yield a considerable
@@ -262,7 +266,7 @@ ica.fit(filt_raw)
 raw.load_data()
 ica.plot_sources(raw, show_scrollbars=False)
 
-###############################################################################
+# %%
 # Here we can pretty clearly see that the first component (``ICA000``) captures
 # the EOG signal quite well, and the second component (``ICA001``) looks a lot
 # like `a heartbeat <qrs_>`_ (for more info on visually identifying Independent
@@ -274,7 +278,7 @@ ica.plot_sources(raw, show_scrollbars=False)
 # sphinx_gallery_thumbnail_number = 9
 ica.plot_components()
 
-###############################################################################
+# %%
 # .. note::
 #
 #     `~mne.preprocessing.ICA.plot_components` (which plots the scalp
@@ -295,13 +299,13 @@ ica.plot_overlay(raw, exclude=[0], picks='eeg')
 # heartbeats
 ica.plot_overlay(raw, exclude=[1], picks='mag')
 
-###############################################################################
+# %%
 # We can also plot some diagnostics of each IC using
 # `~mne.preprocessing.ICA.plot_properties`:
 
 ica.plot_properties(raw, picks=[0, 1])
 
-###############################################################################
+# %%
 # In the remaining sections, we'll look at different ways of choosing which ICs
 # to exclude prior to reconstructing the sensor signals.
 #
@@ -321,7 +325,7 @@ ica.plot_properties(raw, picks=[0, 1])
 
 ica.exclude = [0, 1]  # indices chosen based on various plots above
 
-###############################################################################
+# %%
 # Now that the exclusions have been set, we can reconstruct the sensor signals
 # with artifacts removed using the `~mne.preprocessing.ICA.apply` method
 # (remember, we're applying the ICA solution from the *filtered* data to the
@@ -338,7 +342,7 @@ reconst_raw.plot(order=artifact_picks, n_channels=len(artifact_picks),
                  show_scrollbars=False)
 del reconst_raw
 
-###############################################################################
+# %%
 # Using an EOG channel to select ICA components
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
@@ -370,7 +374,7 @@ ica.plot_sources(raw, show_scrollbars=False)
 # plot ICs applied to the averaged EOG epochs, with EOG matches highlighted
 ica.plot_sources(eog_evoked)
 
-###############################################################################
+# %%
 # Note that above we used `~mne.preprocessing.ICA.plot_sources` on both
 # the original `~mne.io.Raw` instance and also on an
 # `~mne.Evoked` instance of the extracted EOG artifacts. This can be
@@ -416,7 +420,7 @@ ica.plot_sources(raw, show_scrollbars=False)
 # plot ICs applied to the averaged ECG epochs, with ECG matches highlighted
 ica.plot_sources(ecg_evoked)
 
-###############################################################################
+# %%
 # The last of these plots is especially useful: it shows us that the heartbeat
 # artifact is coming through on *two* ICs, and we've only caught one of them.
 # In fact, if we look closely at the output of
@@ -447,7 +451,7 @@ new_ica.plot_sources(raw, show_scrollbars=False)
 # plot ICs applied to the averaged ECG epochs, with ECG matches highlighted
 new_ica.plot_sources(ecg_evoked)
 
-###############################################################################
+# %%
 # Much better! Now we've captured both ICs that are reflecting the heartbeat
 # artifact (and as a result, we got two diagnostic plots: one for each IC that
 # reflects the heartbeat). This demonstrates the value of checking the results
@@ -457,7 +461,7 @@ new_ica.plot_sources(ecg_evoked)
 # clean up memory before moving on
 del raw, ica, new_ica
 
-###############################################################################
+# %%
 # Selecting ICA components using template matching
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
@@ -465,8 +469,8 @@ del raw, ica, new_ica
 # an IC for exclusion on one subject, and then use that component as a
 # *template* for selecting which ICs to exclude from other subjects' data,
 # using `mne.preprocessing.corrmap` :footcite:`CamposViolaEtAl2009`.
-# The idea behind
-# `~mne.preprocessing.corrmap` is that the artifact patterns are similar
+# The idea behind `~mne.preprocessing.corrmap` is that the artifact patterns
+# are similar
 # enough across subjects that corresponding ICs can be identified by
 # correlating the ICs from each ICA solution with a common template, and
 # picking the ICs with the highest correlation strength.
@@ -502,19 +506,19 @@ icas = list()
 for subj in range(4):
     # EEGBCI subjects are 1-indexed; run 3 is a left/right hand movement task
     fname = mne.datasets.eegbci.load_data(subj + 1, runs=[3])[0]
-    raw = mne.io.read_raw_edf(fname)
+    raw = mne.io.read_raw_edf(fname).load_data().resample(50)
     # remove trailing `.` from channel names so we can set montage
     raw.rename_channels(mapping)
     raw.set_montage('standard_1005')
     # high-pass filter
     raw_filt = raw.copy().load_data().filter(l_freq=1., h_freq=None)
-    # fit ICA
-    ica = ICA(n_components=30, max_iter='auto', random_state=97)
-    ica.fit(raw_filt)
+    # fit ICA, using low max_iter for speed
+    ica = ICA(n_components=30, max_iter=100, random_state=97)
+    ica.fit(raw_filt, verbose='error')
     raws.append(raw)
     icas.append(ica)
 
-###############################################################################
+# %%
 # Now let's run `~mne.preprocessing.corrmap`:
 
 # use the first subject as template; use Fpz as proxy for EOG
@@ -523,32 +527,27 @@ ica = icas[0]
 eog_inds, eog_scores = ica.find_bads_eog(raw, ch_name='Fpz')
 corrmap(icas, template=(0, eog_inds[0]))
 
-###############################################################################
+# %%
 # The first figure shows the template map, while the second figure shows all
 # the maps that were considered a "match" for the template (including the
-# template itself). There were only three matches from the four subjects;
-# notice the output message ``No maps selected for subject(s) 1, consider a
-# more liberal threshold``.  By default the threshold is set automatically by
-# trying several values; here it may have chosen a threshold that is too high.
-# Let's take a look at the ICA sources for each subject:
+# template itself). There is one match for each subject, but it's a good idea
+# to also double-check the ICA sources for each subject:
 
 for index, (ica, raw) in enumerate(zip(icas, raws)):
     fig = ica.plot_sources(raw, show_scrollbars=False)
     fig.subplots_adjust(top=0.9)  # make space for title
     fig.suptitle('Subject {}'.format(index))
 
-###############################################################################
-# Notice that subject 1 *does* seem to have an IC that looks like it reflects
-# blink artifacts (component ``ICA000``). Notice also that subject 3 appears to
-# have *two* components that are reflecting ocular artifacts (``ICA000`` and
-# ``ICA002``), but only one was caught by `~mne.preprocessing.corrmap`.
-# Let's try setting the threshold manually:
+# %%
+# Notice that subjects 2 and 3 each seem to have *two* ICs that reflect ocular
+# activity (components ``ICA000`` and ``ICA002``), but only one was caught by
+# `~mne.preprocessing.corrmap`. Let's try setting the threshold manually:
 
 corrmap(icas, template=(0, eog_inds[0]), threshold=0.9)
 
-###############################################################################
-# Now we get the message ``At least 1 IC detected for each subject`` (which is
-# good). At this point we'll re-run `~mne.preprocessing.corrmap` with
+# %%
+# This time it found 2 ICs for each of subjects 2 and 3 (which is good).
+# At this point we'll re-run `~mne.preprocessing.corrmap` with
 # parameters ``label='blink', plot=False`` to *label* the ICs from each subject
 # that capture the blink artifacts (without plotting them again).
 
@@ -556,22 +555,22 @@ corrmap(icas, template=(0, eog_inds[0]), threshold=0.9, label='blink',
         plot=False)
 print([ica.labels_ for ica in icas])
 
-###############################################################################
+# %%
 # Notice that the first subject has 3 different labels for the IC at index 0:
 # "eog/0/Fpz", "eog", and "blink". The first two were added by
-# `~mne.preprocessing.ICA.find_bads_eog`; the "blink" label was added by
-# the last call to `~mne.preprocessing.corrmap`. Notice also that each
-# subject has at least one IC index labelled "blink", and subject 3 has two
+# `~mne.preprocessing.ICA.find_bads_eog`; the "blink" label was added by the
+# last call to `~mne.preprocessing.corrmap`. Notice also that each subject has
+# at least one IC index labelled "blink", and subjects 2 and 3 each have two
 # components (0 and 2) labelled "blink" (consistent with the plot of IC sources
-# above). The ``labels_`` attribute of `~mne.preprocessing.ICA` objects
-# can also be manually edited to annotate the ICs with custom labels. They also
+# above). The ``labels_`` attribute of `~mne.preprocessing.ICA` objects can
+# also be manually edited to annotate the ICs with custom labels. They also
 # come in handy when plotting:
 
 icas[3].plot_components(picks=icas[3].labels_['blink'])
 icas[3].exclude = icas[3].labels_['blink']
 icas[3].plot_sources(raws[3], show_scrollbars=False)
 
-###############################################################################
+# %%
 # As a final note, it is possible to extract ICs numerically using the
 # `~mne.preprocessing.ICA.get_components` method of
 # `~mne.preprocessing.ICA` objects. This will return a :class:`NumPy
@@ -584,7 +583,7 @@ template_eog_component = icas[0].get_components()[:, eog_inds[0]]
 corrmap(icas, template=template_eog_component, threshold=0.9)
 print(template_eog_component)
 
-###############################################################################
+# %%
 # An advantage of using this numerical representation of an IC to capture a
 # particular artifact pattern is that it can be saved and used as a template
 # for future template-matching tasks using `~mne.preprocessing.corrmap`
@@ -606,7 +605,7 @@ print(template_eog_component)
 # .. _`this EEGLAB tutorial`: https://labeling.ucsd.edu/tutorial/labels
 
 
-###############################################################################
+# %%
 # Compute ICA components on Epochs
 # ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 #
@@ -618,7 +617,7 @@ print(template_eog_component)
 #     This example is computationally intensive, so it might take a few minutes
 #     to complete.
 #
-# Read and preprocess the data. Preprocessing consists of:
+# After reading the data, preprocessing consists of:
 #
 # - MEG channel selection
 # - 1-30 Hz band-pass filter
@@ -634,14 +633,14 @@ filt_raw.pick_types(meg=True, eeg=False, exclude='bads', stim=True).load_data()
 filt_raw.filter(1, 30, fir_design='firwin')
 
 # peak-to-peak amplitude rejection parameters
-reject = dict(grad=4000e-13, mag=4e-12)
+reject = dict(mag=4e-12)
 # create longer and more epochs for more artifact exposure
 events = mne.find_events(filt_raw, stim_channel='STI 014')
 # don't baseline correct epochs
 epochs = mne.Epochs(filt_raw, events, event_id=None, tmin=-0.2, tmax=0.5,
                     reject=reject, baseline=None)
 
-###############################################################################
+# %%
 # Fit ICA model using the FastICA algorithm, detect and plot components
 # explaining ECG artifacts.
 
@@ -652,15 +651,15 @@ ecg_inds, scores = ica.find_bads_ecg(ecg_epochs, threshold='auto')
 
 ica.plot_components(ecg_inds)
 
-###############################################################################
+# %%
 # Plot the properties of the ECG components:
 ica.plot_properties(epochs, picks=ecg_inds)
 
-###############################################################################
+# %%
 # Plot the estimated sources of detected ECG related components:
 ica.plot_sources(filt_raw, picks=ecg_inds)
 
-###############################################################################
+# %%
 # References
 # ^^^^^^^^^^
 # .. footbibliography::

@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """
 .. _tut-working-with-ecog:
 
@@ -16,8 +17,12 @@ This example shows how to use:
 - channel locations in FreeSurfer's ``fsaverage`` MRI space
 - projection onto a pial surface
 
-For a complementary example that involves sEEG data, channel locations in
-MNI space, or projection into a volume, see :ref:`tut-working-with-seeg`.
+For a complementary example that involves sEEG data, channel locations in MNI
+space, or projection into a volume, see :ref:`tut-working-with-seeg`.
+
+Please note that this tutorial requires 3D plotting dependencies (see
+:ref:`manual-install`) as well as ``mne-bids`` which can be installed using
+``pip``.
 """
 # Authors: Eric Larson <larson.eric.d@gmail.com>
 #          Chris Holdgraf <choldgraf@gmail.com>
@@ -99,13 +104,9 @@ events, event_id = mne.events_from_annotations(raw)
 epoch_length = 25  # seconds
 epochs = mne.Epochs(raw, events, event_id=event_id['onset'],
                     tmin=13, tmax=13 + epoch_length, baseline=None)
-
-# And then load data and downsample.
-epochs.load_data()
-epochs.resample(200)  # Hz, will also load the data for us
-
-# Finally, make evoked from the one epoch
-evoked = epochs.average()
+# Make evoked from the one epoch and resample
+evoked = epochs.average().resample(200)
+del epochs
 
 
 # %%
@@ -184,16 +185,17 @@ xyz_pts = np.array([dig['r'] for dig in evoked.info['dig']])
 src = mne.read_source_spaces(
     op.join(subjects_dir, 'fsaverage', 'bem', 'fsaverage-ico-5-src.fif'))
 stc = mne.stc_near_sensors(gamma_power_t, trans='fsaverage',
-                           subject='fsaverage', src=src,
-                           mode='nearest', subjects_dir=subjects_dir,
+                           subject='fsaverage', subjects_dir=subjects_dir,
+                           src=src, surface='pial', mode='nearest',
                            distance=0.02)
 vmin, vmid, vmax = np.percentile(gamma_power_t.data, [10, 25, 90])
 clim = dict(kind='value', lims=[vmin, vmid, vmax])
 brain = stc.plot(surface='pial', hemi='rh', colormap='inferno', colorbar=False,
                  clim=clim, views=['lat', 'med'], subjects_dir=subjects_dir,
-                 size=(250, 250), smoothing_steps=20, time_viewer=False)
+                 size=(250, 250), smoothing_steps='nearest',
+                 time_viewer=False)
 brain.add_sensors(raw.info, trans='fsaverage')
 
 # You can save a movie like the one on our documentation website with:
-# brain.save_movie(time_dilation=1, interpolation='linear', framerate=12,
+# brain.save_movie(time_dilation=1, interpolation='linear', framerate=3,
 #                  time_viewer=True)

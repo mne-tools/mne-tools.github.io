@@ -1,13 +1,15 @@
+# -*- coding: utf-8 -*-
 """
 .. _tut-forward:
 
+==================================
 Head model and forward computation
 ==================================
 
 The aim of this tutorial is to be a getting started for forward computation.
 
-For more extensive details and presentation of the general
-concepts for forward modeling, see :ref:`ch_forward`.
+For more extensive details and presentation of the general concepts for forward
+modeling, see :ref:`ch_forward`.
 """
 
 # %%
@@ -55,10 +57,15 @@ subject = 'sample'
 #
 # Let's look at these surfaces. The function :func:`mne.viz.plot_bem`
 # assumes that you have the ``bem`` folder of your subject's FreeSurfer
-# reconstruction, containing the necessary surface files.
+# reconstruction, containing the necessary surface files. Here we use a smaller
+# than default subset of ``slices`` for speed.
 
-mne.viz.plot_bem(subject=subject, subjects_dir=subjects_dir,
-                 brain_surfaces='white', orientation='coronal')
+plot_bem_kwargs = dict(
+    subject=subject, subjects_dir=subjects_dir,
+    brain_surfaces='white', orientation='coronal',
+    slices=[50, 100, 150, 200])
+
+mne.viz.plot_bem(**plot_bem_kwargs)
 
 # %%
 # Visualizing the coregistration
@@ -121,8 +128,7 @@ print(src)
 # hemisphere (258 locations) and one for the right hemisphere (258
 # locations). Sources can be visualized on top of the BEM surfaces in purple.
 
-mne.viz.plot_bem(subject=subject, subjects_dir=subjects_dir,
-                 brain_surfaces='white', src=src, orientation='coronal')
+mne.viz.plot_bem(src=src, **plot_bem_kwargs)
 
 # %%
 # To compute a volume based source space defined with a grid of candidate
@@ -132,12 +138,12 @@ mne.viz.plot_bem(subject=subject, subjects_dir=subjects_dir,
 # brain and it can miss some parts of the cortex.
 
 sphere = (0.0, 0.0, 0.04, 0.09)
-vol_src = mne.setup_volume_source_space(subject, subjects_dir=subjects_dir,
-                                        sphere=sphere, sphere_units='m')
+vol_src = mne.setup_volume_source_space(
+    subject, subjects_dir=subjects_dir, sphere=sphere, sphere_units='m',
+    add_interpolator=False)  # just for speed!
 print(vol_src)
 
-mne.viz.plot_bem(subject=subject, subjects_dir=subjects_dir,
-                 brain_surfaces='white', src=vol_src, orientation='coronal')
+mne.viz.plot_bem(src=vol_src, **plot_bem_kwargs)
 
 # %%
 # To compute a volume based source space defined with a grid of candidate
@@ -146,11 +152,11 @@ mne.viz.plot_bem(subject=subject, subjects_dir=subjects_dir,
 
 surface = op.join(subjects_dir, subject, 'bem', 'inner_skull.surf')
 vol_src = mne.setup_volume_source_space(
-    subject, subjects_dir=subjects_dir, surface=surface)
+    subject, subjects_dir=subjects_dir, surface=surface,
+    add_interpolator=False)  # Just for speed!
 print(vol_src)
 
-mne.viz.plot_bem(subject=subject, subjects_dir=subjects_dir,
-                 brain_surfaces='white', src=vol_src, orientation='coronal')
+mne.viz.plot_bem(src=vol_src, **plot_bem_kwargs)
 
 # %%
 # .. note:: Some sources may appear to be outside the BEM inner skull contour.

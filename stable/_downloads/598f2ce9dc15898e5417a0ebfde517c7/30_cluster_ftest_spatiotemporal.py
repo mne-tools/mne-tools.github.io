@@ -10,7 +10,9 @@ permutation test across space and time.
 """
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Eric Larson <larson.eric.d@gmail.com>
-# License: BSD (3-clause)
+# License: BSD-3-Clause
+
+# %%
 
 import os.path as op
 
@@ -24,7 +26,7 @@ from mne.datasets import sample
 
 print(__doc__)
 
-###############################################################################
+# %%
 # Set parameters
 # --------------
 data_path = sample.data_path()
@@ -46,7 +48,7 @@ stc = morph.apply(stc)
 n_vertices_fsave, n_times = stc.data.shape
 tstep = stc.tstep * 1000  # convert to milliseconds
 
-n_subjects1, n_subjects2 = 7, 9
+n_subjects1, n_subjects2 = 6, 7
 print('Simulating data for %d and %d subjects.' % (n_subjects1, n_subjects2))
 
 #    Let's make sure our results replicate, so set the seed.
@@ -61,7 +63,7 @@ X2[:, :, :] += 3 * stc.data[:, :, np.newaxis]
 X1 = np.abs(X1)  # only magnitude
 X2 = np.abs(X2)  # only magnitude
 
-###############################################################################
+# %%
 # Compute statistic
 # -----------------
 #
@@ -76,20 +78,23 @@ X1 = np.transpose(X1, [2, 1, 0])
 X2 = np.transpose(X2, [2, 1, 0])
 X = [X1, X2]
 
-#    Now let's actually do the clustering. This can take a long time...
-#    Here we set the threshold quite high to reduce computation.
-p_threshold = 0.0001
+# Now let's actually do the clustering. This can take a long time...
+# Here we set the threshold quite high to reduce computation,
+# and use a very low number of permutations for the same reason.
+n_permutations = 50
+p_threshold = 0.001
 f_threshold = stats.distributions.f.ppf(1. - p_threshold / 2.,
                                         n_subjects1 - 1, n_subjects2 - 1)
 print('Clustering.')
 T_obs, clusters, cluster_p_values, H0 = clu =\
-    spatio_temporal_cluster_test(X, adjacency=adjacency, n_jobs=1,
-                                 threshold=f_threshold, buffer_size=None)
+    spatio_temporal_cluster_test(
+        X, adjacency=adjacency, n_jobs=1, n_permutations=n_permutations,
+        threshold=f_threshold, buffer_size=None)
 #    Now select the clusters that are sig. at p < 0.05 (note that this value
 #    is multiple-comparisons corrected).
 good_cluster_inds = np.where(cluster_p_values < 0.05)[0]
 
-###############################################################################
+# %%
 # Visualize the clusters
 # ----------------------
 

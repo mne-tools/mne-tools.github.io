@@ -17,7 +17,9 @@ be more representative of the actual head position during the recording.
 """
 # Authors: Adonay Nunes <adonay.s.nunes@gmail.com>
 #          Luke Bloy <luke.bloy@gmail.com>
-# License: BSD (3-clause)
+# License: BSD-3-Clause
+
+# %%
 
 import os.path as op
 
@@ -35,13 +37,14 @@ trans_fname = op.join(data_path, 'MEG', 'bst_auditory',
                       'bst_auditory-trans.fif')
 raw_fname1 = op.join(data_path_MEG, 'bst_auditory', 'S01_AEF_20131218_01.ds')
 raw_fname2 = op.join(data_path_MEG, 'bst_auditory', 'S01_AEF_20131218_02.ds')
-# read and concatenate two files
+# read and concatenate two files, ignoring device<->head mismatch
 raw = read_raw_ctf(raw_fname1, preload=False)
-mne.io.concatenate_raws([raw, read_raw_ctf(raw_fname2, preload=False)])
+mne.io.concatenate_raws(
+    [raw, read_raw_ctf(raw_fname2, preload=False)], on_mismatch='ignore')
 raw.crop(350, 410).load_data()
 raw.resample(100, npad="auto")
 
-###############################################################################
+# %%
 # Plot continuous head position with respect to the mean recording position
 # --------------------------------------------------------------------------
 
@@ -61,7 +64,7 @@ for ax, val, val_ori in zip(fig.axes[::2], average_head_dev_t['trans'][:3, 3],
 # The green horizontal lines represent the original head position, whereas the
 # red lines are the new head position averaged over all the time points.
 
-###############################################################################
+# %%
 # Plot raw data with annotated movement
 # ------------------------------------------------------------------
 

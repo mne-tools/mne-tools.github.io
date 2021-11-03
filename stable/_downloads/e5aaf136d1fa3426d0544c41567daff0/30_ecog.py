@@ -1,5 +1,5 @@
 """
-.. _tut_working_with_ecog:
+.. _tut-working-with-ecog:
 
 ======================
 Working with ECoG data
@@ -11,13 +11,13 @@ electrocorticography (ECoG) data.
 
 This example shows how to use:
 
-- ECoG data (`available here <https://openneuro.org/datasets/ds003029>`_)
-  from an epilepsy patient during a seizure
+- ECoG data (`available here <https://openneuro.org/datasets/ds003029>`__) from
+  an epilepsy patient during a seizure
 - channel locations in FreeSurfer's ``fsaverage`` MRI space
 - projection onto a pial surface
 
 For a complementary example that involves sEEG data, channel locations in
-MNI space, or projection into a volume, see :ref:`tut_working_with_seeg`.
+MNI space, or projection into a volume, see :ref:`tut-working-with-seeg`.
 """
 # Authors: Eric Larson <larson.eric.d@gmail.com>
 #          Chris Holdgraf <choldgraf@gmail.com>
@@ -25,7 +25,9 @@ MNI space, or projection into a volume, see :ref:`tut_working_with_seeg`.
 #          Alex Rockhill <aprockhill@mailbox.org>
 #          Liberty Hamilton <libertyhamilton@gmail.com>
 #
-# License: BSD (3-clause)
+# License: BSD-3-Clause
+
+# %%
 
 import os.path as op
 
@@ -45,12 +47,16 @@ sample_path = mne.datasets.sample.data_path()
 subjects_dir = op.join(sample_path, 'subjects')
 
 
-###############################################################################
+# %%
 # Load in data and perform basic preprocessing
 # --------------------------------------------
 #
 # Let's load some ECoG electrode data with `mne-bids
 # <https://mne.tools/mne-bids/>`_.
+#
+# .. note::
+#     Downsampling is just to save execution time in this example, you should
+#     not need to do this in general!
 
 # first define the bids path
 bids_path = BIDSPath(root=bids_root, subject='pt1', session='presurgery',
@@ -74,7 +80,17 @@ raw.notch_filter([60], trans_bandwidth=3)
 raw.drop_channels(raw.info['bads'])
 
 # the coordinate frame of the montage
-print(raw.get_montage().get_positions()['coord_frame'])
+montage = raw.get_montage()
+print(montage.get_positions()['coord_frame'])
+
+# add fiducials to montage
+montage.add_mni_fiducials(subjects_dir)
+
+# now with fiducials assigned, the montage will be properly converted
+# to "head" which is what MNE requires internally (this is the coordinate
+# system with the origin between LPA and RPA whereas MNI has the origin
+# at the posterior commissure)
+raw.set_montage(montage)
 
 # Find the annotated events
 events, event_id = mne.events_from_annotations(raw)
@@ -83,18 +99,12 @@ events, event_id = mne.events_from_annotations(raw)
 epoch_length = 25  # seconds
 epochs = mne.Epochs(raw, events, event_id=event_id['onset'],
                     tmin=13, tmax=13 + epoch_length, baseline=None)
-
-# And then load data and downsample.
-# .. note: This is just to save execution time in this example, you should
-#          not need to do this in general!
-epochs.load_data()
-epochs.resample(200)  # Hz, will also load the data for us
-
-# Finally, make evoked from the one epoch
-evoked = epochs.average()
+# Make evoked from the one epoch and resample
+evoked = epochs.average().resample(200)
+del epochs
 
 
-###############################################################################
+# %%
 # Explore the electrodes on a template brain
 # ------------------------------------------
 #
@@ -104,14 +114,14 @@ evoked = epochs.average()
 # (along with xy positions of each electrode in the image), so that later
 # we can plot frequency band power on top of it.
 
-fig = plot_alignment(raw.info, subject='fsaverage', subjects_dir=subjects_dir,
-                     surfaces=['pial'], coord_frame='mri')
-az, el, focalpoint = 160, -70, [0.067, -0.040, 0.018]
-mne.viz.set_3d_view(fig, azimuth=az, elevation=el, focalpoint=focalpoint)
+fig = plot_alignment(raw.info, trans='fsaverage',
+                     subject='fsaverage', subjects_dir=subjects_dir,
+                     surfaces=['pial'], coord_frame='head')
+mne.viz.set_3d_view(fig, azimuth=0, elevation=70)
 
 xy, im = snapshot_brain_montage(fig, raw.info)
 
-###############################################################################
+# %%
 # Compute frequency features of the data
 # --------------------------------------
 #
@@ -123,7 +133,7 @@ gamma_power_t = evoked.copy().filter(30, 90).apply_hilbert(
     envelope=True).resample(sfreq)
 gamma_info = gamma_power_t.info
 
-###############################################################################
+# %%
 # Visualize the time-evolution of the gamma power on the brain
 # ------------------------------------------------------------
 #
@@ -154,7 +164,7 @@ for i, pos in enumerate(xy_pts):
     color = cmap(i / xy_pts.shape[0])
     ax.plot(x_line + x, gamma_power[i] + y, linewidth=0.5, color=color)
 
-###############################################################################
+# %%
 # We can project gamma power from the sensor data to the nearest locations on
 # the pial surface and visualize that:
 #
@@ -163,28 +173,24 @@ for i, pos in enumerate(xy_pts):
 # this example short time section. This dataset is available using
 # :func:`mne.datasets.epilepsy_ecog.data_path` for you to examine.
 
-# sphinx_gallery_thumbnail_number = 5
+# sphinx_gallery_thumbnail_number = 3
 
 xyz_pts = np.array([dig['r'] for dig in evoked.info['dig']])
 
 src = mne.read_source_spaces(
     op.join(subjects_dir, 'fsaverage', 'bem', 'fsaverage-ico-5-src.fif'))
-trans = None  # identity transform
-stc = mne.stc_near_sensors(gamma_power_t, trans, 'fsaverage', src=src,
+stc = mne.stc_near_sensors(gamma_power_t, trans='fsaverage',
+                           subject='fsaverage', src=src,
                            mode='nearest', subjects_dir=subjects_dir,
                            distance=0.02)
 vmin, vmid, vmax = np.percentile(gamma_power_t.data, [10, 25, 90])
 clim = dict(kind='value', lims=[vmin, vmid, vmax])
 brain = stc.plot(surface='pial', hemi='rh', colormap='inferno', colorbar=False,
                  clim=clim, views=['lat', 'med'], subjects_dir=subjects_dir,
-                 size=(250, 250), smoothing_steps=20, time_viewer=False)
-
-# plot electrode locations
-for xyz in xyz_pts:
-    for subplot in (0, 1):
-        brain.plotter.subplot(subplot, 0)
-        brain._renderer.sphere(xyz * 1e3, color='white', scale=2)
+                 size=(250, 250), smoothing_steps='nearest',
+                 time_viewer=False)
+brain.add_sensors(raw.info, trans='fsaverage')
 
 # You can save a movie like the one on our documentation website with:
-# brain.save_movie(time_dilation=1, interpolation='linear', framerate=12,
+# brain.save_movie(time_dilation=1, interpolation='linear', framerate=3,
 #                  time_viewer=True)

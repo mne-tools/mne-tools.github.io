@@ -16,7 +16,9 @@ signals.
 #          Alex Barachant <alexandre.barachant@gmail.com>
 #          Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #
-# License: BSD (3-clause)
+# License: BSD-3-Clause
+
+# %%
 
 
 import numpy as np
@@ -33,7 +35,7 @@ from sklearn.model_selection import StratifiedKFold, cross_val_score
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import LabelEncoder
 
-###############################################################################
+# %%
 # Set parameters and read data
 event_id = dict(hands=2, feet=3)  # motor imagery: hands vs feet
 subject = 1
@@ -50,15 +52,15 @@ raw.load_data()
 # Assemble the classifier using scikit-learn pipeline
 clf = make_pipeline(CSP(n_components=4, reg=None, log=True, norm_trace=False),
                     LinearDiscriminantAnalysis())
-n_splits = 5  # how many folds to use for cross-validation
+n_splits = 3  # for cross-validation, 5 is better, here we use 3 for speed
 cv = StratifiedKFold(n_splits=n_splits, shuffle=True, random_state=42)
 
 # Classification & time-frequency parameters
 tmin, tmax = -.200, 2.000
 n_cycles = 10.  # how many complete cycles: used to define window size
-min_freq = 5.
-max_freq = 25.
-n_freqs = 8  # how many frequency bins to use
+min_freq = 8.
+max_freq = 20.
+n_freqs = 6  # how many frequency bins to use
 
 # Assemble list of frequency range tuples
 freqs = np.linspace(min_freq, max_freq, n_freqs)  # assemble frequencies
@@ -72,7 +74,7 @@ n_windows = len(centered_w_times)
 # Instantiate label encoder
 le = LabelEncoder()
 
-###############################################################################
+# %%
 # Loop through frequencies, apply classifier and save scores
 
 # init scores
@@ -101,7 +103,7 @@ for freq, (fmin, fmax) in enumerate(freq_ranges):
                                                 scoring='roc_auc', cv=cv,
                                                 n_jobs=1), axis=0)
 
-###############################################################################
+# %%
 # Plot frequency results
 
 plt.bar(freqs[:-1], freq_scores, width=np.diff(freqs)[0],
@@ -115,7 +117,7 @@ plt.xlabel('Frequency (Hz)')
 plt.ylabel('Decoding Scores')
 plt.title('Frequency Decoding Scores')
 
-###############################################################################
+# %%
 # Loop through frequencies and time, apply classifier and save scores
 
 # init scores
@@ -152,7 +154,7 @@ for freq, (fmin, fmax) in enumerate(freq_ranges):
                                                      scoring='roc_auc', cv=cv,
                                                      n_jobs=1), axis=0)
 
-###############################################################################
+# %%
 # Plot time-frequency results
 
 # Set up time frequency object

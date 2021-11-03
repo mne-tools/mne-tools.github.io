@@ -10,18 +10,21 @@ For more extensive details and presentation of the general
 concepts for forward modeling, see :ref:`ch_forward`.
 """
 
+# %%
+
 import os.path as op
 import mne
 from mne.datasets import sample
 data_path = sample.data_path()
 
 # the raw file containing the channel location + types
-raw_fname = data_path + '/MEG/sample/sample_audvis_raw.fif'
+sample_dir = op.join(data_path, 'MEG', 'sample',)
+raw_fname = op.join(sample_dir, 'sample_audvis_raw.fif')
 # The paths to Freesurfer reconstructions
-subjects_dir = data_path + '/subjects'
+subjects_dir = op.join(data_path, 'subjects')
 subject = 'sample'
 
-###############################################################################
+# %%
 # Computing the forward operator
 # ------------------------------
 #
@@ -31,7 +34,7 @@ subject = 'sample'
 #    - a source space
 #    - the :term:`BEM` surfaces
 
-###############################################################################
+# %%
 # Compute and visualize BEM surfaces
 # ----------------------------------
 #
@@ -52,12 +55,17 @@ subject = 'sample'
 #
 # Let's look at these surfaces. The function :func:`mne.viz.plot_bem`
 # assumes that you have the ``bem`` folder of your subject's FreeSurfer
-# reconstruction, containing the necessary surface files.
+# reconstruction, containing the necessary surface files. Here we use a smaller
+# than default subset of ``slices`` for speed.
 
-mne.viz.plot_bem(subject=subject, subjects_dir=subjects_dir,
-                 brain_surfaces='white', orientation='coronal')
+plot_bem_kwargs = dict(
+    subject=subject, subjects_dir=subjects_dir,
+    brain_surfaces='white', orientation='coronal',
+    slices=[50, 100, 150, 200])
 
-###############################################################################
+mne.viz.plot_bem(**plot_bem_kwargs)
+
+# %%
 # Visualizing the coregistration
 # ------------------------------
 #
@@ -73,7 +81,7 @@ mne.viz.plot_bem(subject=subject, subjects_dir=subjects_dir,
 # alignment with the following code.
 
 # The transformation file obtained by coregistration
-trans = data_path + '/MEG/sample/sample_audvis_raw-trans.fif'
+trans = op.join(sample_dir, 'sample_audvis_raw-trans.fif')
 
 info = mne.io.read_info(raw_fname)
 # Here we look at the dense head, which isn't used for BEM computations but
@@ -82,7 +90,7 @@ mne.viz.plot_alignment(info, trans, subject=subject, dig=True,
                        meg=['helmet', 'sensors'], subjects_dir=subjects_dir,
                        surfaces='head-dense')
 
-###############################################################################
+# %%
 # .. _plot_forward_source_space:
 #
 # Compute Source Space
@@ -113,15 +121,14 @@ src = mne.setup_source_space(subject, spacing='oct4', add_dist='patch',
                              subjects_dir=subjects_dir)
 print(src)
 
-###############################################################################
+# %%
 # The surface based source space ``src`` contains two parts, one for the left
 # hemisphere (258 locations) and one for the right hemisphere (258
 # locations). Sources can be visualized on top of the BEM surfaces in purple.
 
-mne.viz.plot_bem(subject=subject, subjects_dir=subjects_dir,
-                 brain_surfaces='white', src=src, orientation='coronal')
+mne.viz.plot_bem(src=src, **plot_bem_kwargs)
 
-###############################################################################
+# %%
 # To compute a volume based source space defined with a grid of candidate
 # dipoles inside a sphere of radius 90mm centered at (0.0, 0.0, 40.0) mm
 # you can use the following code.
@@ -129,27 +136,27 @@ mne.viz.plot_bem(subject=subject, subjects_dir=subjects_dir,
 # brain and it can miss some parts of the cortex.
 
 sphere = (0.0, 0.0, 0.04, 0.09)
-vol_src = mne.setup_volume_source_space(subject, subjects_dir=subjects_dir,
-                                        sphere=sphere, sphere_units='m')
+vol_src = mne.setup_volume_source_space(
+    subject, subjects_dir=subjects_dir, sphere=sphere, sphere_units='m',
+    add_interpolator=False)  # just for speed!
 print(vol_src)
 
-mne.viz.plot_bem(subject=subject, subjects_dir=subjects_dir,
-                 brain_surfaces='white', src=vol_src, orientation='coronal')
+mne.viz.plot_bem(src=vol_src, **plot_bem_kwargs)
 
-###############################################################################
+# %%
 # To compute a volume based source space defined with a grid of candidate
 # dipoles inside the brain (requires the :term:`BEM` surfaces) you can use the
 # following.
 
 surface = op.join(subjects_dir, subject, 'bem', 'inner_skull.surf')
-vol_src = mne.setup_volume_source_space(subject, subjects_dir=subjects_dir,
-                                        surface=surface)
+vol_src = mne.setup_volume_source_space(
+    subject, subjects_dir=subjects_dir, surface=surface,
+    add_interpolator=False)  # Just for speed!
 print(vol_src)
 
-mne.viz.plot_bem(subject=subject, subjects_dir=subjects_dir,
-                 brain_surfaces='white', src=vol_src, orientation='coronal')
+mne.viz.plot_bem(src=vol_src, **plot_bem_kwargs)
 
-###############################################################################
+# %%
 # .. note:: Some sources may appear to be outside the BEM inner skull contour.
 #           This is because the ``slices`` are decimated for plotting here.
 #           Each slice in the figure actually represents several MRI slices,
@@ -161,12 +168,12 @@ mne.viz.plot_bem(subject=subject, subjects_dir=subjects_dir,
 # Now let's see how to view all sources in 3D.
 
 fig = mne.viz.plot_alignment(subject=subject, subjects_dir=subjects_dir,
-                             surfaces='white', coord_frame='head',
+                             surfaces='white', coord_frame='mri',
                              src=src)
 mne.viz.set_3d_view(fig, azimuth=173.78, elevation=101.75,
                     distance=0.30, focalpoint=(-0.03, -0.01, 0.03))
 
-###############################################################################
+# %%
 # .. _plot_forward_compute_forward_solution:
 #
 # Compute forward solution
@@ -187,7 +194,7 @@ model = mne.make_bem_model(subject='sample', ico=4,
                            subjects_dir=subjects_dir)
 bem = mne.make_bem_solution(model)
 
-###############################################################################
+# %%
 # Note that the :term:`BEM` does not involve any use of the trans file. The BEM
 # only depends on the head geometry and conductivities.
 # It is therefore independent from the MEG data and the head position.
@@ -202,7 +209,7 @@ fwd = mne.make_forward_solution(raw_fname, trans=trans, src=src, bem=bem,
                                 verbose=True)
 print(fwd)
 
-###############################################################################
+# %%
 # .. warning::
 #    Forward computation can remove vertices that are too close to (or outside)
 #    the inner skull surface. For example, here we have gone from 516 to 474
@@ -213,14 +220,14 @@ print(fwd)
 print(f'Before: {src}')
 print(f'After:  {fwd["src"]}')
 
-###############################################################################
+# %%
 # We can explore the content of ``fwd`` to access the numpy array that contains
 # the gain matrix.
 
 leadfield = fwd['sol']['data']
 print("Leadfield size : %d sensors x %d dipoles" % leadfield.shape)
 
-###############################################################################
+# %%
 # To extract the numpy array containing the forward operator corresponding to
 # the source space ``fwd['src']`` with cortical orientation constraint
 # we can use the following:
@@ -230,7 +237,7 @@ fwd_fixed = mne.convert_forward_solution(fwd, surf_ori=True, force_fixed=True,
 leadfield = fwd_fixed['sol']['data']
 print("Leadfield size : %d sensors x %d dipoles" % leadfield.shape)
 
-###############################################################################
+# %%
 # This is equivalent to the following code that explicitly applies the
 # forward operator to a source estimate composed of the identity operator
 # (which we omit here because it uses a lot of memory)::

@@ -1,13 +1,14 @@
+# -*- coding: utf-8 -*-
 """
 .. _tut-visualize-epochs:
 
+========================
 Visualizing epoched data
 ========================
 
 This tutorial shows how to plot epoched data as time series, how to plot the
 spectral density of epoched data, how to plot epochs as an imagemap, and how to
-plot the sensor locations and projectors stored in `~mne.Epochs`
-objects.
+plot the sensor locations and projectors stored in `~mne.Epochs` objects.
 
 We'll start by importing the modules we need, loading the continuous (raw)
 sample data, and cropping it to save memory:
@@ -27,8 +28,8 @@ raw = mne.io.read_raw_fif(sample_data_raw_file, verbose=False).crop(tmax=120)
 # To create the `~mne.Epochs` data structure, we'll extract the event
 # IDs stored in the :term:`stim channel`, map those integer event IDs to more
 # descriptive condition labels using an event dictionary, and pass those to the
-# `~mne.Epochs` constructor, along with the `~mne.io.Raw` data
-# and the desired temporal limits of our epochs, ``tmin`` and ``tmax`` (for a
+# `~mne.Epochs` constructor, along with the `~mne.io.Raw` data and the
+# desired temporal limits of our epochs, ``tmin`` and ``tmax`` (for a
 # detailed explanation of these steps, see :ref:`tut-epochs-class`).
 
 events = mne.find_events(raw, stim_channel='STI 014')

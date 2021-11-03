@@ -1,17 +1,17 @@
+# -*- coding: utf-8 -*-
 """
 .. _ex-electrode-pos-2d:
 
-====================================================
-How to convert 3D electrode positions to a 2D image.
-====================================================
+===================================================
+How to convert 3D electrode positions to a 2D image
+===================================================
 
 Sometimes we want to convert a 3D representation of electrodes into a 2D
-image. For example, if we are using electrocorticography it is common to
-create scatterplots on top of a brain, with each point representing an
-electrode.
+image. For example, if we are using electrocorticography it is common to create
+scatterplots on top of a brain, with each point representing an electrode.
 
 In this example, we'll show two ways of doing this in MNE-Python. First,
-if we have the 3D locations of each electrode then we can use Mayavi to
+if we have the 3D locations of each electrode then we can use PyVista to
 take a snapshot of a view of the brain. If we do not have these 3D locations,
 and only have a 2D image of the electrodes on the brain, we can use the
 :class:`mne.viz.ClickableImage` class to choose our own electrode positions
@@ -70,7 +70,7 @@ montage.apply_trans(trans)
 fig = plot_alignment(raw.info, trans=trans, subject='sample_ecog',
                      subjects_dir=subjects_dir, surfaces=dict(pial=0.9))
 set_3d_view(figure=fig, azimuth=20, elevation=80)
-xy, im = snapshot_brain_montage(fig, raw.info)
+xy, im = snapshot_brain_montage(fig, montage)
 
 # Convert from a dictionary to array to plot
 xy_pts = np.vstack([xy[ch] for ch in raw.ch_names])

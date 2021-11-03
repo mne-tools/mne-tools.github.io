@@ -40,13 +40,34 @@ The Shared Near Infrared Spectroscopy Format
 is designed by the fNIRS community in an effort to facilitate
 sharing and analysis of fNIRS data. And is the official format of the
 Society for functional near-infrared spectroscopy (SfNIRS).
+The manufacturers NIRx, Kernel, and Cortivision export data in the SNIRF
+format, and these files can be imported in to MNE.
 SNIRF is the preferred format for reading data in to MNE-Python.
 Data stored in the SNIRF format can be read in
 using :func:`mne.io.read_raw_snirf`.
 
 .. note:: The SNIRF format has provisions for many different types of fNIRS
           recordings. MNE-Python currently only supports reading continuous
-          wave data stored in the .snirf format.
+          wave or haemoglobin data stored in the .snirf format.
+
+
+Specifying the coordinate system
+--------------------------------
+
+There are a variety of coordinate systems used to specify the location of
+sensors (see :ref:`tut-source-alignment` for details). Where possible the
+coordinate system will be determined automatically when reading a SNIRF file.
+However, sometimes this is not possible and you must manually specify the
+coordinate frame the optodes are in. This is done using the ``optode_frame``
+argument when loading data.
+
+=======  ==================  =================
+Vendor   Model               ``optode_frame``
+=======  ==================  =================
+NIRx     ICBM-152 MNI        mri
+Kernel   ICBM 2009b          mri
+=======  ==================  =================
+
 
 
 ***********************
@@ -64,8 +85,8 @@ NIRx recordings can be read in using :func:`mne.io.read_raw_nirx`.
 The NIRx device stores data directly to a directory with multiple file types,
 MNE-Python extracts the appropriate information from each file.
 MNE-Python only supports NIRx files recorded with NIRStar
-version 15.0 and above.
-MNE-Python supports reading data from NIRScout and NIRSport 1 devices.
+version 15.0 and above and Aurora version 2021 and above.
+MNE-Python supports reading data from NIRScout and NIRSport devices.
 
 
 .. _import-hitachi:
@@ -248,5 +269,4 @@ brain = mne.viz.Brain('fsaverage', subjects_dir=subjects_dir,
                       alpha=0.5, cortex='low_contrast')
 brain.add_head()
 brain.add_sensors(raw.info, trans='fsaverage')
-brain.enable_depth_peeling()
 brain.show_view(azimuth=90, elevation=90, distance=500)

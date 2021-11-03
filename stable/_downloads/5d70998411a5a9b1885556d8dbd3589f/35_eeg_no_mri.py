@@ -3,7 +3,9 @@
 #          Joan Massich <mailsik@gmail.com>
 #          Eric Larson <larson.eric.d@gmail.com>
 #
-# License: BSD Style.
+# License: BSD-3-Clause
+
+# %%
 
 """
 .. _tut-eeg-fsaverage-source-modeling:
@@ -59,7 +61,7 @@ new_names = dict(
     for ch_name in raw.ch_names)
 raw.rename_channels(new_names)
 
-# Read and set the EEG electrode locations
+# Read and set the EEG electrode locations:
 montage = mne.channels.make_standard_montage('standard_1005')
 raw.set_montage(montage)
 raw.set_eeg_reference(projection=True)  # needed for inverse modeling
@@ -76,11 +78,6 @@ mne.viz.plot_alignment(
 fwd = mne.make_forward_solution(raw.info, trans=trans, src=src,
                                 bem=bem, eeg=True, mindist=5.0, n_jobs=1)
 print(fwd)
-
-# Use fwd to compute the sensitivity map for illustration purposes
-eeg_map = mne.sensitivity_map(fwd, ch_type='eeg', mode='fixed')
-brain = eeg_map.plot(time_label='EEG sensitivity', subjects_dir=subjects_dir,
-                     clim=dict(lims=[5, 50, 100]))
 
 ##############################################################################
 # From here on, standard inverse imaging methods can be used!
