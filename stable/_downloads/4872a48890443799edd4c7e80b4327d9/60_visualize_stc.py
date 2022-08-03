@@ -1,6 +1,8 @@
+# -*- coding: utf-8 -*-
 """
 .. _tut-viz-stcs:
 
+====================================
 Visualize source time courses (stcs)
 ====================================
 
@@ -24,11 +26,11 @@ from mne.minimum_norm import apply_inverse, read_inverse_operator
 from mne import read_evokeds
 
 data_path = sample.data_path()
-sample_dir = op.join(data_path, 'MEG', 'sample')
-subjects_dir = op.join(data_path, 'subjects')
+meg_path = data_path / 'MEG' / 'sample'
+subjects_dir = data_path / 'subjects'
 
-fname_evoked = op.join(data_path, 'MEG', 'sample', 'sample_audvis-ave.fif')
-fname_stc = op.join(sample_dir, 'sample_audvis-meg')
+fname_evoked = meg_path / 'sample_audvis-ave.fif'
+fname_stc = meg_path / 'sample_audvis-meg'
 fetch_hcp_mmp_parcellation(subjects_dir)
 
 # %%
@@ -45,8 +47,8 @@ print(stc)
 #
 # We can plot the source estimate using the
 # :func:`stc.plot <mne.SourceEstimate.plot>` just as in other MNE
-# objects. Note that for this visualization to work, you must have ``mayavi``
-# and ``pysurfer`` installed on your machine.
+# objects. Note that for this visualization to work, you must have ``PyVista``
+# installed on your machine.
 initial_time = 0.1
 brain = stc.plot(subjects_dir=subjects_dir, initial_time=initial_time,
                  clim=dict(kind='value', lims=[3, 6, 9]),
@@ -67,7 +69,7 @@ brain = stc_fs.plot(subjects_dir=subjects_dir, initial_time=initial_time,
 
 # to help orient us, let's add a parcellation (red=auditory, green=motor,
 # blue=visual)
-brain.add_annotation('HCPMMP1_combined', borders=2, subjects_dir=subjects_dir)
+brain.add_annotation('HCPMMP1_combined', borders=2)
 
 # You can save a movie like the one on our documentation website with:
 # brain.save_movie(time_dilation=20, tmin=0.05, tmax=0.16,
@@ -77,7 +79,7 @@ brain.add_annotation('HCPMMP1_combined', borders=2, subjects_dir=subjects_dir)
 # Note that here we used ``initial_time=0.1``, but we can also browse through
 # time using ``time_viewer=True``.
 #
-# In case ``mayavi`` is not available, we also offer a ``matplotlib``
+# In case ``PyVista`` is not available, we also offer a ``matplotlib``
 # backend. Here we use verbose='error' to ignore a warning that not all
 # vertices were used in plotting.
 mpl_fig = stc.plot(subjects_dir=subjects_dir, initial_time=initial_time,
@@ -98,7 +100,7 @@ evoked.decimate(10, verbose='error')
 
 # %%
 # Then, we can load the precomputed inverse operator from a file.
-fname_inv = data_path + '/MEG/sample/sample_audvis-meg-vol-7-meg-inv.fif'
+fname_inv = meg_path / 'sample_audvis-meg-vol-7-meg-inv.fif'
 inv = read_inverse_operator(fname_inv)
 src = inv['src']
 mri_head_t = inv['mri_head_t']
@@ -163,7 +165,6 @@ brain = mne.viz.Brain('sample', hemi='both', surf='pial', alpha=0.5,
                       cortex='low_contrast', subjects_dir=subjects_dir)
 brain.add_volume_labels(aseg='aparc+aseg', labels=labels)
 brain.show_view(azimuth=250, elevation=40, distance=400)
-brain.enable_depth_peeling()
 
 # %%
 # And we can project these label time courses back to their original
@@ -191,9 +192,9 @@ brain = stc.plot(subject='sample', subjects_dir=subjects_dir,
 # For computing a dipole fit, we need to load the noise covariance, the BEM
 # solution, and the coregistration transformation files. Note that for the
 # other methods, these were already used to generate the inverse operator.
-fname_cov = op.join(sample_dir, 'sample_audvis-cov.fif')
-fname_bem = op.join(subjects_dir, 'sample', 'bem', 'sample-5120-bem-sol.fif')
-fname_trans = op.join(sample_dir, 'sample_audvis_raw-trans.fif')
+fname_cov = meg_path / 'sample_audvis-cov.fif'
+fname_bem = subjects_dir / 'sample' / 'bem' / 'sample-5120-bem-sol.fif'
+fname_trans = meg_path / 'sample_audvis_raw-trans.fif'
 
 ##############################################################################
 # Dipoles are fit independently for each time point, so let us crop our time

@@ -6,10 +6,11 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.17.1: http://docutils.sourceforge.net/" />
 
-    <title>Algorithms and other implementation details &#8212; MNE 0.24.1 documentation</title>
+    <title>Algorithms and other implementation details &#8212; MNE 1.0.3 documentation</title>
     
-  <link href="../_static/css/theme.css" rel="stylesheet">
-  <link href="../_static/css/index.ff1ffe594081f20da1ef19478df9384b.css" rel="stylesheet">
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../_static/styles/theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
+<link href="../_static/styles/pydata-sphinx-theme.css?digest=1999514e3f237ded88cf" rel="stylesheet">
 
     
   <link rel="stylesheet"
@@ -19,12 +20,7 @@
   <link rel="preload" as="font" type="font/woff2" crossorigin
     href="../_static/vendor/fontawesome/5.13.0/webfonts/fa-brands-400.woff2">
 
-    
-      
-
-    
     <link rel="stylesheet" type="text/css" href="../_static/pygments.css" />
-    <link rel="stylesheet" type="text/css" href="../_static/css/blank.css" />
     <link rel="stylesheet" type="text/css" href="../_static/graphviz.css" />
     <link rel="stylesheet" type="text/css" href="../_static/bootstrap_divs.css" />
     <link rel="stylesheet" type="text/css" href="../_static/copybutton.css" />
@@ -34,7 +30,8 @@
     <link rel="stylesheet" type="text/css" href="../_static/sg_gallery-rendered-html.css" />
     <link rel="stylesheet" type="text/css" href="../_static/style.css" />
     
-  <link rel="preload" as="script" href="../_static/js/index.be7d3bbb2ef33a8344ce.js">
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf">
 
     <script data-url_root="../" id="documentation_options" src="../_static/documentation_options.js"></script>
     <script src="../_static/jquery.js"></script>
@@ -69,7 +66,7 @@
 
 
   </head>
-  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="80">
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="60">
     
     <div class="container-fluid" id="banner"></div>
 
@@ -137,56 +134,101 @@
     <div id="navbar-end">
       
       <div class="navbar-end-item">
-        <div class="dropdown">
-    <button type="button" class="btn btn-primary btn-sm navbar-btn dropdown-toggle" id="dLabelMore" data-toggle="dropdown">
-        v0.24.1
+        <div class="dropdown" id="version_switcher">
+    <button type="button" class="btn btn-primary btn-sm navbar-btn dropdown-toggle" id="version_switcher_button" data-toggle="dropdown">
+        1.0  <!-- this text may get changed later by javascript -->
         <span class="caret"></span>
     </button>
-    <div class="dropdown-menu list-group-flush py-0" aria-labelledby="dLabelMore">
-        <a class="list-group-item list-group-item-action py-1" href="https://mne.tools/dev/index.html">v1.0 (devel)</a>
-        <a class="list-group-item list-group-item-action py-1" href="https://mne.tools/stable/index.html">v0.24 (stable)</a>
-        <a class="list-group-item list-group-item-action py-1" href="https://mne.tools/0.23/index.html">v0.23</a>
-        <a class="list-group-item list-group-item-action py-1" href="https://mne.tools/0.22/index.html">v0.22</a>
-        <a class="list-group-item list-group-item-action py-1" href="https://mne.tools/0.21/index.html">v0.21</a>
-        <a class="list-group-item list-group-item-action py-1" href="https://mne.tools/0.20/index.html">v0.20</a>
-        <a class="list-group-item list-group-item-action py-1" href="https://mne.tools/0.19/index.html">v0.19</a>
-        <a class="list-group-item list-group-item-action py-1" href="https://mne.tools/0.18/index.html">v0.18</a>
-        <a class="list-group-item list-group-item-action py-1" href="https://mne.tools/0.17/index.html">v0.17</a>
-        <a class="list-group-item list-group-item-action py-1" href="https://mne.tools/0.16/index.html">v0.16</a>
-        <a class="list-group-item list-group-item-action py-1" href="https://mne.tools/0.15/index.html">v0.15</a>
-        <a class="list-group-item list-group-item-action py-1" href="https://mne.tools/0.14/index.html">v0.14</a>
-        <a class="list-group-item list-group-item-action py-1" href="https://mne.tools/0.13/index.html">v0.13</a>
-        <a class="list-group-item list-group-item-action py-1" href="https://mne.tools/0.12/index.html">v0.12</a>
-        <a class="list-group-item list-group-item-action py-1" href="https://mne.tools/0.11/index.html">v0.11</a>
+    <div id="version_switcher_menu" class="dropdown-menu list-group-flush py-0" aria-labelledby="version_switcher_button">
+    <!-- dropdown will be populated by javascript on page load -->
     </div>
 </div>
+
+<!-- NOTE: this JS must live here (not in our global JS file) because it relies
+     on being processed by Jinja before it is run (specifically for replacing
+     variables overview/implementation and {'json_url': 'https://mne.tools/dev/_static/versions.json', 'url_template': 'https://mne.tools/{version}/', 'version_match': '1.0'}.
+-->
+
+<script type="text/javascript">
+// Check if corresponding page path exists in other version of docs
+// and, if so, go there instead of the homepage of the other docs version
+function checkPageExistsAndRedirect(event) {
+    const currentFilePath = "overview/implementation.html",
+          tryUrl = event.target.getAttribute("href");
+    let otherDocsHomepage = tryUrl.replace(currentFilePath, "");
+    $.ajax({
+        type: 'HEAD',
+        url: tryUrl,
+        // if the page exists, go there
+        success: function() {
+            location.href = tryUrl;
+        }
+    }).fail(function() {
+        location.href = otherDocsHomepage;
+    });
+    // this prevents the browser from following the href of the clicked node
+    // (which is fine because this function takes care of redirecting)
+    return false;
+}
+
+// Populate the version switcher from the JSON config file
+(function () {
+    $.getJSON("https://mne.tools/dev/_static/versions.json", function(data, textStatus, jqXHR) {
+        const currentFilePath = "overview/implementation.html";
+        // create links to the corresponding page in the other docs versions
+        $.each(data, function(index, entry) {
+            // if no custom name specified (e.g., "latest"), use version string
+            if (!("name" in entry)) {
+                entry.name = entry.version;
+            }
+            // create the node
+            const node = document.createElement("a");
+            node.setAttribute("class", "list-group-item list-group-item-action py-1");
+            node.textContent = `${entry.name}`;
+            node.setAttribute("href", `${entry.url}${currentFilePath}`);
+            // on click, AJAX calls will check if the linked page exists before
+            // trying to redirect, and if not, will redirect to the homepage
+            // for that version of the docs.
+            node.onclick = checkPageExistsAndRedirect;
+            // Add dataset values for the version and name in case people want
+            // to apply CSS styling based on this information.
+            node.dataset["versionName"] = entry.name;
+            node.dataset["version"] = entry.version;
+
+            $("#version_switcher_menu").append(node);
+            // replace dropdown button text with the preferred display name of
+            // this version, rather than using sphinx's 1.0 variable.
+            // also highlight the dropdown entry for the currently-viewed
+            // version's entry
+            if (entry.version == "1.0") {
+                node.classList.add("active");
+                let btn = document.getElementById("version_switcher_button");
+                btn.innerText = btn.dataset["activeVersionName"] = entry.name;
+                btn.dataset["activeVersion"] = entry.version;
+            }
+        });
+    });
+})();
+</script>
       </div>
       
       <div class="navbar-end-item">
         <ul id="navbar-icon-links" class="navbar-nav" aria-label="Quick Links">
         <li class="nav-item">
-          <a class="nav-link" href="https://github.com/mne-tools/mne-python" rel="noopener" target="_blank" title="GitHub">
-            <span><i class="fab fa-github-square"></i></span>
-            <label class="sr-only">GitHub</label>
-          </a>
+          <a class="nav-link" href="https://github.com/mne-tools/mne-python" rel="noopener" target="_blank" title="GitHub"><span><i class="fab fa-github-square"></i></span>
+            <label class="sr-only">GitHub</label></a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="https://twitter.com/mne_python" rel="noopener" target="_blank" title="Twitter">
-            <span><i class="fab fa-twitter-square"></i></span>
-            <label class="sr-only">Twitter</label>
-          </a>
+          <a class="nav-link" href="https://twitter.com/mne_python" rel="noopener" target="_blank" title="Twitter"><span><i class="fab fa-twitter-square"></i></span>
+            <label class="sr-only">Twitter</label></a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="https://mne.discourse.group/" rel="noopener" target="_blank" title="Discourse">
-            <span><i class="fab fa-discourse"></i></span>
-            <label class="sr-only">Discourse</label>
-          </a>
+          <a class="nav-link" href="https://mne.discourse.group/" rel="noopener" target="_blank" title="Discourse"><span><i class="fab fa-discourse"></i></span>
+            <label class="sr-only">Discourse</label></a>
         </li>
         <li class="nav-item">
-          <a class="nav-link" href="https://discord.gg/rKfvxTuATa" rel="noopener" target="_blank" title="Discord">
-            <span><i class="fab fa-discord"></i></span>
-            <label class="sr-only">Discord</label>
-          </a>
+          <a class="nav-link" href="https://discord.gg/rKfvxTuATa" rel="noopener" target="_blank" title="Discord"><span><i class="fab fa-discord"></i></span>
+            <label class="sr-only">Discord</label></a>
         </li>
       </ul>
       </div>
@@ -202,7 +244,8 @@
           
             
             <!-- Only show if we have sidebars configured, else just a small margin  -->
-            <div class="col-12 col-md-3 bd-sidebar"><form class="bd-search d-flex align-items-center" action="../search.html" method="get">
+            <div class="col-12 col-md-3 bd-sidebar">
+              <div class="sidebar-start-items"><form class="bd-search d-flex align-items-center" action="../search.html" method="get">
   <i class="icon fas fa-search"></i>
   <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" >
 </form><nav class="bd-links" id="bd-docs-nav" aria-label="Main navigation">
@@ -218,407 +261,558 @@
    </i>
   </label>
   <ul>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/intro/10_overview.html">
-     Overview of MEG/EEG analysis with MNE-Python
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/intro/15_inplace.html">
-     Modifying data in-place
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/intro/20_events_from_raw.html">
-     Parsing events from raw data
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/intro/30_info.html">
-     The Info data structure
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/intro/40_sensor_locations.html">
-     Working with sensor locations
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/intro/50_configure_mne.html">
-     Configuring MNE-Python
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/intro/70_report.html">
-     Getting started with
-     <code class="xref py py-class docutils literal notranslate">
-      <span class="pre">
-       mne.Report
-      </span>
-     </code>
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/io/10_reading_meg_data.html">
-     Importing data from MEG devices
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/io/20_reading_eeg_data.html">
-     Importing data from EEG devices
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/io/30_reading_fnirs_data.html">
-     Importing data from fNIRS devices
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/io/60_ctf_bst_auditory.html">
-     Working with CTF data: the Brainstorm auditory dataset
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/raw/10_raw_overview.html">
-     The Raw data structure: continuous data
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/raw/20_event_arrays.html">
-     Working with events
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/raw/30_annotate_raw.html">
-     Annotating continuous data
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/raw/40_visualize_raw.html">
-     Built-in plotting methods for Raw objects
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/preprocessing/10_preprocessing_overview.html">
-     Overview of artifact detection
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/preprocessing/15_handling_bad_channels.html">
-     Handling bad channels
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/preprocessing/20_rejecting_bad_data.html">
-     Rejecting bad data spans and breaks
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/preprocessing/25_background_filtering.html">
-     Background information on filtering
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/preprocessing/30_filtering_resampling.html">
-     Filtering and resampling data
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/preprocessing/35_artifact_correction_regression.html">
-     Repairing artifacts with regression
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/preprocessing/40_artifact_correction_ica.html">
-     Repairing artifacts with ICA
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/preprocessing/45_projectors_background.html">
-     Background on projectors and projections
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/preprocessing/50_artifact_correction_ssp.html">
-     Repairing artifacts with SSP
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/preprocessing/55_setting_eeg_reference.html">
-     Setting the EEG reference
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/preprocessing/59_head_positions.html">
-     Extracting and visualizing subject head movement
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/preprocessing/60_maxwell_filtering_sss.html">
-     Signal-space separation (SSS) and Maxwell filtering
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/preprocessing/70_fnirs_processing.html">
-     Preprocessing functional near-infrared spectroscopy (fNIRS) data
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/epochs/10_epochs_overview.html">
-     The Epochs data structure: discontinuous data
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/epochs/20_visualize_epochs.html">
-     Visualizing epoched data
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/epochs/30_epochs_metadata.html">
-     Working with Epoch metadata
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/epochs/40_autogenerate_metadata.html">
-     Auto-generating
-     <code class="docutils literal notranslate">
-      <span class="pre">
-       Epochs
-      </span>
-     </code>
-     metadata
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/epochs/50_epochs_to_data_frame.html">
-     Exporting Epochs to Pandas DataFrames
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/epochs/60_make_fixed_length_epochs.html">
-     Divide continuous data into equally-spaced epochs
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/evoked/10_evoked_overview.html">
-     The Evoked data structure: evoked/averaged data
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/evoked/20_visualize_evoked.html">
-     Visualizing Evoked data
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/evoked/30_eeg_erp.html">
-     EEG processing and Event Related Potentials (ERPs)
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/evoked/40_whitened.html">
-     Plotting whitened data
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/time-freq/20_sensors_time_frequency.html">
-     Frequency and time-frequency sensor analysis
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/time-freq/50_ssvep.html">
-     Frequency-tagging: Basic analysis of an SSVEP/vSSR dataset
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/forward/10_background_freesurfer.html">
-     FreeSurfer MRI reconstruction
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/forward/20_source_alignment.html">
-     Source alignment and coordinate frames
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/forward/25_automated_coreg.html">
-     Using an automated approach to coregistration
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/forward/30_forward.html">
-     Head model and forward computation
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/forward/35_eeg_no_mri.html">
-     EEG forward operator with a template MRI
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/forward/50_background_freesurfer_mne.html">
-     How MNE uses FreeSurfer’s outputs
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/forward/80_fix_bem_in_blender.html">
-     Editing BEM surfaces in Blender
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/forward/90_compute_covariance.html">
-     Computing a covariance matrix
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/inverse/10_stc_class.html">
-     The
-     <code class="xref py py-class docutils literal notranslate">
-      <span class="pre">
-       SourceEstimate
-      </span>
-     </code>
-     data structure
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/inverse/20_dipole_fit.html">
-     Source localization with equivalent current dipole (ECD) fit
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/inverse/30_mne_dspm_loreta.html">
-     Source localization with MNE/dSPM/sLORETA/eLORETA
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/inverse/35_dipole_orientations.html">
-     The role of dipole orientations in distributed source localization
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/inverse/40_mne_fixed_free.html">
-     Computing various MNE solutions
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/inverse/50_beamformer_lcmv.html">
-     Source reconstruction using an LCMV beamformer
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/inverse/60_visualize_stc.html">
-     Visualize source time courses (stcs)
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/inverse/70_eeg_mri_coords.html">
-     EEG source localization given electrode locations on an MRI
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/inverse/80_brainstorm_phantom_elekta.html">
-     Brainstorm Elekta phantom dataset tutorial
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/inverse/85_brainstorm_phantom_ctf.html">
-     Brainstorm CTF phantom dataset tutorial
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/inverse/90_phantom_4DBTi.html">
-     4D Neuroimaging/BTi phantom dataset tutorial
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/stats-sensor-space/10_background_stats.html">
-     Statistical inference
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/stats-sensor-space/20_erp_stats.html">
-     Visualising statistical significance thresholds on EEG data
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/stats-sensor-space/40_cluster_1samp_time_freq.html">
-     Non-parametric 1 sample cluster statistic on single trial power
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/stats-sensor-space/50_cluster_between_time_freq.html">
-     Non-parametric between conditions cluster statistic on single trial power
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/stats-sensor-space/75_cluster_ftest_spatiotemporal.html">
-     Spatiotemporal permutation F-test on full sensor data
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/stats-source-space/20_cluster_1samp_spatiotemporal.html">
-     Permutation t-test on source data with spatio-temporal clustering
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/stats-source-space/30_cluster_ftest_spatiotemporal.html">
-     2 samples permutation test on source data with spatio-temporal clustering
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/stats-source-space/60_cluster_rmANOVA_spatiotemporal.html">
-     Repeated measures ANOVA on source data with spatio-temporal clustering
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/stats-source-space/70_cluster_rmANOVA_time_freq.html">
-     Mass-univariate twoway repeated measures ANOVA on single trial power
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/machine-learning/30_strf.html">
-     Spectro-temporal receptive field (STRF) estimation on continuous data
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/machine-learning/50_decoding.html">
-     Decoding (MVPA)
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/clinical/10_ieeg_localize.html">
-     Locating Intracranial Electrode Contacts
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/clinical/20_seeg.html">
-     Working with sEEG data
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/clinical/30_ecog.html">
-     Working with ECoG data
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/clinical/60_sleep.html">
-     Sleep stage classification from polysomnography (PSG) data
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/simulation/10_array_objs.html">
-     Creating MNE-Python data structures from scratch
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/simulation/70_point_spread.html">
-     Corrupt known signal with point spread
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_tutorials/simulation/80_dics.html">
-     DICS for power mapping
-    </a>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../auto_tutorials/intro/index.html">
+     Introductory tutorials
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/>
+    <label for="toctree-checkbox-2">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/intro/10_overview.html">
+       Overview of MEG/EEG analysis with MNE-Python
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/intro/15_inplace.html">
+       Modifying data in-place
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/intro/20_events_from_raw.html">
+       Parsing events from raw data
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/intro/30_info.html">
+       The Info data structure
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/intro/40_sensor_locations.html">
+       Working with sensor locations
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/intro/50_configure_mne.html">
+       Configuring MNE-Python
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/intro/70_report.html">
+       Getting started with mne.Report
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../auto_tutorials/io/index.html">
+     Reading data for different recording systems
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/>
+    <label for="toctree-checkbox-3">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/io/10_reading_meg_data.html">
+       Importing data from MEG devices
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/io/20_reading_eeg_data.html">
+       Importing data from EEG devices
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/io/30_reading_fnirs_data.html">
+       Importing data from fNIRS devices
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/io/60_ctf_bst_auditory.html">
+       Working with CTF data: the Brainstorm auditory dataset
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../auto_tutorials/raw/index.html">
+     Working with continuous data
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" type="checkbox"/>
+    <label for="toctree-checkbox-4">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/raw/10_raw_overview.html">
+       The Raw data structure: continuous data
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/raw/20_event_arrays.html">
+       Working with events
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/raw/30_annotate_raw.html">
+       Annotating continuous data
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/raw/40_visualize_raw.html">
+       Built-in plotting methods for Raw objects
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../auto_tutorials/preprocessing/index.html">
+     Preprocessing
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" type="checkbox"/>
+    <label for="toctree-checkbox-5">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/preprocessing/10_preprocessing_overview.html">
+       Overview of artifact detection
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/preprocessing/15_handling_bad_channels.html">
+       Handling bad channels
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/preprocessing/20_rejecting_bad_data.html">
+       Rejecting bad data spans and breaks
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/preprocessing/25_background_filtering.html">
+       Background information on filtering
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/preprocessing/30_filtering_resampling.html">
+       Filtering and resampling data
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/preprocessing/35_artifact_correction_regression.html">
+       Repairing artifacts with regression
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/preprocessing/40_artifact_correction_ica.html">
+       Repairing artifacts with ICA
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/preprocessing/45_projectors_background.html">
+       Background on projectors and projections
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/preprocessing/50_artifact_correction_ssp.html">
+       Repairing artifacts with SSP
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/preprocessing/55_setting_eeg_reference.html">
+       Setting the EEG reference
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/preprocessing/59_head_positions.html">
+       Extracting and visualizing subject head movement
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/preprocessing/60_maxwell_filtering_sss.html">
+       Signal-space separation (SSS) and Maxwell filtering
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/preprocessing/70_fnirs_processing.html">
+       Preprocessing functional near-infrared spectroscopy (fNIRS) data
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../auto_tutorials/epochs/index.html">
+     Segmenting continuous data into epochs
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" type="checkbox"/>
+    <label for="toctree-checkbox-6">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/epochs/10_epochs_overview.html">
+       The Epochs data structure: discontinuous data
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/epochs/20_visualize_epochs.html">
+       Visualizing epoched data
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/epochs/30_epochs_metadata.html">
+       Working with Epoch metadata
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/epochs/40_autogenerate_metadata.html">
+       Auto-generating Epochs metadata
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/epochs/50_epochs_to_data_frame.html">
+       Exporting Epochs to Pandas DataFrames
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/epochs/60_make_fixed_length_epochs.html">
+       Divide continuous data into equally-spaced epochs
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../auto_tutorials/evoked/index.html">
+     Estimating evoked responses
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" type="checkbox"/>
+    <label for="toctree-checkbox-7">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/evoked/10_evoked_overview.html">
+       The Evoked data structure: evoked/averaged data
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/evoked/20_visualize_evoked.html">
+       Visualizing Evoked data
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/evoked/30_eeg_erp.html">
+       EEG processing and Event Related Potentials (ERPs)
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/evoked/40_whitened.html">
+       Plotting whitened data
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../auto_tutorials/time-freq/index.html">
+     Time-frequency analysis
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" type="checkbox"/>
+    <label for="toctree-checkbox-8">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/time-freq/20_sensors_time_frequency.html">
+       Frequency and time-frequency sensor analysis
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/time-freq/50_ssvep.html">
+       Frequency-tagging: Basic analysis of an SSVEP/vSSR dataset
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../auto_tutorials/forward/index.html">
+     Forward models and source spaces
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" type="checkbox"/>
+    <label for="toctree-checkbox-9">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/forward/10_background_freesurfer.html">
+       FreeSurfer MRI reconstruction
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/forward/20_source_alignment.html">
+       Source alignment and coordinate frames
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/forward/25_automated_coreg.html">
+       Using an automated approach to coregistration
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/forward/30_forward.html">
+       Head model and forward computation
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/forward/35_eeg_no_mri.html">
+       EEG forward operator with a template MRI
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/forward/50_background_freesurfer_mne.html">
+       How MNE uses FreeSurfer’s outputs
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/forward/80_fix_bem_in_blender.html">
+       Editing BEM surfaces in Blender
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/forward/90_compute_covariance.html">
+       Computing a covariance matrix
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../auto_tutorials/inverse/index.html">
+     Source localization and inverses
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" type="checkbox"/>
+    <label for="toctree-checkbox-10">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/inverse/10_stc_class.html">
+       The SourceEstimate data structure
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/inverse/20_dipole_fit.html">
+       Source localization with equivalent current dipole (ECD) fit
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/inverse/30_mne_dspm_loreta.html">
+       Source localization with MNE, dSPM, sLORETA, and eLORETA
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/inverse/35_dipole_orientations.html">
+       The role of dipole orientations in distributed source localization
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/inverse/40_mne_fixed_free.html">
+       Computing various MNE solutions
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/inverse/50_beamformer_lcmv.html">
+       Source reconstruction using an LCMV beamformer
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/inverse/60_visualize_stc.html">
+       Visualize source time courses (stcs)
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/inverse/70_eeg_mri_coords.html">
+       EEG source localization given electrode locations on an MRI
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/inverse/80_brainstorm_phantom_elekta.html">
+       Brainstorm Elekta phantom dataset tutorial
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/inverse/85_brainstorm_phantom_ctf.html">
+       Brainstorm CTF phantom dataset tutorial
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/inverse/90_phantom_4DBTi.html">
+       4D Neuroimaging/BTi phantom dataset tutorial
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../auto_tutorials/stats-sensor-space/index.html">
+     Statistical analysis of sensor data
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" type="checkbox"/>
+    <label for="toctree-checkbox-11">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/stats-sensor-space/10_background_stats.html">
+       Statistical inference
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/stats-sensor-space/20_erp_stats.html">
+       Visualising statistical significance thresholds on EEG data
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/stats-sensor-space/40_cluster_1samp_time_freq.html">
+       Non-parametric 1 sample cluster statistic on single trial power
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/stats-sensor-space/50_cluster_between_time_freq.html">
+       Non-parametric between conditions cluster statistic on single trial power
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/stats-sensor-space/75_cluster_ftest_spatiotemporal.html">
+       Spatiotemporal permutation F-test on full sensor data
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../auto_tutorials/stats-source-space/index.html">
+     Statistical analysis of source estimates
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" type="checkbox"/>
+    <label for="toctree-checkbox-12">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/stats-source-space/20_cluster_1samp_spatiotemporal.html">
+       Permutation t-test on source data with spatio-temporal clustering
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/stats-source-space/30_cluster_ftest_spatiotemporal.html">
+       2 samples permutation test on source data with spatio-temporal clustering
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/stats-source-space/60_cluster_rmANOVA_spatiotemporal.html">
+       Repeated measures ANOVA on source data with spatio-temporal clustering
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/stats-source-space/70_cluster_rmANOVA_time_freq.html">
+       Mass-univariate twoway repeated measures ANOVA on single trial power
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../auto_tutorials/machine-learning/index.html">
+     Machine learning models of neural activity
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-13" name="toctree-checkbox-13" type="checkbox"/>
+    <label for="toctree-checkbox-13">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/machine-learning/30_strf.html">
+       Spectro-temporal receptive field (STRF) estimation on continuous data
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/machine-learning/50_decoding.html">
+       Decoding (MVPA)
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../auto_tutorials/clinical/index.html">
+     Clinical applications
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-14" name="toctree-checkbox-14" type="checkbox"/>
+    <label for="toctree-checkbox-14">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/clinical/10_ieeg_localize.html">
+       Locating intracranial electrode contacts
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/clinical/20_seeg.html">
+       Working with sEEG data
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/clinical/30_ecog.html">
+       Working with ECoG data
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/clinical/60_sleep.html">
+       Sleep stage classification from polysomnography (PSG) data
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../auto_tutorials/simulation/index.html">
+     Simulation
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-15" name="toctree-checkbox-15" type="checkbox"/>
+    <label for="toctree-checkbox-15">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/simulation/10_array_objs.html">
+       Creating MNE-Python data structures from scratch
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/simulation/70_point_spread.html">
+       Corrupt known signal with point spread
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_tutorials/simulation/80_dics.html">
+       DICS for power mapping
+      </a>
+     </li>
+    </ul>
    </li>
   </ul>
  </li>
@@ -626,541 +820,666 @@
   <a class="reference internal" href="../auto_examples/index.html">
    Examples
   </a>
-  <input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/>
-  <label for="toctree-checkbox-2">
+  <input class="toctree-checkbox" id="toctree-checkbox-16" name="toctree-checkbox-16" type="checkbox"/>
+  <label for="toctree-checkbox-16">
    <i class="fas fa-chevron-down">
    </i>
   </label>
   <ul>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/io/elekta_epochs.html">
-     Getting averaging info from .fif files
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/io/read_neo_format.html">
-     How to use data in neural ensemble (NEO) format
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/io/read_noise_covariance_matrix.html">
-     Reading/Writing a noise covariance matrix
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/io/read_xdf.html">
-     Reading XDF EEG data
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/simulation/simulate_evoked_data.html">
-     Generate simulated evoked data
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/simulation/simulate_raw_data.html">
-     Generate simulated raw data
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/simulation/simulated_raw_data_using_subject_anatomy.html">
-     Simulate raw data using subject anatomy
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/simulation/source_simulator.html">
-     Generate simulated source data
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/preprocessing/css.html">
-     Cortical Signal Suppression (CSS) for removal of cortical signals
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/preprocessing/define_target_events.html">
-     Define target events based on time lag, plot evoked response
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/preprocessing/eeg_csd.html">
-     Transform EEG data using current source density (CSD)
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/preprocessing/eog_artifact_histogram.html">
-     Show EOG artifact timing
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/preprocessing/find_ref_artifacts.html">
-     Find MEG reference channel artifacts
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/preprocessing/fnirs_artifact_removal.html">
-     Visualise NIRS artifact correction methods
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/preprocessing/ica_comparison.html">
-     Compare the different ICA algorithms in MNE
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/preprocessing/interpolate_bad_channels.html">
-     Interpolate bad channels for MEG/EEG channels
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/preprocessing/movement_compensation.html">
-     Maxwell filter data with movement compensation
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/preprocessing/movement_detection.html">
-     Annotate movement artifacts and reestimate dev_head_t
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/preprocessing/muscle_detection.html">
-     Annotate muscle artifacts
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/preprocessing/otp.html">
-     Plot sensor denoising using oversampled temporal projection
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/preprocessing/shift_evoked.html">
-     Shifting time-scale in evoked data
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/preprocessing/virtual_evoked.html">
-     Remap MEG channel types
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/preprocessing/xdawn_denoising.html">
-     XDAWN Denoising
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/visualization/3d_to_2d.html">
-     How to convert 3D electrode positions to a 2D image.
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/visualization/brain.html">
-     Plotting with
-     <code class="docutils literal notranslate">
-      <span class="pre">
-       mne.viz.Brain
-      </span>
-     </code>
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/visualization/channel_epochs_image.html">
-     Visualize channel over epochs as an image
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/visualization/eeg_on_scalp.html">
-     Plotting EEG sensors on the scalp
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/visualization/eeglab_head_sphere.html">
-     How to plot topomaps the way EEGLAB does
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/visualization/evoked_arrowmap.html">
-     Plotting topographic arrowmaps of evoked data
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/visualization/evoked_topomap.html">
-     Plotting topographic maps of evoked data
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/visualization/evoked_whitening.html">
-     Whitening evoked data with a noise covariance
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/visualization/meg_sensors.html">
-     Plotting sensor layouts of MEG systems
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/visualization/mne_helmet.html">
-     Plot the MNE brain and helmet
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/visualization/montage_sgskip.html">
-     Plotting sensor layouts of EEG systems
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/visualization/parcellation.html">
-     Plot a cortical parcellation
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/visualization/publication_figure.html">
-     Make figures more publication ready
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/visualization/roi_erpimage_by_rt.html">
-     Plot single trial activity, grouped by ROI and sorted by RT
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/visualization/sensor_noise_level.html">
-     Show noise levels from empty room data
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/visualization/ssp_projs_sensitivity_map.html">
-     Sensitivity map of SSP projections
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/visualization/topo_compare_conditions.html">
-     Compare evoked responses for different conditions
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/visualization/topo_customized.html">
-     Plot custom topographies for MEG sensors
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/visualization/xhemi.html">
-     Cross-hemisphere comparison
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/time_frequency/compute_csd.html">
-     Compute a cross-spectral density (CSD) matrix
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/time_frequency/compute_source_psd_epochs.html">
-     Compute Power Spectral Density of inverse solution from single epochs
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/time_frequency/source_label_time_frequency.html">
-     Compute power and phase lock in label of the source space
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/time_frequency/source_power_spectrum.html">
-     Compute source power spectral density (PSD) in a label
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/time_frequency/source_power_spectrum_opm.html">
-     Compute source power spectral density (PSD) of VectorView and OPM data
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/time_frequency/source_space_time_frequency.html">
-     Compute induced power in the source space with dSPM
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/time_frequency/temporal_whitening.html">
-     Temporal whitening with AR model
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/time_frequency/time_frequency_erds.html">
-     Compute and visualize ERDS maps
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/time_frequency/time_frequency_global_field_power.html">
-     Explore event-related dynamics for specific frequency bands
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/time_frequency/time_frequency_simulated.html">
-     Time-frequency on simulated data (Multitaper vs. Morlet vs. Stockwell)
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/stats/cluster_stats_evoked.html">
-     Permutation F-test on sensor data with 1D cluster level
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/stats/fdr_stats_evoked.html">
-     FDR correction on T-test on sensor data
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/stats/linear_regression_raw.html">
-     Regression on continuous data (rER[P/F])
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/stats/sensor_permutation_test.html">
-     Permutation T-test on sensor data
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/stats/sensor_regression.html">
-     Analysing continuous features with binning and regression in sensor space
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/decoding/decoding_csp_eeg.html">
-     Motor imagery decoding from EEG data using the Common Spatial Pattern (CSP)
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/decoding/decoding_csp_timefreq.html">
-     Decoding in time-frequency space using Common Spatial Patterns (CSP)
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/decoding/decoding_rsa_sgskip.html">
-     Representational Similarity Analysis
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/decoding/decoding_spatio_temporal_source.html">
-     Decoding source space data
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/decoding/decoding_spoc_CMC.html">
-     Continuous Target Decoding with SPoC
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/decoding/decoding_time_generalization_conditions.html">
-     Decoding sensor space data with generalization across time and conditions
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/decoding/decoding_unsupervised_spatial_filter.html">
-     Analysis of evoked response using ICA and PCA reduction techniques
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/decoding/decoding_xdawn_eeg.html">
-     XDAWN Decoding From EEG data
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/decoding/ems_filtering.html">
-     Compute effect-matched-spatial filtering (EMS)
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/decoding/linear_model_patterns.html">
-     Linear classifier on sensor data with plot patterns and filters
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/decoding/receptive_field_mtrf.html">
-     Receptive Field Estimation and Prediction
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/decoding/ssd_spatial_filters.html">
-     Compute Spectro-Spatial Decomposition (SSD) spatial filters
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/forward/forward_sensitivity_maps.html">
-     Display sensitivity maps for EEG and MEG sensors
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/forward/left_cerebellum_volume_source.html">
-     Generate a left cerebellum volume source space
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/forward/source_space_morphing.html">
-     Use source space morphing
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/inverse/compute_mne_inverse_epochs_in_label.html">
-     Compute MNE-dSPM inverse solution on single epochs
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/inverse/compute_mne_inverse_raw_in_label.html">
-     Compute sLORETA inverse solution on raw data
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/inverse/compute_mne_inverse_volume.html">
-     Compute MNE-dSPM inverse solution on evoked data in volume source space
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/inverse/custom_inverse_solver.html">
-     Source localization with a custom inverse solver
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/inverse/dics_source_power.html">
-     Compute source power using DICS beamformer
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/inverse/evoked_ers_source_power.html">
-     Compute evoked ERS source power using DICS, LCMV beamformer, and dSPM
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/inverse/gamma_map_inverse.html">
-     Compute a sparse inverse solution using the Gamma-MAP empirical Bayesian method
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/inverse/label_activation_from_stc.html">
-     Extracting time course from source_estimate object
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/inverse/label_from_stc.html">
-     Generate a functional label from source estimates
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/inverse/label_source_activations.html">
-     Extracting the time series of activations in a label
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/inverse/mixed_norm_inverse.html">
-     Compute sparse inverse solution with mixed norm: MxNE and irMxNE
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/inverse/mixed_source_space_inverse.html">
-     Compute MNE inverse solution on evoked data with a mixed source space
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/inverse/mne_cov_power.html">
-     Compute source power estimate by projecting the covariance with MNE
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/inverse/morph_surface_stc.html">
-     Morph surface source estimate
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/inverse/morph_volume_stc.html">
-     Morph volumetric source estimate
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/inverse/multidict_reweighted_tfmxne.html">
-     Compute iterative reweighted TF-MxNE with multiscale time-frequency dictionary
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/inverse/psf_ctf_label_leakage.html">
-     Visualize source leakage among labels using a circular graph
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/inverse/psf_ctf_vertices.html">
-     Plot point-spread functions (PSFs) and cross-talk functions (CTFs)
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/inverse/psf_ctf_vertices_lcmv.html">
-     Compute cross-talk functions for LCMV beamformers
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/inverse/rap_music.html">
-     Compute Rap-Music on evoked data
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/inverse/read_inverse.html">
-     Reading an inverse operator
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/inverse/read_stc.html">
-     Reading an STC file
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/inverse/resolution_metrics.html">
-     Compute spatial resolution metrics in source space
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/inverse/resolution_metrics_eegmeg.html">
-     Compute spatial resolution metrics to compare MEG with EEG+MEG
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/inverse/snr_estimate.html">
-     Estimate data SNR using an inverse
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/inverse/source_space_snr.html">
-     Computing source space SNR
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/inverse/time_frequency_mixed_norm_inverse.html">
-     Compute MxNE with time-frequency sparse prior
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/inverse/vector_mne_solution.html">
-     Plotting the full vector-valued MNE solution
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/datasets/brainstorm_data.html">
-     Brainstorm raw (median nerve) dataset
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/datasets/hf_sef_data.html">
-     HF-SEF dataset
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/datasets/limo_data.html">
-     Single trial linear regression analysis with the LIMO dataset
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/datasets/opm_data.html">
-     Optically pumped magnetometer (OPM) data
-    </a>
-   </li>
-   <li class="toctree-l2">
-    <a class="reference internal" href="../auto_examples/datasets/spm_faces_dataset_sgskip.html">
-     From raw data to dSPM on SPM Faces dataset
-    </a>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../auto_examples/io/index.html">
+     Input/Output
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-17" name="toctree-checkbox-17" type="checkbox"/>
+    <label for="toctree-checkbox-17">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/io/elekta_epochs.html">
+       Getting averaging info from .fif files
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/io/read_neo_format.html">
+       How to use data in neural ensemble (NEO) format
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/io/read_noise_covariance_matrix.html">
+       Reading/Writing a noise covariance matrix
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/io/read_xdf.html">
+       Reading XDF EEG data
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../auto_examples/simulation/index.html">
+     Data Simulation
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-18" name="toctree-checkbox-18" type="checkbox"/>
+    <label for="toctree-checkbox-18">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/simulation/simulate_evoked_data.html">
+       Generate simulated evoked data
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/simulation/simulate_raw_data.html">
+       Generate simulated raw data
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/simulation/simulated_raw_data_using_subject_anatomy.html">
+       Simulate raw data using subject anatomy
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/simulation/source_simulator.html">
+       Generate simulated source data
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../auto_examples/preprocessing/index.html">
+     Preprocessing
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-19" name="toctree-checkbox-19" type="checkbox"/>
+    <label for="toctree-checkbox-19">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/preprocessing/css.html">
+       Cortical Signal Suppression (CSS) for removal of cortical signals
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/preprocessing/define_target_events.html">
+       Define target events based on time lag, plot evoked response
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/preprocessing/eeg_csd.html">
+       Transform EEG data using current source density (CSD)
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/preprocessing/eog_artifact_histogram.html">
+       Show EOG artifact timing
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/preprocessing/find_ref_artifacts.html">
+       Find MEG reference channel artifacts
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/preprocessing/fnirs_artifact_removal.html">
+       Visualise NIRS artifact correction methods
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/preprocessing/ica_comparison.html">
+       Compare the different ICA algorithms in MNE
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/preprocessing/interpolate_bad_channels.html">
+       Interpolate bad channels for MEG/EEG channels
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/preprocessing/movement_compensation.html">
+       Maxwell filter data with movement compensation
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/preprocessing/movement_detection.html">
+       Annotate movement artifacts and reestimate dev_head_t
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/preprocessing/muscle_detection.html">
+       Annotate muscle artifacts
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/preprocessing/otp.html">
+       Plot sensor denoising using oversampled temporal projection
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/preprocessing/shift_evoked.html">
+       Shifting time-scale in evoked data
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/preprocessing/virtual_evoked.html">
+       Remap MEG channel types
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/preprocessing/xdawn_denoising.html">
+       XDAWN Denoising
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../auto_examples/visualization/index.html">
+     Visualization
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-20" name="toctree-checkbox-20" type="checkbox"/>
+    <label for="toctree-checkbox-20">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/visualization/3d_to_2d.html">
+       How to convert 3D electrode positions to a 2D image
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/visualization/brain.html">
+       Plotting with
+       <code class="docutils literal notranslate">
+        <span class="pre">
+         mne.viz.Brain
+        </span>
+       </code>
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/visualization/channel_epochs_image.html">
+       Visualize channel over epochs as an image
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/visualization/eeg_on_scalp.html">
+       Plotting EEG sensors on the scalp
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/visualization/eeglab_head_sphere.html">
+       How to plot topomaps the way EEGLAB does
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/visualization/evoked_arrowmap.html">
+       Plotting topographic arrowmaps of evoked data
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/visualization/evoked_topomap.html">
+       Plotting topographic maps of evoked data
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/visualization/evoked_whitening.html">
+       Whitening evoked data with a noise covariance
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/visualization/meg_sensors.html">
+       Plotting sensor layouts of MEG systems
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/visualization/mne_helmet.html">
+       Plot the MNE brain and helmet
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/visualization/montage_sgskip.html">
+       Plotting sensor layouts of EEG systems
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/visualization/parcellation.html">
+       Plot a cortical parcellation
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/visualization/publication_figure.html">
+       Make figures more publication ready
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/visualization/roi_erpimage_by_rt.html">
+       Plot single trial activity, grouped by ROI and sorted by RT
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/visualization/sensor_noise_level.html">
+       Show noise levels from empty room data
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/visualization/ssp_projs_sensitivity_map.html">
+       Sensitivity map of SSP projections
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/visualization/topo_compare_conditions.html">
+       Compare evoked responses for different conditions
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/visualization/topo_customized.html">
+       Plot custom topographies for MEG sensors
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/visualization/xhemi.html">
+       Cross-hemisphere comparison
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../auto_examples/time_frequency/index.html">
+     Time-Frequency Examples
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-21" name="toctree-checkbox-21" type="checkbox"/>
+    <label for="toctree-checkbox-21">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/time_frequency/compute_csd.html">
+       Compute a cross-spectral density (CSD) matrix
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/time_frequency/compute_source_psd_epochs.html">
+       Compute Power Spectral Density of inverse solution from single epochs
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/time_frequency/source_label_time_frequency.html">
+       Compute power and phase lock in label of the source space
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/time_frequency/source_power_spectrum.html">
+       Compute source power spectral density (PSD) in a label
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/time_frequency/source_power_spectrum_opm.html">
+       Compute source power spectral density (PSD) of VectorView and OPM data
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/time_frequency/source_space_time_frequency.html">
+       Compute induced power in the source space with dSPM
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/time_frequency/temporal_whitening.html">
+       Temporal whitening with AR model
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/time_frequency/time_frequency_erds.html">
+       Compute and visualize ERDS maps
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/time_frequency/time_frequency_global_field_power.html">
+       Explore event-related dynamics for specific frequency bands
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/time_frequency/time_frequency_simulated.html">
+       Time-frequency on simulated data (Multitaper vs. Morlet vs. Stockwell)
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../auto_examples/stats/index.html">
+     Statistics Examples
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-22" name="toctree-checkbox-22" type="checkbox"/>
+    <label for="toctree-checkbox-22">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/stats/cluster_stats_evoked.html">
+       Permutation F-test on sensor data with 1D cluster level
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/stats/fdr_stats_evoked.html">
+       FDR correction on T-test on sensor data
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/stats/linear_regression_raw.html">
+       Regression on continuous data (rER[P/F])
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/stats/sensor_permutation_test.html">
+       Permutation T-test on sensor data
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/stats/sensor_regression.html">
+       Analysing continuous features with binning and regression in sensor space
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../auto_examples/decoding/index.html">
+     Machine Learning (Decoding, Encoding, and MVPA)
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-23" name="toctree-checkbox-23" type="checkbox"/>
+    <label for="toctree-checkbox-23">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/decoding/decoding_csp_eeg.html">
+       Motor imagery decoding from EEG data using the Common Spatial Pattern (CSP)
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/decoding/decoding_csp_timefreq.html">
+       Decoding in time-frequency space using Common Spatial Patterns (CSP)
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/decoding/decoding_rsa_sgskip.html">
+       Representational Similarity Analysis
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/decoding/decoding_spatio_temporal_source.html">
+       Decoding source space data
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/decoding/decoding_spoc_CMC.html">
+       Continuous Target Decoding with SPoC
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/decoding/decoding_time_generalization_conditions.html">
+       Decoding sensor space data with generalization across time and conditions
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/decoding/decoding_unsupervised_spatial_filter.html">
+       Analysis of evoked response using ICA and PCA reduction techniques
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/decoding/decoding_xdawn_eeg.html">
+       XDAWN Decoding From EEG data
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/decoding/ems_filtering.html">
+       Compute effect-matched-spatial filtering (EMS)
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/decoding/linear_model_patterns.html">
+       Linear classifier on sensor data with plot patterns and filters
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/decoding/receptive_field_mtrf.html">
+       Receptive Field Estimation and Prediction
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/decoding/ssd_spatial_filters.html">
+       Compute Spectro-Spatial Decomposition (SSD) spatial filters
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toctree-l2">
+    <a class="reference internal" href="../auto_examples/connectivity/index.html">
+     Connectivity Analysis Examples
+    </a>
+   </li>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../auto_examples/forward/index.html">
+     Forward modeling
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-24" name="toctree-checkbox-24" type="checkbox"/>
+    <label for="toctree-checkbox-24">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/forward/forward_sensitivity_maps.html">
+       Display sensitivity maps for EEG and MEG sensors
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/forward/left_cerebellum_volume_source.html">
+       Generate a left cerebellum volume source space
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/forward/source_space_morphing.html">
+       Use source space morphing
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../auto_examples/inverse/index.html">
+     Inverse problem and source analysis
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-25" name="toctree-checkbox-25" type="checkbox"/>
+    <label for="toctree-checkbox-25">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/inverse/compute_mne_inverse_epochs_in_label.html">
+       Compute MNE-dSPM inverse solution on single epochs
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/inverse/compute_mne_inverse_raw_in_label.html">
+       Compute sLORETA inverse solution on raw data
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/inverse/compute_mne_inverse_volume.html">
+       Compute MNE-dSPM inverse solution on evoked data in volume source space
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/inverse/custom_inverse_solver.html">
+       Source localization with a custom inverse solver
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/inverse/dics_source_power.html">
+       Compute source power using DICS beamformer
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/inverse/evoked_ers_source_power.html">
+       Compute evoked ERS source power using DICS, LCMV beamformer, and dSPM
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/inverse/gamma_map_inverse.html">
+       Compute a sparse inverse solution using the Gamma-MAP empirical Bayesian method
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/inverse/label_activation_from_stc.html">
+       Extracting time course from source_estimate object
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/inverse/label_from_stc.html">
+       Generate a functional label from source estimates
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/inverse/label_source_activations.html">
+       Extracting the time series of activations in a label
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/inverse/mixed_norm_inverse.html">
+       Compute sparse inverse solution with mixed norm: MxNE and irMxNE
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/inverse/mixed_source_space_inverse.html">
+       Compute MNE inverse solution on evoked data with a mixed source space
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/inverse/mne_cov_power.html">
+       Compute source power estimate by projecting the covariance with MNE
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/inverse/morph_surface_stc.html">
+       Morph surface source estimate
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/inverse/morph_volume_stc.html">
+       Morph volumetric source estimate
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/inverse/multidict_reweighted_tfmxne.html">
+       Compute iterative reweighted TF-MxNE with multiscale time-frequency dictionary
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/inverse/psf_ctf_label_leakage.html">
+       Visualize source leakage among labels using a circular graph
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/inverse/psf_ctf_vertices.html">
+       Plot point-spread functions (PSFs) and cross-talk functions (CTFs)
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/inverse/psf_ctf_vertices_lcmv.html">
+       Compute cross-talk functions for LCMV beamformers
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/inverse/rap_music.html">
+       Compute Rap-Music on evoked data
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/inverse/read_inverse.html">
+       Reading an inverse operator
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/inverse/read_stc.html">
+       Reading an STC file
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/inverse/resolution_metrics.html">
+       Compute spatial resolution metrics in source space
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/inverse/resolution_metrics_eegmeg.html">
+       Compute spatial resolution metrics to compare MEG with EEG+MEG
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/inverse/snr_estimate.html">
+       Estimate data SNR using an inverse
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/inverse/source_space_snr.html">
+       Computing source space SNR
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/inverse/time_frequency_mixed_norm_inverse.html">
+       Compute MxNE with time-frequency sparse prior
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/inverse/vector_mne_solution.html">
+       Plotting the full vector-valued MNE solution
+      </a>
+     </li>
+    </ul>
+   </li>
+   <li class="toctree-l2 has-children">
+    <a class="reference internal" href="../auto_examples/datasets/index.html">
+     Examples on open datasets
+    </a>
+    <input class="toctree-checkbox" id="toctree-checkbox-26" name="toctree-checkbox-26" type="checkbox"/>
+    <label for="toctree-checkbox-26">
+     <i class="fas fa-chevron-down">
+     </i>
+    </label>
+    <ul>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/datasets/brainstorm_data.html">
+       Brainstorm raw (median nerve) dataset
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/datasets/hf_sef_data.html">
+       HF-SEF dataset
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/datasets/limo_data.html">
+       Single trial linear regression analysis with the LIMO dataset
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/datasets/opm_data.html">
+       Optically pumped magnetometer (OPM) data
+      </a>
+     </li>
+     <li class="toctree-l3">
+      <a class="reference internal" href="../auto_examples/datasets/spm_faces_dataset_sgskip.html">
+       From raw data to dSPM on SPM Faces dataset
+      </a>
+     </li>
+    </ul>
    </li>
   </ul>
  </li>
@@ -1213,6 +1532,9 @@
 
   </div>
 </nav>
+              </div>
+              <div class="sidebar-end-items">
+              </div>
             </div>
             
           
@@ -1223,7 +1545,7 @@
               
               <div class="toc-item">
                 
-<div class="tocsection onthispage pt-5 pb-3">
+<div class="tocsection onthispage mt-5 pt-1 pb-3">
     <i class="fas fa-list"></i> On this page
 </div>
 
@@ -1578,10 +1900,10 @@
 <div>
   
   <section id="algorithms-and-other-implementation-details">
-<span id="implementation"></span><h1>Algorithms and other implementation details<a class="headerlink" href="#algorithms-and-other-implementation-details" title="Permalink to this headline">¶</a></h1>
+<span id="implementation"></span><h1>Algorithms and other implementation details<a class="headerlink" href="#algorithms-and-other-implementation-details" title="Permalink to this headline">#</a></h1>
 <p>This page describes some of the technical details of MNE-Python implementation.</p>
 <section id="internal-representation-units">
-<span id="units"></span><h2>Internal representation (units)<a class="headerlink" href="#internal-representation-units" title="Permalink to this headline">¶</a></h2>
+<span id="units"></span><h2>Internal representation (units)<a class="headerlink" href="#internal-representation-units" title="Permalink to this headline">#</a></h2>
 <p>Irrespective of the units used in your manufacturer’s format, when importing
 data, MNE-Python will always convert measurements to the same standard units.
 Thus the in-memory representation of data are always in:</p>
@@ -1600,11 +1922,11 @@ and volts to microvolts (µV) when plotting MEG and EEG data.</p>
 <p>The units used in internal data representation are particularly important to
 remember when extracting data from MNE-Python objects and manipulating it
 outside MNE-Python (e.g., when using methods like <a class="reference internal" href="../generated/mne.io.Raw.html#mne.io.Raw.get_data" title="mne.io.Raw.get_data"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_data()</span></code></a>
-or <a class="reference internal" href="../generated/mne.Epochs.html#mne.Epochs.to_data_frame" title="mne.Epochs.to_data_frame"><code class="xref py py-meth docutils literal notranslate"><span class="pre">to_data_frame()</span></code></a> to convert data to <a class="reference external" href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.23.dev0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">NumPy</span> <span class="pre">arrays</span></code></a> or <a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v1.3.4)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Pandas</span> <span class="pre">DataFrames</span></code></a> for analysis
+or <a class="reference internal" href="../generated/mne.Epochs.html#mne.Epochs.to_data_frame" title="mne.Epochs.to_data_frame"><code class="xref py py-meth docutils literal notranslate"><span class="pre">to_data_frame()</span></code></a> to convert data to <a class="reference external" href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.24.dev0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">NumPy</span> <span class="pre">arrays</span></code></a> or <a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v1.4.2)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Pandas</span> <span class="pre">DataFrames</span></code></a> for analysis
 or plotting with other Python modules).</p>
 </section>
 <section id="floating-point-precision">
-<span id="precision"></span><h2>Floating-point precision<a class="headerlink" href="#floating-point-precision" title="Permalink to this headline">¶</a></h2>
+<span id="precision"></span><h2>Floating-point precision<a class="headerlink" href="#floating-point-precision" title="Permalink to this headline">#</a></h2>
 <p>MNE-Python performs all computation in memory using the double-precision 64-bit
 floating point format. This means that the data is typecast into float64 format
 as soon as it is read into memory. The reason for this is that operations such
@@ -1616,14 +1938,14 @@ later may lead to loss in precision</em>. If you would like to ensure 64-bit
 precision, there are two possibilities:</p>
 <ul class="simple">
 <li><p>Chain the operations in memory and avoid saving intermediate results.</p></li>
-<li><p>Save intermediate results but change the <a class="reference external" href="https://numpy.org/devdocs/reference/generated/numpy.dtype.html#numpy.dtype" title="(in NumPy v1.23.dev0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dtype</span></code></a> used for
+<li><p>Save intermediate results but change the <a class="reference external" href="https://numpy.org/devdocs/reference/generated/numpy.dtype.html#numpy.dtype" title="(in NumPy v1.24.dev0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dtype</span></code></a> used for
 saving, by using the <code class="docutils literal notranslate"><span class="pre">fmt</span></code> parameter of <a class="reference internal" href="../generated/mne.io.Raw.html#mne.io.Raw.save" title="mne.io.Raw.save"><code class="xref py py-meth docutils literal notranslate"><span class="pre">mne.io.Raw.save()</span></code></a> (or
 <a class="reference internal" href="../generated/mne.Epochs.html#mne.Epochs.save" title="mne.Epochs.save"><code class="xref py py-meth docutils literal notranslate"><span class="pre">mne.Epochs.save()</span></code></a>, etc). However, note that this may render the
 <code class="file docutils literal notranslate"><span class="pre">.fif</span></code> files unreadable in software packages other than MNE-Python.</p></li>
 </ul>
 </section>
 <section id="supported-channel-types">
-<span id="channel-types"></span><h2>Supported channel types<a class="headerlink" href="#supported-channel-types" title="Permalink to this headline">¶</a></h2>
+<span id="channel-types"></span><h2>Supported channel types<a class="headerlink" href="#supported-channel-types" title="Permalink to this headline">#</a></h2>
 <p>Channel types are represented in MNE-Python with shortened or abbreviated
 names. This page lists all supported channel types, their abbreviated names,
 and the measurement unit used to represent data of that type. Where channel
@@ -1721,7 +2043,7 @@ skin conductance)</p></td>
 </table>
 </section>
 <section id="supported-data-formats">
-<span id="data-formats"></span><h2>Supported data formats<a class="headerlink" href="#supported-data-formats" title="Permalink to this headline">¶</a></h2>
+<span id="data-formats"></span><h2>Supported data formats<a class="headerlink" href="#supported-data-formats" title="Permalink to this headline">#</a></h2>
 <p>When MNE-Python loads sensor data, the data are stored in a Python object of
 type <a class="reference internal" href="../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-class docutils literal notranslate"><span class="pre">mne.io.Raw</span></code></a>. Specialized loading functions are provided for the
 raw data file formats from a variety of equipment manufacturers. All raw data
@@ -1850,11 +2172,11 @@ table).</p>
 </tr>
 </tbody>
 </table>
-<p>More details are provided in the tutorials in the <a class="reference internal" href="../auto_tutorials/index.html#tut-data-formats"><span class="std std-ref">Reading data for different recording systems</span></a>
+<p>More details are provided in the tutorials in the <a class="reference internal" href="../auto_tutorials/io/index.html#tut-data-formats"><span class="std std-ref">Reading data for different recording systems</span></a>
 section.</p>
 </section>
 <section id="supported-formats-for-digitized-3d-locations">
-<span id="dig-formats"></span><h2>Supported formats for digitized 3D locations<a class="headerlink" href="#supported-formats-for-digitized-3d-locations" title="Permalink to this headline">¶</a></h2>
+<span id="dig-formats"></span><h2>Supported formats for digitized 3D locations<a class="headerlink" href="#supported-formats-for-digitized-3d-locations" title="Permalink to this headline">#</a></h2>
 <p>MNE-Python can load 3D point locations obtained by digitization systems.
 Such files allow to obtain a <a class="reference internal" href="../generated/mne.channels.DigMontage.html#mne.channels.DigMontage" title="mne.channels.DigMontage"><code class="xref py py-class docutils literal notranslate"><span class="pre">montage</span></code></a>
 that can then be added to <a class="reference internal" href="../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-class docutils literal notranslate"><span class="pre">Raw</span></code></a> objects with the
@@ -1905,15 +2227,15 @@ function for more info on reading specific file types.</p>
 from arrays with <a class="reference internal" href="../generated/mne.channels.make_dig_montage.html#mne.channels.make_dig_montage" title="mne.channels.make_dig_montage"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.channels.make_dig_montage()</span></code></a>.</p>
 </section>
 <section id="memory-efficient-i-o">
-<span id="memory"></span><h2>Memory-efficient I/O<a class="headerlink" href="#memory-efficient-i-o" title="Permalink to this headline">¶</a></h2>
+<span id="memory"></span><h2>Memory-efficient I/O<a class="headerlink" href="#memory-efficient-i-o" title="Permalink to this headline">#</a></h2>
 <section id="preloading-continuous-raw-data">
-<h3>Preloading continuous (raw) data<a class="headerlink" href="#preloading-continuous-raw-data" title="Permalink to this headline">¶</a></h3>
+<h3>Preloading continuous (raw) data<a class="headerlink" href="#preloading-continuous-raw-data" title="Permalink to this headline">#</a></h3>
 <p>MNE-Python can read data on-demand using the <code class="docutils literal notranslate"><span class="pre">preload</span></code> option provided in
 raw reading functions. For example:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">mne</span> <span class="kn">import</span> <span class="n">io</span>
 <span class="kn">from</span> <span class="nn">mne.datasets</span> <span class="kn">import</span> <span class="n">sample</span>
 <span class="n">data_path</span> <span class="o">=</span> <span class="n">sample</span><span class="o">.</span><span class="n">data_path</span><span class="p">()</span>
-<span class="n">raw_fname</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">+</span> <span class="s1">&#39;/MEG/sample/sample_audvis_filt-0-40_raw.fif&#39;</span>
+<span class="n">raw_fname</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">/</span> <span class="s1">&#39;MEG&#39;</span> <span class="o">/</span> <span class="s1">&#39;sample&#39;</span> <span class="o">/</span> <span class="s1">&#39;sample_audvis_filt-0-40_raw.fif&#39;</span>
 <span class="n">raw</span> <span class="o">=</span> <span class="n">io</span><span class="o">.</span><span class="n">read_raw_fif</span><span class="p">(</span><span class="n">raw_fname</span><span class="p">,</span> <span class="n">preload</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -1924,7 +2246,7 @@ work with <code class="docutils literal notranslate"><span class="pre">preload=F
 </div>
 </section>
 <section id="preloading-epoched-data">
-<h3>Preloading epoched data<a class="headerlink" href="#preloading-epoched-data" title="Permalink to this headline">¶</a></h3>
+<h3>Preloading epoched data<a class="headerlink" href="#preloading-epoched-data" title="Permalink to this headline">#</a></h3>
 <p>Similarly, epochs can also be be read from disk on-demand. For example:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">mne</span>
 <span class="n">events</span> <span class="o">=</span> <span class="n">mne</span><span class="o">.</span><span class="n">find_events</span><span class="p">(</span><span class="n">raw</span><span class="p">)</span>
@@ -1948,12 +2270,12 @@ loaded from disk, <em>not</em> when the <code class="docutils literal notranslat
 <p>To explicitly reject artifacts with <code class="docutils literal notranslate"><span class="pre">preload=False</span></code>, use the function <a class="reference internal" href="../generated/mne.Epochs.html#mne.Epochs.drop_bad" title="mne.Epochs.drop_bad"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.Epochs.drop_bad()</span></code></a>.</p>
 </section>
 <section id="loading-data-explicitly">
-<h3>Loading data explicitly<a class="headerlink" href="#loading-data-explicitly" title="Permalink to this headline">¶</a></h3>
+<h3>Loading data explicitly<a class="headerlink" href="#loading-data-explicitly" title="Permalink to this headline">#</a></h3>
 <p>To load the data if <code class="docutils literal notranslate"><span class="pre">preload=False</span></code> was initially selected, use the functions <a class="reference internal" href="../generated/mne.io.Raw.html#mne.io.Raw.load_data" title="mne.io.Raw.load_data"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.io.Raw.load_data()</span></code></a> and <a class="reference internal" href="../generated/mne.Epochs.html#mne.Epochs.load_data" title="mne.Epochs.load_data"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.Epochs.load_data()</span></code></a>.</p>
 </section>
 <section id="accessing-data-as-numpy-arrays">
-<h3>Accessing data as NumPy arrays<a class="headerlink" href="#accessing-data-as-numpy-arrays" title="Permalink to this headline">¶</a></h3>
-<p>If you just want your raw data as a <a class="reference external" href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.23.dev0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Numpy</span> <span class="pre">array</span></code></a> to
+<h3>Accessing data as NumPy arrays<a class="headerlink" href="#accessing-data-as-numpy-arrays" title="Permalink to this headline">#</a></h3>
+<p>If you just want your raw data as a <a class="reference external" href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.24.dev0)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Numpy</span> <span class="pre">array</span></code></a> to
 work with it in a different framework you can use slicing syntax:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">first_channel_data</span><span class="p">,</span> <span class="n">times</span> <span class="o">=</span> <span class="n">raw</span><span class="p">[</span><span class="mi">0</span><span class="p">,</span> <span class="p">:]</span>
 <span class="n">channels_3_and_4</span><span class="p">,</span> <span class="n">times</span> <span class="o">=</span> <span class="n">raw</span><span class="p">[</span><span class="mi">3</span><span class="p">:</span><span class="mi">5</span><span class="p">,</span> <span class="p">:]</span>
@@ -1962,7 +2284,7 @@ work with it in a different framework you can use slicing syntax:</p>
 </section>
 </section>
 <section id="bad-channel-repair-via-interpolation">
-<span id="channel-interpolation"></span><h2>Bad channel repair via interpolation<a class="headerlink" href="#bad-channel-repair-via-interpolation" title="Permalink to this headline">¶</a></h2>
+<span id="channel-interpolation"></span><h2>Bad channel repair via interpolation<a class="headerlink" href="#bad-channel-repair-via-interpolation" title="Permalink to this headline">#</a></h2>
 <p>In short, data repair using spherical spline interpolation <a class="footnote-reference brackets" href="#footcite-perrinetal1989" id="id1">1</a> consists of the following steps:</p>
 <ul class="simple">
 <li><p>Project the good and bad electrodes onto a unit sphere</p></li>
@@ -1971,23 +2293,23 @@ work with it in a different framework you can use slicing syntax:</p>
 </ul>
 <p>Spherical splines assume that the potential <span class="math notranslate nohighlight">\(V(\boldsymbol{r_i})\)</span> at any point <span class="math notranslate nohighlight">\(\boldsymbol{r_i}\)</span> on the surface of the sphere can be represented by:</p>
 <div class="math notranslate nohighlight" id="equation-model">
-<span class="eqno">(1)<a class="headerlink" href="#equation-model" title="Permalink to this equation">¶</a></span>\[V(\boldsymbol{r_i}) = c_0 + \sum_{j=1}^{N}c_{i}g_{m}(cos(\boldsymbol{r_i}, \boldsymbol{r_{j}}))\]</div>
+<span class="eqno">(1)<a class="headerlink" href="#equation-model" title="Permalink to this equation">#</a></span>\[V(\boldsymbol{r_i}) = c_0 + \sum_{j=1}^{N}c_{i}g_{m}(cos(\boldsymbol{r_i}, \boldsymbol{r_{j}}))\]</div>
 <p>where the <span class="math notranslate nohighlight">\(C = (c_{1}, ..., c_{N})^{T}\)</span> are constants which must be estimated. The function <span class="math notranslate nohighlight">\(g_{m}(\cdot)\)</span> of order <span class="math notranslate nohighlight">\(m\)</span> is given by:</p>
 <div class="math notranslate nohighlight" id="equation-legendre">
-<span class="eqno">(2)<a class="headerlink" href="#equation-legendre" title="Permalink to this equation">¶</a></span>\[g_{m}(x) = \frac{1}{4 \pi}\sum_{n=1}^{\infty} \frac{2n + 1}{(n(n + 1))^m}P_{n}(x)\]</div>
+<span class="eqno">(2)<a class="headerlink" href="#equation-legendre" title="Permalink to this equation">#</a></span>\[g_{m}(x) = \frac{1}{4 \pi}\sum_{n=1}^{\infty} \frac{2n + 1}{(n(n + 1))^m}P_{n}(x)\]</div>
 <p>where <span class="math notranslate nohighlight">\(P_{n}(x)\)</span> are <a class="reference external" href="https://en.wikipedia.org/wiki/Legendre_polynomials">Legendre polynomials</a> of order <span class="math notranslate nohighlight">\(n\)</span>.</p>
 <p>To estimate the constants <span class="math notranslate nohighlight">\(C\)</span>, we must solve the following two equations simultaneously:</p>
 <div class="math notranslate nohighlight" id="equation-matrix-form">
-<span class="eqno">(3)<a class="headerlink" href="#equation-matrix-form" title="Permalink to this equation">¶</a></span>\[G_{ss}C + T_{s}c_0 = X\]</div>
+<span class="eqno">(3)<a class="headerlink" href="#equation-matrix-form" title="Permalink to this equation">#</a></span>\[G_{ss}C + T_{s}c_0 = X\]</div>
 <div class="math notranslate nohighlight" id="equation-constraint">
-<span class="eqno">(4)<a class="headerlink" href="#equation-constraint" title="Permalink to this equation">¶</a></span>\[{T_s}^{T}C = 0\]</div>
+<span class="eqno">(4)<a class="headerlink" href="#equation-constraint" title="Permalink to this equation">#</a></span>\[{T_s}^{T}C = 0\]</div>
 <p>where <span class="math notranslate nohighlight">\(G_{ss} \in R^{N \times N}\)</span> is a matrix whose entries are <span class="math notranslate nohighlight">\(G_{ss}[i, j] = g_{m}(cos(\boldsymbol{r_i}, \boldsymbol{r_j}))\)</span> and <span class="math notranslate nohighlight">\(X \in R^{N \times 1}\)</span> are the potentials <span class="math notranslate nohighlight">\(V(\boldsymbol{r_i})\)</span> measured at the good channels. <span class="math notranslate nohighlight">\(T_{s} = (1, 1, ..., 1)^\top\)</span> is a column vector of dimension <span class="math notranslate nohighlight">\(N\)</span>. Equation <a class="reference internal" href="#equation-matrix-form">(3)</a> is the matrix formulation of Equation <a class="reference internal" href="#equation-model">(1)</a> and equation <a class="reference internal" href="#equation-constraint">(4)</a> is like applying an average reference to the data. From equation <a class="reference internal" href="#equation-matrix-form">(3)</a> and <a class="reference internal" href="#equation-constraint">(4)</a>, we get:</p>
 <div class="math notranslate nohighlight" id="equation-estimate-constant">
-<span class="eqno">(5)<a class="headerlink" href="#equation-estimate-constant" title="Permalink to this equation">¶</a></span>\[\begin{split}\begin{bmatrix} c_0 \\ C \end{bmatrix} = {\begin{bmatrix} {T_s}^{T} &amp;&amp; 0 \\ T_s &amp;&amp; G_{ss} \end{bmatrix}}^{-1} \begin{bmatrix} 0 \\ X \end{bmatrix} = C_{i}X\end{split}\]</div>
+<span class="eqno">(5)<a class="headerlink" href="#equation-estimate-constant" title="Permalink to this equation">#</a></span>\[\begin{split}\begin{bmatrix} c_0 \\ C \end{bmatrix} = {\begin{bmatrix} {T_s}^{T} &amp;&amp; 0 \\ T_s &amp;&amp; G_{ss} \end{bmatrix}}^{-1} \begin{bmatrix} 0 \\ X \end{bmatrix} = C_{i}X\end{split}\]</div>
 <p><span class="math notranslate nohighlight">\(C_{i}\)</span> is the same as matrix <span class="math notranslate nohighlight">\({\begin{bmatrix} {T_s}^{T} &amp;&amp; 0 \\ T_s &amp;&amp; G_{ss} \end{bmatrix}}^{-1}\)</span> but with its first column deleted, therefore giving a matrix of dimension <span class="math notranslate nohighlight">\((N + 1) \times N\)</span>.</p>
 <p>Now, to estimate the potentials <span class="math notranslate nohighlight">\(\hat{X} \in R^{M \times 1}\)</span> at the bad channels, we have to do:</p>
 <div class="math notranslate nohighlight" id="equation-estimate-data">
-<span class="eqno">(6)<a class="headerlink" href="#equation-estimate-data" title="Permalink to this equation">¶</a></span>\[\hat{X} = G_{ds}C + T_{d}c_0\]</div>
+<span class="eqno">(6)<a class="headerlink" href="#equation-estimate-data" title="Permalink to this equation">#</a></span>\[\hat{X} = G_{ds}C + T_{d}c_0\]</div>
 <p>where <span class="math notranslate nohighlight">\(G_{ds} \in R^{M \times N}\)</span> computes <span class="math notranslate nohighlight">\(g_{m}(\boldsymbol{r_i}, \boldsymbol{r_j})\)</span> between the bad and good channels. <span class="math notranslate nohighlight">\(T_{d} = (1, 1, ..., 1)^\top\)</span> is a column vector of dimension <span class="math notranslate nohighlight">\(M\)</span>. Plugging in equation <a class="reference internal" href="#equation-estimate-constant">(5)</a> in <a class="reference internal" href="#equation-estimate-data">(6)</a>, we get</p>
 <div class="math notranslate nohighlight">
 \[\begin{split}\hat{X} = \begin{bmatrix} T_d &amp;&amp; G_{ds} \end{bmatrix} \begin{bmatrix} c_0 \\ C \end{bmatrix} = \underbrace{\begin{bmatrix} T_d &amp;&amp; G_{ds} \end{bmatrix} C_{i}}_\text{mapping matrix}X\end{split}\]</div>
@@ -1998,33 +2320,33 @@ work with it in a different framework you can use slicing syntax:</p>
 <p>and the bad channel will be fixed.</p>
 </section>
 <section id="maxwell-filtering">
-<span id="maxwell"></span><h2>Maxwell filtering<a class="headerlink" href="#maxwell-filtering" title="Permalink to this headline">¶</a></h2>
+<span id="maxwell"></span><h2>Maxwell filtering<a class="headerlink" href="#maxwell-filtering" title="Permalink to this headline">#</a></h2>
 <p>MNE-Python’s implementation of Maxwell filtering is described in the
 <a class="reference internal" href="../auto_tutorials/preprocessing/60_maxwell_filtering_sss.html#tut-artifact-sss"><span class="std std-ref">Signal-space separation (SSS) and Maxwell filtering</span></a> tutorial.</p>
 </section>
 <section id="signal-space-projection-ssp">
-<span id="ssp-method"></span><h2>Signal-Space Projection (SSP)<a class="headerlink" href="#signal-space-projection-ssp" title="Permalink to this headline">¶</a></h2>
+<span id="ssp-method"></span><h2>Signal-Space Projection (SSP)<a class="headerlink" href="#signal-space-projection-ssp" title="Permalink to this headline">#</a></h2>
 <p>The Signal-Space Projection (SSP) is one approach to rejection of external
 disturbances in software. The section presents some relevant details of this
 method. For practical examples of how to use SSP for artifact rejection, see
 <a class="reference internal" href="../auto_tutorials/preprocessing/50_artifact_correction_ssp.html#tut-artifact-ssp"><span class="std std-ref">Repairing artifacts with SSP</span></a>.</p>
 <section id="general-concepts">
-<h3>General concepts<a class="headerlink" href="#general-concepts" title="Permalink to this headline">¶</a></h3>
+<h3>General concepts<a class="headerlink" href="#general-concepts" title="Permalink to this headline">#</a></h3>
 <p>Unlike many other noise-cancellation approaches, SSP does not require
 additional reference sensors to record the disturbance fields. Instead, SSP
 relies on the fact that the magnetic field distributions generated by the
 sources in the brain have spatial distributions sufficiently different from
 those generated by external noise sources. Furthermore, it is implicitly
-assumed that the linear space spanned by the significant external noise patters
+assumed that the linear space spanned by the significant external noise patterns
 has a low dimension.</p>
 <p>Without loss of generality we can always decompose any <span class="math notranslate nohighlight">\(n\)</span>-channel
 measurement <span class="math notranslate nohighlight">\(b(t)\)</span> into its signal and noise components as</p>
 <div class="math notranslate nohighlight" id="equation-additive-model">
-<span class="eqno">(7)<a class="headerlink" href="#equation-additive-model" title="Permalink to this equation">¶</a></span>\[b(t) = b_s(t) + b_n(t)\]</div>
+<span class="eqno">(7)<a class="headerlink" href="#equation-additive-model" title="Permalink to this equation">#</a></span>\[b(t) = b_s(t) + b_n(t)\]</div>
 <p>Further, if we know that <span class="math notranslate nohighlight">\(b_n(t)\)</span> is well characterized by a few field
 patterns <span class="math notranslate nohighlight">\(b_1 \dotso b_m\)</span>, we can express the disturbance as</p>
 <div class="math notranslate nohighlight" id="equation-pca">
-<span class="eqno">(8)<a class="headerlink" href="#equation-pca" title="Permalink to this equation">¶</a></span>\[b_n(t) = Uc_n(t) + e(t)\ ,\]</div>
+<span class="eqno">(8)<a class="headerlink" href="#equation-pca" title="Permalink to this equation">#</a></span>\[b_n(t) = Uc_n(t) + e(t)\ ,\]</div>
 <p>where the columns of <span class="math notranslate nohighlight">\(U\)</span> constitute an orthonormal basis for <span class="math notranslate nohighlight">\(b_1
 \dotso b_m\)</span>, <span class="math notranslate nohighlight">\(c_n(t)\)</span> is an <span class="math notranslate nohighlight">\(m\)</span>-component column vector, and the
 error term <span class="math notranslate nohighlight">\(e(t)\)</span> is small and does not exhibit any consistent spatial
@@ -2034,10 +2356,10 @@ of SSP is that we can actually find a small basis set <span class="math notransl
 such that the conditions described above are satisfied. We can now construct
 the orthogonal complement operator</p>
 <div class="math notranslate nohighlight" id="equation-projector">
-<span class="eqno">(9)<a class="headerlink" href="#equation-projector" title="Permalink to this equation">¶</a></span>\[P_{\perp} = I - UU^\top\]</div>
+<span class="eqno">(9)<a class="headerlink" href="#equation-projector" title="Permalink to this equation">#</a></span>\[P_{\perp} = I - UU^\top\]</div>
 <p>and apply it to <span class="math notranslate nohighlight">\(b(t)\)</span> in Equation <a class="reference internal" href="#equation-additive-model">(7)</a> yielding</p>
 <div class="math notranslate nohighlight" id="equation-result">
-<span class="eqno">(10)<a class="headerlink" href="#equation-result" title="Permalink to this equation">¶</a></span>\[b_{s}(t) \approx P_{\perp}b(t)\ ,\]</div>
+<span class="eqno">(10)<a class="headerlink" href="#equation-result" title="Permalink to this equation">#</a></span>\[b_{s}(t) \approx P_{\perp}b(t)\ ,\]</div>
 <p>since <span class="math notranslate nohighlight">\(P_{\perp}b_n(t) = P_{\perp}(Uc_n(t) + e(t)) \approx 0\)</span> and
 <span class="math notranslate nohighlight">\(P_{\perp}b_{s}(t) \approx b_{s}(t)\)</span>. The projection operator
 <span class="math notranslate nohighlight">\(P_{\perp}\)</span> is called the <strong>signal-space projection operator</strong> and
@@ -2063,7 +2385,7 @@ the course of inverse computations.</p>
 <a class="footnote-reference brackets" href="#footcite-tescheetal1995" id="id2">2</a><a class="footnote-reference brackets" href="#footcite-uusitaloilmoniemi1997" id="id3">3</a>.</p>
 </section>
 <section id="estimation-of-the-noise-subspace">
-<h3>Estimation of the noise subspace<a class="headerlink" href="#estimation-of-the-noise-subspace" title="Permalink to this headline">¶</a></h3>
+<h3>Estimation of the noise subspace<a class="headerlink" href="#estimation-of-the-noise-subspace" title="Permalink to this headline">#</a></h3>
 <p>As described above, application of SSP requires the estimation of the signal
 vectors <span class="math notranslate nohighlight">\(b_1 \dotso b_m\)</span> constituting the noise subspace. The most common
 approach, also implemented in <a class="reference internal" href="../generated/mne.compute_proj_raw.html#mne.compute_proj_raw" title="mne.compute_proj_raw"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.compute_proj_raw()</span></code></a>
@@ -2074,15 +2396,15 @@ subspace. It is also customary to use a separate set of vectors for
 magnetometers and gradiometers in the Vectorview system.</p>
 </section>
 <section id="eeg-average-electrode-reference">
-<h3>EEG average electrode reference<a class="headerlink" href="#eeg-average-electrode-reference" title="Permalink to this headline">¶</a></h3>
+<h3>EEG average electrode reference<a class="headerlink" href="#eeg-average-electrode-reference" title="Permalink to this headline">#</a></h3>
 <p>The EEG average reference is the mean signal over all the sensors. It is
 typical in EEG analysis to subtract the average reference from all the sensor
 signals <span class="math notranslate nohighlight">\(b^{1}(t), ..., b^{n}(t)\)</span>. That is:</p>
 <div class="math notranslate nohighlight" id="equation-eeg-proj">
-<span class="eqno">(11)<a class="headerlink" href="#equation-eeg-proj" title="Permalink to this equation">¶</a></span>\[{b}^{j}_{s}(t) = b^{j}(t) - \frac{1}{n}\sum_{k}{b^k(t)}\]</div>
+<span class="eqno">(11)<a class="headerlink" href="#equation-eeg-proj" title="Permalink to this equation">#</a></span>\[{b}^{j}_{s}(t) = b^{j}(t) - \frac{1}{n}\sum_{k}{b^k(t)}\]</div>
 <p>where the noise term <span class="math notranslate nohighlight">\(b_{n}^{j}(t)\)</span> is given by</p>
 <div class="math notranslate nohighlight" id="equation-noise-term">
-<span class="eqno">(12)<a class="headerlink" href="#equation-noise-term" title="Permalink to this equation">¶</a></span>\[b_{n}^{j}(t) = \frac{1}{n}\sum_{k}{b^k(t)}\]</div>
+<span class="eqno">(12)<a class="headerlink" href="#equation-noise-term" title="Permalink to this equation">#</a></span>\[b_{n}^{j}(t) = \frac{1}{n}\sum_{k}{b^k(t)}\]</div>
 <p>Thus, the projector vector <span class="math notranslate nohighlight">\(P_{\perp}\)</span> will be given by
 <span class="math notranslate nohighlight">\(P_{\perp}=\frac{1}{n}[1, 1, ..., 1]\)</span></p>
 <div class="admonition warning">
@@ -2095,9 +2417,9 @@ of interest.</p>
 </section>
 </section>
 <section id="the-boundary-element-model-bem">
-<span id="bem-model"></span><h2>The Boundary Element Model (BEM)<a class="headerlink" href="#the-boundary-element-model-bem" title="Permalink to this headline">¶</a></h2>
+<span id="bem-model"></span><h2>The Boundary Element Model (BEM)<a class="headerlink" href="#the-boundary-element-model-bem" title="Permalink to this headline">#</a></h2>
 <section id="using-the-watershed-algorithm">
-<span id="bem-watershed-algorithm"></span><h3>Using the watershed algorithm<a class="headerlink" href="#using-the-watershed-algorithm" title="Permalink to this headline">¶</a></h3>
+<span id="bem-watershed-algorithm"></span><h3>Using the watershed algorithm<a class="headerlink" href="#using-the-watershed-algorithm" title="Permalink to this headline">#</a></h3>
 <p>The watershed algorithm [Segonne <em>et al.</em>,
 2004] is part of the FreeSurfer software.
 The name of the program is mri_watershed .
@@ -2119,7 +2441,7 @@ volume. Furthermore, <code class="docutils literal notranslate"><span class="pre
 fif format and saves the result to <code class="file docutils literal notranslate"><span class="pre">bem/</span><em><span class="pre">&lt;subject&gt;</span></em><span class="pre">-head.fif</span></code>.</p>
 </section>
 <section id="using-flash-images">
-<h3>Using FLASH images<a class="headerlink" href="#using-flash-images" title="Permalink to this headline">¶</a></h3>
+<h3>Using FLASH images<a class="headerlink" href="#using-flash-images" title="Permalink to this headline">#</a></h3>
 <p>This method depends on the availablily of MRI data acquired with a multi-echo
 FLASH sequence at two flip angles (5 and 30 degrees). These data can be
 acquired separately from the MPRAGE data employed in FreeSurfer cortical
@@ -2146,7 +2468,7 @@ watershed output file while the other surfaces can be picked from
 the FLASH segmentation data.</p>
 </div>
 <section id="organizing-mri-data-into-directories">
-<h4>Organizing MRI data into directories<a class="headerlink" href="#organizing-mri-data-into-directories" title="Permalink to this headline">¶</a></h4>
+<h4>Organizing MRI data into directories<a class="headerlink" href="#organizing-mri-data-into-directories" title="Permalink to this headline">#</a></h4>
 <p>Since all images comprising the multi-echo FLASH data are contained in a single
 series, it is necessary to organize the images according to the echoes before
 proceeding to the BEM surface reconstruction. This can be accomplished by using
@@ -2155,7 +2477,7 @@ or the MNE-C tool <code class="docutils literal notranslate"><span class="pre">m
 <a class="reference internal" href="../generated/mne.bem.convert_flash_mris.html#mne.bem.convert_flash_mris" title="mne.bem.convert_flash_mris"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.bem.convert_flash_mris()</span></code></a>.</p>
 </section>
 <section id="creating-the-surface-tessellations">
-<h4>Creating the surface tessellations<a class="headerlink" href="#creating-the-surface-tessellations" title="Permalink to this headline">¶</a></h4>
+<h4>Creating the surface tessellations<a class="headerlink" href="#creating-the-surface-tessellations" title="Permalink to this headline">#</a></h4>
 <p>The BEM surface segmentation and tessellation is automated with the script
 <a class="reference internal" href="../generated/commands.html#mne-flash-bem"><span class="std std-ref">mne flash_bem</span></a>. It assumes that a FreeSurfer reconstruction for this
 subject is already in place.</p>
@@ -2216,7 +2538,7 @@ steps 3 and 4 in the above are replaced by averaging over the different
 echo times in 5-degree flip angle data.</p>
 </section>
 <section id="inspecting-the-meshes">
-<span id="inspecting-meshes"></span><h4>Inspecting the meshes<a class="headerlink" href="#inspecting-the-meshes" title="Permalink to this headline">¶</a></h4>
+<span id="inspecting-meshes"></span><h4>Inspecting the meshes<a class="headerlink" href="#inspecting-the-meshes" title="Permalink to this headline">#</a></h4>
 <p>It is advisable to check the validity of the BEM meshes before
 using them. This can be done with:</p>
 <ul class="simple">
@@ -2228,9 +2550,9 @@ using them. This can be done with:</p>
 </section>
 </section>
 <section id="the-forward-solution">
-<span id="ch-forward"></span><h2>The forward solution<a class="headerlink" href="#the-forward-solution" title="Permalink to this headline">¶</a></h2>
+<span id="ch-forward"></span><h2>The forward solution<a class="headerlink" href="#the-forward-solution" title="Permalink to this headline">#</a></h2>
 <section id="meg-eeg-and-mri-coordinate-systems">
-<span id="coordinate-systems"></span><h3>MEG/EEG and MRI coordinate systems<a class="headerlink" href="#meg-eeg-and-mri-coordinate-systems" title="Permalink to this headline">¶</a></h3>
+<span id="coordinate-systems"></span><h3>MEG/EEG and MRI coordinate systems<a class="headerlink" href="#meg-eeg-and-mri-coordinate-systems" title="Permalink to this headline">#</a></h3>
 <aside class="sidebar">
 <p class="sidebar-title">Coordinate systems in MNE-Python</p>
 <p>In some MNE-Python objects (e.g., <a class="reference internal" href="../generated/mne.Forward.html#mne.Forward" title="mne.Forward"><code class="xref py py-class docutils literal notranslate"><span class="pre">Forward</span></code></a>,
@@ -2246,7 +2568,7 @@ to the right, the <span class="math notranslate nohighlight">\(y\)</span> axis t
 <figure class="align-default" id="id17">
 <span id="coordinate-system-figure"></span><img alt="MEG/EEG and MRI coordinate systems" src="../_images/CoordinateSystems.png" />
 <figcaption>
-<p><span class="caption-text">MEG/EEG and MRI coordinate systems</span><a class="headerlink" href="#id17" title="Permalink to this image">¶</a></p>
+<p><span class="caption-text">MEG/EEG and MRI coordinate systems</span><a class="headerlink" href="#id17" title="Permalink to this image">#</a></p>
 <div class="legend">
 <p>The coordinate transforms present in the fif files in MNE and the
 FreeSurfer files as well as those set to fixed values are indicated with
@@ -2390,7 +2712,7 @@ information on the FreeSurfer MRI systems can be found at
 The symbols <span class="math notranslate nohighlight">\(T_x\)</span> are defined in <a class="reference internal" href="#coordinate-system-figure"><span class="std std-ref">MEG/EEG and MRI coordinate systems</span></a>.</p>
 </div>
 <table class="table" id="id18">
-<caption><span class="caption-text">Coordinate transformations in FreeSurfer and MNE software packages.</span><a class="headerlink" href="#id18" title="Permalink to this table">¶</a></caption>
+<caption><span class="caption-text">Coordinate transformations in FreeSurfer and MNE software packages.</span><a class="headerlink" href="#id18" title="Permalink to this table">#</a></caption>
 <colgroup>
 <col style="width: 27%" />
 <col style="width: 28%" />
@@ -2428,7 +2750,7 @@ containing <span class="math notranslate nohighlight">\(T_1\)</span>.</p></td>
 </tr>
 <tr class="row-odd"><td><p><span class="math notranslate nohighlight">\(T_3\)</span></p></td>
 <td><p><code class="docutils literal notranslate"><span class="pre">mri/*mgz</span></code> files</p></td>
-<td><p><a class="reference external" href="https://nipy.org/nibabel/reference/nibabel.freesurfer.html#nibabel.freesurfer.mghformat.MGHImage" title="(in NiBabel v3.2.1+100.g9fdf5e3e)"><code class="xref py py-class docutils literal notranslate"><span class="pre">nibabel.freesurfer.mghformat.MGHImage</span></code></a></p></td>
+<td><p><a class="reference external" href="https://nipy.org/nibabel/reference/nibabel.freesurfer.html#nibabel.freesurfer.mghformat.MGHImage" title="(in NiBabel v3.2.2+146.ga20f13ad)"><code class="xref py py-class docutils literal notranslate"><span class="pre">nibabel.freesurfer.mghformat.MGHImage</span></code></a></p></td>
 </tr>
 <tr class="row-even"><td><p><span class="math notranslate nohighlight">\(T_4\)</span></p></td>
 <td><p>mri/transforms/talairach.xfm</p></td>
@@ -2446,11 +2768,11 @@ containing <span class="math notranslate nohighlight">\(T_1\)</span>.</p></td>
 </table>
 </section>
 <section id="the-head-and-device-coordinate-systems">
-<span id="head-device-coords"></span><h3>The head and device coordinate systems<a class="headerlink" href="#the-head-and-device-coordinate-systems" title="Permalink to this headline">¶</a></h3>
+<span id="head-device-coords"></span><h3>The head and device coordinate systems<a class="headerlink" href="#the-head-and-device-coordinate-systems" title="Permalink to this headline">#</a></h3>
 <figure class="align-default" id="id19">
 <img alt="Head coordinate system" src="../_images/HeadCS.png" />
 <figcaption>
-<p><span class="caption-text">The head coordinate system</span><a class="headerlink" href="#id19" title="Permalink to this image">¶</a></p>
+<p><span class="caption-text">The head coordinate system</span><a class="headerlink" href="#id19" title="Permalink to this image">#</a></p>
 </figcaption>
 </figure>
 <p>The MEG/EEG head coordinate system employed in the MNE software is a
@@ -2484,12 +2806,12 @@ all coordinate information to the MNE software head coordinate frame.</p>
 </div>
 </section>
 <section id="creating-a-surface-based-source-space">
-<h3>Creating a surface-based source space<a class="headerlink" href="#creating-a-surface-based-source-space" title="Permalink to this headline">¶</a></h3>
+<h3>Creating a surface-based source space<a class="headerlink" href="#creating-a-surface-based-source-space" title="Permalink to this headline">#</a></h3>
 <p>The fif format source space files containing the dipole locations and
 orientations are created with <a class="reference internal" href="../generated/mne.setup_source_space.html#mne.setup_source_space" title="mne.setup_source_space"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.setup_source_space()</span></code></a>.</p>
 </section>
 <section id="creating-a-volumetric-or-discrete-source-space">
-<h3>Creating a volumetric or discrete source space<a class="headerlink" href="#creating-a-volumetric-or-discrete-source-space" title="Permalink to this headline">¶</a></h3>
+<h3>Creating a volumetric or discrete source space<a class="headerlink" href="#creating-a-volumetric-or-discrete-source-space" title="Permalink to this headline">#</a></h3>
 <p>In addition to source spaces confined to a surface, the MNE software provides
 some support for three-dimensional source spaces bounded by a surface as well
 as source spaces comprised of discrete, arbitrarily located source points. The
@@ -2497,10 +2819,10 @@ as source spaces comprised of discrete, arbitrarily located source points. The
 spaces.</p>
 </section>
 <section id="creating-the-bem-meshes">
-<h3>Creating the BEM meshes<a class="headerlink" href="#creating-the-bem-meshes" title="Permalink to this headline">¶</a></h3>
+<h3>Creating the BEM meshes<a class="headerlink" href="#creating-the-bem-meshes" title="Permalink to this headline">#</a></h3>
 <p>See <a class="reference internal" href="#bem-model"><span class="std std-ref">The Boundary Element Model (BEM)</span></a>.</p>
 <section id="topology-checks">
-<h4>Topology checks<a class="headerlink" href="#topology-checks" title="Permalink to this headline">¶</a></h4>
+<h4>Topology checks<a class="headerlink" href="#topology-checks" title="Permalink to this headline">#</a></h4>
 <p>The following topology checks are performed during the creation of BEM models:</p>
 <ul class="simple">
 <li><p>The completeness of each surface is confirmed by calculating the total solid
@@ -2523,12 +2845,12 @@ coordinates have been specified in meters instead of millimeters.</p></li>
 </section>
 </section>
 <section id="computing-the-bem-geometry-data">
-<h3>Computing the BEM geometry data<a class="headerlink" href="#computing-the-bem-geometry-data" title="Permalink to this headline">¶</a></h3>
+<h3>Computing the BEM geometry data<a class="headerlink" href="#computing-the-bem-geometry-data" title="Permalink to this headline">#</a></h3>
 <p>The utility <a class="reference internal" href="../generated/mne.make_bem_solution.html#mne.make_bem_solution" title="mne.make_bem_solution"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.make_bem_solution()</span></code></a> computes the geometry information for
 BEM.</p>
 </section>
 <section id="coil-geometry-information">
-<span id="id5"></span><h3>Coil geometry information<a class="headerlink" href="#coil-geometry-information" title="Permalink to this headline">¶</a></h3>
+<span id="id5"></span><h3>Coil geometry information<a class="headerlink" href="#coil-geometry-information" title="Permalink to this headline">#</a></h3>
 <p>This Section explains the presentation of MEG detection coil geometry
 information the approximations used for different detection coils in MNE
 software. Two pieces of information are needed to characterize the detectors:</p>
@@ -2546,7 +2868,7 @@ comparison between different coil geometries, and
 the files describing Neuromag coil geometries.</p>
 </div>
 <section id="the-sensor-coordinate-system">
-<h4>The sensor coordinate system<a class="headerlink" href="#the-sensor-coordinate-system" title="Permalink to this headline">¶</a></h4>
+<h4>The sensor coordinate system<a class="headerlink" href="#the-sensor-coordinate-system" title="Permalink to this headline">#</a></h4>
 <p>The sensor coordinate system is completely characterized by the location of its
 origin and the direction cosines of three orthogonal unit vectors pointing to
 the directions of the x, y, and z axis. In fact, the unit vectors contain
@@ -2575,7 +2897,7 @@ r_{0D} &amp; 1
 \end{bmatrix}\ .\end{split}\]</div>
 </section>
 <section id="calculation-of-the-magnetic-field">
-<h4>Calculation of the magnetic field<a class="headerlink" href="#calculation-of-the-magnetic-field" title="Permalink to this headline">¶</a></h4>
+<h4>Calculation of the magnetic field<a class="headerlink" href="#calculation-of-the-magnetic-field" title="Permalink to this headline">#</a></h4>
 <p>The forward calculation in the MNE software computes the signals detected by
 each MEG sensor for three orthogonal dipoles at each source space location.
 This requires specification of the conductor model, the location and
@@ -2606,7 +2928,7 @@ integration points for planar gradiometers and sixteen for magnetometers.
 Detailed information about the integration points is given in the next section.</p>
 </section>
 <section id="implemented-coil-geometries">
-<span id="id6"></span><h4>Implemented coil geometries<a class="headerlink" href="#implemented-coil-geometries" title="Permalink to this headline">¶</a></h4>
+<span id="id6"></span><h4>Implemented coil geometries<a class="headerlink" href="#implemented-coil-geometries" title="Permalink to this headline">#</a></h4>
 <p>This section describes the coil geometries currently implemented
 in MNE. The coil types fall in two general categories:</p>
 <ul class="simple">
@@ -2648,7 +2970,7 @@ T/m.</p></li>
 automatically created by the MNE-C utility <code class="docutils literal notranslate"><span class="pre">mne_list_coil_def</span></code>.</p>
 </div>
 <span id="normal-coil-descriptions"></span><table class="table" id="id20">
-<caption><span class="caption-text">Normal coil descriptions.</span><a class="headerlink" href="#id20" title="Permalink to this table">¶</a></caption>
+<caption><span class="caption-text">Normal coil descriptions.</span><a class="headerlink" href="#id20" title="Permalink to this table">#</a></caption>
 <colgroup>
 <col style="width: 7%" />
 <col style="width: 27%" />
@@ -2801,7 +3123,7 @@ diagonal gradients</p></td>
 combinations have to be included.</p>
 </div>
 <span id="accurate-coil-descriptions"></span><table class="table" id="id21">
-<caption><span class="caption-text">Accurate coil descriptions</span><a class="headerlink" href="#id21" title="Permalink to this table">¶</a></caption>
+<caption><span class="caption-text">Accurate coil descriptions</span><a class="headerlink" href="#id21" title="Permalink to this table">#</a></caption>
 <colgroup>
 <col style="width: 7%" />
 <col style="width: 27%" />
@@ -2958,7 +3280,7 @@ gradiometer</p></td>
 </table>
 </section>
 <section id="the-coil-definition-file">
-<span id="coil-definition-file"></span><h4>The coil definition file<a class="headerlink" href="#the-coil-definition-file" title="Permalink to this headline">¶</a></h4>
+<span id="coil-definition-file"></span><h4>The coil definition file<a class="headerlink" href="#the-coil-definition-file" title="Permalink to this headline">#</a></h4>
 <p>The coil geometry information is stored in the text file
 <code class="file docutils literal notranslate"><em><span class="pre">$MNE_ROOT</span></em><span class="pre">/share/mne/coil_def.dat</span></code>. In this file, any lines starting
 with the pound sign (#) are comments. A coil definition starts with a
@@ -2983,7 +3305,7 @@ a coil approximation for the forward calculations.</p></li>
 description contains several words, it is enclosed in quotes.</p></li>
 </ul>
 <span id="coil-accuracies"></span><table class="table" id="id22">
-<caption><span class="caption-text">Coil representation accuracies.</span><a class="headerlink" href="#id22" title="Permalink to this table">¶</a></caption>
+<caption><span class="caption-text">Coil representation accuracies.</span><a class="headerlink" href="#id22" title="Permalink to this table">#</a></caption>
 <colgroup>
 <col style="width: 8%" />
 <col style="width: 92%" />
@@ -3022,16 +3344,16 @@ with the gradiometer loops tilted with respect to each other.</p></li>
 </section>
 </section>
 <section id="computing-the-forward-solution">
-<h3>Computing the forward solution<a class="headerlink" href="#computing-the-forward-solution" title="Permalink to this headline">¶</a></h3>
+<h3>Computing the forward solution<a class="headerlink" href="#computing-the-forward-solution" title="Permalink to this headline">#</a></h3>
 <section id="purpose">
-<h4>Purpose<a class="headerlink" href="#purpose" title="Permalink to this headline">¶</a></h4>
+<h4>Purpose<a class="headerlink" href="#purpose" title="Permalink to this headline">#</a></h4>
 <p>Examples on how to compute the forward solution in MNE-Python using
 <a class="reference internal" href="../generated/mne.make_forward_solution.html#mne.make_forward_solution" title="mne.make_forward_solution"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.make_forward_solution()</span></code></a> can be found
 <a class="reference internal" href="../auto_tutorials/forward/30_forward.html#plot-forward-compute-forward-solution"><span class="std std-ref">Compute forward solution</span></a> and
 <a class="reference internal" href="cookbook.html#computing-the-forward-solution"><span class="std std-ref">Computing the forward solution</span></a>.</p>
 </section>
 <section id="implementation-of-software-gradient-compensation">
-<h4>Implementation of software gradient compensation<a class="headerlink" href="#implementation-of-software-gradient-compensation" title="Permalink to this headline">¶</a></h4>
+<h4>Implementation of software gradient compensation<a class="headerlink" href="#implementation-of-software-gradient-compensation" title="Permalink to this headline">#</a></h4>
 <p>Accounting for noise cancellation in MNE-Python is accomplished in
 <a class="reference internal" href="../generated/mne.io.Raw.html#mne.io.Raw.apply_gradient_compensation" title="mne.io.Raw.apply_gradient_compensation"><code class="xref py py-meth docutils literal notranslate"><span class="pre">mne.io.Raw.apply_gradient_compensation()</span></code></a>. See
 <a class="reference internal" href="../auto_tutorials/inverse/85_brainstorm_phantom_ctf.html#plot-brainstorm-phantom-ctf"><span class="std std-ref">Brainstorm CTF phantom dataset tutorial</span></a> for an example.</p>
@@ -3044,11 +3366,11 @@ sensors in addition to the main MEG sensor array and computes a compensated
 forward solution.</p>
 </section>
 <section id="the-eeg-sphere-model-definition-file">
-<h4>The EEG sphere model definition file<a class="headerlink" href="#the-eeg-sphere-model-definition-file" title="Permalink to this headline">¶</a></h4>
+<h4>The EEG sphere model definition file<a class="headerlink" href="#the-eeg-sphere-model-definition-file" title="Permalink to this headline">#</a></h4>
 <p>In MNE-Python, different sphere models can be specified through
 <a class="reference internal" href="../generated/mne.make_sphere_model.html#mne.make_sphere_model" title="mne.make_sphere_model"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.make_sphere_model()</span></code></a>. The default model has the following structure:</p>
 <table class="table" id="id23">
-<caption><span class="caption-text">Structure of the default EEG model</span><a class="headerlink" href="#id23" title="Permalink to this table">¶</a></caption>
+<caption><span class="caption-text">Structure of the default EEG model</span><a class="headerlink" href="#id23" title="Permalink to this table">#</a></caption>
 <colgroup>
 <col style="width: 15%" />
 <col style="width: 43%" />
@@ -3085,7 +3407,7 @@ as <a class="reference internal" href="../generated/mne.fit_dipole.html#mne.fit_
 <a class="reference internal" href="../generated/mne.make_forward_solution.html#mne.make_forward_solution" title="mne.make_forward_solution"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.make_forward_solution()</span></code></a>.</p>
 </section>
 <section id="eeg-forward-solution-in-the-sphere-model">
-<span id="eeg-sphere-model"></span><h4>EEG forward solution in the sphere model<a class="headerlink" href="#eeg-forward-solution-in-the-sphere-model" title="Permalink to this headline">¶</a></h4>
+<span id="eeg-sphere-model"></span><h4>EEG forward solution in the sphere model<a class="headerlink" href="#eeg-forward-solution-in-the-sphere-model" title="Permalink to this headline">#</a></h4>
 <aside class="sidebar">
 <p class="sidebar-title">Sphere-model examples in MNE-Python</p>
 <p>For examples of using the sphere model when computing the forward model
@@ -3113,7 +3435,7 @@ those lying just inside the inner skull surface.</p>
 </section>
 </section>
 <section id="averaging-forward-solutions">
-<h3>Averaging forward solutions<a class="headerlink" href="#averaging-forward-solutions" title="Permalink to this headline">¶</a></h3>
+<h3>Averaging forward solutions<a class="headerlink" href="#averaging-forward-solutions" title="Permalink to this headline">#</a></h3>
 <p>One possibility to make a grand average over several runs of a experiment is to
 average the data across runs and average the forward solutions accordingly. For
 this purpose, <a class="reference internal" href="../generated/mne.average_forward_solutions.html#mne.average_forward_solutions" title="mne.average_forward_solutions"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.average_forward_solutions()</span></code></a> computes a weighted average
@@ -3123,7 +3445,7 @@ the electrode locations do not change.</p>
 </section>
 </section>
 <section id="the-minimum-norm-current-estimates">
-<span id="minimum-norm-estimates"></span><h2>The minimum-norm current estimates<a class="headerlink" href="#the-minimum-norm-current-estimates" title="Permalink to this headline">¶</a></h2>
+<span id="minimum-norm-estimates"></span><h2>The minimum-norm current estimates<a class="headerlink" href="#the-minimum-norm-current-estimates" title="Permalink to this headline">#</a></h2>
 <p>This section describes the mathematical details of the calculation of
 minimum-norm estimates. In Bayesian sense, the ensuing current distribution is
 the maximum a posteriori (MAP) estimate under the following assumptions:</p>
@@ -3139,9 +3461,9 @@ known covariance matrix. The noise is not correlated over time.</p></li>
 <p>Computing the inverse operator is accomplished using
 <a class="reference internal" href="../generated/mne.minimum_norm.make_inverse_operator.html#mne.minimum_norm.make_inverse_operator" title="mne.minimum_norm.make_inverse_operator"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.minimum_norm.make_inverse_operator()</span></code></a> and
 <a class="reference internal" href="../generated/mne.minimum_norm.apply_inverse.html#mne.minimum_norm.apply_inverse" title="mne.minimum_norm.apply_inverse"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.minimum_norm.apply_inverse()</span></code></a>. The use of these functions is presented
-in the tutorial <a class="reference internal" href="../auto_tutorials/inverse/30_mne_dspm_loreta.html#tut-inverse-methods"><span class="std std-ref">Source localization with MNE/dSPM/sLORETA/eLORETA</span></a>.</p>
+in the tutorial <a class="reference internal" href="../auto_tutorials/inverse/30_mne_dspm_loreta.html#tut-inverse-methods"><span class="std std-ref">Source localization with MNE, dSPM, sLORETA, and eLORETA</span></a>.</p>
 <section id="the-linear-inverse-operator">
-<h3>The linear inverse operator<a class="headerlink" href="#the-linear-inverse-operator" title="Permalink to this headline">¶</a></h3>
+<h3>The linear inverse operator<a class="headerlink" href="#the-linear-inverse-operator" title="Permalink to this headline">#</a></h3>
 <p>The measured data in the source estimation procedure consists of MEG and EEG
 data, recorded on a total of N channels. The task is to estimate a total of
 <span class="math notranslate nohighlight">\(Q\)</span>
@@ -3167,12 +3489,12 @@ not computed explicitly. See <a class="reference internal" href="#mne-solution">
 details, and <a class="reference internal" href="cookbook.html#cihcfjei"><span class="std std-ref">Calculating the inverse operator</span></a> for a detailed example.</p>
 </section>
 <section id="regularization">
-<span id="mne-regularization"></span><h3>Regularization<a class="headerlink" href="#regularization" title="Permalink to this headline">¶</a></h3>
+<span id="mne-regularization"></span><h3>Regularization<a class="headerlink" href="#regularization" title="Permalink to this headline">#</a></h3>
 <p>The a priori variance of the currents is, in practice, unknown. We can express
 this by writing <span class="math notranslate nohighlight">\(R' = R/ \lambda^2 = R \lambda^{-2}\)</span>, which yields the
 inverse operator</p>
 <div class="math notranslate nohighlight" id="equation-inv-m">
-<span class="eqno">(13)<a class="headerlink" href="#equation-inv-m" title="Permalink to this equation">¶</a></span>\[\begin{split} M &amp;= R' G^\top (G R' G^\top + C)^{-1} \\
+<span class="eqno">(13)<a class="headerlink" href="#equation-inv-m" title="Permalink to this equation">#</a></span>\[\begin{split} M &amp;= R' G^\top (G R' G^\top + C)^{-1} \\
    &amp;= R \lambda^{-2} G^\top (G R \lambda^{-2} G^\top + C)^{-1} \\
    &amp;= R \lambda^{-2} G^\top \lambda^2 (G R G^\top + \lambda^2 C)^{-1} \\
    &amp;= R G^\top (G R G^\top + \lambda^2 C)^{-1}\ ,\end{split}\]</div>
@@ -3193,14 +3515,14 @@ increasing <span class="math notranslate nohighlight">\(\lambda^2\)</span>, the 
 discrepancy between the measured and predicted data is tolerable.</p>
 </section>
 <section id="whitening-and-scaling">
-<span id="id10"></span><h3>Whitening and scaling<a class="headerlink" href="#whitening-and-scaling" title="Permalink to this headline">¶</a></h3>
+<span id="id10"></span><h3>Whitening and scaling<a class="headerlink" href="#whitening-and-scaling" title="Permalink to this headline">#</a></h3>
 <p>The MNE software employs data whitening so that a ‘whitened’ inverse operator
 assumes the form</p>
 <div class="math notranslate nohighlight" id="equation-inv-m-tilde">
-<span class="eqno">(14)<a class="headerlink" href="#equation-inv-m-tilde" title="Permalink to this equation">¶</a></span>\[\tilde{M} = M C^{^1/_2} = R \tilde{G}^\top (\tilde{G} R \tilde{G}^\top + \lambda^2 I)^{-1}\ ,\]</div>
+<span class="eqno">(14)<a class="headerlink" href="#equation-inv-m-tilde" title="Permalink to this equation">#</a></span>\[\tilde{M} = M C^{^1/_2} = R \tilde{G}^\top (\tilde{G} R \tilde{G}^\top + \lambda^2 I)^{-1}\ ,\]</div>
 <p>where</p>
 <div class="math notranslate nohighlight" id="equation-inv-g-tilde">
-<span class="eqno">(15)<a class="headerlink" href="#equation-inv-g-tilde" title="Permalink to this equation">¶</a></span>\[\tilde{G} = C^{-^1/_2}G\]</div>
+<span class="eqno">(15)<a class="headerlink" href="#equation-inv-g-tilde" title="Permalink to this equation">#</a></span>\[\tilde{G} = C^{-^1/_2}G\]</div>
 <p>is the spatially whitened gain matrix. We arrive at the whitened inverse
 operator equation <a class="reference internal" href="#equation-inv-m-tilde">(14)</a> by making the substitution for
 <span class="math notranslate nohighlight">\(G\)</span> from <a class="reference internal" href="#equation-inv-g-tilde">(15)</a> in <a class="reference internal" href="#equation-inv-m">(13)</a> as</p>
@@ -3212,12 +3534,12 @@ operator equation <a class="reference internal" href="#equation-inv-m-tilde">(14
                          &amp;= R \tilde{G}^\top (\tilde{G} R \tilde{G}^\top + \lambda^2 I)^{-1}\ .\end{split}\]</div>
 <p>The expected current values are</p>
 <div class="math notranslate nohighlight" id="equation-inv-j-hat-t">
-<span class="eqno">(16)<a class="headerlink" href="#equation-inv-j-hat-t" title="Permalink to this equation">¶</a></span>\[\begin{split} \hat{j}(t) &amp;= Mx(t) \\
+<span class="eqno">(16)<a class="headerlink" href="#equation-inv-j-hat-t" title="Permalink to this equation">#</a></span>\[\begin{split} \hat{j}(t) &amp;= Mx(t) \\
             &amp;= M C^{^1/_2} C^{-^1/_2} x(t) \\
             &amp;= \tilde{M} \tilde{x}(t)\end{split}\]</div>
 <p>knowing <a class="reference internal" href="#equation-inv-m-tilde">(14)</a> and taking</p>
 <div class="math notranslate nohighlight" id="equation-inv-tilde-x-t">
-<span class="eqno">(17)<a class="headerlink" href="#equation-inv-tilde-x-t" title="Permalink to this equation">¶</a></span>\[ \tilde{x}(t) = C^{-^1/_2}x(t)\]</div>
+<span class="eqno">(17)<a class="headerlink" href="#equation-inv-tilde-x-t" title="Permalink to this equation">#</a></span>\[ \tilde{x}(t) = C^{-^1/_2}x(t)\]</div>
 <p>as the whitened measurement vector at time <em>t</em>. The spatial
 whitening operator <span class="math notranslate nohighlight">\(C^{-^1/_2}\)</span> is obtained with the help of the
 eigenvalue decomposition
@@ -3231,8 +3553,8 @@ change in the variance of the current amplitudes in the Bayesian <em>a priori</e
 distribution.</p>
 <p>A convenient choice for the source-covariance matrix <span class="math notranslate nohighlight">\(R\)</span> is such that
 <span class="math notranslate nohighlight">\(\text{trace}(\tilde{G} R \tilde{G}^\top) / \text{trace}(I) = 1\)</span>. With this
-choice we can approximate <span class="math notranslate nohighlight">\(\lambda^2 \sim 1/SNR\)</span>, where SNR is the
-(power) signal-to-noise ratio of the whitened data.</p>
+choice we can approximate <span class="math notranslate nohighlight">\(\lambda^2 \sim 1/\rm{SNR}^2\)</span>, where SNR is the
+(amplitude) signal-to-noise ratio of the whitened data.</p>
 <div class="admonition note">
 <p class="admonition-title">Note</p>
 <p>The definition of the signal to noise-ratio/ <span class="math notranslate nohighlight">\(\lambda^2\)</span> relationship
@@ -3246,7 +3568,7 @@ expressed in T or T/m whereas the unit of EEG is Volts.</p>
 and whitening.</p>
 </section>
 <section id="regularization-of-the-noise-covariance-matrix">
-<span id="cov-regularization-math"></span><h3>Regularization of the noise-covariance matrix<a class="headerlink" href="#regularization-of-the-noise-covariance-matrix" title="Permalink to this headline">¶</a></h3>
+<span id="cov-regularization-math"></span><h3>Regularization of the noise-covariance matrix<a class="headerlink" href="#regularization-of-the-noise-covariance-matrix" title="Permalink to this headline">#</a></h3>
 <p>Since finite amount of data is usually available to compute an estimate of the
 noise-covariance matrix <span class="math notranslate nohighlight">\(C\)</span>, the smallest eigenvalues of its estimate are
 usually inaccurate and smaller than the true eigenvalues. Depending on the
@@ -3277,13 +3599,13 @@ corresponding to the channels contained in each channel group.</p>
 regularizing the channel covariance matrix.</p>
 </section>
 <section id="computation-of-the-solution">
-<span id="mne-solution"></span><h3>Computation of the solution<a class="headerlink" href="#computation-of-the-solution" title="Permalink to this headline">¶</a></h3>
+<span id="mne-solution"></span><h3>Computation of the solution<a class="headerlink" href="#computation-of-the-solution" title="Permalink to this headline">#</a></h3>
 <p>The most straightforward approach to calculate the MNE is to employ the
 expression of the original or whitened inverse operator directly. However, for
 computational convenience we prefer to take another route, which employs the
 singular-value decomposition (SVD) of the matrix</p>
 <div class="math notranslate nohighlight" id="equation-inv-a">
-<span class="eqno">(18)<a class="headerlink" href="#equation-inv-a" title="Permalink to this equation">¶</a></span>\[\begin{split} A &amp;= \tilde{G} R^{^1/_2} \\
+<span class="eqno">(18)<a class="headerlink" href="#equation-inv-a" title="Permalink to this equation">#</a></span>\[\begin{split} A &amp;= \tilde{G} R^{^1/_2} \\
    &amp;= U \Lambda V^\top\end{split}\]</div>
 <p>where the superscript <span class="math notranslate nohighlight">\(^1/_2\)</span> indicates a square root of <span class="math notranslate nohighlight">\(R\)</span>. For a
 diagonal matrix, one simply takes the square root of <span class="math notranslate nohighlight">\(R\)</span> while in the
@@ -3292,7 +3614,7 @@ and thus <span class="math notranslate nohighlight">\(R^{^1/_2} = R_C\)</span>.<
 <p>Combining the SVD from <a class="reference internal" href="#equation-inv-a">(18)</a> with the inverse equation <a class="reference internal" href="#equation-inv-m">(13)</a> it is
 easy to show that</p>
 <div class="math notranslate nohighlight" id="equation-inv-m-tilde-svd">
-<span class="eqno">(19)<a class="headerlink" href="#equation-inv-m-tilde-svd" title="Permalink to this equation">¶</a></span>\[\begin{split} \tilde{M} &amp;= R \tilde{G}^\top (\tilde{G} R \tilde{G}^\top + \lambda^2 I)^{-1} \\
+<span class="eqno">(19)<a class="headerlink" href="#equation-inv-m-tilde-svd" title="Permalink to this equation">#</a></span>\[\begin{split} \tilde{M} &amp;= R \tilde{G}^\top (\tilde{G} R \tilde{G}^\top + \lambda^2 I)^{-1} \\
            &amp;= R^{^1/_2} A^\top (A A^\top + \lambda^2 I)^{-1} \\
            &amp;= R^{^1/_2} V \Lambda U^\top (U \Lambda V^\top V \Lambda U^\top + \lambda^2 I)^{-1} \\
            &amp;= R^{^1/_2} V \Lambda U^\top (U (\Lambda^2 + \lambda^2 I) U^\top)^{-1} \\
@@ -3301,15 +3623,15 @@ easy to show that</p>
            &amp;= R^{^1/_2} V \Gamma U^\top\end{split}\]</div>
 <p>where the elements of the diagonal matrix <span class="math notranslate nohighlight">\(\Gamma\)</span> are simply</p>
 <div class="math notranslate nohighlight" id="equation-inv-gamma-k">
-<span class="eqno">(20)<a class="headerlink" href="#equation-inv-gamma-k" title="Permalink to this equation">¶</a></span>\[ \gamma_k = \frac{\lambda_k}{\lambda_k^2 + \lambda^2}\ .\]</div>
+<span class="eqno">(20)<a class="headerlink" href="#equation-inv-gamma-k" title="Permalink to this equation">#</a></span>\[ \gamma_k = \frac{\lambda_k}{\lambda_k^2 + \lambda^2}\ .\]</div>
 <p>From our expected current equation <a class="reference internal" href="#equation-inv-j-hat-t">(16)</a> and our whitened
 measurement equation <a class="reference internal" href="#equation-inv-tilde-x-t">(17)</a>, if we take</p>
 <div class="math notranslate nohighlight" id="equation-inv-w-t">
-<span class="eqno">(21)<a class="headerlink" href="#equation-inv-w-t" title="Permalink to this equation">¶</a></span>\[\begin{split} w(t) &amp;= U^\top \tilde{x}(t) \\
+<span class="eqno">(21)<a class="headerlink" href="#equation-inv-w-t" title="Permalink to this equation">#</a></span>\[\begin{split} w(t) &amp;= U^\top \tilde{x}(t) \\
       &amp;= U^\top C^{-^1/_2} x(t)\ ,\end{split}\]</div>
 <p>we can see that the expression for the expected current is just</p>
 <div class="math notranslate nohighlight" id="equation-inv-j-hat-t-svd">
-<span class="eqno">(22)<a class="headerlink" href="#equation-inv-j-hat-t-svd" title="Permalink to this equation">¶</a></span>\[\begin{split} \hat{j}(t) &amp;= R^{^1/_2} V \Gamma w(t) \\
+<span class="eqno">(22)<a class="headerlink" href="#equation-inv-j-hat-t-svd" title="Permalink to this equation">#</a></span>\[\begin{split} \hat{j}(t) &amp;= R^{^1/_2} V \Gamma w(t) \\
             &amp;= \sum_k {\bar{v_k} \gamma_k w_k(t)}\ ,\end{split}\]</div>
 <p>where <span class="math notranslate nohighlight">\(\bar{v_k} = R^{^1/_2} v_k\)</span>, with <span class="math notranslate nohighlight">\(v_k\)</span> being the
 <span class="math notranslate nohighlight">\(k\)</span> th column of <span class="math notranslate nohighlight">\(V\)</span>. It is thus seen that the current estimate is
@@ -3324,7 +3646,7 @@ independent of  <span class="math notranslate nohighlight">\(L\)</span> and, for
 in <a class="reference internal" href="cookbook.html#cihcfjei"><span class="std std-ref">Calculating the inverse operator</span></a>.</p>
 </section>
 <section id="noise-normalization">
-<span id="id11"></span><h3>Noise normalization<a class="headerlink" href="#noise-normalization" title="Permalink to this headline">¶</a></h3>
+<span id="id11"></span><h3>Noise normalization<a class="headerlink" href="#noise-normalization" title="Permalink to this headline">#</a></h3>
 <p>Noise normalization serves three purposes:</p>
 <ul class="simple">
 <li><p>It converts the expected current value into a dimensionless statistical test
@@ -3342,9 +3664,9 @@ root of the estimated variance of each voxel. In computing these noise
 normalization factors, it’s convenient to reuse our “weighted eigenleads”
 definition from equation <a class="reference internal" href="#equation-inv-j-hat-t">(16)</a> in matrix form as</p>
 <div class="math notranslate nohighlight" id="equation-inv-eigenleads-weighted">
-<span class="eqno">(23)<a class="headerlink" href="#equation-inv-eigenleads-weighted" title="Permalink to this equation">¶</a></span>\[ \bar{V} = R^{^1/_2} V\ .\]</div>
+<span class="eqno">(23)<a class="headerlink" href="#equation-inv-eigenleads-weighted" title="Permalink to this equation">#</a></span>\[ \bar{V} = R^{^1/_2} V\ .\]</div>
 <section id="dspm">
-<h4>dSPM<a class="headerlink" href="#dspm" title="Permalink to this headline">¶</a></h4>
+<h4>dSPM<a class="headerlink" href="#dspm" title="Permalink to this headline">#</a></h4>
 <p>Noise-normalized linear estimates introduced by Dale et al.
 <a class="footnote-reference brackets" href="#footcite-daleetal1999" id="id12">8</a> require division of the expected current amplitude by
 its variance. In practice, this requires the computation of the diagonal
@@ -3372,7 +3694,7 @@ to <span class="math notranslate nohighlight">\(\sqrt{L}\)</span>.</p>
 </div>
 </section>
 <section id="sloreta">
-<h4>sLORETA<a class="headerlink" href="#sloreta" title="Permalink to this headline">¶</a></h4>
+<h4>sLORETA<a class="headerlink" href="#sloreta" title="Permalink to this headline">#</a></h4>
 <p>sLORETA <a class="footnote-reference brackets" href="#footcite-pascual-marqui2002" id="id13">9</a> estimates the current variances as the
 diagonal entries of the
 resolution matrix, which is the product of the inverse and forward operators.
@@ -3398,7 +3720,7 @@ we can find our variance estimates as</p>
 </section>
 </section>
 <section id="eloreta">
-<h3>eLORETA<a class="headerlink" href="#eloreta" title="Permalink to this headline">¶</a></h3>
+<h3>eLORETA<a class="headerlink" href="#eloreta" title="Permalink to this headline">#</a></h3>
 <p>While dSPM and sLORETA solve for noise normalization weights
 <span class="math notranslate nohighlight">\(\sigma^2_k\)</span> that are applied to standard minimum-norm estimates
 <span class="math notranslate nohighlight">\(\hat{j}(t)\)</span>, eLORETA <a class="footnote-reference brackets" href="#footcite-pascual-marqui2011" id="id14">10</a> instead solves for
@@ -3448,7 +3770,7 @@ the substitution <a class="reference internal" href="#equation-inv-g-tilde">(15)
 compute the whitened version <span class="math notranslate nohighlight">\(\tilde{N}\)</span>.</p>
 </section>
 <section id="predicted-data">
-<h3>Predicted data<a class="headerlink" href="#predicted-data" title="Permalink to this headline">¶</a></h3>
+<h3>Predicted data<a class="headerlink" href="#predicted-data" title="Permalink to this headline">#</a></h3>
 <p>Under noiseless conditions the SNR is infinite and thus leads to
 <span class="math notranslate nohighlight">\(\lambda^2 = 0\)</span> and the minimum-norm estimate explains the measured data
 perfectly. Under realistic conditions, however, <span class="math notranslate nohighlight">\(\lambda^2 &gt; 0\)</span> and there
@@ -3463,7 +3785,7 @@ valuable insight on the correctness of the regularization applied.</p>
 ‘recolored eigenfields’ in <span class="math notranslate nohighlight">\(C^{^1/_2} U\)</span>.</p>
 </section>
 <section id="cortical-patch-statistics">
-<h3>Cortical patch statistics<a class="headerlink" href="#cortical-patch-statistics" title="Permalink to this headline">¶</a></h3>
+<h3>Cortical patch statistics<a class="headerlink" href="#cortical-patch-statistics" title="Permalink to this headline">#</a></h3>
 <p>If the <code class="docutils literal notranslate"><span class="pre">add_dists=True</span></code> option was used in source space creation,
 the source space file will contain
 Cortical Patch Statistics (CPS) for each vertex of the cortical surface. The
@@ -3486,7 +3808,7 @@ cortical patch statistics (CPS) to define normal orientations or not (see
 <a class="reference internal" href="cookbook.html#chdbbcej"><span class="std std-ref">Cortical surface reconstruction with FreeSurfer</span></a>).</p>
 </section>
 <section id="orientation-constraints">
-<span id="inverse-orientation-constraints"></span><h3>Orientation constraints<a class="headerlink" href="#orientation-constraints" title="Permalink to this headline">¶</a></h3>
+<span id="inverse-orientation-constraints"></span><h3>Orientation constraints<a class="headerlink" href="#orientation-constraints" title="Permalink to this headline">#</a></h3>
 <p>The principal sources of MEG and EEG signals are generally believed to be
 postsynaptic currents in the cortical pyramidal neurons. Since the net primary
 current associated with these microscopic events is oriented normal to the
@@ -3525,7 +3847,7 @@ parameter will be multiplied by <span class="math notranslate nohighlight">\(\si
 </ul>
 </section>
 <section id="depth-weighting">
-<h3>Depth weighting<a class="headerlink" href="#depth-weighting" title="Permalink to this headline">¶</a></h3>
+<h3>Depth weighting<a class="headerlink" href="#depth-weighting" title="Permalink to this headline">#</a></h3>
 <p>The minimum-norm estimates have a bias towards superficial currents. This
 tendency can be alleviated by adjusting the source covariance matrix <span class="math notranslate nohighlight">\(R\)</span>
 to favor deeper source locations. In the depth weighting scheme employed in MNE
@@ -3539,7 +3861,7 @@ the order of the depth weighting, which is specified via the <code class="docuti
 in <a class="reference internal" href="../generated/mne.minimum_norm.make_inverse_operator.html#mne.minimum_norm.make_inverse_operator" title="mne.minimum_norm.make_inverse_operator"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.minimum_norm.make_inverse_operator()</span></code></a>.</p>
 </section>
 <section id="effective-number-of-averages">
-<h3>Effective number of averages<a class="headerlink" href="#effective-number-of-averages" title="Permalink to this headline">¶</a></h3>
+<h3>Effective number of averages<a class="headerlink" href="#effective-number-of-averages" title="Permalink to this headline">#</a></h3>
 <p>It is often the case that the epoch to be analyzed is a linear combination over
 conditions rather than one of the original averages computed. As stated above,
 the noise-covariance matrix computed is originally one corresponding to raw
@@ -3579,9 +3901,9 @@ Generalizing, for any combination of sums and differences, where <span class="ma
 </section>
 </section>
 <section id="morphing-and-averaging-source-estimates">
-<span id="ch-morph"></span><h2>Morphing and averaging source estimates<a class="headerlink" href="#morphing-and-averaging-source-estimates" title="Permalink to this headline">¶</a></h2>
+<span id="ch-morph"></span><h2>Morphing and averaging source estimates<a class="headerlink" href="#morphing-and-averaging-source-estimates" title="Permalink to this headline">#</a></h2>
 <section id="why-morphing">
-<h3>Why morphing?<a class="headerlink" href="#why-morphing" title="Permalink to this headline">¶</a></h3>
+<h3>Why morphing?<a class="headerlink" href="#why-morphing" title="Permalink to this headline">#</a></h3>
 <aside class="sidebar">
 <p class="sidebar-title">Morphing examples in MNE-Python</p>
 <p>Examples of morphing in MNE-Python include <a class="reference internal" href="../auto_tutorials/inverse/40_mne_fixed_free.html#tut-mne-fixed-free"><span class="std std-ref">this tutorial</span></a> on surface source estimation or these examples on
@@ -3605,7 +3927,7 @@ tell us how the data produced by subject A would be represented on the brain of
 subject B (and vice-versa).</p>
 </section>
 <section id="the-morphing-maps">
-<h3>The morphing maps<a class="headerlink" href="#the-morphing-maps" title="Permalink to this headline">¶</a></h3>
+<h3>The morphing maps<a class="headerlink" href="#the-morphing-maps" title="Permalink to this headline">#</a></h3>
 <p>The MNE software accomplishes morphing with help of morphing maps.
 The morphing is performed with help of the registered
 spherical surfaces (<code class="docutils literal notranslate"><span class="pre">lh.sphere.reg</span></code> and <code class="docutils literal notranslate"><span class="pre">rh.sphere.reg</span></code> ) which must be
@@ -3635,7 +3957,7 @@ within the triangle <span class="math notranslate nohighlight">\(T_j^{(A)}\)</sp
 <p><em>i.e.</em>, the mapping is <em>almost</em> a bijection.</p>
 </section>
 <section id="about-smoothing">
-<h3>About smoothing<a class="headerlink" href="#about-smoothing" title="Permalink to this headline">¶</a></h3>
+<h3>About smoothing<a class="headerlink" href="#about-smoothing" title="Permalink to this headline">#</a></h3>
 <p>The current estimates are normally defined only in a decimated grid which is a
 sparse subset of the vertices in the triangular tessellation of the cortical
 surface. Therefore, any sparse set of values is distributed to neighboring
@@ -3667,8 +3989,9 @@ smudging (smoothing) operation is linear.</p>
 </section>
 </section>
 <section id="references">
-<h2>References<a class="headerlink" href="#references" title="Permalink to this headline">¶</a></h2>
-<p id="id16"><dl class="footnote brackets">
+<h2>References<a class="headerlink" href="#references" title="Permalink to this headline">#</a></h2>
+<div class="docutils container" id="id16">
+<dl class="footnote brackets">
 <dt class="label" id="footcite-perrinetal1989"><span class="brackets"><a class="fn-backref" href="#id1">1</a></span></dt>
 <dd><p>François M. Perrin, Jacques Pernier, Olivier M. Bertrand, and Jean Franćois Echallier. Spherical splines for scalp potential and current density mapping. <em>Electroencephalography and Clinical Neurophysiology</em>, 72(2):184–187, 1989. <a class="reference external" href="https://doi.org/10.1016/0013-4694(89)90180-6">doi:10.1016/0013-4694(89)90180-6</a>.</p>
 </dd>
@@ -3700,7 +4023,7 @@ smudging (smoothing) operation is linear.</p>
 <dd><p>Roberto D. Pascual-Marqui, Dietrich Lehmann, Martha Koukkou, Kieko Kochi, Peter Anderer, Bernd Saletu, Hideaki Tanaka, Koichi Hirata, E. Roy John, Leslie Prichep, Rolando Biscay-Lirio, and Toshihiko Kinoshita. Assessing interactions in the brain with exact low-resolution electromagnetic tomography. <em>Philosophical Transactions of the Royal Society A: Mathematical, Physical and Engineering Sciences</em>, 369(1952):3768–3784, 2011. <a class="reference external" href="https://doi.org/10.1098/rsta.2011.0081">doi:10.1098/rsta.2011.0081</a>.</p>
 </dd>
 </dl>
-</p>
+</div>
 </section>
 </section>
 
@@ -3710,7 +4033,7 @@ smudging (smoothing) operation is linear.</p>
 
               
               <!-- Previous / next buttons -->
-<div class='prev-next-area'> 
+<div class='prev-next-area'>
     <a class='left-prev' id="prev-link" href="../glossary.html" title="previous page">
         <i class="fas fa-angle-left"></i>
         <div class="prev-next-info">
@@ -3735,12 +4058,13 @@ smudging (smoothing) operation is linear.</p>
     <script src="https://mne.tools/versionwarning.js"></script>
     
   
-  <script src="../_static/js/index.be7d3bbb2ef33a8344ce.js"></script>
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../_static/scripts/pydata-sphinx-theme.js?digest=1999514e3f237ded88cf"></script>
 <footer class="footer mt-5 mt-md-0">
   <div class="container">
     
     <div class="footer-item">
-      <p class="text-center text-muted small">&copy; Copyright 2012–2021, MNE Developers. Last updated <time datetime="2021-12-03T05:52:28.966460+00:00" class="localized">2021-12-03 05:52 UTC</time>
+      <p class="text-center text-muted small">&copy; Copyright 2012–2022, MNE Developers. Last updated <time datetime="2022-05-27T17:47:54.886015+00:00" class="localized">2022-05-27 17:47 UTC</time>
 <script type="text/javascript">$(function () { $("time.localized").each(function () { var el = $(this); el.text(new Date(el.attr("datetime")).toLocaleString([], {dateStyle: "medium", timeStyle: "long"})); }); } )</script></p>
     </div>
     

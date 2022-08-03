@@ -1,22 +1,25 @@
+# -*- coding: utf-8 -*-
 """
 .. _tut-report:
 
-Getting started with :class:`mne.Report`
-========================================
+===============================
+Getting started with mne.Report
+===============================
 
-`mne.Report` is a way to create interactive HTML summaries of your data. These
-reports can show many different visualizations of one or multiple subject's
-data. A common use case is creating diagnostic summaries to check data quality
-at different stages in the processing pipeline. The report can show things like
-plots of data before and after each preprocessing step, epoch rejection
-statistics, MRI slices with overlaid BEM shells, all the way up to plots of
-estimated cortical activity.
+:class:`mne.Report` is a way to create interactive HTML summaries of your data.
+These reports can show many different visualizations for one or multiple
+participants. A common use case is creating diagnostic summaries to check data
+quality at different stages in the processing pipeline. The report can show
+things like plots of data before and after each preprocessing step, epoch
+rejection statistics, MRI slices with overlaid BEM shells, all the way up to
+plots of estimated cortical activity.
 
-Compared to a Jupyter notebook, `mne.Report` is easier to deploy (the HTML
-pages it generates are self-contained and do not require a running Python
+Compared to a Jupyter notebook, :class:`mne.Report` is easier to deploy (the
+HTML pages it generates are self-contained and do not require a running Python
 environment) but less flexible (you can't change code and re-run something
 directly within the browser). This tutorial covers the basics of building a
-`~mne.Report`. As usual, we'll start by importing the modules and data we need:
+:class:`~mne.Report`. As usual, we'll start by importing the modules and data
+we need:
 """
 
 # %%
@@ -81,12 +84,12 @@ subjects_dir = data_path / 'subjects'
 # equally-spaced 1-second segments of the data:
 #
 # .. warning::
-#    In the following example, we crop the raw data and crop to 60 seconds
-#    just to speed up processing, this is not usually recommended!
+#    In the following example, we crop the raw data to 60 seconds merely to
+#    speed up processing; this is not usually recommended!
 
 raw_path = sample_dir / 'sample_audvis_filt-0-40_raw.fif'
 raw = mne.io.read_raw(raw_path)
-raw.pick_types(eeg=True, eog=True).crop(tmax=60).load_data()
+raw.pick_types(eeg=True, eog=True, stim=True).crop(tmax=60).load_data()
 
 report = mne.Report(title='Raw example')
 # This method also accepts a path, e.g., raw=raw_path
@@ -102,7 +105,7 @@ report.save('report_raw.html', overwrite=True)
 # is used to generate a meaningful time axis.
 
 events_path = sample_dir / 'sample_audvis_filt-0-40_raw-eve.fif'
-events = mne.read_events(events_path)
+events = mne.find_events(raw=raw)
 sfreq = raw.info['sfreq']
 
 report = mne.Report(title='Events example')
@@ -116,9 +119,24 @@ report.save('report_events.html', overwrite=True)
 #
 # Epochs can be added via :meth:`mne.Report.add_epochs`. Note that although
 # this method accepts a path to an epochs file too, in the following example
-# we only add epochs that we create on the fly from raw data.
+# we only add epochs that we create on the fly from raw data. To demonstrate
+# the representation of epochs metadata, we'll add some of that too.
 
-epochs = mne.Epochs(raw=raw, events=events)
+event_id = {
+    'auditory/left': 1, 'auditory/right': 2, 'visual/left': 3,
+    'visual/right': 4, 'face': 5, 'buttonpress': 32
+}
+
+metadata, _, _ = mne.epochs.make_metadata(
+    events=events,
+    event_id=event_id,
+    tmin=-0.2,
+    tmax=0.5,
+    sfreq=raw.info['sfreq']
+)
+epochs = mne.Epochs(
+    raw=raw, events=events, event_id=event_id, metadata=metadata
+)
 
 report = mne.Report(title='Epochs example')
 report.add_epochs(epochs=epochs, title='Epochs from "epochs"')
@@ -272,12 +290,14 @@ report.save('report_ica.html', overwrite=True)
 # surfaces can be added via :meth:`mne.Report.add_bem`. All you need to pass is
 # the FreeSurfer subject name and subjects directory, and a title. To reduce
 # the resulting file size, you may pass the ``decim`` parameter to only include
-# every n-th volume slice.
+# every n-th volume slice, and ``width`` to specify the width of the resulting
+# figures in pixels.
 
 report = mne.Report(title='BEM example')
 report.add_bem(
     subject='sample', subjects_dir=subjects_dir, title='MRI & BEM',
-    decim=20
+    decim=20,
+    width=256
 )
 report.save('report_mri_and_bem.html', overwrite=True)
 
@@ -285,18 +305,19 @@ report.save('report_mri_and_bem.html', overwrite=True)
 # Adding coregistration
 # ^^^^^^^^^^^^^^^^^^^^^
 #
-# The ``head -> mri`` transformation (obtained by "coregistration") can be
-# visualized via :meth:`mne.Report.add_trans`. The method expects the
-# transformation either as a `~mne.transforms.Transform` object or as a path to
-# a ``trans.fif`` file, the FreeSurfer subject name and subjects directory, and
-# a title.
+# The sensor alignment (``head -> mri`` transformation obtained by
+# "coregistration") can be visualized via :meth:`mne.Report.add_trans`. The
+# method expects the transformation either as a `~mne.transforms.Transform`
+# object or as a path to a ``trans.fif`` file, the FreeSurfer subject name and
+# subjects directory, and a title. The ``alpha`` parameter can be used to
+# control the transparency of the head, where a value of 1 means fully opaque.
 
 trans_path = sample_dir / 'sample_audvis_raw-trans.fif'
 
 report = mne.Report(title='Coregistration example')
 report.add_trans(
     trans=trans_path, info=raw_path, subject='sample',
-    subjects_dir=subjects_dir, title='Coregistration'
+    subjects_dir=subjects_dir, alpha=1.0, title='Coregistration'
 )
 report.save('report_coregistration.html', overwrite=True)
 
@@ -406,6 +427,7 @@ report.add_figure(
     image_format='PNG'
 )
 report.save('report_custom_figure.html', overwrite=True)
+plt.close(fig)
 
 # %%
 # The :meth:`mne.Report.add_figure` method can add multiple figures at once. In
@@ -437,9 +459,17 @@ for angle in rotation_angles:
     figs.append(fig)
     captions.append(f'Rotation angle: {round(angle, 1)}°')
 
+# can also be a MNEQtBrowser instance
+figs.append(raw.plot())
+captions.append('... plus a raw data plot')
+
 report = mne.Report(title='Multiple figures example')
 report.add_figure(fig=figs, title='Fun with figures! 🥳', caption=captions)
 report.save('report_custom_figures.html', overwrite=True)
+for fig in figs[:-1]:
+    plt.close(fig)
+figs[-1].close()
+del figs
 
 # %%
 # Adding image files
