@@ -395,7 +395,8 @@ plot_t_p(ts[-1], ps[-1], titles[-1], mccs[-1])
 # multidimensional (e.g., spatio-temporal) -- because the null distribution
 # will be derived from data in a way that preserves these correlations.
 #
-# .. sidebar:: Effect size
+# .. admonition:: Effect size
+#     :class: sidebar note
 #
 #     For a nice description of how to compute the effect size obtained
 #     in a cluster test, see this
@@ -440,10 +441,21 @@ print(mini_adjacency[0])
 # for computing adjacency matrices, for example:
 #
 # * :func:`mne.channels.find_ch_adjacency`
-# * :func:`mne.channels.read_ch_adjacency`
 # * :func:`mne.stats.combine_adjacency`
 #
 # See the :ref:`Statistics API <api_reference_statistics>` for a full list.
+#
+# MNE also ships with numerous built-in channel adjacency matrices from the
+# FieldTrip project (called "neighbors" there). You can get an overview of
+# them by using :func:`mne.channels.get_builtin_ch_adjacencies`:
+
+builtin_ch_adj = mne.channels.get_builtin_ch_adjacencies(descriptions=True)
+for adj_name, adj_description in builtin_ch_adj:
+    print(f'{adj_name}: {adj_description}')
+
+# %%
+# These built-in channel adjacency matrices can be loaded via
+# :func:`mne.channels.read_ch_adjacency`.
 #
 # Standard clustering
 # ~~~~~~~~~~~~~~~~~~~
@@ -464,7 +476,7 @@ t_thresh = stats.distributions.t.ppf(1 - alpha / 2, df=df)
 
 # run the cluster test
 t_clust, clusters, p_values, H0 = permutation_cluster_1samp_test(
-    X, n_jobs=1, threshold=t_thresh, adjacency=None,
+    X, n_jobs=None, threshold=t_thresh, adjacency=None,
     n_permutations=n_permutations, out_type='mask')
 
 # Put the cluster data in a viewable format
@@ -484,7 +496,7 @@ plot_t_p(ts[-1], ps[-1], titles[-1], mccs[-1])
 titles.append(r'$\mathbf{C_{hat}}$')
 stat_fun_hat = partial(ttest_1samp_no_p, sigma=sigma)
 t_hat, clusters, p_values, H0 = permutation_cluster_1samp_test(
-    X, n_jobs=1, threshold=t_thresh, adjacency=None, out_type='mask',
+    X, n_jobs=None, threshold=t_thresh, adjacency=None, out_type='mask',
     n_permutations=n_permutations, stat_fun=stat_fun_hat, buffer_size=None)
 p_hat = np.ones((width, width))
 for cl, p in zip(clusters, p_values):
@@ -520,7 +532,7 @@ plot_t_p(ts[-1], ps[-1], titles[-1], mccs[-1])
 titles.append(r'$\mathbf{C_{TFCE}}$')
 threshold_tfce = dict(start=0, step=0.2)
 t_tfce, _, p_tfce, H0 = permutation_cluster_1samp_test(
-    X, n_jobs=1, threshold=threshold_tfce, adjacency=None,
+    X, n_jobs=None, threshold=threshold_tfce, adjacency=None,
     n_permutations=n_permutations, out_type='mask')
 ts.append(t_tfce)
 ps.append(p_tfce)
@@ -531,7 +543,7 @@ plot_t_p(ts[-1], ps[-1], titles[-1], mccs[-1])
 # We can also combine TFCE and the "hat" correction:
 titles.append(r'$\mathbf{C_{hat,TFCE}}$')
 t_tfce_hat, _, p_tfce_hat, H0 = permutation_cluster_1samp_test(
-    X, n_jobs=1, threshold=threshold_tfce, adjacency=None, out_type='mask',
+    X, n_jobs=None, threshold=threshold_tfce, adjacency=None, out_type='mask',
     n_permutations=n_permutations, stat_fun=stat_fun_hat, buffer_size=None)
 ts.append(t_tfce_hat)
 ps.append(p_tfce_hat)

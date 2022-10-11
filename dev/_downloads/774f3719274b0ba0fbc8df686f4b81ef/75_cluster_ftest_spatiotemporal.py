@@ -141,7 +141,7 @@ F_obs, clusters, p_values, _ = cluster_stats
 #           an adjacency for time points was automatically taken into
 #           account. That is, at time point N, the time points N - 1 and
 #           N + 1 were considered as adjacent (this is also called "lattice
-#           adjacency"). This is only possbile because we ran the analysis on
+#           adjacency"). This is only possible because we ran the analysis on
 #           2D data (times × channels) per observation ... for 3D data per
 #           observation (e.g., times × frequencies × channels), we will need
 #           to use :func:`mne.stats.combine_adjacency`, as shown further
@@ -192,7 +192,7 @@ for i_clu, clu_idx in enumerate(good_cluster_inds):
     # plot average test statistic and mark significant sensors
     f_evoked = mne.EvokedArray(f_map[:, np.newaxis], epochs.info, tmin=0)
     f_evoked.plot_topomap(times=0, mask=mask, axes=ax_topo, cmap='Reds',
-                          vmin=np.min, vmax=np.max, show=False,
+                          vlim=(np.min, np.max), show=False,
                           colorbar=False, mask_params=dict(markersize=10))
     image = ax_topo.images[0]
 
@@ -321,8 +321,8 @@ for i_clu, clu_idx in enumerate(good_cluster_inds):
     # plot average test statistic and mark significant sensors
     f_evoked = mne.EvokedArray(f_map[:, np.newaxis], epochs.info, tmin=0)
     f_evoked.plot_topomap(times=0, mask=mask, axes=ax_topo, cmap='Reds',
-                          vmin=np.min, vmax=np.max, show=False,
-                          colorbar=False, mask_params=dict(markersize=10))
+                          vlim=(np.min, np.max), show=False, colorbar=False,
+                          mask_params=dict(markersize=10))
     image = ax_topo.images[0]
 
     # create additional axes (for ERF and colorbar)

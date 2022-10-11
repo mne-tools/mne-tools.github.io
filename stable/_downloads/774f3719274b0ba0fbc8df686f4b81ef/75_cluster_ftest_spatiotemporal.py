@@ -89,13 +89,7 @@ adjacency, ch_names = find_ch_adjacency(epochs.info, ch_type='mag')
 
 print(type(adjacency))  # it's a sparse matrix!
 
-fig, ax = plt.subplots(figsize=(5, 4))
-ax.imshow(adjacency.toarray(), cmap='gray', origin='lower',
-          interpolation='nearest')
-ax.set_xlabel('{} Magnetometers'.format(len(ch_names)))
-ax.set_ylabel('{} Magnetometers'.format(len(ch_names)))
-ax.set_title('Between-sensor adjacency')
-fig.tight_layout()
+mne.viz.plot_ch_adjacency(epochs.info, adjacency, ch_names)
 
 # %%
 # Compute permutation statistic
@@ -137,7 +131,7 @@ f_thresh = scipy.stats.f.ppf(1 - alpha_cluster_forming, dfn=dfn, dfd=dfd)
 # run the cluster based permutation analysis
 cluster_stats = spatio_temporal_cluster_test(X, n_permutations=1000,
                                              threshold=f_thresh, tail=tail,
-                                             n_jobs=1, buffer_size=None,
+                                             n_jobs=None, buffer_size=None,
                                              adjacency=adjacency)
 F_obs, clusters, p_values, _ = cluster_stats
 
@@ -147,7 +141,7 @@ F_obs, clusters, p_values, _ = cluster_stats
 #           an adjacency for time points was automatically taken into
 #           account. That is, at time point N, the time points N - 1 and
 #           N + 1 were considered as adjacent (this is also called "lattice
-#           adjacency"). This is only possbile because we ran the analysis on
+#           adjacency"). This is only possible because we ran the analysis on
 #           2D data (times × channels) per observation ... for 3D data per
 #           observation (e.g., times × frequencies × channels), we will need
 #           to use :func:`mne.stats.combine_adjacency`, as shown further
@@ -201,6 +195,9 @@ for i_clu, clu_idx in enumerate(good_cluster_inds):
                           vmin=np.min, vmax=np.max, show=False,
                           colorbar=False, mask_params=dict(markersize=10))
     image = ax_topo.images[0]
+
+    # remove the title that would otherwise say "0.000 s"
+    ax_topo.set_title("")
 
     # create additional axes (for ERF and colorbar)
     divider = make_axes_locatable(ax_topo)
@@ -282,7 +279,7 @@ tfr_threshold = 15.0
 
 # run cluster based permutation analysis
 cluster_stats = spatio_temporal_cluster_test(
-    X, n_permutations=1000, threshold=tfr_threshold, tail=1, n_jobs=1,
+    X, n_permutations=1000, threshold=tfr_threshold, tail=1, n_jobs=None,
     buffer_size=None, adjacency=tfr_adjacency)
 
 # %%

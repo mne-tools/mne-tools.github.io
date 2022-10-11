@@ -186,7 +186,7 @@ t_threshold = stats.distributions.t.ppf(1 - p_threshold / 2, df=df)
 # Now let's actually do the clustering. This can take a long time...
 print('Clustering.')
 T_obs, clusters, cluster_p_values, H0 = clu = \
-    spatio_temporal_cluster_1samp_test(X, adjacency=adjacency, n_jobs=1,
+    spatio_temporal_cluster_1samp_test(X, adjacency=adjacency, n_jobs=None,
                                        threshold=t_threshold, buffer_size=None,
                                        verbose=True)
 

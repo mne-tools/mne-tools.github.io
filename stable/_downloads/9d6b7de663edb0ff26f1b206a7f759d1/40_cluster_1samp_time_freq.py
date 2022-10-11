@@ -25,7 +25,7 @@ data (i.e., an average of their epochs). This would then be considered
 an analysis at the "2nd level".
 
 For more information on cluster-based permutation testing in MNE-Python,
-see also: :ref:`tut-cluster-spatiotemporal-sensor`
+see also: :ref:`tut-cluster-spatiotemporal-sensor`.
 """
 # Authors: Alexandre Gramfort <alexandre.gramfort@inria.fr>
 #          Stefan Appelhoff <stefan.appelhoff@mailbox.org>
@@ -84,7 +84,7 @@ freqs = np.arange(8, 40, 2)
 
 # run the TFR decomposition
 tfr_epochs = tfr_morlet(epochs, freqs, n_cycles=4., decim=decim,
-                        average=False, return_itc=False, n_jobs=1)
+                        average=False, return_itc=False, n_jobs=None)
 
 # Baseline power
 tfr_epochs.apply_baseline(mode='logratio', baseline=(-.100, 0))
@@ -117,7 +117,7 @@ sensor_adjacency, ch_names = mne.channels.find_ch_adjacency(
 # In this case, find_ch_adjacency finds an appropriate file and
 # reads it (see log output: "neuromag306planar").
 # However, we need to subselect the channels we are actually using
-use_idx = [ch_names.index(ch_name.replace(' ', ''))
+use_idx = [ch_names.index(ch_name)
            for ch_name in tfr_epochs.ch_names]
 sensor_adjacency = sensor_adjacency[use_idx][:, use_idx]
 
