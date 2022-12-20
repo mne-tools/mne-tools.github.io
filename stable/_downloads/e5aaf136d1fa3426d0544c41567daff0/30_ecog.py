@@ -36,7 +36,6 @@ Please note that this tutorial requires 3D plotting dependencies (see
 
 import numpy as np
 import matplotlib.pyplot as plt
-from matplotlib.cm import get_cmap
 from mne_bids import BIDSPath, read_raw_bids
 
 import mne
@@ -62,7 +61,7 @@ subjects_dir = sample_path / 'subjects'
 
 # first define the bids path
 bids_path = BIDSPath(root=bids_root, subject='pt1', session='presurgery',
-                     task='ictal', datatype='ieeg', extension='vhdr')
+                     task='ictal', datatype='ieeg', extension='.vhdr')
 
 # then we'll use it to load in the sample dataset
 # Here we use a format (iEEG) that is only available in MNE-BIDS 0.7+, so it
@@ -148,7 +147,7 @@ gamma_info = gamma_power_t.info
 xy_pts = np.vstack([xy[ch] for ch in raw.info['ch_names']])
 
 # get a colormap to color nearby points similar colors
-cmap = get_cmap('viridis')
+cmap = plt.colormaps['viridis']
 
 # create the figure of the brain with the electrode positions
 fig, ax = plt.subplots(figsize=(5, 5))
@@ -192,6 +191,7 @@ brain = stc.plot(surface='pial', hemi='rh', colormap='inferno', colorbar=False,
                  size=(250, 250), smoothing_steps='nearest',
                  time_viewer=False)
 brain.add_sensors(raw.info, trans='fsaverage')
+del brain
 
 # You can save a movie like the one on our documentation website with:
 # brain.save_movie(time_dilation=1, interpolation='linear', framerate=3,
