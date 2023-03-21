@@ -9,7 +9,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>Filtering and resampling data &#8212; MNE 1.4.0.dev79+g0e305ee75 documentation</title>
+    <title>Filtering and resampling data &#8212; MNE 1.4.0.dev83+g5ca0141f6 documentation</title>
   
   
   
@@ -649,6 +649,7 @@ document.write(`
 <li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/fnirs_artifact_removal.html">Visualise NIRS artifact correction methods</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/ica_comparison.html">Compare the different ICA algorithms in MNE</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/interpolate_bad_channels.html">Interpolate bad channels for MEG/EEG channels</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/locate_ieeg_micro.html">Locating micro-scale intracranial electrode contacts</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/movement_compensation.html">Maxwell filter data with movement compensation</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/movement_detection.html">Annotate movement artifacts and reestimate dev_head_t</a></li>
 <li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/muscle_detection.html">Annotate muscle artifacts</a></li>
@@ -1012,7 +1013,7 @@ Designing a one-pass, zero-phase, non-causal highpass filter:
 [Parallel(n_jobs=1)]: Done   2 out of   2 | elapsed:    0.0s remaining:    0.0s
 [Parallel(n_jobs=1)]: Done   3 out of   3 | elapsed:    0.0s remaining:    0.0s
 [Parallel(n_jobs=1)]: Done   4 out of   4 | elapsed:    0.0s remaining:    0.0s
-[Parallel(n_jobs=1)]: Done 102 out of 102 | elapsed:    0.5s finished
+[Parallel(n_jobs=1)]: Done 102 out of 102 | elapsed:    0.3s finished
 Using matplotlib as 2D backend.
 Using qt as 2D backend.
 Filtering raw data in 1 contiguous segment
@@ -1032,7 +1033,7 @@ Designing a one-pass, zero-phase, non-causal highpass filter:
 [Parallel(n_jobs=1)]: Done   2 out of   2 | elapsed:    0.0s remaining:    0.0s
 [Parallel(n_jobs=1)]: Done   3 out of   3 | elapsed:    0.0s remaining:    0.0s
 [Parallel(n_jobs=1)]: Done   4 out of   4 | elapsed:    0.0s remaining:    0.0s
-[Parallel(n_jobs=1)]: Done 102 out of 102 | elapsed:    0.4s finished
+[Parallel(n_jobs=1)]: Done 102 out of 102 | elapsed:    0.3s finished
 Using matplotlib as 2D backend.
 Using qt as 2D backend.
 </pre></div>
@@ -1075,8 +1076,11 @@ plot the filter:</p>
 <p>Power line noise is an environmental artifact that manifests as persistent
 oscillations centered around the <a class="reference external" href="https://en.wikipedia.org/wiki/Mains_electricity">AC power line frequency</a>. Power line
 artifacts are easiest to see on plots of the spectrum, so we’ll use
-<a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw.plot_psd" title="mne.io.Raw.plot_psd"><code class="xref py py-meth docutils literal notranslate"><span class="pre">plot_psd()</span></code></a> to illustrate. We’ll also write a little
-function that adds arrows to the spectrum plot to highlight the artifacts:</p>
+<a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw.compute_psd" title="mne.io.Raw.compute_psd"><code class="xref py py-meth docutils literal notranslate"><span class="pre">compute_psd()</span></code></a> to get a
+<a class="reference internal" href="../../generated/mne.time_frequency.Spectrum.html#mne.time_frequency.Spectrum" title="mne.time_frequency.Spectrum"><code class="xref py py-class docutils literal notranslate"><span class="pre">Spectrum</span></code></a> object, and use its
+<a class="reference internal" href="../../generated/mne.time_frequency.Spectrum.html#mne.time_frequency.Spectrum.plot" title="mne.time_frequency.Spectrum.plot"><code class="xref py py-meth docutils literal notranslate"><span class="pre">plot()</span></code></a> method to illustrate. We’ll also
+write a little function that adds arrows to the spectrum plot to highlight
+the artifacts:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">add_arrows</span><span class="p">(</span><span class="n">axes</span><span class="p">):</span>
     <span class="c1"># add some arrows at 60 Hz and its harmonics</span>
     <span class="k">for</span> <span class="n">ax</span> <span class="ow">in</span> <span class="n">axes</span><span class="p">:</span>
@@ -1090,12 +1094,11 @@ function that adds arrows to the spectrum plot to highlight the artifacts:</p>
                      <span class="n">width</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">head_width</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">length_includes_head</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 
-<span class="n">fig</span> <span class="o">=</span> <a href="../../generated/mne.io.Raw.html#mne.io.Raw.plot_psd" title="mne.io.Raw.plot_psd" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-method"><span class="n">raw</span><span class="o">.</span><span class="n">plot_psd</span></a><span class="p">(</span><span class="n">fmax</span><span class="o">=</span><span class="mi">250</span><span class="p">,</span> <span class="n">average</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">fig</span> <span class="o">=</span> <a href="../../generated/mne.io.Raw.html#mne.io.Raw.compute_psd" title="mne.io.Raw.compute_psd" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-method"><span class="n">raw</span><span class="o">.</span><span class="n">compute_psd</span></a><span class="p">(</span><span class="n">fmax</span><span class="o">=</span><span class="mi">250</span><span class="p">)</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">average</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="n">add_arrows</span><span class="p">(</span><a href="https://matplotlib.org/stable/api/figure_api.html#matplotlib.figure.Figure.axes" title="matplotlib.figure.Figure.axes" class="sphx-glr-backref-module-matplotlib-figure sphx-glr-backref-type-py-property"><span class="n">fig</span><span class="o">.</span><span class="n">axes</span></a><span class="p">[:</span><span class="mi">2</span><span class="p">])</span>
 </pre></div>
 </div>
-<img src="../../_images/sphx_glr_30_filtering_resampling_005.png" srcset="../../_images/sphx_glr_30_filtering_resampling_005.png" alt="Magnetometers" class = "sphx-glr-single-img"/><div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>NOTE: plot_psd() is a legacy function. New code should use .compute_psd().plot().
-Effective window size : 3.410 (s)
+<img src="../../_images/sphx_glr_30_filtering_resampling_005.png" srcset="../../_images/sphx_glr_30_filtering_resampling_005.png" alt="Magnetometers" class = "sphx-glr-single-img"/><div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Effective window size : 3.410 (s)
 </pre></div>
 </div>
 <p>It should be evident that MEG channels are more susceptible to this kind of
@@ -1109,7 +1112,7 @@ so that only the magnetometers and gradiometers get filtered:</p>
 <a href="https://docs.python.org/3/library/stdtypes.html#tuple" title="builtins.tuple" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">freqs</span></a> <span class="o">=</span> <span class="p">(</span><span class="mi">60</span><span class="p">,</span> <span class="mi">120</span><span class="p">,</span> <span class="mi">180</span><span class="p">,</span> <span class="mi">240</span><span class="p">)</span>
 <a href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw_notch</span></a> <span class="o">=</span> <a href="../../generated/mne.io.Raw.html#mne.io.Raw.copy" title="mne.io.Raw.copy" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-method"><span class="n">raw</span><span class="o">.</span><span class="n">copy</span></a><span class="p">()</span><span class="o">.</span><span class="n">notch_filter</span><span class="p">(</span><a href="https://docs.python.org/3/library/stdtypes.html#tuple" title="builtins.tuple" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">freqs</span></a><span class="o">=</span><a href="https://docs.python.org/3/library/stdtypes.html#tuple" title="builtins.tuple" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">freqs</span></a><span class="p">,</span> <span class="n">picks</span><span class="o">=</span><a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">meg_picks</span></a><span class="p">)</span>
 <span class="k">for</span> <a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">title</span></a><span class="p">,</span> <a href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">data</span></a> <span class="ow">in</span> <span class="nb">zip</span><span class="p">([</span><span class="s1">&#39;Un&#39;</span><span class="p">,</span> <span class="s1">&#39;Notch &#39;</span><span class="p">],</span> <span class="p">[</span><a href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw</span></a><span class="p">,</span> <a href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw_notch</span></a><span class="p">]):</span>
-    <span class="n">fig</span> <span class="o">=</span> <a href="../../generated/mne.io.Raw.html#mne.io.Raw.plot_psd" title="mne.io.Raw.plot_psd" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-method"><span class="n">data</span><span class="o">.</span><span class="n">plot_psd</span></a><span class="p">(</span><span class="n">fmax</span><span class="o">=</span><span class="mi">250</span><span class="p">,</span> <span class="n">average</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">fig</span> <span class="o">=</span> <a href="../../generated/mne.io.Raw.html#mne.io.Raw.compute_psd" title="mne.io.Raw.compute_psd" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-method"><span class="n">data</span><span class="o">.</span><span class="n">compute_psd</span></a><span class="p">(</span><span class="n">fmax</span><span class="o">=</span><span class="mi">250</span><span class="p">)</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">average</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <a href="https://matplotlib.org/stable/api/figure_api.html#matplotlib.figure.Figure.subplots_adjust" title="matplotlib.figure.Figure.subplots_adjust" class="sphx-glr-backref-module-matplotlib-figure sphx-glr-backref-type-py-method"><span class="n">fig</span><span class="o">.</span><span class="n">subplots_adjust</span></a><span class="p">(</span><span class="n">top</span><span class="o">=</span><span class="mf">0.85</span><span class="p">)</span>
     <a href="https://matplotlib.org/stable/api/figure_api.html#matplotlib.figure.Figure.suptitle" title="matplotlib.figure.Figure.suptitle" class="sphx-glr-backref-module-matplotlib-figure sphx-glr-backref-type-py-method"><span class="n">fig</span><span class="o">.</span><span class="n">suptitle</span></a><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">filtered&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">title</span></a><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="s1">&#39;xx-large&#39;</span><span class="p">,</span> <span class="n">weight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
     <span class="n">add_arrows</span><span class="p">(</span><a href="https://matplotlib.org/stable/api/figure_api.html#matplotlib.figure.Figure.axes" title="matplotlib.figure.Figure.axes" class="sphx-glr-backref-module-matplotlib-figure sphx-glr-backref-type-py-property"><span class="n">fig</span><span class="o">.</span><span class="n">axes</span></a><span class="p">[:</span><span class="mi">2</span><span class="p">])</span>
@@ -1136,10 +1139,8 @@ Designing a one-pass, zero-phase, non-causal bandstop filter:
 [Parallel(n_jobs=1)]: Done   2 out of   2 | elapsed:    0.0s remaining:    0.0s
 [Parallel(n_jobs=1)]: Done   3 out of   3 | elapsed:    0.0s remaining:    0.0s
 [Parallel(n_jobs=1)]: Done   4 out of   4 | elapsed:    0.0s remaining:    0.0s
-[Parallel(n_jobs=1)]: Done 102 out of 102 | elapsed:    0.3s finished
-NOTE: plot_psd() is a legacy function. New code should use .compute_psd().plot().
+[Parallel(n_jobs=1)]: Done 102 out of 102 | elapsed:    0.2s finished
 Effective window size : 3.410 (s)
-NOTE: plot_psd() is a legacy function. New code should use .compute_psd().plot().
 Effective window size : 3.410 (s)
 </pre></div>
 </div>
@@ -1154,7 +1155,7 @@ line noise at those frequencies:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw_notch_fit</span></a> <span class="o">=</span> <a href="../../generated/mne.io.Raw.html#mne.io.Raw.copy" title="mne.io.Raw.copy" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-method"><span class="n">raw</span><span class="o">.</span><span class="n">copy</span></a><span class="p">()</span><span class="o">.</span><span class="n">notch_filter</span><span class="p">(</span>
     <a href="https://docs.python.org/3/library/stdtypes.html#tuple" title="builtins.tuple" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">freqs</span></a><span class="o">=</span><a href="https://docs.python.org/3/library/stdtypes.html#tuple" title="builtins.tuple" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">freqs</span></a><span class="p">,</span> <span class="n">picks</span><span class="o">=</span><a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">meg_picks</span></a><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s1">&#39;spectrum_fit&#39;</span><span class="p">,</span> <span class="n">filter_length</span><span class="o">=</span><span class="s1">&#39;10s&#39;</span><span class="p">)</span>
 <span class="k">for</span> <a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">title</span></a><span class="p">,</span> <a href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">data</span></a> <span class="ow">in</span> <span class="nb">zip</span><span class="p">([</span><span class="s1">&#39;Un&#39;</span><span class="p">,</span> <span class="s1">&#39;spectrum_fit &#39;</span><span class="p">],</span> <span class="p">[</span><a href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw</span></a><span class="p">,</span> <a href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw_notch_fit</span></a><span class="p">]):</span>
-    <span class="n">fig</span> <span class="o">=</span> <a href="../../generated/mne.io.Raw.html#mne.io.Raw.plot_psd" title="mne.io.Raw.plot_psd" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-method"><span class="n">data</span><span class="o">.</span><span class="n">plot_psd</span></a><span class="p">(</span><span class="n">fmax</span><span class="o">=</span><span class="mi">250</span><span class="p">,</span> <span class="n">average</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">fig</span> <span class="o">=</span> <a href="../../generated/mne.io.Raw.html#mne.io.Raw.compute_psd" title="mne.io.Raw.compute_psd" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-method"><span class="n">data</span><span class="o">.</span><span class="n">compute_psd</span></a><span class="p">(</span><span class="n">fmax</span><span class="o">=</span><span class="mi">250</span><span class="p">)</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">average</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <a href="https://matplotlib.org/stable/api/figure_api.html#matplotlib.figure.Figure.subplots_adjust" title="matplotlib.figure.Figure.subplots_adjust" class="sphx-glr-backref-module-matplotlib-figure sphx-glr-backref-type-py-method"><span class="n">fig</span><span class="o">.</span><span class="n">subplots_adjust</span></a><span class="p">(</span><span class="n">top</span><span class="o">=</span><span class="mf">0.85</span><span class="p">)</span>
     <a href="https://matplotlib.org/stable/api/figure_api.html#matplotlib.figure.Figure.suptitle" title="matplotlib.figure.Figure.suptitle" class="sphx-glr-backref-module-matplotlib-figure sphx-glr-backref-type-py-method"><span class="n">fig</span><span class="o">.</span><span class="n">suptitle</span></a><span class="p">(</span><span class="s1">&#39;</span><span class="si">{}</span><span class="s1">filtered&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">title</span></a><span class="p">),</span> <span class="n">size</span><span class="o">=</span><span class="s1">&#39;xx-large&#39;</span><span class="p">,</span> <span class="n">weight</span><span class="o">=</span><span class="s1">&#39;bold&#39;</span><span class="p">)</span>
     <span class="n">add_arrows</span><span class="p">(</span><a href="https://matplotlib.org/stable/api/figure_api.html#matplotlib.figure.Figure.axes" title="matplotlib.figure.Figure.axes" class="sphx-glr-backref-module-matplotlib-figure sphx-glr-backref-type-py-property"><span class="n">fig</span><span class="o">.</span><span class="n">axes</span></a><span class="p">[:</span><span class="mi">2</span><span class="p">])</span>
@@ -1172,9 +1173,7 @@ Removed notch frequencies (Hz):
     239.00 : 1122 windows
     240.00 : 1122 windows
     241.00 : 1122 windows
-NOTE: plot_psd() is a legacy function. New code should use .compute_psd().plot().
 Effective window size : 3.410 (s)
-NOTE: plot_psd() is a legacy function. New code should use .compute_psd().plot().
 Effective window size : 3.410 (s)
 </pre></div>
 </div>
@@ -1205,7 +1204,7 @@ target rate of 200 Hz):</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw_downsampled</span></a> <span class="o">=</span> <a href="../../generated/mne.io.Raw.html#mne.io.Raw.copy" title="mne.io.Raw.copy" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-method"><span class="n">raw</span><span class="o">.</span><span class="n">copy</span></a><span class="p">()</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="n">sfreq</span><span class="o">=</span><span class="mi">200</span><span class="p">)</span>
 
 <span class="k">for</span> <a href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">data</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">title</span></a> <span class="ow">in</span> <span class="nb">zip</span><span class="p">([</span><a href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw</span></a><span class="p">,</span> <a href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw_downsampled</span></a><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;Original&#39;</span><span class="p">,</span> <span class="s1">&#39;Downsampled&#39;</span><span class="p">]):</span>
-    <span class="n">fig</span> <span class="o">=</span> <a href="../../generated/mne.io.Raw.html#mne.io.Raw.plot_psd" title="mne.io.Raw.plot_psd" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-method"><span class="n">data</span><span class="o">.</span><span class="n">plot_psd</span></a><span class="p">(</span><span class="n">average</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+    <span class="n">fig</span> <span class="o">=</span> <a href="../../generated/mne.io.Raw.html#mne.io.Raw.compute_psd" title="mne.io.Raw.compute_psd" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-method"><span class="n">data</span><span class="o">.</span><span class="n">compute_psd</span></a><span class="p">()</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">average</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
     <a href="https://matplotlib.org/stable/api/figure_api.html#matplotlib.figure.Figure.subplots_adjust" title="matplotlib.figure.Figure.subplots_adjust" class="sphx-glr-backref-module-matplotlib-figure sphx-glr-backref-type-py-method"><span class="n">fig</span><span class="o">.</span><span class="n">subplots_adjust</span></a><span class="p">(</span><span class="n">top</span><span class="o">=</span><span class="mf">0.9</span><span class="p">)</span>
     <a href="https://matplotlib.org/stable/api/figure_api.html#matplotlib.figure.Figure.suptitle" title="matplotlib.figure.Figure.suptitle" class="sphx-glr-backref-module-matplotlib-figure sphx-glr-backref-type-py-method"><span class="n">fig</span><span class="o">.</span><span class="n">suptitle</span></a><span class="p">(</span><a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">title</span></a><span class="p">)</span>
     <a href="https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.setp.html#matplotlib.pyplot.setp" title="matplotlib.pyplot.setp" class="sphx-glr-backref-module-matplotlib-pyplot sphx-glr-backref-type-py-function"><span class="n">plt</span><span class="o">.</span><span class="n">setp</span></a><span class="p">(</span><a href="https://matplotlib.org/stable/api/figure_api.html#matplotlib.figure.Figure.axes" title="matplotlib.figure.Figure.axes" class="sphx-glr-backref-module-matplotlib-figure sphx-glr-backref-type-py-property"><span class="n">fig</span><span class="o">.</span><span class="n">axes</span></a><span class="p">,</span> <span class="n">xlim</span><span class="o">=</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">300</span><span class="p">))</span>
@@ -1219,9 +1218,7 @@ target rate of 200 Hz):</p>
 Event IDs: [ 1  2  3  4  5 32]
 86 events found
 Event IDs: [ 1  2  3  4  5 32]
-NOTE: plot_psd() is a legacy function. New code should use .compute_psd().plot().
 Effective window size : 3.410 (s)
-NOTE: plot_psd() is a legacy function. New code should use .compute_psd().plot().
 Effective window size : 10.240 (s)
 </pre></div>
 </div>
@@ -1330,8 +1327,8 @@ corresponding Events array <em>simultaneously</em> so that they stay more or les
 in synch. This can be done by passing the Events array as the
 <code class="docutils literal notranslate"><span class="pre">events</span></code> parameter to <a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw.resample" title="mne.io.Raw.resample"><code class="xref py py-meth docutils literal notranslate"><span class="pre">raw.resample()</span></code></a>.</p></li>
 </ol>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  34.499 seconds)</p>
-<p><strong>Estimated memory usage:</strong>  776 MB</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  25.567 seconds)</p>
+<p><strong>Estimated memory usage:</strong>  796 MB</p>
 <div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-tutorials-preprocessing-30-filtering-resampling-py">
 <div class="sphx-glr-download sphx-glr-download-python docutils container">
 <p><a class="reference download internal" download="" href="../../_downloads/63cab32016602394f025dbe0ed7f501b/30_filtering_resampling.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">30_filtering_resampling.py</span></code></a></p>
@@ -1423,7 +1420,7 @@ in synch. This can be done by passing the Events array as the
   
     <div class="footer-items__start">
       
-        <div class="footer-item"><p class="text-center text-muted small">&copy; Copyright 2012–2023, MNE Developers. Last updated <time datetime="2023-03-20T06:38:33.451372+00:00" class="localized">2023-03-20 06:38 UTC</time>
+        <div class="footer-item"><p class="text-center text-muted small">&copy; Copyright 2012–2023, MNE Developers. Last updated <time datetime="2023-03-21T06:47:16.980044+00:00" class="localized">2023-03-21 06:47 UTC</time>
 <script type="text/javascript">$(function () { $("time.localized").each(function () { var el = $(this); el.text(new Date(el.attr("datetime")).toLocaleString([], {dateStyle: "medium", timeStyle: "long"})); }); } )</script></p></div>
       
     </div>
