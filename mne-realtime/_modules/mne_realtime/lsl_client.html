@@ -410,34 +410,42 @@ document.write(`
 <span class="sd">    &quot;&quot;&quot;</span>
 
 <div class="viewcode-block" id="LSLClient.get_data_as_epoch"><a class="viewcode-back" href="../../generated/mne_realtime.LSLClient.html#mne_realtime.LSLClient.get_data_as_epoch">[docs]</a>    <span class="nd">@fill_doc</span>
-    <span class="k">def</span> <span class="nf">get_data_as_epoch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_samples</span><span class="o">=</span><span class="mi">1024</span><span class="p">,</span> <span class="n">picks</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return last n_samples from current time.</span>
+    <span class="k">def</span> <span class="nf">get_data_as_epoch</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">n_samples</span><span class="o">=</span><span class="mi">1024</span><span class="p">,</span> <span class="n">picks</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <span class="n">timeout</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;Return n_samples from LSL in FIFO order.</span>
 
 <span class="sd">        Parameters</span>
 <span class="sd">        ----------</span>
 <span class="sd">        n_samples : int</span>
 <span class="sd">            Number of samples to fetch.</span>
 <span class="sd">        %(picks_all)s</span>
+<span class="sd">        timeout : float | None</span>
+<span class="sd">            Maximum amount of time to wait for data from LSL</span>
+<span class="sd">            if None: waits for 5x n_samples / sfreq</span>
 
 <span class="sd">        Returns</span>
 <span class="sd">        -------</span>
-<span class="sd">        epoch : instance of Epochs</span>
+<span class="sd">        epoch : instance of EpochsArray | None</span>
 <span class="sd">            The samples fetched as an Epochs object.</span>
+<span class="sd">            None if no data was returned from pylsl.</span>
 
 <span class="sd">        See Also</span>
 <span class="sd">        --------</span>
 <span class="sd">        mne.Epochs.iter_evoked</span>
 <span class="sd">        &quot;&quot;&quot;</span>
-        <span class="c1"># set up timeout in case LSL process hang. wait arb 5x expected time</span>
-        <span class="n">wait_time</span> <span class="o">=</span> <span class="n">n_samples</span> <span class="o">*</span> <span class="mf">5.</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;sfreq&#39;</span><span class="p">]</span>
+        <span class="k">if</span> <span class="n">timeout</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="c1"># set up timeout in case LSL process hang. wait arb 5x expected time</span>
+            <span class="n">timeout</span> <span class="o">=</span> <span class="n">n_samples</span> <span class="o">*</span> <span class="mf">5.</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s1">&#39;sfreq&#39;</span><span class="p">]</span>
 
         <span class="c1"># create an event at the start of the data collection</span>
         <span class="n">events</span> <span class="o">=</span> <span class="n">np</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">([</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">]),</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
         <span class="n">_</span><span class="p">,</span> <span class="n">timestamps</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">client</span><span class="o">.</span><span class="n">pull_chunk</span><span class="p">(</span>
             <span class="n">max_samples</span><span class="o">=</span><span class="nb">min</span><span class="p">(</span><span class="n">n_samples</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">]),</span>
-            <span class="n">timeout</span><span class="o">=</span><span class="n">wait_time</span><span class="p">,</span>
+            <span class="n">timeout</span><span class="o">=</span><span class="n">timeout</span><span class="p">,</span>
             <span class="n">dest_obj</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">buffer</span><span class="p">,</span>
         <span class="p">)</span>
+        <span class="k">if</span> <span class="ow">not</span> <span class="n">timestamps</span><span class="p">:</span>
+            <span class="k">return</span> <span class="kc">None</span>
+
         <span class="n">data</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">buffer</span><span class="p">[:</span><span class="nb">len</span><span class="p">(</span><span class="n">timestamps</span><span class="p">)]</span><span class="o">.</span><span class="n">transpose</span><span class="p">()</span>  <span class="c1"># n_channels x n_samples</span>
 
         <span class="n">picks</span> <span class="o">=</span> <span class="n">_picks_to_idx</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">picks</span><span class="p">,</span> <span class="s1">&#39;all&#39;</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="p">())</span>
@@ -574,7 +582,7 @@ document.write(`
         <div class="footer-item">
   <p class="copyright">
     
-      © Copyright 2012-2023, MNE Developers. Last updated on 2023-04-13.
+      © Copyright 2012-2023, MNE Developers. Last updated on 2023-04-14.
       <br/>
     
   </p>
