@@ -9,7 +9,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>mne.time_frequency.tfr_morlet &#8212; MNE 1.4.0.dev128+g8c7f0c61f documentation</title>
+    <title>mne.time_frequency.tfr_morlet &#8212; MNE 1.4.0.dev131+g18b80903d documentation</title>
   
   
   
@@ -1353,15 +1353,31 @@ decreases with frequency. For example, <code class="docutils literal notranslate
 <p>To use a temporal window with fixed length, the number of cycles has to be
 defined based on the frequency. For example, <code class="docutils literal notranslate"><span class="pre">freqs=np.arange(1,</span> <span class="pre">6,</span> <span class="pre">2)</span></code> and
 <code class="docutils literal notranslate"><span class="pre">n_cycles=freqs</span> <span class="pre">/</span> <span class="pre">2</span></code> yields <code class="docutils literal notranslate"><span class="pre">T=array([0.5,</span> <span class="pre">0.5,</span> <span class="pre">0.5])</span></code>.</p>
-<p>In wavelet analysis, the oscillation that is defined by <code class="docutils literal notranslate"><span class="pre">n_cycles</span></code> is tapered
-by a Gaussian taper, i.e., the edges of the wavelet are dampened. This means
-that reporting the number of cycles is not necessarily helpful for
-understanding the amount of temporal smoothing that has been applied (see
-<a class="footnote-reference brackets" href="#footcite-cohen2019" id="id2" role="doc-noteref"><span class="fn-bracket">[</span>2<span class="fn-bracket">]</span></a>). Instead, the full width at half-maximum (FWHM) of the
-wavelet can be reported.</p>
-<p>The FWHM of the wavelet at a specific frequency is defined as:
-<span class="math notranslate nohighlight">\(\mathrm{FWHM} = \frac{\mathtt{n\_cycles} \times \sqrt{2 \ln{2}}}{\pi \times \mathtt{freq}}\)</span>
-(cf. eq. 4 in <a class="footnote-reference brackets" href="#footcite-cohen2019" id="id3" role="doc-noteref"><span class="fn-bracket">[</span>2<span class="fn-bracket">]</span></a>).</p>
+<p>Convolution of a signal with a Morlet wavelet will impose temporal smoothing
+that is determined by the duration of the wavelet. In MNE-Python, the duration
+of the wavelet is determined by the <code class="docutils literal notranslate"><span class="pre">sigma</span></code> parameter, which gives the
+standard deviation of the wavelet’s Gaussian envelope (our wavelets extend to
+±5 standard deviations to ensure values very close to zero at the endpoints).
+Some authors (e.g., <a class="footnote-reference brackets" href="#footcite-cohen2019" id="id2" role="doc-noteref"><span class="fn-bracket">[</span>2<span class="fn-bracket">]</span></a>) recommend specifying and reporting
+wavelet duration in terms of the full-width half-maximum (FWHM) of the
+wavelet’s Gaussian envelope. The FWHM is related to <code class="docutils literal notranslate"><span class="pre">sigma</span></code> by the following
+identity: <span class="math notranslate nohighlight">\(\mathrm{FWHM} = \sigma \times 2 \sqrt{2 \ln{2}}\)</span> (or the
+equivalent in Python code: <code class="docutils literal notranslate"><span class="pre">fwhm</span> <span class="pre">=</span> <span class="pre">sigma</span> <span class="pre">*</span> <span class="pre">2</span> <span class="pre">*</span> <span class="pre">np.sqrt(2</span> <span class="pre">*</span> <span class="pre">np.log(2))</span></code>).
+If <code class="docutils literal notranslate"><span class="pre">sigma</span></code> is not provided, it is computed from <code class="docutils literal notranslate"><span class="pre">n_cycles</span></code> as
+<span class="math notranslate nohighlight">\(\frac{\mathtt{n\_cycles}}{2 \pi f}\)</span> where <span class="math notranslate nohighlight">\(f\)</span> is the frequency of
+the wavelet oscillation (given by <code class="docutils literal notranslate"><span class="pre">freqs</span></code>). Thus when <code class="docutils literal notranslate"><span class="pre">sigma=None</span></code> the FWHM
+will be given by</p>
+<div class="math notranslate nohighlight">
+\[\mathrm{FWHM} = \frac{\mathtt{n\_cycles} \times \sqrt{2 \ln{2}}}{\pi \times f}\]</div>
+<p>(cf. eq. 4 in <a class="footnote-reference brackets" href="#footcite-cohen2019" id="id3" role="doc-noteref"><span class="fn-bracket">[</span>2<span class="fn-bracket">]</span></a>). To create wavelets with a chosen FWHM,
+one can compute:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">n_cycles</span> <span class="o">=</span> <span class="n">desired_fwhm</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">pi</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">array</span><span class="p">(</span><span class="n">freqs</span><span class="p">)</span> <span class="o">/</span> <span class="n">np</span><span class="o">.</span><span class="n">sqrt</span><span class="p">(</span><span class="mi">2</span> <span class="o">*</span> <span class="n">np</span><span class="o">.</span><span class="n">log</span><span class="p">(</span><span class="mi">2</span><span class="p">))</span>
+</pre></div>
+</div>
+<p>to get an array of values for <code class="docutils literal notranslate"><span class="pre">n_cycles</span></code> that yield the desired FWHM at each
+frequency in <code class="docutils literal notranslate"><span class="pre">freqs</span></code>.  If you want different FWHM values at each frequency,
+do the same computation with <code class="docutils literal notranslate"><span class="pre">desired_fwhm</span></code> as an array of the same shape as
+<code class="docutils literal notranslate"><span class="pre">freqs</span></code>.</p>
 <p>See <a class="reference internal" href="mne.time_frequency.morlet.html#mne.time_frequency.morlet" title="mne.time_frequency.morlet"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.time_frequency.morlet()</span></code></a> for more information about the
 Morlet wavelet.</p>
 <p class="rubric">References</p>
@@ -1478,7 +1494,7 @@ Morlet wavelet.</p>
   
     <div class="footer-items__start">
       
-        <div class="footer-item"><p class="text-center text-muted small">&copy; Copyright 2012–2023, MNE Developers. Last updated <time datetime="2023-04-28T06:28:35.886435+00:00" class="localized">2023-04-28 06:28 UTC</time>
+        <div class="footer-item"><p class="text-center text-muted small">&copy; Copyright 2012–2023, MNE Developers. Last updated <time datetime="2023-04-29T06:19:42.988646+00:00" class="localized">2023-04-29 06:19 UTC</time>
 <script type="text/javascript">$(function () { $("time.localized").each(function () { var el = $(this); el.text(new Date(el.attr("datetime")).toLocaleString([], {dateStyle: "medium", timeStyle: "long"})); }); } )</script></p></div>
       
     </div>
