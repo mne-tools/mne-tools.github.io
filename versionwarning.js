@@ -6,10 +6,15 @@ function showVersionWarning() {
         const releases = Array.from(
             document.querySelector('.version-switcher__menu').children
         );
-        const latest_stable = parseFloat(
-            releases.filter(
-                ver => ver.getAttribute('data-version') == 'stable'
-            )[0].getAttribute('data-version-name').split(' ')[0]
+        const stableRelease = releases.filter(
+            ver => ver.getAttribute('data-version') == 'stable'
+        )
+        if (typeof stableRelease == "undefined") {
+            setTimeout(showVersionWarning, 250);
+            return
+        }
+        const latestStable = parseFloat(
+            stableRelease[0].getAttribute('data-version-name').split(' ')[0]
         );
         // see if filePath exists in the stable version of the docs
         var filePath = urlParts.slice(2).join('/');
@@ -30,7 +35,7 @@ function showVersionWarning() {
                 middle.appendChild(inner);
                 // for less-than comparison: 'dev' → NaN → false (which is what we want)
                 inner.innerText = "This is documentation for";
-                if (parseFloat(version) < latest_stable) {
+                if (parseFloat(version) < latestStable) {
                     inner.innerText += "an"
                     bold.innerText = `old version (${version})`;
                 } else {
@@ -45,11 +50,10 @@ function showVersionWarning() {
                     "Switch to stable version");
                 inner.appendChild(anchor);
                 const refNode = document.querySelector('.bd-header');
-                insertBefore(newNode, refNode);
+                document.body.insertBefore(newNode, refNode);
             }
         })
     }
 }
 
-if (document.readyState != "loading") showVersionWarning();
-else document.addEventListener("DOMContentLoaded", showVersionWarning);
+showVersionWarning();
