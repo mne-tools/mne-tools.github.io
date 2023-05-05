@@ -38,19 +38,25 @@ function showVersionWarning() {
                 button.href = `https://mne.tools/stable/${filePath}`;
                 button.innerText = "Switch to stable version";
                 const banner = document.querySelector('#banner');
-                // for really old versions
+                // for versions 0.23, 0.24, 1.0
                 if (banner !== null) {
                     outer = banner;
-                    outer.classList = "container-fluid alert-danger devbar pt-3";
+                    outer.classList = "container-fluid alert-danger devbar";
                     middle.classList = "row no-gutters";
                     inner.classList = "col-12 text-center";
                     button.classList = "btn btn-danger font-weight-bold ml-3 my-3 align-baseline";
-                } else {
+                // for versions newer than 1.0
+                } else if (parseFloat(version) > 1) {
                     outer.classList = "bd-header-announcement container-fluid";
                     middle.classList = "bd-header-announcement__content";
                     inner.classList = "sidebar-message";
                     button.classList = "sd-btn sd-btn-danger sd-shadow-sm sd-text-wrap font-weight-bold ms-3 my-3 align-baseline";
+                // for versions older than 0.23
+                } else {
+                    outer.style = "background-color: rgb(248, 215, 218); color: rgb(114, 28, 36);";
+                    button.style = "background-color: rgb(220, 53, 69); color: rgb(255, 255, 255); margin: 1rem; padding: 0.375rem 0.75rem; border-radius: 4px; display: inline-block; text-align: center;"
                 }
+
                 outer.appendChild(middle);
                 middle.appendChild(inner);
                 // for less-than comparison: "dev" → NaN → false (which is what we want)
