@@ -3,19 +3,21 @@ function showVersionWarning() {
     if (location.hostname === "mne.tools") {
         const urlParts = location.pathname.split("/");
         const version = urlParts[1];
-        const releases = Array.from(
-            document.querySelector(".version-switcher__menu").children
-        );
-        const stableRelease = releases.filter(
-            ver => ver.getAttribute("data-version") == "stable"
-        )
-        if (typeof stableRelease == "undefined") {
-            setTimeout(showVersionWarning, 250);
-            return
+        const menu = document.querySelector(".version-switcher__menu");
+        var latestStable = Infinity;
+        if (menu !== null) {
+            const releases = Array.from(menu.children);
+            const stableRelease = releases.filter(
+                ver => ver.getAttribute("data-version") == "stable"
+            )[0]
+            if (typeof stableRelease == "undefined") {
+                setTimeout(showVersionWarning, 250);
+                return
+            }
+            latestStable = parseFloat(
+                stableRelease.getAttribute("data-version-name").split(" ")[0]
+            );
         }
-        const latestStable = parseFloat(
-            stableRelease[0].getAttribute("data-version-name").split(" ")[0]
-        );
         // see if filePath exists in the stable version of the docs
         var filePath = urlParts.slice(2).join("/");
 
@@ -52,8 +54,7 @@ function showVersionWarning() {
                 anchor.href = `https://mne.tools/stable/${filePath}`;
                 anchor.innerText = "Switch to stable version";
                 inner.appendChild(anchor);
-                const refNode = document.querySelector(".bd-header");
-                document.body.insertBefore(outer, refNode);
+                document.body.prepend(outer);
             }
         })
     }
