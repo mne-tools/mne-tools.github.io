@@ -53,7 +53,7 @@ function showVersionWarning() {
                     button.classList = "sd-btn sd-btn-danger sd-shadow-sm sd-text-wrap font-weight-bold ms-3 my-3 align-baseline";
                 // for versions older than 0.23
                 } else {
-                    outer.style = "background-color: rgb(248, 215, 218); color: rgb(114, 28, 36);";
+                    outer.style = "background-color: rgb(248, 215, 218); color: rgb(114, 28, 36); text-align: center;";
                     button.style = "background-color: rgb(220, 53, 69); color: rgb(255, 255, 255); margin: 1rem; padding: 0.375rem 0.75rem; border-radius: 4px; display: inline-block; text-align: center;"
                 }
 
