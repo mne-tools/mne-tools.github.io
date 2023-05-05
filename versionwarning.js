@@ -12,30 +12,45 @@ function showVersionWarning() {
             )[0]
             if (typeof stableRelease == "undefined") {
                 setTimeout(showVersionWarning, 250);
-                return
+                return;
             }
             latestStable = parseFloat(
                 stableRelease.getAttribute("data-version-name").split(" ")[0]
             );
         }
-        // see if filePath exists in the stable version of the docs
+        // see if filePath exists in the stable version of the docs...
         var filePath = urlParts.slice(2).join("/");
-
         fetch(`https://mne.tools/stable/${filePath}`, { method: "HEAD" })
+        // ...if not, redirect will go to the main homepage in stable
         .then((response) => {
             if (!response.ok) {
                 filePath = "";
             }
         })
+        // now construct the warning banner
         .then(() => {
             if (version !== "stable") {
-                const outer = document.createElement("div");
+                var outer = document.createElement("div");
                 const middle = document.createElement("div");
                 const inner = document.createElement("div");
                 const bold = document.createElement("strong");
-                outer.classList = "bd-header-announcement container-fluid";
-                middle.classList = "bd-header-announcement__content";
-                inner.classList = "sidebar-message";
+                const button = document.createElement("a");
+                button.href = `https://mne.tools/stable/${filePath}`;
+                button.innerText = "Switch to stable version";
+                const banner = document.querySelector('#banner');
+                // for really old versions
+                if (banner !== null) {
+                    outer = banner;
+                    outer.classList = "container-fluid alert-danger devbar pt-3";
+                    middle.classList = "row no-gutters";
+                    inner.classList = "col-12 text-center";
+                    button.classList = "btn btn-danger font-weight-bold ml-3 my-3 align-baseline";
+                } else {
+                    outer.classList = "bd-header-announcement container-fluid";
+                    middle.classList = "bd-header-announcement__content";
+                    inner.classList = "sidebar-message";
+                    button.classList = "sd-btn sd-btn-danger sd-shadow-sm sd-text-wrap font-weight-bold ms-3 my-3 align-baseline";
+                }
                 outer.appendChild(middle);
                 middle.appendChild(inner);
                 // for less-than comparison: "dev" → NaN → false (which is what we want)
@@ -48,12 +63,8 @@ function showVersionWarning() {
                     bold.innerText = "unstable development version";
                 }
                 inner.appendChild(bold);
-                inner.appendChild(document.createTextNode(" of MNE-Python."))
-                const anchor = document.createElement("a");
-                anchor.classList = "sd-btn sd-btn-danger sd-shadow-sm sd-text-wrap font-weight-bold ms-3 my-3 align-baseline";
-                anchor.href = `https://mne.tools/stable/${filePath}`;
-                anchor.innerText = "Switch to stable version";
-                inner.appendChild(anchor);
+                inner.appendChild(document.createTextNode(" of MNE-Python. "))
+                inner.appendChild(button);
                 document.body.prepend(outer);
             }
         })
