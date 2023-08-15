@@ -9,7 +9,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
 
-    <title>Working with eye tracker data in MNE-Python &#8212; MNE 1.4.0 documentation</title>
+    <title>Working with eye tracker data in MNE-Python &#8212; MNE 1.5.0 documentation</title>
   
   
   
@@ -63,7 +63,7 @@
     <script>DOCUMENTATION_OPTIONS.pagename = 'auto_tutorials/preprocessing/90_eyetracking_data';</script>
     <script>
         DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://mne.tools/dev/_static/versions.json';
-        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '1.4';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '1.5';
         </script>
     <link rel="shortcut icon" href="../../_static/favicon.ico"/>
     <link rel="index" title="Index" href="../../genindex.html" />
@@ -230,7 +230,7 @@ document.write(`
 document.write(`
   <div class="version-switcher__container dropdown">
     <button type="button" class="version-switcher__button btn btn-sm navbar-btn dropdown-toggle" data-bs-toggle="dropdown">
-      1.4  <!-- this text may get changed later by javascript -->
+      1.5  <!-- this text may get changed later by javascript -->
       <span class="caret"></span>
     </button>
     <div class="version-switcher__menu dropdown-menu list-group-flush py-0">
@@ -411,7 +411,7 @@ document.write(`
 document.write(`
   <div class="version-switcher__container dropdown">
     <button type="button" class="version-switcher__button btn btn-sm navbar-btn dropdown-toggle" data-bs-toggle="dropdown">
-      1.4  <!-- this text may get changed later by javascript -->
+      1.5  <!-- this text may get changed later by javascript -->
       <span class="caret"></span>
     </button>
     <div class="version-switcher__menu dropdown-menu list-group-flush py-0">
@@ -810,42 +810,56 @@ to download the full example code</p>
 </div>
 <section class="sphx-glr-example-title" id="working-with-eye-tracker-data-in-mne-python">
 <span id="tut-eyetrack"></span><span id="sphx-glr-auto-tutorials-preprocessing-90-eyetracking-data-py"></span><h1>Working with eye tracker data in MNE-Python<a class="headerlink" href="#working-with-eye-tracker-data-in-mne-python" title="Permalink to this heading">#</a></h1>
-<p>In this tutorial we will load some eye tracker data and plot the average
-pupil response to light flashes (i.e. the pupillary light reflex).</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Authors: Dominik Welke &lt;dominik.welke@web.de&gt;</span>
-<span class="c1">#          Scott Huberty &lt;scott.huberty@mail.mcgill.ca&gt;</span>
+<p>In this tutorial we will explore simultaneously recorded eye-tracking and EEG data from
+a pupillary light reflex task. We will combine the eye-tracking and EEG data, and plot
+the ERP and pupil response to the light flashes (i.e. the pupillary light reflex).</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Authors: Scott Huberty &lt;seh33@uw.edu&gt;</span>
+<span class="c1">#          Dominik Welke &lt;dominik.welke@web.de&gt;</span>
+<span class="c1">#</span>
 <span class="c1">#</span>
 <span class="c1"># License: BSD-3-Clause</span>
 </pre></div>
 </div>
 <section id="data-loading">
 <h2>Data loading<a class="headerlink" href="#data-loading" title="Permalink to this heading">#</a></h2>
-<p>First we will load an eye tracker recording from SR research’s proprietary
-<code class="docutils literal notranslate"><span class="pre">'.asc'</span></code> file format.</p>
-<p>By default, Eyelink files will output events for occular events (blinks,
-saccades, fixations), and experiment messages. MNE will store these events
-as <a class="reference internal" href="../../generated/mne.Annotations.html#mne.Annotations" title="mne.Annotations"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mne.Annotations</span></code></a>. If we are only interested in certain event types from
-the Eyelink file, we can select for these using the <code class="docutils literal notranslate"><span class="pre">'create_annotations'</span></code>
-argument of <a class="reference internal" href="../../generated/mne.io.read_raw_eyelink.html#mne.io.read_raw_eyelink" title="mne.io.read_raw_eyelink"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mne.io.read_raw_eyelink</span></code></a>. Here, we will only create annotations
-for blinks, and experiment messages.</p>
-<p>The info structure tells us we loaded a monocular recording with 2
-<code class="docutils literal notranslate"><span class="pre">'eyegaze'</span></code>, channels (X/Y), 1 <code class="docutils literal notranslate"><span class="pre">'pupil'</span></code> channel, and 1 <code class="docutils literal notranslate"><span class="pre">'stim'</span></code>
-channel.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">mne</span> <span class="kn">import</span> <a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class"><span class="n">Epochs</span></a><span class="p">,</span> <a href="../../generated/mne.find_events.html#mne.find_events" title="mne.find_events" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-function"><span class="n">find_events</span></a>
-<span class="kn">from</span> <span class="nn">mne.io</span> <span class="kn">import</span> <a href="../../generated/mne.io.read_raw_eyelink.html#mne.io.read_raw_eyelink" title="mne.io.read_raw_eyelink" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-function"><span class="n">read_raw_eyelink</span></a>
+<p>As usual we start by importing the modules we need and loading some
+<a class="reference internal" href="../../overview/datasets_index.html#eyelink-dataset"><span class="std std-ref">example data</span></a>: eye-tracking data recorded from SR research’s
+<code class="docutils literal notranslate"><span class="pre">'.asc'</span></code> file format, and EEG data recorded from EGI’s <code class="docutils literal notranslate"><span class="pre">'.mff'</span></code> file format. We’ll
+pass <code class="docutils literal notranslate"><span class="pre">create_annotations=[&quot;blinks&quot;]</span></code> to <a class="reference internal" href="../../generated/mne.io.read_raw_eyelink.html#mne.io.read_raw_eyelink" title="mne.io.read_raw_eyelink"><code class="xref py py-func docutils literal notranslate"><span class="pre">read_raw_eyelink()</span></code></a> so that
+only blinks annotations are created (by default, annotations are created for blinks,
+saccades, fixations, and experiment messages).</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">mne</span>
 <span class="kn">from</span> <span class="nn">mne.datasets.eyelink</span> <span class="kn">import</span> <a href="../../generated/mne.datasets.eyelink.data_path.html#mne.datasets.eyelink.data_path" title="mne.datasets.eyelink.data_path" class="sphx-glr-backref-module-mne-datasets-eyelink sphx-glr-backref-type-py-function"><span class="n">data_path</span></a>
+<span class="kn">from</span> <span class="nn">mne.preprocessing.eyetracking</span> <span class="kn">import</span> <a href="../../generated/mne.preprocessing.eyetracking.read_eyelink_calibration.html#mne.preprocessing.eyetracking.read_eyelink_calibration" title="mne.preprocessing.eyetracking.read_eyelink_calibration" class="sphx-glr-backref-module-mne-preprocessing-eyetracking sphx-glr-backref-type-py-function"><span class="n">read_eyelink_calibration</span></a>
 
-<a href="https://docs.python.org/3/library/pathlib.html#pathlib.PosixPath" title="pathlib.PosixPath" class="sphx-glr-backref-module-pathlib sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">eyelink_fname</span></a> <span class="o">=</span> <a href="../../generated/mne.datasets.eyelink.data_path.html#mne.datasets.eyelink.data_path" title="mne.datasets.eyelink.data_path" class="sphx-glr-backref-module-mne-datasets-eyelink sphx-glr-backref-type-py-function"><span class="n">data_path</span></a><span class="p">()</span> <span class="o">/</span> <span class="s2">&quot;mono_multi-block_multi-DINS.asc&quot;</span>
+<a href="https://docs.python.org/3/library/pathlib.html#pathlib.PosixPath" title="pathlib.PosixPath" class="sphx-glr-backref-module-pathlib sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">et_fpath</span></a> <span class="o">=</span> <a href="../../generated/mne.datasets.eyelink.data_path.html#mne.datasets.eyelink.data_path" title="mne.datasets.eyelink.data_path" class="sphx-glr-backref-module-mne-datasets-eyelink sphx-glr-backref-type-py-function"><span class="n">data_path</span></a><span class="p">()</span> <span class="o">/</span> <span class="s2">&quot;sub-01_task-plr_eyetrack.asc&quot;</span>
+<a href="https://docs.python.org/3/library/pathlib.html#pathlib.PosixPath" title="pathlib.PosixPath" class="sphx-glr-backref-module-pathlib sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">eeg_fpath</span></a> <span class="o">=</span> <a href="../../generated/mne.datasets.eyelink.data_path.html#mne.datasets.eyelink.data_path" title="mne.datasets.eyelink.data_path" class="sphx-glr-backref-module-mne-datasets-eyelink sphx-glr-backref-type-py-function"><span class="n">data_path</span></a><span class="p">()</span> <span class="o">/</span> <span class="s2">&quot;sub-01_task-plr_eeg.mff&quot;</span>
 
-<span class="n">raw</span> <span class="o">=</span> <a href="../../generated/mne.io.read_raw_eyelink.html#mne.io.read_raw_eyelink" title="mne.io.read_raw_eyelink" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-function"><span class="n">read_raw_eyelink</span></a><span class="p">(</span><a href="https://docs.python.org/3/library/pathlib.html#pathlib.PosixPath" title="pathlib.PosixPath" class="sphx-glr-backref-module-pathlib sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">eyelink_fname</span></a><span class="p">,</span> <span class="n">create_annotations</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;blinks&quot;</span><span class="p">,</span> <span class="s2">&quot;messages&quot;</span><span class="p">])</span>
-<span class="n">raw</span><span class="o">.</span><span class="n">crop</span><span class="p">(</span><span class="n">tmin</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">tmax</span><span class="o">=</span><span class="mi">146</span><span class="p">)</span>
+<span class="n">raw_et</span> <span class="o">=</span> <a href="../../generated/mne.io.read_raw_eyelink.html#mne.io.read_raw_eyelink" title="mne.io.read_raw_eyelink" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read_raw_eyelink</span></a><span class="p">(</span><a href="https://docs.python.org/3/library/pathlib.html#pathlib.PosixPath" title="pathlib.PosixPath" class="sphx-glr-backref-module-pathlib sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">et_fpath</span></a><span class="p">,</span> <span class="n">preload</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">create_annotations</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;blinks&quot;</span><span class="p">])</span>
+<span class="n">raw_eeg</span> <span class="o">=</span> <a href="../../generated/mne.io.read_raw_egi.html#mne.io.read_raw_egi" title="mne.io.read_raw_egi" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read_raw_egi</span></a><span class="p">(</span><a href="https://docs.python.org/3/library/pathlib.html#pathlib.PosixPath" title="pathlib.PosixPath" class="sphx-glr-backref-module-pathlib sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">eeg_fpath</span></a><span class="p">,</span> <span class="n">preload</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="s2">&quot;warning&quot;</span><span class="p">)</span>
+<span class="n">raw_eeg</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">30</span><span class="p">)</span>
 </pre></div>
 </div>
-<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Loading /home/circleci/mne_data/eyelink-example-data/mono_multi-block_multi-DINS.asc
-Pixel coordinate data detected.
-Pass `scalings=dict(eyegaze=1e3)` when using plot method to make traces more legible.
-Pupil-size area reported.
-There are 4 recording blocks in this file. Times between blocks will be annotated with bad_rec_gap.
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Loading /home/circleci/mne_data/eyelink-example-data/sub-01_task-plr_eyetrack.asc
+Pixel coordinate data detected.Pass `scalings=dict(eyegaze=1e3)` when using plot method to make traces more legible.
+Pupil-size area detected.
+There are 2 recording blocks in this file. Times between  blocks will be annotated with BAD_ACQ_SKIP.
+Filtering raw data in 1 contiguous segment
+Setting up band-pass filter from 1 - 30 Hz
+
+FIR filter parameters
+---------------------
+Designing a one-pass, zero-phase, non-causal bandpass filter:
+- Windowed time-domain design (firwin) method
+- Hamming window with 0.0194 passband ripple and 53 dB stopband attenuation
+- Lower passband edge: 1.00
+- Lower transition bandwidth: 1.00 Hz (-6 dB cutoff frequency: 0.50 Hz)
+- Upper passband edge: 30.00 Hz
+- Upper transition bandwidth: 7.50 Hz (-6 dB cutoff frequency: 33.75 Hz)
+- Filter length: 3301 samples (3.301 s)
+
+[Parallel(n_jobs=1)]: Done  17 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=1)]: Done  71 tasks      | elapsed:    0.6s
 </pre></div>
 </div>
 <div class="output_subarea output_html rendered_html output_result">
@@ -853,7 +867,90 @@ There are 4 recording blocks in this file. Times between blocks will be annotate
     <tr>
         <th>Measurement date</th>
 
-        <td>November 25, 2022  17:10:47 GMT</td>
+        <td>June 27, 2023  12:20:19 GMT</td>
+
+    </tr>
+    <tr>
+        <th>Experimenter</th>
+
+        <td>Unknown</td>
+
+    </tr>
+        <th>Participant</th>
+
+        <td>Unknown</td>
+
+    </tr>
+    <tr>
+        <th>Digitized points</th>
+
+        <td>132 points</td>
+
+    </tr>
+    <tr>
+        <th>Good channels</th>
+        <td>129 EEG, 6 Stimulus</td>
+    </tr>
+    <tr>
+        <th>Bad channels</th>
+        <td>None</td>
+    </tr>
+    <tr>
+        <th>EOG channels</th>
+        <td>Not available</td>
+    </tr>
+    <tr>
+        <th>ECG channels</th>
+        <td>Not available</td>
+
+    <tr>
+        <th>Sampling frequency</th>
+        <td>1000.00 Hz</td>
+    </tr>
+
+
+    <tr>
+        <th>Highpass</th>
+        <td>1.00 Hz</td>
+    </tr>
+
+
+    <tr>
+        <th>Lowpass</th>
+        <td>30.00 Hz</td>
+    </tr>
+
+
+
+    <tr>
+        <th>Filenames</th>
+        <td>signal1.bin</td>
+    </tr>
+
+    <tr>
+        <th>Duration</th>
+        <td>00:03:11 (HH:MM:SS)</td>
+    </tr>
+</table>
+</div>
+<br />
+<br /><div class="sidebar admonition seealso">
+<p class="admonition-title">See also</p>
+<p><a class="reference internal" href="../io/70_reading_eyetracking_data.html#tut-importing-eyetracking-data"><span class="std std-ref">Importing Data from Eyetracking devices</span></a></p>
+</div>
+<p>The info structure of the eye-tracking data tells us we loaded a monocular recording
+with 2 eyegaze channels (x- and y-coordinate positions), 1 pupil channel, 1 stim
+channel, and 3 channels for the head distance and position (since this data was
+collected using EyeLink’s Remote mode).</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="../../generated/mne.Info.html#mne.Info" title="mne.Info" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw_et</span><span class="o">.</span><span class="n">info</span></a>
+</pre></div>
+</div>
+<div class="output_subarea output_html rendered_html output_result">
+<table class="table table-hover table-striped table-sm table-responsive small">
+    <tr>
+        <th>Measurement date</th>
+
+        <td>June 29, 2023  20:07:21 GMT</td>
 
     </tr>
     <tr>
@@ -875,7 +972,163 @@ There are 4 recording blocks in this file. Times between blocks will be annotate
     </tr>
     <tr>
         <th>Good channels</th>
-        <td>2 Eye-tracking (Gaze position), 1 Eye-tracking (Pupil size), 1 Stimulus</td>
+        <td>2 Eye-tracking (Gaze position), 1 Eye-tracking (Pupil size), 1 Stimulus, 3 misc</td>
+    </tr>
+    <tr>
+        <th>Bad channels</th>
+        <td>None</td>
+    </tr>
+    <tr>
+        <th>EOG channels</th>
+        <td>Not available</td>
+    </tr>
+    <tr>
+        <th>ECG channels</th>
+        <td>Not available</td>
+
+    <tr>
+        <th>Sampling frequency</th>
+        <td>1000.00 Hz</td>
+    </tr>
+
+
+    <tr>
+        <th>Highpass</th>
+        <td>0.00 Hz</td>
+    </tr>
+
+
+    <tr>
+        <th>Lowpass</th>
+        <td>500.00 Hz</td>
+    </tr>
+
+
+</table>
+</div>
+<br />
+<br /></section>
+<section id="ocular-annotations">
+<h2>Ocular annotations<a class="headerlink" href="#ocular-annotations" title="Permalink to this heading">#</a></h2>
+<p>By default, EyeLink files will output ocular events (blinks, saccades, and
+fixations), and experiment messages. MNE will store these events
+as <a class="reference internal" href="../../generated/mne.Annotations.html#mne.Annotations" title="mne.Annotations"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mne.Annotations</span></code></a>. Ocular annotations contain channel information in the
+<code class="docutils literal notranslate"><span class="pre">'ch_names'</span></code> key. This means that we can see which eye an ocular event occurred in,
+which can be useful for binocular recordings:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">raw_et</span><span class="o">.</span><span class="n">annotations</span><span class="p">[</span><span class="mi">0</span><span class="p">][</span><span class="s2">&quot;ch_names&quot;</span><span class="p">])</span>  <span class="c1"># a blink in the right eye</span>
+</pre></div>
+</div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>(&#39;xpos_right&#39;, &#39;ypos_right&#39;, &#39;pupil_right&#39;)
+</pre></div>
+</div>
+</section>
+<section id="checking-the-calibration">
+<h2>Checking the calibration<a class="headerlink" href="#checking-the-calibration" title="Permalink to this heading">#</a></h2>
+<p>EyeLink <code class="docutils literal notranslate"><span class="pre">.asc</span></code> files can also include calibration information.
+MNE-Python can load and visualize those eye-tracking calibrations, which
+is a useful first step in assessing the quality of the eye-tracking data.
+<a class="reference internal" href="../../generated/mne.preprocessing.eyetracking.read_eyelink_calibration.html#mne.preprocessing.eyetracking.read_eyelink_calibration" title="mne.preprocessing.eyetracking.read_eyelink_calibration"><code class="xref py py-func docutils literal notranslate"><span class="pre">read_eyelink_calibration()</span></code></a>
+will return a list of <a class="reference internal" href="../../generated/mne.preprocessing.eyetracking.Calibration.html#mne.preprocessing.eyetracking.Calibration" title="mne.preprocessing.eyetracking.Calibration"><code class="xref py py-class docutils literal notranslate"><span class="pre">Calibration</span></code></a> instances,
+one for each calibration. We can index that list to access a specific calibration.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">cals</span></a> <span class="o">=</span> <a href="../../generated/mne.preprocessing.eyetracking.read_eyelink_calibration.html#mne.preprocessing.eyetracking.read_eyelink_calibration" title="mne.preprocessing.eyetracking.read_eyelink_calibration" class="sphx-glr-backref-module-mne-preprocessing-eyetracking sphx-glr-backref-type-py-function"><span class="n">read_eyelink_calibration</span></a><span class="p">(</span><a href="https://docs.python.org/3/library/pathlib.html#pathlib.PosixPath" title="pathlib.PosixPath" class="sphx-glr-backref-module-pathlib sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">et_fpath</span></a><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;number of calibrations: </span><span class="si">{</span><span class="nb">len</span><span class="p">(</span><a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">cals</span></a><span class="p">)</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<a href="../../generated/mne.preprocessing.eyetracking.Calibration.html#mne.preprocessing.eyetracking.Calibration" title="mne.preprocessing.eyetracking.Calibration" class="sphx-glr-backref-module-mne-preprocessing-eyetracking sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">first_cal</span></a> <span class="o">=</span> <a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">cals</span></a><span class="p">[</span><span class="mi">0</span><span class="p">]</span>  <span class="c1"># let&#39;s access the first (and only in this case) calibration</span>
+<span class="nb">print</span><span class="p">(</span><a href="../../generated/mne.preprocessing.eyetracking.Calibration.html#mne.preprocessing.eyetracking.Calibration" title="mne.preprocessing.eyetracking.Calibration" class="sphx-glr-backref-module-mne-preprocessing-eyetracking sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">first_cal</span></a><span class="p">)</span>
+</pre></div>
+</div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Reading calibration data from /home/circleci/mne_data/eyelink-example-data/sub-01_task-plr_eyetrack.asc
+number of calibrations: 1
+Calibration |
+  onset: -11.543 seconds
+  model: HV5
+  eye: right
+  average error: 0.71 degrees
+  max error: 0.99 degrees
+  screen size: None meters
+  screen distance: None meters
+  screen resolution: None pixels
+</pre></div>
+</div>
+<p>Calibrations have dict-like attribute access; in addition to the attributes shown in
+the output above, additional attributes are <code class="docutils literal notranslate"><span class="pre">'positions'</span></code> (the x and y coordinates
+of each calibration point), <code class="docutils literal notranslate"><span class="pre">'gaze'</span></code> (the x and y coordinates of the actual gaze
+position to each calibration point), and <code class="docutils literal notranslate"><span class="pre">'offsets'</span></code> (the offset in visual degrees
+between the calibration position and the actual gaze position for each calibration
+point). Below is an example of how to access these data:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;offset of the first calibration point: </span><span class="si">{</span><a href="../../generated/mne.preprocessing.eyetracking.Calibration.html#mne.preprocessing.eyetracking.Calibration" title="mne.preprocessing.eyetracking.Calibration" class="sphx-glr-backref-module-mne-preprocessing-eyetracking sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">first_cal</span></a><span class="p">[</span><span class="s1">&#39;offsets&#39;</span><span class="p">][</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;offset for each calibration point: </span><span class="si">{</span><a href="../../generated/mne.preprocessing.eyetracking.Calibration.html#mne.preprocessing.eyetracking.Calibration" title="mne.preprocessing.eyetracking.Calibration" class="sphx-glr-backref-module-mne-preprocessing-eyetracking sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">first_cal</span></a><span class="p">[</span><span class="s1">&#39;offsets&#39;</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;x-coordinate for each calibration point: </span><span class="si">{</span><a href="../../generated/mne.preprocessing.eyetracking.Calibration.html#mne.preprocessing.eyetracking.Calibration" title="mne.preprocessing.eyetracking.Calibration" class="sphx-glr-backref-module-mne-preprocessing-eyetracking sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">first_cal</span></a><span class="p">[</span><span class="s1">&#39;positions&#39;</span><span class="p">]</span><span class="o">.</span><span class="n">T</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>offset of the first calibration point: 0.72
+offset for each calibration point: [0.72 0.42 0.99 0.59 0.49]
+x-coordinate for each calibration point: [ 960.  960.  960.  288. 1631.]
+</pre></div>
+</div>
+<p>Let’s plot the calibration to get a better look. Below we see the location that each
+calibration point was displayed (gray dots), the positions of the actual gaze (red),
+and the offsets (in visual degrees) between the calibration position and the actual
+gaze position of each calibration point.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="../../generated/mne.preprocessing.eyetracking.Calibration.html#mne.preprocessing.eyetracking.Calibration.plot" title="mne.preprocessing.eyetracking.Calibration.plot" class="sphx-glr-backref-module-mne-preprocessing-eyetracking sphx-glr-backref-type-py-method"><span class="n">first_cal</span><span class="o">.</span><span class="n">plot</span></a><span class="p">()</span>
+</pre></div>
+</div>
+<img src="../../_images/sphx_glr_90_eyetracking_data_001.png" srcset="../../_images/sphx_glr_90_eyetracking_data_001.png" alt="Calibration (right eye)" class = "sphx-glr-single-img"/></section>
+<section id="plot-the-raw-eye-tracking-data">
+<h2>Plot the raw eye-tracking data<a class="headerlink" href="#plot-the-raw-eye-tracking-data" title="Permalink to this heading">#</a></h2>
+<p>Let’s plot the raw eye-tracking data. We’ll pass a custom <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dict</span></code></a> into
+the scalings argument to make the eyegaze channel traces legible when plotting,
+since this file contains pixel position data (as opposed to eye angles,
+which are reported in radians).</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">raw_et</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">scalings</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">eyegaze</span><span class="o">=</span><span class="mf">1e3</span><span class="p">))</span>
+</pre></div>
+</div>
+<img src="../../_images/sphx_glr_90_eyetracking_data_002.png" srcset="../../_images/sphx_glr_90_eyetracking_data_002.png" alt="Raw plot" class = "sphx-glr-single-img"/></section>
+<section id="handling-blink-artifacts">
+<h2>Handling blink artifacts<a class="headerlink" href="#handling-blink-artifacts" title="Permalink to this heading">#</a></h2>
+<p>Naturally, there are blinks in our data, which occur within <code class="docutils literal notranslate"><span class="pre">&quot;BAD_blink&quot;</span></code>
+annotations. During blink periods, eyegaze coordinates are not reported, and pupil
+size data are <code class="docutils literal notranslate"><span class="pre">0</span></code>. We don’t want these blink artifacts biasing our analysis, so we
+have two options: Drop the blink periods from our data during epoching, or interpolate
+the missing data during the blink periods. For this tutorial, let’s interpolate the
+blink samples. We’ll pass <code class="docutils literal notranslate"><span class="pre">(0.05,</span> <span class="pre">0.2)</span></code> to
+<a class="reference internal" href="../../generated/mne.preprocessing.eyetracking.interpolate_blinks.html#mne.preprocessing.eyetracking.interpolate_blinks" title="mne.preprocessing.eyetracking.interpolate_blinks"><code class="xref py py-func docutils literal notranslate"><span class="pre">interpolate_blinks()</span></code></a>, expanding the interpolation
+window 50 ms before and 200 ms after the blink, so that the noisy data surrounding
+the blink is also interpolated.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="../../generated/mne.preprocessing.eyetracking.interpolate_blinks.html#mne.preprocessing.eyetracking.interpolate_blinks" title="mne.preprocessing.eyetracking.interpolate_blinks" class="sphx-glr-backref-module-mne-preprocessing-eyetracking sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">preprocessing</span><span class="o">.</span><span class="n">eyetracking</span><span class="o">.</span><span class="n">interpolate_blinks</span></a><span class="p">(</span><span class="n">raw_et</span><span class="p">,</span> <span class="n">buffer</span><span class="o">=</span><span class="p">(</span><span class="mf">0.05</span><span class="p">,</span> <span class="mf">0.2</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Interpolating missing data during blinks...
+Removing &#39;BAD_&#39; from BAD_blink.
+</pre></div>
+</div>
+<div class="output_subarea output_html rendered_html output_result">
+<table class="table table-hover table-striped table-sm table-responsive small">
+    <tr>
+        <th>Measurement date</th>
+
+        <td>June 29, 2023  20:07:21 GMT</td>
+
+    </tr>
+    <tr>
+        <th>Experimenter</th>
+
+        <td>Unknown</td>
+
+    </tr>
+        <th>Participant</th>
+
+        <td>Unknown</td>
+
+    </tr>
+    <tr>
+        <th>Digitized points</th>
+
+        <td>Not available</td>
+
+    </tr>
+    <tr>
+        <th>Good channels</th>
+        <td>2 Eye-tracking (Gaze position), 1 Eye-tracking (Pupil size), 1 Stimulus, 3 misc</td>
     </tr>
     <tr>
         <th>Bad channels</th>
@@ -910,88 +1163,121 @@ There are 4 recording blocks in this file. Times between blocks will be annotate
 
     <tr>
         <th>Filenames</th>
-        <td>mono_multi-block_multi-DINS.asc</td>
+        <td>sub-01_task-plr_eyetrack.asc</td>
     </tr>
 
     <tr>
         <th>Duration</th>
-        <td>00:02:26 (HH:MM:SS)</td>
+        <td>00:02:23 (HH:MM:SS)</td>
     </tr>
 </table>
 </div>
 <br />
-<br /></section>
-<section id="get-stimulus-events-from-din-channel">
-<h2>Get stimulus events from DIN channel<a class="headerlink" href="#get-stimulus-events-from-din-channel" title="Permalink to this heading">#</a></h2>
-<p>Eyelink eye trackers have a DIN port that can be used to feed in stimulus
-or response timings. <a class="reference internal" href="../../generated/mne.io.read_raw_eyelink.html#mne.io.read_raw_eyelink" title="mne.io.read_raw_eyelink"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.io.read_raw_eyelink()</span></code></a> loads this data as a
-<code class="docutils literal notranslate"><span class="pre">'stim'</span></code> channel. Alternatively, the onset of stimulus events could be sent
-to the eyetracker as <code class="docutils literal notranslate"><span class="pre">messages</span></code> - these can be read in as
-<a class="reference internal" href="../../generated/mne.Annotations.html#mne.Annotations" title="mne.Annotations"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mne.Annotations</span></code></a>.</p>
-<p>In the example data, the DIN channel contains the onset of light flashes on
-the screen. We now extract these events to visualize the pupil response.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">events</span></a> <span class="o">=</span> <a href="../../generated/mne.find_events.html#mne.find_events" title="mne.find_events" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-function"><span class="n">find_events</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="s2">&quot;DIN&quot;</span><span class="p">,</span> <span class="n">shortest_event</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">min_duration</span><span class="o">=</span><span class="mf">0.02</span><span class="p">,</span> <span class="n">uint_cast</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">event_dict</span></a> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;flash&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">}</span>
+<br /><div class="admonition important">
+<p class="admonition-title">Important</p>
+<p>By default, <a class="reference internal" href="../../generated/mne.preprocessing.eyetracking.interpolate_blinks.html#mne.preprocessing.eyetracking.interpolate_blinks" title="mne.preprocessing.eyetracking.interpolate_blinks"><code class="xref py py-func docutils literal notranslate"><span class="pre">interpolate_blinks()</span></code></a>,
+will only interpolate blinks in pupil channels. Passing
+<code class="docutils literal notranslate"><span class="pre">interpolate_gaze=True</span></code> will also interpolate the blink periods of the
+eyegaze channels. Be aware, however, that eye movements can occur
+during blinks which makes the gaze data less suitable for interpolation.</p>
+</div>
+</section>
+<section id="extract-common-stimulus-events-from-the-data">
+<h2>Extract common stimulus events from the data<a class="headerlink" href="#extract-common-stimulus-events-from-the-data" title="Permalink to this heading">#</a></h2>
+<p>In this experiment, a photodiode attached to the display screen was connected to both
+the EEG and eye-tracking systems. The photodiode was triggered by the the light flash
+stimuli, causing a signal to be sent to both systems simultaneously, signifying the
+onset of the flash. The photodiode signal was recorded as a digital input channel in
+the EEG and eye-tracking data. MNE loads these data as a <a class="reference internal" href="../../glossary.html#term-stim-channel"><span class="xref std std-term">stim channel</span></a>.</p>
+<p>We’ll extract the flash event onsets from both the EEG and eye-tracking data, as they
+are necessary for aligning the data from the two recordings.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">et_events</span></a> <span class="o">=</span> <a href="../../generated/mne.find_events.html#mne.find_events" title="mne.find_events" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">find_events</span></a><span class="p">(</span><span class="n">raw_et</span><span class="p">,</span> <span class="n">min_duration</span><span class="o">=</span><span class="mf">0.01</span><span class="p">,</span> <span class="n">shortest_event</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">uint_cast</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">eeg_events</span></a> <span class="o">=</span> <a href="../../generated/mne.find_events.html#mne.find_events" title="mne.find_events" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">find_events</span></a><span class="p">(</span><span class="n">raw_eeg</span><span class="p">,</span> <span class="n">stim_channel</span><span class="o">=</span><span class="s2">&quot;DIN3&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
 <div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>16 events found
-Event IDs: [3]
+Event IDs: [2]
+16 events found
+Event IDs: [2]
+</pre></div>
+</div>
+<p>The output above shows us that both the EEG and EyeLink data used event ID <code class="docutils literal notranslate"><span class="pre">2</span></code> for
+the flash events, so we’ll create a dictionary to use later when plotting to label
+those events.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">event_dict</span></a> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">Flash</span><span class="o">=</span><span class="mi">2</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
-<section id="plot-raw-data">
-<h2>Plot raw data<a class="headerlink" href="#plot-raw-data" title="Permalink to this heading">#</a></h2>
-<p>As the following plot shows, we now have a raw object with the eye tracker
-data, eyeblink annotations and stimulus events (from the DIN channel).</p>
-<p>The plot also shows us that there is some noise in the data (not always
-categorized as blinks). Also, notice that we have passed a custom <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dict</span></code></a> into
-the scalings argument of <code class="docutils literal notranslate"><span class="pre">raw.plot</span></code>. This is necessary to make the eyegaze
-channel traces legible when plotting, since the file contains pixel position
-data (as opposed to eye angles, which are reported in radians).</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">raw</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
-    <a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">events</span></a><span class="o">=</span><a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">events</span></a><span class="p">,</span>
-    <span class="n">event_id</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;Flash&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">},</span>
-    <span class="n">event_color</span><span class="o">=</span><span class="s2">&quot;g&quot;</span><span class="p">,</span>
-    <span class="n">start</span><span class="o">=</span><span class="mi">25</span><span class="p">,</span>
-    <span class="n">duration</span><span class="o">=</span><span class="mi">45</span><span class="p">,</span>
-    <span class="n">scalings</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">eyegaze</span><span class="o">=</span><span class="mf">1e3</span><span class="p">),</span>
+<section id="align-the-eye-tracking-data-with-eeg-the-data">
+<h2>Align the eye-tracking data with EEG the data<a class="headerlink" href="#align-the-eye-tracking-data-with-eeg-the-data" title="Permalink to this heading">#</a></h2>
+<p>In this dataset, eye-tracking and EEG data were recorded simultaneously, but on
+different systems, so we’ll need to align the data before we can analyze them
+together. We can do this using the <a class="reference internal" href="../../generated/mne.preprocessing.realign_raw.html#mne.preprocessing.realign_raw" title="mne.preprocessing.realign_raw"><code class="xref py py-func docutils literal notranslate"><span class="pre">realign_raw()</span></code></a> function,
+which will align the data based on the timing of the shared events that are present in
+both <a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-class docutils literal notranslate"><span class="pre">Raw</span></code></a> objects. We’ll use the shared photodiode events we extracted
+above, but first we need to convert the event onsets from samples to seconds. Once the
+data have been aligned, we’ll add the EEG channels to the eye-tracking raw object.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Convert event onsets from samples to seconds</span>
+<a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">et_flash_times</span></a> <span class="o">=</span> <a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">et_events</span></a><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <a href="../../generated/mne.Info.html#mne.Info" title="mne.Info" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw_et</span><span class="o">.</span><span class="n">info</span></a><span class="p">[</span><span class="s2">&quot;sfreq&quot;</span><span class="p">]</span>
+<a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">eeg_flash_times</span></a> <span class="o">=</span> <a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">eeg_events</span></a><span class="p">[:,</span> <span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <a href="../../generated/mne.Info.html#mne.Info" title="mne.Info" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw_eeg</span><span class="o">.</span><span class="n">info</span></a><span class="p">[</span><span class="s2">&quot;sfreq&quot;</span><span class="p">]</span>
+<span class="c1"># Align the data</span>
+<a href="../../generated/mne.preprocessing.realign_raw.html#mne.preprocessing.realign_raw" title="mne.preprocessing.realign_raw" class="sphx-glr-backref-module-mne-preprocessing sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">preprocessing</span><span class="o">.</span><span class="n">realign_raw</span></a><span class="p">(</span>
+    <span class="n">raw_et</span><span class="p">,</span> <span class="n">raw_eeg</span><span class="p">,</span> <a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">et_flash_times</span></a><span class="p">,</span> <a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">eeg_flash_times</span></a><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="s2">&quot;error&quot;</span>
 <span class="p">)</span>
+<span class="c1"># Add EEG channels to the eye-tracking raw object</span>
+<span class="n">raw_et</span><span class="o">.</span><span class="n">add_channels</span><span class="p">([</span><span class="n">raw_eeg</span><span class="p">],</span> <span class="n">force_update_info</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># Define a few channel groups of interest and plot the data</span>
+<a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">frontal</span></a> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;E19&quot;</span><span class="p">,</span> <span class="s2">&quot;E11&quot;</span><span class="p">,</span> <span class="s2">&quot;E4&quot;</span><span class="p">,</span> <span class="s2">&quot;E12&quot;</span><span class="p">,</span> <span class="s2">&quot;E5&quot;</span><span class="p">]</span>
+<a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">occipital</span></a> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;E61&quot;</span><span class="p">,</span> <span class="s2">&quot;E62&quot;</span><span class="p">,</span> <span class="s2">&quot;E78&quot;</span><span class="p">,</span> <span class="s2">&quot;E67&quot;</span><span class="p">,</span> <span class="s2">&quot;E72&quot;</span><span class="p">,</span> <span class="s2">&quot;E77&quot;</span><span class="p">]</span>
+<a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">pupil</span></a> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;pupil_right&quot;</span><span class="p">]</span>
+<a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">picks_idx</span></a> <span class="o">=</span> <a href="../../generated/mne.pick_channels.html#mne.pick_channels" title="mne.pick_channels" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">pick_channels</span></a><span class="p">(</span>
+    <span class="n">raw_et</span><span class="o">.</span><span class="n">ch_names</span><span class="p">,</span> <a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">frontal</span></a> <span class="o">+</span> <a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">occipital</span></a> <span class="o">+</span> <a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">pupil</span></a><span class="p">,</span> <span class="n">ordered</span><span class="o">=</span><span class="kc">True</span>
+<span class="p">)</span>
+<span class="n">raw_et</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">events</span><span class="o">=</span><a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">et_events</span></a><span class="p">,</span> <span class="n">event_id</span><span class="o">=</span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">event_dict</span></a><span class="p">,</span> <span class="n">event_color</span><span class="o">=</span><span class="s2">&quot;g&quot;</span><span class="p">,</span> <span class="n">order</span><span class="o">=</span><a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">picks_idx</span></a><span class="p">)</span>
 </pre></div>
 </div>
-<img src="../../_images/sphx_glr_90_eyetracking_data_001.png" srcset="../../_images/sphx_glr_90_eyetracking_data_001.png" alt="Raw plot" class = "sphx-glr-single-img"/></section>
-<section id="plot-average-pupil-response">
-<h2>Plot average pupil response<a class="headerlink" href="#plot-average-pupil-response" title="Permalink to this heading">#</a></h2>
-<p>We now visualize the pupillary light reflex.
-Therefore, we select only the pupil channel and plot the evoked response to
-the light flashes.</p>
-<p>As we see, there is a prominent decrease in pupil size following the
-stimulation. The noise starting about 2.5 s after stimulus onset stems from
-eyeblinks and artifacts in some of the 16 trials.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class"><span class="n">Epochs</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">events</span></a><span class="p">,</span> <span class="n">tmin</span><span class="o">=-</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">tmax</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">event_id</span><span class="o">=</span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">event_dict</span></a><span class="p">,</span> <span class="n">preload</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<a href="../../generated/mne.Epochs.html#mne.Epochs.pick_types" title="mne.Epochs.pick_types" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">epochs</span><span class="o">.</span><span class="n">pick_types</span></a><span class="p">(</span><span class="n">eyetrack</span><span class="o">=</span><span class="s2">&quot;pupil&quot;</span><span class="p">)</span>
-<a href="../../generated/mne.Epochs.html#mne.Epochs.average" title="mne.Epochs.average" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">epochs</span><span class="o">.</span><span class="n">average</span></a><span class="p">()</span><span class="o">.</span><span class="n">plot</span><span class="p">()</span>
+<img src="../../_images/sphx_glr_90_eyetracking_data_003.png" srcset="../../_images/sphx_glr_90_eyetracking_data_003.png" alt="Raw plot" class = "sphx-glr-single-img"/><div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>50 events found
+Event IDs: [1 2 3 4]
+50 events found
+Event IDs: [1 2 3 4]
 </pre></div>
 </div>
-<img src="../../_images/sphx_glr_90_eyetracking_data_002.png" srcset="../../_images/sphx_glr_90_eyetracking_data_002.png" alt="Eye-tracking (Pupil size) (1 channel)" class = "sphx-glr-single-img"/><div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Not setting metadata
+</section>
+<section id="showing-the-pupillary-light-reflex">
+<h2>Showing the pupillary light reflex<a class="headerlink" href="#showing-the-pupillary-light-reflex" title="Permalink to this heading">#</a></h2>
+<p>Now let’s extract epochs around our flash events. We should see a clear pupil
+constriction response to the flashes.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class"><span class="n">mne</span><span class="o">.</span><span class="n">Epochs</span></a><span class="p">(</span>
+    <span class="n">raw_et</span><span class="p">,</span>
+    <span class="n">events</span><span class="o">=</span><a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">et_events</span></a><span class="p">,</span>
+    <span class="n">event_id</span><span class="o">=</span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">event_dict</span></a><span class="p">,</span>
+    <span class="n">tmin</span><span class="o">=-</span><span class="mf">0.3</span><span class="p">,</span>
+    <span class="n">tmax</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span>
+    <span class="n">preload</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+<a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a><span class="p">[:</span><span class="mi">8</span><span class="p">]</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">events</span><span class="o">=</span><a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">et_events</span></a><span class="p">,</span> <span class="n">event_id</span><span class="o">=</span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">event_dict</span></a><span class="p">,</span> <span class="n">order</span><span class="o">=</span><a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">picks_idx</span></a><span class="p">)</span>
+</pre></div>
+</div>
+<img src="../../_images/sphx_glr_90_eyetracking_data_004.png" srcset="../../_images/sphx_glr_90_eyetracking_data_004.png" alt="Raw plot" class = "sphx-glr-single-img"/><div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Not setting metadata
 16 matching events found
 Setting baseline interval to [-0.3, 0.0] s
 Applying baseline correction (mode: mean)
 0 projection items activated
-Using data from preloaded Raw for 16 events and 5301 original time points ...
+Using data from preloaded Raw for 16 events and 3301 original time points ...
 0 bad epochs dropped
-NOTE: pick_types() is a legacy function. New code should use inst.pick(...).
-NOTE: pick_channels() is a legacy function. New code should use inst.pick(...).
 </pre></div>
 </div>
-<p>It is important to note that pupil size data are reported by Eyelink (and
-stored internally by MNE) as arbitrary units (AU). While it often can be
-preferable to convert pupil size data to millimeters, this requires
-information that is not always present in the file. MNE does not currently
-provide methods to convert pupil size data.
-See <a class="reference internal" href="../io/70_reading_eyetracking_data.html#tut-importing-eyetracking-data"><span class="std std-ref">Importing Data from Eyetracking devices</span></a> for more information on pupil size
-data.</p>
-<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  6.911 seconds)</p>
-<p><strong>Estimated memory usage:</strong>  128 MB</p>
+<p>Finally, let’s plot the evoked responses to the light flashes to get a sense of the
+average pupillary light response, and the associated ERP in the EEG data.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="../../generated/mne.Epochs.html#mne.Epochs.average" title="mne.Epochs.average" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">epochs</span><span class="o">.</span><span class="n">average</span></a><span class="p">()</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">picks</span><span class="o">=</span><a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">occipital</span></a> <span class="o">+</span> <a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">pupil</span></a><span class="p">)</span>
+</pre></div>
+</div>
+<img src="../../_images/sphx_glr_90_eyetracking_data_005.png" srcset="../../_images/sphx_glr_90_eyetracking_data_005.png" alt="EEG (6 channels), Eye-tracking (Pupil size) (1 channel)" class = "sphx-glr-single-img"/><div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>NOTE: pick_channels() is a legacy function. New code should use inst.pick(...).
+</pre></div>
+</div>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 23.440 seconds)</p>
+<p><strong>Estimated memory usage:</strong>  207 MB</p>
 <div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-tutorials-preprocessing-90-eyetracking-data-py">
 <div class="sphx-glr-download sphx-glr-download-python docutils container">
 <p><a class="reference download internal" download="" href="../../_downloads/fff317a7ad0b571659feca95bfa095b9/90_eyetracking_data.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">90_eyetracking_data.py</span></code></a></p>
@@ -1053,9 +1339,13 @@ data.</p>
   <nav class="bd-toc-nav page-toc">
     <ul class="visible nav section-nav flex-column">
 <li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#data-loading">Data loading</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#get-stimulus-events-from-din-channel">Get stimulus events from DIN channel</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#plot-raw-data">Plot raw data</a></li>
-<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#plot-average-pupil-response">Plot average pupil response</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#ocular-annotations">Ocular annotations</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#checking-the-calibration">Checking the calibration</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#plot-the-raw-eye-tracking-data">Plot the raw eye-tracking data</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#handling-blink-artifacts">Handling blink artifacts</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#extract-common-stimulus-events-from-the-data">Extract common stimulus events from the data</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#align-the-eye-tracking-data-with-eeg-the-data">Align the eye-tracking data with EEG the data</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#showing-the-pupillary-light-reflex">Showing the pupillary light reflex</a></li>
 </ul>
   </nav></div>
 
@@ -1092,12 +1382,13 @@ data.</p>
 <script src="../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
 
     <script src="https://mne.tools/versionwarning.js"></script>
+    
   <footer class="bd-footer">
 <div class="bd-footer__inner bd-page-width">
   
     <div class="footer-items__start">
       
-        <div class="footer-item"><p class="text-center text-muted small">&copy; Copyright 2012–2023, MNE Developers. Last updated <time datetime="2023-05-18T06:19:52.441027+00:00" class="localized">2023-05-18 06:19 UTC</time>
+        <div class="footer-item"><p class="text-center text-muted small">&copy; Copyright 2012–2023, MNE Developers. Last updated <time datetime="2023-08-15T22:46:29.470994+00:00" class="localized">2023-08-15 22:46 UTC</time>
 <script type="text/javascript">$(function () { $("time.localized").each(function () { var el = $(this); el.text(new Date(el.attr("datetime")).toLocaleString([], {dateStyle: "medium", timeStyle: "long"})); }); } )</script></p></div>
       
     </div>
