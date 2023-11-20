@@ -19,6 +19,7 @@ shows how to do this.
 import numpy as np
 import nibabel as nib
 import mne
+import mne_gui_addons as mne_gui
 
 # path to sample sEEG
 misc_path = mne.datasets.misc.data_path()
@@ -57,7 +58,7 @@ head_ct_t = mne.transforms.invert_transform(mne.channels.compute_native_head_t(m
 # launch the viewer with only the CT (note, we won't be able to use
 # the MR in this case to help determine which brain area the contact is
 # in), and use the user interface to find the locations of the contacts
-gui = mne.gui.locate_ieeg(raw.info, head_ct_t, CT_orig)
+gui = mne_gui.locate_ieeg(raw.info, head_ct_t, CT_orig)
 
 # we'll programmatically mark all the contacts on one electrode shaft
 for i, pos in enumerate(

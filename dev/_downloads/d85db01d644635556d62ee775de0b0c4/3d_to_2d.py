@@ -20,6 +20,7 @@ on the image.
 #          Alex Rockhill        <aprockhill@mailbox.org>
 #
 # License: BSD-3-Clause
+# Copyright the MNE-Python contributors.
 
 # %%
 from os.path import dirname
@@ -30,8 +31,12 @@ from matplotlib import pyplot as plt
 
 import mne
 from mne.io.fiff.raw import read_raw_fif
-from mne.viz import ClickableImage  # noqa: F401
-from mne.viz import plot_alignment, set_3d_view, snapshot_brain_montage
+from mne.viz import (
+    ClickableImage,  # noqa: F401
+    plot_alignment,
+    set_3d_view,
+    snapshot_brain_montage,
+)
 
 misc_path = mne.datasets.misc.data_path()
 subjects_dir = misc_path / "ecog"
@@ -49,7 +54,7 @@ layout_name = "custom_layout.lout"
 # a 2D snapshot.
 
 raw = read_raw_fif(ecog_data_fname)
-raw.pick_channels([f"G{i}" for i in range(1, 257)])  # pick just one grid
+raw.pick([f"G{i}" for i in range(1, 257)])  # pick just one grid
 
 # Since we loaded in the ecog data from FIF, the coordinates
 # are in 'head' space, but we actually want them in 'mri' space.
@@ -129,8 +134,7 @@ ax.set_axis_off()
 lt = mne.channels.read_layout(layout_path / layout_name, scale=False)
 x = lt.pos[:, 0] * float(im.shape[1])
 y = (1 - lt.pos[:, 1]) * float(im.shape[0])  # Flip the y-position
-fig, ax = plt.subplots()
+fig, ax = plt.subplots(layout="constrained")
 ax.imshow(im)
 ax.scatter(x, y, s=80, color="r")
-fig.tight_layout()
 ax.set_axis_off()

@@ -39,13 +39,15 @@ ROI.
 #          Evgenii Kalenkovich <e.kalenkovich@gmail.com>
 #
 # License: BSD-3-Clause
+# Copyright the MNE-Python contributors.
 
 # %%
 
 import matplotlib.pyplot as plt
-import mne
 import numpy as np
 from scipy.stats import ttest_rel
+
+import mne
 
 # %%
 # Data preprocessing

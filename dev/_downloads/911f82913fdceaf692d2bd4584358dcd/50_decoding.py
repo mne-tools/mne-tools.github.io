@@ -1,3 +1,5 @@
+# License: BSD-3-Clause
+# Copyright the MNE-Python contributors.
 r"""
 .. _tut-mvpa:
 
@@ -25,24 +27,23 @@ Let's start by loading data for a simple two-class problem:
 # %%
 # sphinx_gallery_thumbnail_number = 6
 
-import numpy as np
 import matplotlib.pyplot as plt
-
+import numpy as np
+from sklearn.linear_model import LogisticRegression
 from sklearn.pipeline import make_pipeline
 from sklearn.preprocessing import StandardScaler
-from sklearn.linear_model import LogisticRegression
 
 import mne
 from mne.datasets import sample
 from mne.decoding import (
-    SlidingEstimator,
-    GeneralizingEstimator,
-    Scaler,
-    cross_val_multiscore,
-    LinearModel,
-    get_coef,
-    Vectorizer,
     CSP,
+    GeneralizingEstimator,
+    LinearModel,
+    Scaler,
+    SlidingEstimator,
+    Vectorizer,
+    cross_val_multiscore,
+    get_coef,
 )
 
 data_path = sample.data_path()
@@ -53,7 +54,7 @@ raw_fname = meg_path / "sample_audvis_filt-0-40_raw.fif"
 tmin, tmax = -0.200, 0.500
 event_id = {"Auditory/Left": 1, "Visual/Left": 3}  # just use two
 raw = mne.io.read_raw_fif(raw_fname)
-raw.pick_types(meg="grad", stim=True, eog=True, exclude=())
+raw.pick(picks=["grad", "stim", "eog"])
 
 # The subsequent decoding analyses only capture evoked responses, so we can
 # low-pass the MEG data. Usually a value more like 40 Hz would be used,
@@ -80,10 +81,10 @@ epochs = mne.Epochs(
     decim=3,
     verbose="error",
 )
-epochs.pick_types(meg=True, exclude="bads")  # remove stim and EOG
+epochs.pick(picks="meg", exclude="bads")  # remove stim and EOG
 del raw
 
-X = epochs.get_data()  # MEG signals: n_epochs, n_meg_channels, n_times
+X = epochs.get_data(copy=False)  # MEG signals: n_epochs, n_meg_channels, n_times
 y = epochs.events[:, 2]  # target: auditory left vs visual left
 
 # %%
@@ -180,7 +181,7 @@ print("Spatio-temporal: %0.1f%%" % (100 * score,))
 # in the original sensor space to CSP space using the following transformation:
 #
 # .. math::       x_{CSP}(t) = W^{T}x(t)
-#    :label: csp
+#    :name: csp
 #
 # where each column of :math:`W \in R^{C\times C}` is a spatial filter and each
 # row of :math:`x_{CSP}` is a CSP component. The matrix :math:`W` is also
@@ -191,15 +192,15 @@ print("Spatio-temporal: %0.1f%%" % (100 * score,))
 # covariance matrices
 #
 # .. math::       W^{T}\Sigma^{+}W = \lambda^{+}
-#    :label: diagonalize_p
+#    :name: diagonalize_p
 # .. math::       W^{T}\Sigma^{-}W = \lambda^{-}
-#    :label: diagonalize_n
+#    :name: diagonalize_n
 #
 # where :math:`\lambda^{C}` is a diagonal matrix whose entries are the
 # eigenvalues of the following generalized eigenvalue problem
 #
 # .. math::      \Sigma^{+}w = \lambda \Sigma^{-}w
-#    :label: eigen_problem
+#    :name: eigen_problem
 #
 # Large entries in the diagonal matrix corresponds to a spatial filter which
 # gives high variance in one class but low variance in the other. Thus, the
@@ -275,7 +276,7 @@ print("CSP: %0.1f%%" % (100 * scores.mean(),))
 # rewrite Equation :eq:`csp` as follows:
 #
 # .. math::       x(t) = (W^{-1})^{T}x_{CSP}(t)
-#    :label: patterns
+#    :name: patterns
 #
 # The columns of the matrix :math:`(W^{-1})^T` are called spatial patterns.
 # This is also called the mixing matrix. The example :ref:`ex-linear-patterns`

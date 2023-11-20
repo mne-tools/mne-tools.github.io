@@ -18,14 +18,16 @@ and 'slowly-processed' face stimuli.
 # Authors: Denis Engemann <denis.engemann@gmail.com>
 #
 # License: BSD-3-Clause
+# Copyright the MNE-Python contributors.
 
 # %%
 
+import matplotlib.pyplot as plt
+
 import mne
 from mne import io
-from mne.event import define_target_events
 from mne.datasets import sample
-import matplotlib.pyplot as plt
+from mne.event import define_target_events
 
 print(__doc__)
 

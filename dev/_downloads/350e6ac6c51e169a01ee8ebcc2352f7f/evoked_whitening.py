@@ -20,14 +20,14 @@ References
 #          Denis A. Engemann <denis.engemann@gmail.com>
 #
 # License: BSD-3-Clause
+# Copyright the MNE-Python contributors.
 
 # %%
 
 import mne
-
 from mne import io
-from mne.datasets import sample
 from mne.cov import compute_covariance
+from mne.datasets import sample
 
 print(__doc__)
 
