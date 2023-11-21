@@ -14,9 +14,12 @@ tutorials address each of these topics in greater detail.
 
 We begin by importing the necessary Python modules:
 """
+# License: BSD-3-Clause
+# Copyright the MNE-Python contributors.
 # %%
 
 import numpy as np
+
 import mne
 
 # %%
@@ -349,7 +352,7 @@ aud_evoked.plot_topomap(times=[0.0, 0.08, 0.1, 0.12, 0.2], ch_type="eeg")
 # at each sensor using `~mne.Evoked.plot_topo`:
 
 evoked_diff = mne.combine_evoked([aud_evoked, vis_evoked], weights=[1, -1])
-evoked_diff.pick_types(meg="mag").plot_topo(color="r", legend=False)
+evoked_diff.pick(picks="mag").plot_topo(color="r", legend=False)
 
 ##############################################################################
 # Inverse modeling

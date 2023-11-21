@@ -19,6 +19,7 @@ Runs a full pipeline using MNE-Python:
 #          Denis Engemann <denis.engemann@gmail.com>
 #
 # License: BSD-3-Clause
+# Copyright the MNE-Python contributors.
 
 # %%
 
@@ -27,10 +28,10 @@ Runs a full pipeline using MNE-Python:
 import matplotlib.pyplot as plt
 
 import mne
+from mne import combine_evoked, io
 from mne.datasets import spm_face
+from mne.minimum_norm import apply_inverse, make_inverse_operator
 from mne.preprocessing import ICA, create_eog_epochs
-from mne import io, combine_evoked
-from mne.minimum_norm import make_inverse_operator, apply_inverse
 
 print(__doc__)
 
@@ -41,9 +42,9 @@ spm_path = data_path / "MEG" / "spm"
 # %%
 # Load and filter data, set up epochs
 
-raw_fname = spm_path / "SPM_CTF_MEG_example_faces%d_3D.ds"
+raw_fname = spm_path / "SPM_CTF_MEG_example_faces1_3D.ds"
 
-raw = io.read_raw_ctf(raw_fname % 1, preload=True)  # Take first run
+raw = io.read_raw_ctf(raw_fname, preload=True)  # Take first run
 # Here to save memory and time we'll downsample heavily -- this is not
 # advised for real data as it can effectively jitter events!
 raw.resample(120.0, npad="auto")
@@ -112,7 +113,7 @@ maps = mne.make_field_map(
     evoked[0], trans_fname, subject="spm", subjects_dir=subjects_dir, n_jobs=None
 )
 
-evoked[0].plot_field(maps, time=0.170)
+evoked[0].plot_field(maps, time=0.170, time_viewer=False)
 
 # %%
 # Look at the whitened evoked daat

@@ -12,10 +12,14 @@ We begin as always by importing the necessary Python modules and loading some
 :ref:`example data <sample-dataset>`:
 """
 
+# License: BSD-3-Clause
+# Copyright the MNE-Python contributors.
 # %%
 
 import os
+
 import numpy as np
+
 import mne
 
 sample_data_folder = mne.datasets.sample.data_path()

@@ -15,6 +15,8 @@ object from (possibly simulated) data in a :class:`NumPy array
 As usual, we start by importing the modules we need:
 """
 
+# License: BSD-3-Clause
+# Copyright the MNE-Python contributors.
 # %%
 
 import mne
@@ -133,7 +135,7 @@ print(evoked.data[:2, :3])  # first 2 channels, first 3 timepoints
 # in interactive/exploratory sessions you may want to create a
 # :meth:`~mne.Evoked.copy` first.
 
-evoked_eeg = evoked.copy().pick_types(meg=False, eeg=True)
+evoked_eeg = evoked.copy().pick(picks="eeg")
 print(evoked_eeg.ch_names)
 
 new_order = ["EEG 002", "MEG 2521", "EEG 003"]

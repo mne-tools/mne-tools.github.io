@@ -17,10 +17,13 @@ different stimulus (word). As usual we'll start by importing the modules we
 need and loading the data:
 """
 
+# License: BSD-3-Clause
+# Copyright the MNE-Python contributors.
 # %%
 
 import numpy as np
 import pandas as pd
+
 import mne
 
 kiloword_data_folder = mne.datasets.kiloword.data_path()

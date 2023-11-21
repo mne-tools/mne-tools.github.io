@@ -16,6 +16,7 @@ related synchronizations (ERS) / desynchronizations (ERD) in the beta band.
 #          Richard Höchenberger <richard.hoechenberger@gmail.com>
 #
 # License: BSD-3-Clause
+# Copyright the MNE-Python contributors.
 
 # %%
 import matplotlib.pyplot as plt
@@ -209,7 +210,7 @@ power, itc = tfr_morlet(
 power.plot_topo(baseline=(-0.5, 0), mode="logratio", title="Average power")
 power.plot([82], baseline=(-0.5, 0), mode="logratio", title=power.ch_names[82])
 
-fig, axes = plt.subplots(1, 2, figsize=(7, 4), constrained_layout=True)
+fig, axes = plt.subplots(1, 2, figsize=(7, 4), layout="constrained")
 topomap_kw = dict(
     ch_type="grad", tmin=0.5, tmax=1.5, baseline=(-0.5, 0), mode="logratio", show=False
 )

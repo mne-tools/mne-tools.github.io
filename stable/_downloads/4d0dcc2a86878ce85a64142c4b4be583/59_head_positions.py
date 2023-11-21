@@ -26,10 +26,12 @@ harmonics).
 #          Daniel McCloy <dan@mccloy.info>
 #
 # License: BSD-3-Clause
+# Copyright the MNE-Python contributors.
 
 # %%
 
 from os import path as op
+
 import mne
 
 data_path = op.join(mne.datasets.testing.data_path(verbose=True), "SSS")

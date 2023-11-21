@@ -12,15 +12,15 @@ are displayed.
 # Authors: Pierre Ablin <pierreablin@gmail.com>
 #
 # License: BSD-3-Clause
+# Copyright the MNE-Python contributors.
 
 # %%
 
 from time import time
 
 import mne
-from mne.preprocessing import ICA
 from mne.datasets import sample
-
+from mne.preprocessing import ICA
 
 print(__doc__)
 
