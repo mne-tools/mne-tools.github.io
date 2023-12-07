@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>From raw data to dSPM on SPM Faces dataset &#8212; MNE 1.7.0.dev22+g6187c836c documentation</title>
+    <title>From raw data to dSPM on SPM Faces dataset &#8212; MNE 1.7.0.dev27+g432249ee6 documentation</title>
   
   
   
@@ -43,7 +43,7 @@
   <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
 <link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
 
-    <script src="../../_static/documentation_options.js?v=b7406605"></script>
+    <script src="../../_static/documentation_options.js?v=dfbefb1c"></script>
     <script src="../../_static/doctools.js?v=888ff710"></script>
     <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
     <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -62,7 +62,7 @@
                 gtag('js', new Date());
                 gtag('config', 'G-5TBCPCRB6X');
             </script>
-    <script>DOCUMENTATION_OPTIONS.pagename = 'auto_examples/datasets/spm_faces_dataset_sgskip';</script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'auto_examples/datasets/spm_faces_dataset';</script>
     <script>
         DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://mne.tools/dev/_static/versions.json';
         DOCUMENTATION_OPTIONS.theme_switcher_version_match = '1.7';
@@ -813,162 +813,387 @@ document.write(`
   
   <div class="sphx-glr-download-link-note admonition note">
 <p class="admonition-title">Note</p>
-<p><a class="reference internal" href="#sphx-glr-download-auto-examples-datasets-spm-faces-dataset-sgskip-py"><span class="std std-ref">Go to the end</span></a>
+<p><a class="reference internal" href="#sphx-glr-download-auto-examples-datasets-spm-faces-dataset-py"><span class="std std-ref">Go to the end</span></a>
 to download the full example code</p>
 </div>
 <section class="sphx-glr-example-title" id="from-raw-data-to-dspm-on-spm-faces-dataset">
-<span id="ex-spm-faces"></span><span id="sphx-glr-auto-examples-datasets-spm-faces-dataset-sgskip-py"></span><h1>From raw data to dSPM on SPM Faces dataset<a class="headerlink" href="#from-raw-data-to-dspm-on-spm-faces-dataset" title="Link to this heading">#</a></h1>
-<p>Runs a full pipeline using MNE-Python:</p>
-<blockquote>
-<div><ul class="simple">
-<li><p>artifact removal</p></li>
-<li><p>averaging Epochs</p></li>
-<li><p>forward model computation</p></li>
-<li><p>source reconstruction using dSPM on the contrast : “faces - scrambled”</p></li>
-</ul>
-</div></blockquote>
-<div class="admonition note">
-<p class="admonition-title">Note</p>
-<p>This example does quite a bit of processing, so even on a
-fast machine it can take several minutes to complete.</p>
-</div>
+<span id="ex-spm-faces"></span><span id="sphx-glr-auto-examples-datasets-spm-faces-dataset-py"></span><h1>From raw data to dSPM on SPM Faces dataset<a class="headerlink" href="#from-raw-data-to-dspm-on-spm-faces-dataset" title="Link to this heading">#</a></h1>
+<p>Runs a full pipeline using MNE-Python. This example does quite a bit of processing, so
+even on a fast machine it can take several minutes to complete.</p>
 <div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Authors: Alexandre Gramfort &lt;alexandre.gramfort@inria.fr&gt;</span>
 <span class="c1">#          Denis Engemann &lt;denis.engemann@gmail.com&gt;</span>
 <span class="c1">#</span>
 <span class="c1"># License: BSD-3-Clause</span>
 <span class="c1"># Copyright the MNE-Python contributors.</span>
-</pre></div>
-</div>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
 
 <span class="kn">import</span> <span class="nn">mne</span>
 <span class="kn">from</span> <span class="nn">mne</span> <span class="kn">import</span> <a href="../../generated/mne.combine_evoked.html#mne.combine_evoked" title="mne.combine_evoked" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-function"><span class="n">combine_evoked</span></a><span class="p">,</span> <span class="n">io</span>
 <span class="kn">from</span> <span class="nn">mne.datasets</span> <span class="kn">import</span> <span class="n">spm_face</span>
 <span class="kn">from</span> <span class="nn">mne.minimum_norm</span> <span class="kn">import</span> <a href="../../generated/mne.minimum_norm.apply_inverse.html#mne.minimum_norm.apply_inverse" title="mne.minimum_norm.apply_inverse" class="sphx-glr-backref-module-mne-minimum_norm sphx-glr-backref-type-py-function"><span class="n">apply_inverse</span></a><span class="p">,</span> <a href="../../generated/mne.minimum_norm.make_inverse_operator.html#mne.minimum_norm.make_inverse_operator" title="mne.minimum_norm.make_inverse_operator" class="sphx-glr-backref-module-mne-minimum_norm sphx-glr-backref-type-py-function"><span class="n">make_inverse_operator</span></a>
-<span class="kn">from</span> <span class="nn">mne.preprocessing</span> <span class="kn">import</span> <a href="../../generated/mne.preprocessing.ICA.html#mne.preprocessing.ICA" title="mne.preprocessing.ICA" class="sphx-glr-backref-module-mne-preprocessing sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">ICA</span></a><span class="p">,</span> <a href="../../generated/mne.preprocessing.create_eog_epochs.html#mne.preprocessing.create_eog_epochs" title="mne.preprocessing.create_eog_epochs" class="sphx-glr-backref-module-mne-preprocessing sphx-glr-backref-type-py-function"><span class="n">create_eog_epochs</span></a>
+<span class="kn">from</span> <span class="nn">mne.preprocessing</span> <span class="kn">import</span> <a href="../../generated/mne.preprocessing.ICA.html#mne.preprocessing.ICA" title="mne.preprocessing.ICA" class="sphx-glr-backref-module-mne-preprocessing sphx-glr-backref-type-py-class"><span class="n">ICA</span></a><span class="p">,</span> <a href="../../generated/mne.preprocessing.create_eog_epochs.html#mne.preprocessing.create_eog_epochs" title="mne.preprocessing.create_eog_epochs" class="sphx-glr-backref-module-mne-preprocessing sphx-glr-backref-type-py-function"><span class="n">create_eog_epochs</span></a>
 
 <span class="nb">print</span><span class="p">(</span><span class="vm">__doc__</span><span class="p">)</span>
 
-<span class="n">data_path</span> <span class="o">=</span> <a href="../../generated/mne.datasets.spm_face.data_path.html#mne.datasets.spm_face.data_path" title="mne.datasets.spm_face.data_path" class="sphx-glr-backref-module-mne-datasets-spm_face sphx-glr-backref-type-py-function"><span class="n">spm_face</span><span class="o">.</span><span class="n">data_path</span></a><span class="p">()</span>
-<span class="n">subjects_dir</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">/</span> <span class="s2">&quot;subjects&quot;</span>
-<span class="n">spm_path</span> <span class="o">=</span> <span class="n">data_path</span> <span class="o">/</span> <span class="s2">&quot;MEG&quot;</span> <span class="o">/</span> <span class="s2">&quot;spm&quot;</span>
+<a href="https://docs.python.org/3/library/pathlib.html#pathlib.PosixPath" title="pathlib.PosixPath" class="sphx-glr-backref-module-pathlib sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">data_path</span></a> <span class="o">=</span> <a href="../../generated/mne.datasets.spm_face.data_path.html#mne.datasets.spm_face.data_path" title="mne.datasets.spm_face.data_path" class="sphx-glr-backref-module-mne-datasets-spm_face sphx-glr-backref-type-py-function"><span class="n">spm_face</span><span class="o">.</span><span class="n">data_path</span></a><span class="p">()</span>
+<a href="https://docs.python.org/3/library/pathlib.html#pathlib.PosixPath" title="pathlib.PosixPath" class="sphx-glr-backref-module-pathlib sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">subjects_dir</span></a> <span class="o">=</span> <a href="https://docs.python.org/3/library/pathlib.html#pathlib.PosixPath" title="pathlib.PosixPath" class="sphx-glr-backref-module-pathlib sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">data_path</span></a> <span class="o">/</span> <span class="s2">&quot;subjects&quot;</span>
+<a href="https://docs.python.org/3/library/pathlib.html#pathlib.PosixPath" title="pathlib.PosixPath" class="sphx-glr-backref-module-pathlib sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">spm_path</span></a> <span class="o">=</span> <a href="https://docs.python.org/3/library/pathlib.html#pathlib.PosixPath" title="pathlib.PosixPath" class="sphx-glr-backref-module-pathlib sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">data_path</span></a> <span class="o">/</span> <span class="s2">&quot;MEG&quot;</span> <span class="o">/</span> <span class="s2">&quot;spm&quot;</span>
 </pre></div>
 </div>
-<p>Load and filter data, set up epochs</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">raw_fname</span> <span class="o">=</span> <span class="n">spm_path</span> <span class="o">/</span> <span class="s2">&quot;SPM_CTF_MEG_example_faces1_3D.ds&quot;</span>
-
-<span class="n">raw</span> <span class="o">=</span> <a href="../../generated/mne.io.read_raw_ctf.html#mne.io.read_raw_ctf" title="mne.io.read_raw_ctf" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-function"><span class="n">io</span><span class="o">.</span><span class="n">read_raw_ctf</span></a><span class="p">(</span><span class="n">raw_fname</span><span class="p">,</span> <span class="n">preload</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># Take first run</span>
+<p>Load data, filter it, and fit ICA.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><a href="https://docs.python.org/3/library/pathlib.html#pathlib.PosixPath" title="pathlib.PosixPath" class="sphx-glr-backref-module-pathlib sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw_fname</span></a> <span class="o">=</span> <a href="https://docs.python.org/3/library/pathlib.html#pathlib.PosixPath" title="pathlib.PosixPath" class="sphx-glr-backref-module-pathlib sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">spm_path</span></a> <span class="o">/</span> <span class="s2">&quot;SPM_CTF_MEG_example_faces1_3D.ds&quot;</span>
+<span class="n">raw</span> <span class="o">=</span> <a href="../../generated/mne.io.read_raw_ctf.html#mne.io.read_raw_ctf" title="mne.io.read_raw_ctf" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-function"><span class="n">io</span><span class="o">.</span><span class="n">read_raw_ctf</span></a><span class="p">(</span><a href="https://docs.python.org/3/library/pathlib.html#pathlib.PosixPath" title="pathlib.PosixPath" class="sphx-glr-backref-module-pathlib sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw_fname</span></a><span class="p">,</span> <span class="n">preload</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>  <span class="c1"># Take first run</span>
 <span class="c1"># Here to save memory and time we&#39;ll downsample heavily -- this is not</span>
 <span class="c1"># advised for real data as it can effectively jitter events!</span>
-<span class="n">raw</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="mf">120.0</span><span class="p">,</span> <span class="n">npad</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">)</span>
-
-<span class="n">picks</span> <span class="o">=</span> <a href="../../generated/mne.pick_types.html#mne.pick_types" title="mne.pick_types" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">pick_types</span></a><span class="p">(</span><span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">meg</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="s2">&quot;bads&quot;</span><span class="p">)</span>
-<span class="n">raw</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;fir&quot;</span><span class="p">,</span> <span class="n">fir_design</span><span class="o">=</span><span class="s2">&quot;firwin&quot;</span><span class="p">)</span>
-
-<span class="n">events</span> <span class="o">=</span> <a href="../../generated/mne.find_events.html#mne.find_events" title="mne.find_events" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">find_events</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">stim_channel</span><span class="o">=</span><span class="s2">&quot;UPPT001&quot;</span><span class="p">)</span>
-
-<span class="c1"># plot the events to get an idea of the paradigm</span>
-<a href="../../generated/mne.viz.plot_events.html#mne.viz.plot_events" title="mne.viz.plot_events" class="sphx-glr-backref-module-mne-viz sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">viz</span><span class="o">.</span><span class="n">plot_events</span></a><span class="p">(</span><span class="n">events</span><span class="p">,</span> <span class="n">raw</span><span class="o">.</span><span class="n">info</span><span class="p">[</span><span class="s2">&quot;sfreq&quot;</span><span class="p">])</span>
-
-<span class="n">event_ids</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;faces&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;scrambled&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">}</span>
-
-<span class="n">tmin</span><span class="p">,</span> <span class="n">tmax</span> <span class="o">=</span> <span class="o">-</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.6</span>
-<span class="n">baseline</span> <span class="o">=</span> <span class="kc">None</span>  <span class="c1"># no baseline as high-pass is applied</span>
-<span class="n">reject</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">mag</span><span class="o">=</span><span class="mf">5e-12</span><span class="p">)</span>
-
-<span class="n">epochs</span> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">mne</span><span class="o">.</span><span class="n">Epochs</span></a><span class="p">(</span>
-    <span class="n">raw</span><span class="p">,</span>
-    <span class="n">events</span><span class="p">,</span>
-    <span class="n">event_ids</span><span class="p">,</span>
-    <span class="n">tmin</span><span class="p">,</span>
-    <span class="n">tmax</span><span class="p">,</span>
-    <span class="n">picks</span><span class="o">=</span><span class="n">picks</span><span class="p">,</span>
-    <span class="n">baseline</span><span class="o">=</span><span class="n">baseline</span><span class="p">,</span>
-    <span class="n">preload</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-    <span class="n">reject</span><span class="o">=</span><span class="n">reject</span><span class="p">,</span>
-<span class="p">)</span>
-
-<span class="c1"># Fit ICA, find and remove major artifacts</span>
-<span class="n">ica</span> <span class="o">=</span> <a href="../../generated/mne.preprocessing.ICA.html#mne.preprocessing.ICA" title="mne.preprocessing.ICA" class="sphx-glr-backref-module-mne-preprocessing sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">ICA</span></a><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="mf">0.95</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
-<span class="n">ica</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">decim</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">reject</span><span class="o">=</span><span class="n">reject</span><span class="p">)</span>
-
+<span class="n">raw</span><span class="o">.</span><span class="n">resample</span><span class="p">(</span><span class="mi">100</span><span class="p">)</span>
+<span class="n">raw</span><span class="o">.</span><span class="n">filter</span><span class="p">(</span><span class="mf">1.0</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>  <span class="c1"># high-pass</span>
+<a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">reject</span></a> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">mag</span><span class="o">=</span><span class="mf">5e-12</span><span class="p">)</span>
+<a href="../../generated/mne.preprocessing.ICA.html#mne.preprocessing.ICA" title="mne.preprocessing.ICA" class="sphx-glr-backref-module-mne-preprocessing sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">ica</span></a> <span class="o">=</span> <a href="../../generated/mne.preprocessing.ICA.html#mne.preprocessing.ICA" title="mne.preprocessing.ICA" class="sphx-glr-backref-module-mne-preprocessing sphx-glr-backref-type-py-class"><span class="n">ICA</span></a><span class="p">(</span><span class="n">n_components</span><span class="o">=</span><span class="mf">0.95</span><span class="p">,</span> <span class="n">max_iter</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span> <span class="n">random_state</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+<a href="../../generated/mne.preprocessing.ICA.html#mne.preprocessing.ICA.fit" title="mne.preprocessing.ICA.fit" class="sphx-glr-backref-module-mne-preprocessing sphx-glr-backref-type-py-method"><span class="n">ica</span><span class="o">.</span><span class="n">fit</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">reject</span></a><span class="o">=</span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">reject</span></a><span class="p">)</span>
 <span class="c1"># compute correlation scores, get bad indices sorted by score</span>
-<span class="n">eog_epochs</span> <span class="o">=</span> <a href="../../generated/mne.preprocessing.create_eog_epochs.html#mne.preprocessing.create_eog_epochs" title="mne.preprocessing.create_eog_epochs" class="sphx-glr-backref-module-mne-preprocessing sphx-glr-backref-type-py-function"><span class="n">create_eog_epochs</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">ch_name</span><span class="o">=</span><span class="s2">&quot;MRT31-2908&quot;</span><span class="p">,</span> <span class="n">reject</span><span class="o">=</span><span class="n">reject</span><span class="p">)</span>
-<span class="n">eog_inds</span><span class="p">,</span> <span class="n">eog_scores</span> <span class="o">=</span> <span class="n">ica</span><span class="o">.</span><span class="n">find_bads_eog</span><span class="p">(</span><span class="n">eog_epochs</span><span class="p">,</span> <span class="n">ch_name</span><span class="o">=</span><span class="s2">&quot;MRT31-2908&quot;</span><span class="p">)</span>
-<span class="n">ica</span><span class="o">.</span><span class="n">plot_scores</span><span class="p">(</span><span class="n">eog_scores</span><span class="p">,</span> <span class="n">eog_inds</span><span class="p">)</span>  <span class="c1"># see scores the selection is based on</span>
-<span class="n">ica</span><span class="o">.</span><span class="n">plot_components</span><span class="p">(</span><span class="n">eog_inds</span><span class="p">)</span>  <span class="c1"># view topographic sensitivity of components</span>
-<span class="n">ica</span><span class="o">.</span><span class="n">exclude</span> <span class="o">+=</span> <span class="n">eog_inds</span><span class="p">[:</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># we saw the 2nd ECG component looked too dipolar</span>
-<span class="n">ica</span><span class="o">.</span><span class="n">plot_overlay</span><span class="p">(</span><span class="n">eog_epochs</span><span class="o">.</span><span class="n">average</span><span class="p">())</span>  <span class="c1"># inspect artifact removal</span>
-<span class="n">ica</span><span class="o">.</span><span class="n">apply</span><span class="p">(</span><span class="n">epochs</span><span class="p">)</span>  <span class="c1"># clean data, default in place</span>
-
-<span class="n">evoked</span> <span class="o">=</span> <span class="p">[</span><span class="n">epochs</span><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">average</span><span class="p">()</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <span class="n">event_ids</span><span class="p">]</span>
-
-<span class="n">contrast</span> <span class="o">=</span> <a href="../../generated/mne.combine_evoked.html#mne.combine_evoked" title="mne.combine_evoked" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-function"><span class="n">combine_evoked</span></a><span class="p">(</span><span class="n">evoked</span><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>  <span class="c1"># Faces - scrambled</span>
-
-<span class="n">evoked</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="n">contrast</span><span class="p">)</span>
-
-<span class="k">for</span> <span class="n">e</span> <span class="ow">in</span> <span class="n">evoked</span><span class="p">:</span>
-    <span class="n">e</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">ylim</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">mag</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">400</span><span class="p">,</span> <span class="mi">400</span><span class="p">]))</span>
-
-<a href="https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.show.html#matplotlib.pyplot.show" title="matplotlib.pyplot.show" class="sphx-glr-backref-module-matplotlib-pyplot sphx-glr-backref-type-py-function"><span class="n">plt</span><span class="o">.</span><span class="n">show</span></a><span class="p">()</span>
-
-<span class="c1"># estimate noise covarariance</span>
-<span class="n">noise_cov</span> <span class="o">=</span> <a href="../../generated/mne.compute_covariance.html#mne.compute_covariance" title="mne.compute_covariance" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">compute_covariance</span></a><span class="p">(</span><span class="n">epochs</span><span class="p">,</span> <span class="n">tmax</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;shrunk&quot;</span><span class="p">,</span> <span class="n">rank</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">eog_epochs</span></a> <span class="o">=</span> <a href="../../generated/mne.preprocessing.create_eog_epochs.html#mne.preprocessing.create_eog_epochs" title="mne.preprocessing.create_eog_epochs" class="sphx-glr-backref-module-mne-preprocessing sphx-glr-backref-type-py-function"><span class="n">create_eog_epochs</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">ch_name</span><span class="o">=</span><span class="s2">&quot;MRT31-2908&quot;</span><span class="p">,</span> <a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">reject</span></a><span class="o">=</span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">reject</span></a><span class="p">)</span>
+<a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">eog_inds</span></a><span class="p">,</span> <a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">eog_scores</span></a> <span class="o">=</span> <a href="../../generated/mne.preprocessing.ICA.html#mne.preprocessing.ICA.find_bads_eog" title="mne.preprocessing.ICA.find_bads_eog" class="sphx-glr-backref-module-mne-preprocessing sphx-glr-backref-type-py-method"><span class="n">ica</span><span class="o">.</span><span class="n">find_bads_eog</span></a><span class="p">(</span><a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">eog_epochs</span></a><span class="p">,</span> <span class="n">ch_name</span><span class="o">=</span><span class="s2">&quot;MRT31-2908&quot;</span><span class="p">)</span>
+<a href="../../generated/mne.preprocessing.ICA.html#mne.preprocessing.ICA.plot_scores" title="mne.preprocessing.ICA.plot_scores" class="sphx-glr-backref-module-mne-preprocessing sphx-glr-backref-type-py-method"><span class="n">ica</span><span class="o">.</span><span class="n">plot_scores</span></a><span class="p">(</span><a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">eog_scores</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">eog_inds</span></a><span class="p">)</span>  <span class="c1"># see scores the selection is based on</span>
+<a href="../../generated/mne.preprocessing.ICA.html#mne.preprocessing.ICA.plot_components" title="mne.preprocessing.ICA.plot_components" class="sphx-glr-backref-module-mne-preprocessing sphx-glr-backref-type-py-method"><span class="n">ica</span><span class="o">.</span><span class="n">plot_components</span></a><span class="p">(</span><a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">eog_inds</span></a><span class="p">)</span>  <span class="c1"># view topographic sensitivity of components</span>
+<a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">ica</span><span class="o">.</span><span class="n">exclude</span></a> <span class="o">+=</span> <a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">eog_inds</span></a><span class="p">[:</span><span class="mi">1</span><span class="p">]</span>  <span class="c1"># we saw the 2nd ECG component looked too dipolar</span>
+<a href="../../generated/mne.preprocessing.ICA.html#mne.preprocessing.ICA.plot_overlay" title="mne.preprocessing.ICA.plot_overlay" class="sphx-glr-backref-module-mne-preprocessing sphx-glr-backref-type-py-method"><span class="n">ica</span><span class="o">.</span><span class="n">plot_overlay</span></a><span class="p">(</span><a href="../../generated/mne.Epochs.html#mne.Epochs.average" title="mne.Epochs.average" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">eog_epochs</span><span class="o">.</span><span class="n">average</span></a><span class="p">())</span>  <span class="c1"># inspect artifact removal</span>
 </pre></div>
 </div>
-<p>Visualize fields on MEG helmet</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="c1"># The transformation here was aligned using the dig-montage. It&#39;s included in</span>
-<span class="c1"># the spm_faces dataset and is named SPM_dig_montage.fif.</span>
-<span class="n">trans_fname</span> <span class="o">=</span> <span class="n">spm_path</span> <span class="o">/</span> <span class="s2">&quot;SPM_CTF_MEG_example_faces1_3D_raw-trans.fif&quot;</span>
+<ul class="sphx-glr-horizontal">
+<li><img src="../../_images/sphx_glr_spm_faces_dataset_001.png" srcset="../../_images/sphx_glr_spm_faces_dataset_001.png" alt="ICA component scores" class = "sphx-glr-multi-img"/></li>
+<li><img src="../../_images/sphx_glr_spm_faces_dataset_002.png" srcset="../../_images/sphx_glr_spm_faces_dataset_002.png" alt="ICA components, ICA018" class = "sphx-glr-multi-img"/></li>
+<li><img src="../../_images/sphx_glr_spm_faces_dataset_003.png" srcset="../../_images/sphx_glr_spm_faces_dataset_003.png" alt="Signals before (red) and after (black) cleaning, Magnetometers (274 channels)" class = "sphx-glr-multi-img"/></li>
+</ul>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>ds directory : /home/circleci/mne_data/MNE-spm-face/MEG/spm/SPM_CTF_MEG_example_faces1_3D.ds
+    res4 data read.
+    hc data read.
+    Separate EEG position data file not present.
+    Quaternion matching (desired vs. transformed):
+      -0.90   72.01    0.00 mm &lt;-&gt;   -0.90   72.01   -0.00 mm (orig :  -43.09   61.46 -252.17 mm) diff =    0.000 mm
+       0.90  -72.01    0.00 mm &lt;-&gt;    0.90  -72.01   -0.00 mm (orig :   53.49  -45.24 -258.02 mm) diff =    0.000 mm
+      98.30    0.00    0.00 mm &lt;-&gt;   98.30   -0.00    0.00 mm (orig :   78.60   72.16 -241.87 mm) diff =    0.000 mm
+    Coordinate transformations established.
+    Polhemus data for 3 HPI coils added
+    Device coordinate locations for 3 HPI coils added
+    Measurement info composed.
+Finding samples for /home/circleci/mne_data/MNE-spm-face/MEG/spm/SPM_CTF_MEG_example_faces1_3D.ds/SPM_CTF_MEG_example_faces1_3D.meg4:
+    System clock channel is available, checking which samples are valid.
+    1 x 324474 = 324474 samples from 340 chs
+Current compensation grade : 3
+Reading 0 ... 324473  =      0.000 ...   675.985 secs...
+Trigger channel UPPT002 has a non-zero initial value of {initial_value} (consider using initial_event=True to detect this event)
+172 events found on stim channel UPPT002
+Event IDs: [255]
+172 events found on stim channel UPPT001
+Event IDs: [1 2 3]
+Trigger channel UPPT002 has a non-zero initial value of {initial_value} (consider using initial_event=True to detect this event)
+172 events found on stim channel UPPT002
+Event IDs: [255]
+172 events found on stim channel UPPT001
+Event IDs: [1 2 3]
+Filtering raw data in 1 contiguous segment
+Setting up high-pass filter at 1 Hz
 
-<span class="n">maps</span> <span class="o">=</span> <a href="../../generated/mne.make_field_map.html#mne.make_field_map" title="mne.make_field_map" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">make_field_map</span></a><span class="p">(</span>
-    <span class="n">evoked</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="n">trans_fname</span><span class="p">,</span> <span class="n">subject</span><span class="o">=</span><span class="s2">&quot;spm&quot;</span><span class="p">,</span> <span class="n">subjects_dir</span><span class="o">=</span><span class="n">subjects_dir</span><span class="p">,</span> <span class="n">n_jobs</span><span class="o">=</span><span class="kc">None</span>
+FIR filter parameters
+---------------------
+Designing a one-pass, zero-phase, non-causal highpass filter:
+- Windowed time-domain design (firwin) method
+- Hamming window with 0.0194 passband ripple and 53 dB stopband attenuation
+- Lower passband edge: 1.00
+- Lower transition bandwidth: 1.00 Hz (-6 dB cutoff frequency: 0.50 Hz)
+- Filter length: 331 samples (3.310 s)
+
+[Parallel(n_jobs=1)]: Done  17 tasks      | elapsed:    0.0s
+[Parallel(n_jobs=1)]: Done  71 tasks      | elapsed:    0.2s
+[Parallel(n_jobs=1)]: Done 161 tasks      | elapsed:    0.4s
+[Parallel(n_jobs=1)]: Done 287 tasks      | elapsed:    0.7s
+Fitting ICA to data using 274 channels (please be patient, this may take a while)
+Removing 5 compensators from info because not all compensation channels were picked.
+    Rejecting  epoch based on MAG : [&#39;MLT35-2908&#39;, &#39;MLT42-2908&#39;, &#39;MLT45-2908&#39;, &#39;MLT52-2908&#39;, &#39;MRT14-2908&#39;, &#39;MRT43-2908&#39;, &#39;MRT44-2908&#39;, &#39;MRT45-2908&#39;, &#39;MRT53-2908&#39;, &#39;MRT54-2908&#39;]
+Artifact detected in [19200, 19400]
+    Rejecting  epoch based on MAG : [&#39;MLT35-2908&#39;, &#39;MLT42-2908&#39;, &#39;MLT45-2908&#39;, &#39;MLT52-2908&#39;, &#39;MRT14-2908&#39;, &#39;MRT43-2908&#39;, &#39;MRT44-2908&#39;, &#39;MRT45-2908&#39;, &#39;MRT53-2908&#39;, &#39;MRT54-2908&#39;]
+Artifact detected in [19400, 19600]
+    Rejecting  epoch based on MAG : [&#39;MRT43-2908&#39;]
+Artifact detected in [19600, 19800]
+    Rejecting  epoch based on MAG : [&#39;MLT24-2908&#39;, &#39;MLT25-2908&#39;, &#39;MLT34-2908&#39;, &#39;MLT35-2908&#39;]
+Artifact detected in [67000, 67200]
+    Rejecting  epoch based on MAG : [&#39;MLF54-2908&#39;, &#39;MLO11-2908&#39;, &#39;MLO14-2908&#39;, &#39;MLP51-2908&#39;, &#39;MLP54-2908&#39;, &#39;MLT14-2908&#39;, &#39;MLT23-2908&#39;, &#39;MLT24-2908&#39;, &#39;MLT25-2908&#39;, &#39;MLT34-2908&#39;, &#39;MLT35-2908&#39;, &#39;MLT36-2908&#39;, &#39;MLT44-2908&#39;, &#39;MLT45-2908&#39;, &#39;MRO12-2908&#39;, &#39;MRO21-2908&#39;, &#39;MRO31-2908&#39;, &#39;MRO32-2908&#39;, &#39;MRO42-2908&#39;, &#39;MRO43-2908&#39;, &#39;MRP41-2908&#39;, &#39;MRP52-2908&#39;, &#39;MRP53-2908&#39;, &#39;MRT31-2908&#39;]
+Artifact detected in [67200, 67400]
+Selecting by explained variance: 25 components
+Fitting ICA took 2.3s.
+Using EOG channel: MRT31-2908
+EOG channel index for this subject is: [274]
+Filtering the data to remove DC offset to help distinguish blinks from saccades
+Selecting channel MRT31-2908 for blink detection
+Setting up band-pass filter from 1 - 10 Hz
+
+FIR filter parameters
+---------------------
+Designing a two-pass forward and reverse, zero-phase, non-causal bandpass filter:
+- Windowed frequency-domain design (firwin2) method
+- Hann window
+- Lower passband edge: 1.00
+- Lower transition bandwidth: 0.50 Hz (-12 dB cutoff frequency: 0.75 Hz)
+- Upper passband edge: 10.00 Hz
+- Upper transition bandwidth: 0.50 Hz (-12 dB cutoff frequency: 10.25 Hz)
+- Filter length: 1000 samples (10.000 s)
+
+Now detecting blinks and generating corresponding events
+Found 144 significant peaks
+Number of EOG events detected: 144
+Not setting metadata
+144 matching events found
+No baseline correction applied
+Using data from preloaded Raw for 144 events and 101 original time points ...
+    Rejecting  epoch based on MAG : [&#39;MLT35-2908&#39;, &#39;MLT42-2908&#39;, &#39;MLT45-2908&#39;, &#39;MLT52-2908&#39;, &#39;MRT14-2908&#39;, &#39;MRT43-2908&#39;, &#39;MRT44-2908&#39;, &#39;MRT45-2908&#39;, &#39;MRT53-2908&#39;, &#39;MRT54-2908&#39;]
+    Rejecting  epoch based on MAG : [&#39;MLT35-2908&#39;, &#39;MLT42-2908&#39;, &#39;MLT45-2908&#39;, &#39;MLT52-2908&#39;, &#39;MRT14-2908&#39;, &#39;MRT43-2908&#39;, &#39;MRT44-2908&#39;, &#39;MRT45-2908&#39;, &#39;MRT53-2908&#39;, &#39;MRT54-2908&#39;]
+    Rejecting  epoch based on MAG : [&#39;MLT24-2908&#39;, &#39;MLT35-2908&#39;]
+    Rejecting  epoch based on MAG : [&#39;MLT24-2908&#39;, &#39;MLT34-2908&#39;, &#39;MLT35-2908&#39;]
+    Rejecting  epoch based on MAG : [&#39;MLT14-2908&#39;, &#39;MLT24-2908&#39;, &#39;MLT25-2908&#39;, &#39;MLT34-2908&#39;, &#39;MLT35-2908&#39;, &#39;MLT44-2908&#39;]
+    Rejecting  epoch based on MAG : [&#39;MLT14-2908&#39;, &#39;MLT23-2908&#39;, &#39;MLT24-2908&#39;, &#39;MLT25-2908&#39;, &#39;MLT34-2908&#39;, &#39;MLT35-2908&#39;, &#39;MLT44-2908&#39;]
+    Rejecting  epoch based on MAG : [&#39;MLT14-2908&#39;, &#39;MLT23-2908&#39;, &#39;MLT24-2908&#39;, &#39;MLT25-2908&#39;, &#39;MLT34-2908&#39;, &#39;MLT35-2908&#39;, &#39;MLT44-2908&#39;, &#39;MLT45-2908&#39;, &#39;MRO42-2908&#39;, &#39;MRP52-2908&#39;]
+    Rejecting  epoch based on MAG : [&#39;MLT14-2908&#39;, &#39;MLT23-2908&#39;, &#39;MLT24-2908&#39;, &#39;MLT25-2908&#39;, &#39;MLT34-2908&#39;, &#39;MLT35-2908&#39;, &#39;MLT36-2908&#39;, &#39;MLT44-2908&#39;, &#39;MLT45-2908&#39;, &#39;MRO12-2908&#39;, &#39;MRO32-2908&#39;, &#39;MRO42-2908&#39;, &#39;MRO43-2908&#39;, &#39;MRP41-2908&#39;, &#39;MRP52-2908&#39;, &#39;MRP53-2908&#39;]
+    Rejecting  epoch based on MAG : [&#39;MLF54-2908&#39;, &#39;MLO11-2908&#39;, &#39;MLO14-2908&#39;, &#39;MLP51-2908&#39;, &#39;MLP54-2908&#39;, &#39;MLT14-2908&#39;, &#39;MLT23-2908&#39;, &#39;MLT24-2908&#39;, &#39;MLT25-2908&#39;, &#39;MLT34-2908&#39;, &#39;MLT35-2908&#39;, &#39;MLT36-2908&#39;, &#39;MLT44-2908&#39;, &#39;MLT45-2908&#39;, &#39;MRO12-2908&#39;, &#39;MRO21-2908&#39;, &#39;MRO32-2908&#39;, &#39;MRO43-2908&#39;, &#39;MRP41-2908&#39;, &#39;MRP52-2908&#39;, &#39;MRP53-2908&#39;, &#39;MRT31-2908&#39;]
+    Rejecting  epoch based on MAG : [&#39;MLF54-2908&#39;, &#39;MLO11-2908&#39;, &#39;MLO14-2908&#39;, &#39;MLP51-2908&#39;, &#39;MLP54-2908&#39;, &#39;MLT14-2908&#39;, &#39;MLT23-2908&#39;, &#39;MLT24-2908&#39;, &#39;MLT25-2908&#39;, &#39;MLT34-2908&#39;, &#39;MLT35-2908&#39;, &#39;MLT36-2908&#39;, &#39;MLT44-2908&#39;, &#39;MLT45-2908&#39;, &#39;MRO12-2908&#39;, &#39;MRO21-2908&#39;, &#39;MRO32-2908&#39;, &#39;MRO43-2908&#39;, &#39;MRP41-2908&#39;, &#39;MRP52-2908&#39;]
+    Rejecting  epoch based on MAG : [&#39;MLT14-2908&#39;, &#39;MLT24-2908&#39;, &#39;MLT25-2908&#39;, &#39;MRP41-2908&#39;]
+    Rejecting  epoch based on MAG : [&#39;MLT14-2908&#39;]
+13 bad epochs dropped
+Using EOG channel: MRT31-2908
+Applying ICA to Evoked instance
+    Transforming to ICA space (25 components)
+    Zeroing out 1 ICA component
+    Projecting back using 274 PCA components
+</pre></div>
+</div>
+<p>Epoch data and apply ICA.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">events</span></a> <span class="o">=</span> <a href="../../generated/mne.find_events.html#mne.find_events" title="mne.find_events" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">find_events</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">stim_channel</span><span class="o">=</span><span class="s2">&quot;UPPT001&quot;</span><span class="p">)</span>
+<a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">event_ids</span></a> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;faces&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span> <span class="s2">&quot;scrambled&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">}</span>
+<a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmin</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmax</span></a> <span class="o">=</span> <span class="o">-</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.6</span>
+<a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class"><span class="n">mne</span><span class="o">.</span><span class="n">Epochs</span></a><span class="p">(</span>
+    <span class="n">raw</span><span class="p">,</span>
+    <a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">events</span></a><span class="p">,</span>
+    <a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">event_ids</span></a><span class="p">,</span>
+    <a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmin</span></a><span class="p">,</span>
+    <a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmax</span></a><span class="p">,</span>
+    <span class="n">picks</span><span class="o">=</span><span class="s2">&quot;meg&quot;</span><span class="p">,</span>
+    <span class="n">baseline</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">preload</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">reject</span></a><span class="o">=</span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">reject</span></a><span class="p">,</span>
 <span class="p">)</span>
-
-<span class="n">evoked</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot_field</span><span class="p">(</span><span class="n">maps</span><span class="p">,</span> <span class="n">time</span><span class="o">=</span><span class="mf">0.170</span><span class="p">,</span> <span class="n">time_viewer</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="k">del</span> <span class="n">raw</span>
+<a href="../../generated/mne.preprocessing.ICA.html#mne.preprocessing.ICA.apply" title="mne.preprocessing.ICA.apply" class="sphx-glr-backref-module-mne-preprocessing sphx-glr-backref-type-py-method"><span class="n">ica</span><span class="o">.</span><span class="n">apply</span></a><span class="p">(</span><a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a><span class="p">)</span>  <span class="c1"># clean data, default in place</span>
+<a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">evoked</span></a> <span class="o">=</span> <span class="p">[</span><a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a><span class="p">[</span><span class="n">k</span><span class="p">]</span><span class="o">.</span><span class="n">average</span><span class="p">()</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">event_ids</span></a><span class="p">]</span>
+<a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="mne.EvokedArray" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">contrast</span></a> <span class="o">=</span> <a href="../../generated/mne.combine_evoked.html#mne.combine_evoked" title="mne.combine_evoked" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-function"><span class="n">combine_evoked</span></a><span class="p">(</span><a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">evoked</span></a><span class="p">,</span> <span class="n">weights</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">,</span> <span class="mi">1</span><span class="p">])</span>  <span class="c1"># Faces - scrambled</span>
+<a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">evoked</span></a><span class="o">.</span><span class="n">append</span><span class="p">(</span><a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="mne.EvokedArray" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">contrast</span></a><span class="p">)</span>
+<span class="k">for</span> <a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="mne.EvokedArray" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">e</span></a> <span class="ow">in</span> <a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">evoked</span></a><span class="p">:</span>
+    <a href="../../generated/mne.EvokedArray.html#mne.EvokedArray.plot" title="mne.EvokedArray.plot" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">e</span><span class="o">.</span><span class="n">plot</span></a><span class="p">(</span><span class="n">ylim</span><span class="o">=</span><span class="nb">dict</span><span class="p">(</span><span class="n">mag</span><span class="o">=</span><span class="p">[</span><span class="o">-</span><span class="mi">400</span><span class="p">,</span> <span class="mi">400</span><span class="p">]))</span>
 </pre></div>
 </div>
-<p>Look at the whitened evoked daat</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">evoked</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot_white</span><span class="p">(</span><span class="n">noise_cov</span><span class="p">)</span>
+<ul class="sphx-glr-horizontal">
+<li><img src="../../_images/sphx_glr_spm_faces_dataset_004.png" srcset="../../_images/sphx_glr_spm_faces_dataset_004.png" alt="Magnetometers (274 channels)" class = "sphx-glr-multi-img"/></li>
+<li><img src="../../_images/sphx_glr_spm_faces_dataset_005.png" srcset="../../_images/sphx_glr_spm_faces_dataset_005.png" alt="Magnetometers (274 channels)" class = "sphx-glr-multi-img"/></li>
+<li><img src="../../_images/sphx_glr_spm_faces_dataset_006.png" srcset="../../_images/sphx_glr_spm_faces_dataset_006.png" alt="Magnetometers (274 channels)" class = "sphx-glr-multi-img"/></li>
+</ul>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>172 events found on stim channel UPPT001
+Event IDs: [1 2 3]
+Not setting metadata
+168 matching events found
+No baseline correction applied
+0 projection items activated
+Using data from preloaded Raw for 168 events and 81 original time points ...
+    Rejecting  epoch based on MAG : [&#39;MLT35-2908&#39;, &#39;MLT42-2908&#39;, &#39;MLT45-2908&#39;, &#39;MLT52-2908&#39;, &#39;MRT14-2908&#39;, &#39;MRT43-2908&#39;, &#39;MRT44-2908&#39;, &#39;MRT45-2908&#39;, &#39;MRT53-2908&#39;, &#39;MRT54-2908&#39;]
+1 bad epochs dropped
+Applying ICA to Epochs instance
+    Transforming to ICA space (25 components)
+    Zeroing out 1 ICA component
+    Projecting back using 274 PCA components
+Removing 5 compensators from info because not all compensation channels were picked.
+Removing 5 compensators from info because not all compensation channels were picked.
+Removing 5 compensators from info because not all compensation channels were picked.
+Removing 5 compensators from info because not all compensation channels were picked.
+Removing 5 compensators from info because not all compensation channels were picked.
+Removing 5 compensators from info because not all compensation channels were picked.
+Removing 5 compensators from info because not all compensation channels were picked.
+Removing 5 compensators from info because not all compensation channels were picked.
+Removing 5 compensators from info because not all compensation channels were picked.
+</pre></div>
+</div>
+<p>Estimate noise covariance and look at the whitened evoked data</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><a href="../../generated/mne.Covariance.html#mne.Covariance" title="mne.Covariance" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">noise_cov</span></a> <span class="o">=</span> <a href="../../generated/mne.compute_covariance.html#mne.compute_covariance" title="mne.compute_covariance" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">compute_covariance</span></a><span class="p">(</span><a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmax</span></a><span class="o">=</span><span class="mi">0</span><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;shrunk&quot;</span><span class="p">,</span> <span class="n">rank</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">evoked</span></a><span class="p">[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">plot_white</span><span class="p">(</span><a href="../../generated/mne.Covariance.html#mne.Covariance" title="mne.Covariance" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">noise_cov</span></a><span class="p">)</span>
+</pre></div>
+</div>
+<img src="../../_images/sphx_glr_spm_faces_dataset_007.png" srcset="../../_images/sphx_glr_spm_faces_dataset_007.png" alt="Magnetometers (274 channels), Whitened GFP, method = "shrunk"" class = "sphx-glr-single-img"/><div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Removing 5 compensators from info because not all compensation channels were picked.
+Computing rank from data with rank=None
+    Using tolerance 3.7e-09 (2.2e-16 eps * 274 dim * 6e+04  max singular value)
+    Estimated rank (mag): 274
+    MAG: rank 274 computed from 274 data channels with 0 projectors
+Reducing data rank from 274 -&gt; 274
+Estimating covariance using SHRUNK
+Done.
+Number of samples used : 3507
+[done]
+NOTE: pick_types() is a legacy function. New code should use inst.pick(...).
+Removing 5 compensators from info because not all compensation channels were picked.
+Computing rank from covariance with rank=None
+    Using tolerance 6.2e-14 (2.2e-16 eps * 274 dim * 1  max singular value)
+    Estimated rank (mag): 274
+    MAG: rank 274 computed from 274 data channels with 0 projectors
+Computing rank from covariance with rank={&#39;mag&#39;: 274}
+    Setting small MAG eigenvalues to zero (without PCA)
+    Created the whitener using a noise covariance matrix with rank 274 (0 small eigenvalues omitted)
 </pre></div>
 </div>
 <p>Compute forward model</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">src</span> <span class="o">=</span> <span class="n">subjects_dir</span> <span class="o">/</span> <span class="s2">&quot;spm&quot;</span> <span class="o">/</span> <span class="s2">&quot;bem&quot;</span> <span class="o">/</span> <span class="s2">&quot;spm-oct-6-src.fif&quot;</span>
-<span class="n">bem</span> <span class="o">=</span> <span class="n">subjects_dir</span> <span class="o">/</span> <span class="s2">&quot;spm&quot;</span> <span class="o">/</span> <span class="s2">&quot;bem&quot;</span> <span class="o">/</span> <span class="s2">&quot;spm-5120-5120-5120-bem-sol.fif&quot;</span>
-<span class="n">forward</span> <span class="o">=</span> <a href="../../generated/mne.make_forward_solution.html#mne.make_forward_solution" title="mne.make_forward_solution" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">make_forward_solution</span></a><span class="p">(</span><span class="n">contrast</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">trans_fname</span><span class="p">,</span> <span class="n">src</span><span class="p">,</span> <span class="n">bem</span><span class="p">)</span>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><a href="https://docs.python.org/3/library/pathlib.html#pathlib.PosixPath" title="pathlib.PosixPath" class="sphx-glr-backref-module-pathlib sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">trans_fname</span></a> <span class="o">=</span> <a href="https://docs.python.org/3/library/pathlib.html#pathlib.PosixPath" title="pathlib.PosixPath" class="sphx-glr-backref-module-pathlib sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">spm_path</span></a> <span class="o">/</span> <span class="s2">&quot;SPM_CTF_MEG_example_faces1_3D_raw-trans.fif&quot;</span>
+<a href="https://docs.python.org/3/library/pathlib.html#pathlib.PosixPath" title="pathlib.PosixPath" class="sphx-glr-backref-module-pathlib sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">src</span></a> <span class="o">=</span> <a href="https://docs.python.org/3/library/pathlib.html#pathlib.PosixPath" title="pathlib.PosixPath" class="sphx-glr-backref-module-pathlib sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">subjects_dir</span></a> <span class="o">/</span> <span class="s2">&quot;spm&quot;</span> <span class="o">/</span> <span class="s2">&quot;bem&quot;</span> <span class="o">/</span> <span class="s2">&quot;spm-oct-6-src.fif&quot;</span>
+<a href="https://docs.python.org/3/library/pathlib.html#pathlib.PosixPath" title="pathlib.PosixPath" class="sphx-glr-backref-module-pathlib sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">bem</span></a> <span class="o">=</span> <a href="https://docs.python.org/3/library/pathlib.html#pathlib.PosixPath" title="pathlib.PosixPath" class="sphx-glr-backref-module-pathlib sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">subjects_dir</span></a> <span class="o">/</span> <span class="s2">&quot;spm&quot;</span> <span class="o">/</span> <span class="s2">&quot;bem&quot;</span> <span class="o">/</span> <span class="s2">&quot;spm-5120-5120-5120-bem-sol.fif&quot;</span>
+<a href="../../generated/mne.Forward.html#mne.Forward" title="mne.Forward" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">forward</span></a> <span class="o">=</span> <a href="../../generated/mne.make_forward_solution.html#mne.make_forward_solution" title="mne.make_forward_solution" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">make_forward_solution</span></a><span class="p">(</span><a href="../../generated/mne.Info.html#mne.Info" title="mne.Info" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">contrast</span><span class="o">.</span><span class="n">info</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/pathlib.html#pathlib.PosixPath" title="pathlib.PosixPath" class="sphx-glr-backref-module-pathlib sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">trans_fname</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/pathlib.html#pathlib.PosixPath" title="pathlib.PosixPath" class="sphx-glr-backref-module-pathlib sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">src</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/pathlib.html#pathlib.PosixPath" title="pathlib.PosixPath" class="sphx-glr-backref-module-pathlib sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">bem</span></a><span class="p">)</span>
 </pre></div>
 </div>
-<p>Compute inverse solution</p>
-<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="n">snr</span> <span class="o">=</span> <span class="mf">3.0</span>
-<span class="n">lambda2</span> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <span class="n">snr</span><span class="o">**</span><span class="mi">2</span>
-<span class="n">method</span> <span class="o">=</span> <span class="s2">&quot;dSPM&quot;</span>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Source space          : /home/circleci/mne_data/MNE-spm-face/subjects/spm/bem/spm-oct-6-src.fif
+MRI -&gt; head transform : /home/circleci/mne_data/MNE-spm-face/MEG/spm/SPM_CTF_MEG_example_faces1_3D_raw-trans.fif
+Measurement data      : instance of Info
+Conductor model   : /home/circleci/mne_data/MNE-spm-face/subjects/spm/bem/spm-5120-5120-5120-bem-sol.fif
+Accurate field computations
+Do computations in head coordinates
+Free source orientations
 
-<span class="n">inverse_operator</span> <span class="o">=</span> <a href="../../generated/mne.minimum_norm.make_inverse_operator.html#mne.minimum_norm.make_inverse_operator" title="mne.minimum_norm.make_inverse_operator" class="sphx-glr-backref-module-mne-minimum_norm sphx-glr-backref-type-py-function"><span class="n">make_inverse_operator</span></a><span class="p">(</span>
-    <span class="n">contrast</span><span class="o">.</span><span class="n">info</span><span class="p">,</span> <span class="n">forward</span><span class="p">,</span> <span class="n">noise_cov</span><span class="p">,</span> <span class="n">loose</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span> <span class="n">depth</span><span class="o">=</span><span class="mf">0.8</span>
-<span class="p">)</span>
+Reading /home/circleci/mne_data/MNE-spm-face/subjects/spm/bem/spm-oct-6-src.fif...
+Read 2 source spaces a total of 8196 active source locations
 
-<span class="c1"># Compute inverse solution on contrast</span>
-<span class="n">stc</span> <span class="o">=</span> <a href="../../generated/mne.minimum_norm.apply_inverse.html#mne.minimum_norm.apply_inverse" title="mne.minimum_norm.apply_inverse" class="sphx-glr-backref-module-mne-minimum_norm sphx-glr-backref-type-py-function"><span class="n">apply_inverse</span></a><span class="p">(</span><span class="n">contrast</span><span class="p">,</span> <span class="n">inverse_operator</span><span class="p">,</span> <span class="n">lambda2</span><span class="p">,</span> <span class="n">method</span><span class="p">,</span> <span class="n">pick_ori</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
-<span class="c1"># stc.save(&#39;spm_%s_dSPM_inverse&#39; % contrast.comment)</span>
+Coordinate transformation: MRI (surface RAS) -&gt; head
+     0.999622  0.006802  0.026647      -2.80 mm
+    -0.014131  0.958276  0.285497       6.72 mm
+    -0.023593 -0.285765  0.958009       9.43 mm
+     0.000000  0.000000  0.000000       1.00
 
-<span class="c1"># Plot contrast in 3D with mne.viz.Brain if available</span>
-<span class="n">brain</span> <span class="o">=</span> <span class="n">stc</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span>
+Read 303 MEG channels from info
+Read 29 MEG compensation channels from info
+5 compensation data sets in info
+Setting up compensation data...
+    Desired compensation data (3) found.
+    All compensation channels found.
+    Preselector created.
+    Compensation data matrix created.
+    Postselector created.
+105 coil definitions read
+Coordinate transformation: MEG device -&gt; head
+     0.997940 -0.049681 -0.040594      -1.35 mm
+     0.054745  0.989330  0.135013      -0.41 mm
+     0.033453 -0.136957  0.990012      65.80 mm
+     0.000000  0.000000  0.000000       1.00
+MEG coil definitions created in head coordinates.
+Removing 5 compensators from info because not all compensation channels were picked.
+Source spaces are now in head coordinates.
+
+Setting up the BEM model using /home/circleci/mne_data/MNE-spm-face/subjects/spm/bem/spm-5120-5120-5120-bem-sol.fif...
+
+Loading surfaces...
+
+Loading the solution matrix...
+
+Three-layer model surfaces loaded.
+Loaded linear collocation BEM solution from /home/circleci/mne_data/MNE-spm-face/subjects/spm/bem/spm-5120-5120-5120-bem-sol.fif
+Employing the head-&gt;MRI coordinate transform with the BEM model.
+BEM model spm-5120-5120-5120-bem-sol.fif is now set up
+
+Source spaces are in head coordinates.
+Checking that the sources are inside the surface (will take a few...)
+Checking surface interior status for 4098 points...
+    Found 1659/4098 points inside  an interior sphere of radius   52.6 mm
+    Found    0/4098 points outside an exterior sphere of radius  100.0 mm
+    Found    0/2439 points outside using surface Qhull
+    Found    0/2439 points outside using solid angles
+    Total 4098/4098 points inside the surface
+Interior check completed in 1226.6 ms
+Checking surface interior status for 4098 points...
+    Found 1713/4098 points inside  an interior sphere of radius   52.6 mm
+    Found    0/4098 points outside an exterior sphere of radius  100.0 mm
+    Found    0/2385 points outside using surface Qhull
+    Found    0/2385 points outside using solid angles
+    Total 4098/4098 points inside the surface
+Interior check completed in 1281.4 ms
+
+Checking surface interior status for 303 points...
+    Found   0/303 points inside  an interior sphere of radius   74.7 mm
+    Found  29/303 points outside an exterior sphere of radius  158.6 mm
+    Found 274/274 points outside using surface Qhull
+    Found   0/  0 points outside using solid angles
+    Total 0/303 points inside the surface
+Interior check completed in 43.4 ms
+
+Composing the field computation matrix...
+Computing MEG at 8196 source locations (free orientations)...
+
+Finished.
+</pre></div>
+</div>
+<p>Compute inverse solution and plot</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">snr</span></a> <span class="o">=</span> <span class="mf">3.0</span>
+<a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">lambda2</span></a> <span class="o">=</span> <span class="mf">1.0</span> <span class="o">/</span> <a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">snr</span></a><span class="o">**</span><span class="mi">2</span>
+<a href="../../generated/mne.minimum_norm.InverseOperator.html#mne.minimum_norm.InverseOperator" title="mne.minimum_norm.InverseOperator" class="sphx-glr-backref-module-mne-minimum_norm sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">inverse_operator</span></a> <span class="o">=</span> <a href="../../generated/mne.minimum_norm.make_inverse_operator.html#mne.minimum_norm.make_inverse_operator" title="mne.minimum_norm.make_inverse_operator" class="sphx-glr-backref-module-mne-minimum_norm sphx-glr-backref-type-py-function"><span class="n">make_inverse_operator</span></a><span class="p">(</span><a href="../../generated/mne.Info.html#mne.Info" title="mne.Info" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">contrast</span><span class="o">.</span><span class="n">info</span></a><span class="p">,</span> <a href="../../generated/mne.Forward.html#mne.Forward" title="mne.Forward" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">forward</span></a><span class="p">,</span> <a href="../../generated/mne.Covariance.html#mne.Covariance" title="mne.Covariance" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">noise_cov</span></a><span class="p">)</span>
+<a href="../../generated/mne.SourceEstimate.html#mne.SourceEstimate" title="mne.SourceEstimate" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">stc</span></a> <span class="o">=</span> <a href="../../generated/mne.minimum_norm.apply_inverse.html#mne.minimum_norm.apply_inverse" title="mne.minimum_norm.apply_inverse" class="sphx-glr-backref-module-mne-minimum_norm sphx-glr-backref-type-py-function"><span class="n">apply_inverse</span></a><span class="p">(</span><a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="mne.EvokedArray" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">contrast</span></a><span class="p">,</span> <a href="../../generated/mne.minimum_norm.InverseOperator.html#mne.minimum_norm.InverseOperator" title="mne.minimum_norm.InverseOperator" class="sphx-glr-backref-module-mne-minimum_norm sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">inverse_operator</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">lambda2</span></a><span class="p">,</span> <span class="n">method</span><span class="o">=</span><span class="s2">&quot;dSPM&quot;</span><span class="p">,</span> <span class="n">pick_ori</span><span class="o">=</span><span class="kc">None</span><span class="p">)</span>
+<a href="../../generated/mne.viz.Brain.html#mne.viz.Brain" title="mne.viz.Brain" class="sphx-glr-backref-module-mne-viz sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">brain</span></a> <span class="o">=</span> <a href="../../generated/mne.SourceEstimate.html#mne.SourceEstimate.plot" title="mne.SourceEstimate.plot" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">stc</span><span class="o">.</span><span class="n">plot</span></a><span class="p">(</span>
     <span class="n">hemi</span><span class="o">=</span><span class="s2">&quot;both&quot;</span><span class="p">,</span>
-    <span class="n">subjects_dir</span><span class="o">=</span><span class="n">subjects_dir</span><span class="p">,</span>
+    <a href="https://docs.python.org/3/library/pathlib.html#pathlib.PosixPath" title="pathlib.PosixPath" class="sphx-glr-backref-module-pathlib sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">subjects_dir</span></a><span class="o">=</span><a href="https://docs.python.org/3/library/pathlib.html#pathlib.PosixPath" title="pathlib.PosixPath" class="sphx-glr-backref-module-pathlib sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">subjects_dir</span></a><span class="p">,</span>
     <span class="n">initial_time</span><span class="o">=</span><span class="mf">0.170</span><span class="p">,</span>
     <span class="n">views</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;ven&quot;</span><span class="p">],</span>
     <span class="n">clim</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;kind&quot;</span><span class="p">:</span> <span class="s2">&quot;value&quot;</span><span class="p">,</span> <span class="s2">&quot;lims&quot;</span><span class="p">:</span> <span class="p">[</span><span class="mf">3.0</span><span class="p">,</span> <span class="mf">6.0</span><span class="p">,</span> <span class="mf">9.0</span><span class="p">]},</span>
 <span class="p">)</span>
-<span class="c1"># brain.save_image(&#39;dSPM_map.png&#39;)</span>
 </pre></div>
 </div>
-<p><strong>Estimated memory usage:</strong>  0 MB</p>
-<div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-datasets-spm-faces-dataset-sgskip-py">
+<img src="../../_images/sphx_glr_spm_faces_dataset_008.png" srcset="../../_images/sphx_glr_spm_faces_dataset_008.png" alt="spm faces dataset" class = "sphx-glr-single-img"/><div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Converting forward solution to surface orientation
+    Average patch normals will be employed in the rotation to the local surface coordinates....
+    Converting to surface-based source orientations...
+    [done]
+Computing inverse operator with 274 channels.
+    274 out of 274 channels remain after picking
+Removing 5 compensators from info because not all compensation channels were picked.
+Selected 274 channels
+Creating the depth weighting matrix...
+    274 magnetometer or axial gradiometer channels
+    limit = 8109/8196 = 10.042069
+    scale = 4.04483e-11 exp = 0.8
+Applying loose dipole orientations to surface source spaces: 0.2
+Whitening the forward solution.
+Removing 5 compensators from info because not all compensation channels were picked.
+Computing rank from covariance with rank=None
+    Using tolerance 6.2e-14 (2.2e-16 eps * 274 dim * 1  max singular value)
+    Estimated rank (mag): 274
+    MAG: rank 274 computed from 274 data channels with 0 projectors
+    Setting small MAG eigenvalues to zero (without PCA)
+Creating the source covariance matrix
+Adjusting source covariance matrix.
+Computing SVD of whitened and weighted lead field matrix.
+    largest singular value = 12.9662
+    scaling factor to adjust the trace = 2.48756e+19 (nchan = 274 nzero = 0)
+Removing 5 compensators from info because not all compensation channels were picked.
+Preparing the inverse operator for use...
+    Scaled noise and source covariance from nave = 1 to nave = 41
+    Created the regularized inverter
+    The projection vectors do not apply to these channels.
+    Created the whitener using a noise covariance matrix with rank 274 (0 small eigenvalues omitted)
+    Computing noise-normalization factors (dSPM)...
+[done]
+Applying inverse operator to &quot;-faces + scrambled&quot;...
+    Picked 274 channels from the data
+    Computing inverse...
+    Eigenleads need to be weighted ...
+    Computing residual...
+    Explained  48.3% variance
+    Combining the current components...
+    dSPM...
+[done]
+</pre></div>
+</div>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 57.158 seconds)</p>
+<p><strong>Estimated memory usage:</strong>  2105 MB</p>
+<div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-datasets-spm-faces-dataset-py">
 <div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
-<p><a class="reference download internal" download="" href="../../_downloads/5ac2a3ff8baa6aba4bf6dd1d047703e2/spm_faces_dataset_sgskip.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">spm_faces_dataset_sgskip.ipynb</span></code></a></p>
+<p><a class="reference download internal" download="" href="../../_downloads/2ef14e30f2307383fca298e63d57a535/spm_faces_dataset.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">spm_faces_dataset.ipynb</span></code></a></p>
 </div>
 <div class="sphx-glr-download sphx-glr-download-python docutils container">
-<p><a class="reference download internal" download="" href="../../_downloads/b44ad6c462a6840ee586cf7cce9e6efb/spm_faces_dataset_sgskip.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">spm_faces_dataset_sgskip.py</span></code></a></p>
+<p><a class="reference download internal" download="" href="../../_downloads/e5b6fe98fe07a113ab155e997b116e77/spm_faces_dataset.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">spm_faces_dataset.py</span></code></a></p>
 </div>
 </div>
 <p class="sphx-glr-signature"><a class="reference external" href="https://sphinx-gallery.github.io">Gallery generated by Sphinx-Gallery</a></p>
@@ -1019,7 +1244,7 @@ fast machine it can take several minutes to complete.</p>
   <div class="sidebar-secondary-item">
   
   <div class="tocsection editthispage">
-    <a href="https://github.com/mne-tools/mne-python/edit/main/doc/auto_examples/datasets/spm_faces_dataset_sgskip.rst">
+    <a href="https://github.com/mne-tools/mne-python/edit/main/doc/auto_examples/datasets/spm_faces_dataset.rst">
       <i class="fa-solid fa-pencil"></i>
       
       
@@ -1054,7 +1279,7 @@ fast machine it can take several minutes to complete.</p>
   
     <div class="footer-items__start">
       
-        <div class="footer-item"><p class="text-center text-muted small">&copy; Copyright 2012–2023, MNE Developers. Last updated <time datetime="2023-12-05T06:26:10.651792+00:00" class="localized">2023-12-05 06:26 UTC</time>
+        <div class="footer-item"><p class="text-center text-muted small">&copy; Copyright 2012–2023, MNE Developers. Last updated <time datetime="2023-12-07T06:27:52.681028+00:00" class="localized">2023-12-07 06:27 UTC</time>
 <script type="text/javascript">$(function () { $("time.localized").each(function () { var el = $(this); el.text(new Date(el.attr("datetime")).toLocaleString([], {dateStyle: "medium", timeStyle: "long"})); }); } )</script></p></div>
       
     </div>
