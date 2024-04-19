@@ -26,6 +26,7 @@ Preprocessing
 #          Eric Larson <larson.eric.d@gmail.com>
 #
 # License: BSD-3-Clause
+# Copyright the MNE-Python contributors.
 
 # %%
 
@@ -84,7 +85,6 @@ for kind in kinds:
         .plot(picks="data", exclude="bads")
     )
     fig.suptitle(titles[kind])
-    fig.subplots_adjust(0.1, 0.1, 0.95, 0.85)
 
 ##############################################################################
 # Alignment and forward

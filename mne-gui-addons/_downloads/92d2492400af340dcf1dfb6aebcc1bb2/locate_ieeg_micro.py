@@ -58,18 +58,20 @@ head_ct_t = mne.transforms.invert_transform(mne.channels.compute_native_head_t(m
 # launch the viewer with only the CT (note, we won't be able to use
 # the MR in this case to help determine which brain area the contact is
 # in), and use the user interface to find the locations of the contacts
-gui = mne_gui.locate_ieeg(raw.info, head_ct_t, CT_orig)
+gui = mne_gui.locate_ieeg(
+    raw.info, head_ct_t, CT_orig, subject="sample_seeg", subjects_dir=subjects_dir
+)
 
 # we'll programmatically mark all the contacts on one electrode shaft
 for i, pos in enumerate(
     [
-        (-52.66, -40.84, -26.99),
-        (-55.47, -38.03, -27.92),
-        (-57.68, -36.27, -28.85),
-        (-59.89, -33.81, -29.32),
-        (-62.57, -31.35, -30.37),
-        (-65.13, -29.07, -31.30),
-        (-67.57, -26.26, -31.88),
+        (-158.90, -78.84, -119.97),
+        (-161.71, -77.91, -117.16),
+        (-163.92, -76.98, -115.40),
+        (-166.13, -76.51, -112.94),
+        (-168.81, -75.46, -110.49),
+        (-171.37, -74.53, -108.20),
+        (-173.81, -73.95, -105.40),
     ]
 ):
     gui.set_RAS(pos)

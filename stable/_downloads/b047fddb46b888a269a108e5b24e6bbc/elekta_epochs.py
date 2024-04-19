@@ -11,12 +11,14 @@ Extract and average epochs accordingly. Modify some averaging parameters and get
 # Author: Jussi Nurminen (jnu@iki.fi)
 #
 # License: BSD-3-Clause
+# Copyright the MNE-Python contributors.
 
 # %%
 
 
-import mne
 import os
+
+import mne
 from mne.datasets import multimodal
 
 fname_raw = os.path.join(multimodal.data_path(), "multimodal_raw.fif")

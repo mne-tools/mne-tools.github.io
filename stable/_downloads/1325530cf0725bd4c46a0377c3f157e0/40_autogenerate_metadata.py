@@ -42,10 +42,14 @@ We will also convert the `~mne.Annotations` contained in this dataset to events
 by calling `mne.events_from_annotations`.
 """
 
+# License: BSD-3-Clause
+# Copyright the MNE-Python contributors.
 # %%
 
 from pathlib import Path
+
 import matplotlib.pyplot as plt
+
 import mne
 
 data_dir = Path(mne.datasets.erp_core.data_path())
