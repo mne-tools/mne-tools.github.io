@@ -18,8 +18,10 @@ repeatedly typing ``mne.preprocessing`` we'll directly import a few functions
 and classes from that submodule:
 """
 
+# Authors: The MNE-Python contributors.
 # License: BSD-3-Clause
 # Copyright the MNE-Python contributors.
+
 # %%
 
 import os
@@ -275,9 +277,7 @@ ica
 
 explained_var_ratio = ica.get_explained_variance_ratio(filt_raw)
 for channel_type, ratio in explained_var_ratio.items():
-    print(
-        f"Fraction of {channel_type} variance explained by all components: " f"{ratio}"
-    )
+    print(f"Fraction of {channel_type} variance explained by all components: {ratio}")
 
 # %%
 # The values were calculated for all ICA components jointly, but separately for

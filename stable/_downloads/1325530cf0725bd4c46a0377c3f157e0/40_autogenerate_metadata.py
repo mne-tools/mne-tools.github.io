@@ -42,8 +42,10 @@ We will also convert the `~mne.Annotations` contained in this dataset to events
 by calling `mne.events_from_annotations`.
 """
 
+# Authors: The MNE-Python contributors.
 # License: BSD-3-Clause
 # Copyright the MNE-Python contributors.
+
 # %%
 
 import matplotlib.pyplot as plt
@@ -304,7 +306,7 @@ epochs = mne.Epochs(
 # responses and a response time greater than 0.5 seconds
 # (i.e., slow responses).
 vis_erp = epochs["response_correct"].average()
-vis_erp_slow = epochs["(not response_correct) & " "(response > 0.3)"].average()
+vis_erp_slow = epochs["(not response_correct) & (response > 0.3)"].average()
 
 fig, ax = plt.subplots(2, figsize=(6, 6), layout="constrained")
 vis_erp.plot(gfp=True, spatial_colors=True, axes=ax[0])
