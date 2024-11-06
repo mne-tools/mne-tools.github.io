@@ -1,5 +1,4 @@
-"""
-.. _ex-vol-stc-group:
+""".. _ex-vol-stc-group:
 
 ====================================================
 Volume Source Time Course Estimate for a Group Study
@@ -14,11 +13,13 @@ GUI to compare brain activity across subjects in a group study.
 # License: BSD-3-Clause
 
 import os.path as op
-import numpy as np
-import mne
-import mne_gui_addons as mne_gui
+
 import autoreject
+import mne
+import numpy as np
 from mne.time_frequency import csd_tfr
+
+import mne_gui_addons as mne_gui
 
 fs_dir = mne.datasets.fetch_fsaverage(verbose=True)
 subjects_dir = op.dirname(fs_dir)

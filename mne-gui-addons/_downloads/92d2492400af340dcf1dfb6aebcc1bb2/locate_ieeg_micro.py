@@ -1,5 +1,4 @@
-"""
-.. _ex-ieeg-micro:
+""".. _ex-ieeg-micro:
 
 ====================================================
 Locating micro-scale intracranial electrode contacts
@@ -16,9 +15,10 @@ shows how to do this.
 #
 # License: BSD-3-Clause
 
-import numpy as np
-import nibabel as nib
 import mne
+import nibabel as nib
+import numpy as np
+
 import mne_gui_addons as mne_gui
 
 # path to sample sEEG
