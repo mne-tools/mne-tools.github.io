@@ -1,5 +1,4 @@
-"""
-.. _tut-ieeg-localize:
+""".. _tut-ieeg-localize:
 
 ========================================
 Locating intracranial electrode contacts
@@ -33,17 +32,16 @@ MNE.
 # License: BSD-3-Clause
 
 # %%
-import numpy as np
 import matplotlib.pyplot as plt
-
+import mne
+import mne_bids
 import nibabel as nib
 import nilearn.plotting
+import numpy as np
 from dipy.align import resample
-
-import mne
-import mne_gui_addons as mne_gui
 from mne.datasets import fetch_fsaverage
-import mne_bids
+
+import mne_gui_addons as mne_gui
 
 # paths to mne datasets: sample sEEG and FreeSurfer's fsaverage subject,
 # which is in MNI space
