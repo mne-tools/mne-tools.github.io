@@ -49,7 +49,7 @@ insts_tfr = list()
 insts_epochs = list()
 for sub in range(1, 4):
     print(f"Computing source estimate for subject {sub}")
-    raw_fnames = mne.datasets.eegbci.load_data(subject=sub, runs=runs, update_path=True)
+    raw_fnames = mne.datasets.eegbci.load_data(subjects=[sub], runs=runs, update_path=True)
     raw = mne.concatenate_raws(
         [
             mne.io.read_raw(raw_fname, preload=True, verbose=False)
