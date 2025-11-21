@@ -1,0 +1,1495 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-content_root="../../" data-theme="auto">
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Reduce EOG artifacts through regression &#8212; MNE 1.10.2 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "auto";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "auto";
+  </script>
+  <!--
+    this give us a css class that will be invisible only if js is disabled
+  -->
+  <noscript>
+    <style>
+      .pst-js-only { display: none !important; }
+
+    </style>
+  </noscript>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=8878045cc6db502f8baf" rel="stylesheet" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=8f2a1f02" />
+    <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+    <link rel="stylesheet" type="text/css" href="../../_static/plot_directive.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery.css?v=d2d258e8" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-binder.css?v=f4aeca0c" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-dataframe.css?v=2082cf3c" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sphinx-design.min.css?v=95c83b7e" />
+    <link rel="stylesheet" type="text/css" href="../../_static/style.css?v=4c2284e1" />
+  
+  <!-- So that users can add custom icons -->
+  <script src="../../_static/scripts/fontawesome.js?digest=8878045cc6db502f8baf"></script>
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf" />
+
+    <script src="../../_static/documentation_options.js?v=bf2c35d7"></script>
+    <script src="../../_static/doctools.js?v=9bcbadda"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../_static/copybutton.js?v=fd10adb8"></script>
+    <script src="../../_static/design-tabs.js?v=f930bc37"></script>
+    <script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-5TBCPCRB6X"></script>
+    <script>
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){ dataLayer.push(arguments); }
+                gtag('js', new Date());
+                gtag('config', 'G-5TBCPCRB6X');
+            </script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'auto_examples/preprocessing/eog_regression';</script>
+    <script>
+        DOCUMENTATION_OPTIONS.theme_version = '0.16.1';
+        DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://mne.tools/dev/_static/versions.json';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '1.10';
+        DOCUMENTATION_OPTIONS.show_version_warning_banner =
+            false;
+        </script>
+    <script defer="defer" src="../../_static/js/custom-icons.js?v=8bbd8100"></script>
+    <link rel="icon" href="../../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Automated epochs metadata generation with variable time windows" href="epochs_metadata.html" />
+    <link rel="prev" title="Show EOG artifact timing" href="eog_artifact_histogram.html" />
+    <link rel="canonical" href="https://mne.tools/stable/auto_examples/preprocessing/eog_regression.html" />
+    
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+  <meta name="docsearch:version" content="1.10" />
+
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="auto">
+
+  
+  
+  <div id="pst-skip-link" class="skip-link d-print-none"><a href="#main-content">Skip to main content</a></div>
+  
+  <div id="pst-scroll-pixel-helper"></div>
+
+  
+  <dialog id="pst-search-dialog">
+    
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+  </dialog>
+
+  <div class="pst-async-banner-revealer d-none">
+  <aside id="bd-header-version-warning" class="d-none d-print-none" aria-label="Version warning"></aside>
+</div>
+
+  
+    <header class="bd-header navbar navbar-expand-lg bd-navbar d-print-none">
+<div class="bd-header__inner bd-page-width">
+  <button class="pst-navbar-icon sidebar-toggle primary-toggle" aria-label="Site navigation">
+    <span class="fa-solid fa-bars"></span>
+  </button>
+  
+  
+  <div class=" navbar-header-items__start">
+    
+      <div class="navbar-item">
+
+  
+    
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../_static/mne_logo_small.svg" class="logo__image only-light" alt="MNE 1.10.2 documentation - Home"/>
+    <img src="../../_static/mne_logo_small.svg" class="logo__image only-dark pst-js-only" alt="MNE 1.10.2 documentation - Home"/>
+  
+  
+</a></div>
+    
+  </div>
+  
+  <div class=" navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../install/index.html">
+    Install
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../../documentation/index.html">
+    Documentation
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../api/python_reference.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../help/index.html">
+    Get help
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../development/index.html">
+    Development
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+        </div>
+      
+      
+        <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+      
+        <div class="navbar-item">
+<div class="version-switcher__container dropdown pst-js-only">
+  <button id="pst-version-switcher-button-2"
+    type="button"
+    class="version-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-version-switcher-list-2"
+    aria-label="Version switcher list"
+  >
+    Choose version  <!-- this text may get changed later by javascript -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-version-switcher-list-2"
+    class="version-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-version-switcher-button-2">
+    <!-- dropdown will be populated by javascript on page load -->
+  </div>
+</div></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="External Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://discord.gg/rKfvxTuATa" title="Discord (office hours)" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-discord fa-fw fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Discord (office hours)</span></a>
+        </li>
+        <li class="nav-item">
+            
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://fosstodon.org/@mne" title="Mastodon" class="nav-link pst-navbar-icon" rel="me" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-mastodon fa-fw fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Mastodon</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://mne.discourse.group/" title="Q&A Forum" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-discourse fa-fw fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Q&A Forum</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/mne-tools/mne-python" title="Code Repository" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-fw fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Code Repository</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/sponsors/mne-tools" title="Sponsor us on GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-regular fa-heart fa-fw fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Sponsor us on GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://opencollective.com/mne-python" title="Donate via OpenCollective" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-custom fa-opencollective fa-fw fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Donate via OpenCollective</span></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+
+<button class="btn btn-sm pst-navbar-icon search-button search-button__button pst-js-only" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass fa-lg"></i>
+</button>
+    </div>
+  
+
+  
+    <button class="pst-navbar-icon sidebar-toggle secondary-toggle" aria-label="On this page">
+      <span class="fa-solid fa-outdent"></span>
+    </button>
+  
+</div>
+
+    </header>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      
+      
+      <dialog id="pst-primary-sidebar-modal"></dialog>
+      <div id="pst-primary-sidebar" class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          
+          
+            <div class="navbar-item">
+<nav>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../install/index.html">
+    Install
+  </a>
+</li>
+
+
+<li class="nav-item current active">
+  <a class="nav-link nav-internal" href="../../documentation/index.html">
+    Documentation
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../api/python_reference.html">
+    API Reference
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../help/index.html">
+    Get help
+  </a>
+</li>
+
+
+<li class="nav-item ">
+  <a class="nav-link nav-internal" href="../../development/index.html">
+    Development
+  </a>
+</li>
+
+  </ul>
+</nav></div>
+          
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+
+<button class="btn btn-sm nav-link pst-navbar-icon theme-switch-button pst-js-only" aria-label="Color mode" data-bs-title="Color mode"  data-bs-placement="bottom" data-bs-toggle="tooltip">
+  <i class="theme-switch fa-solid fa-sun                fa-lg" data-mode="light" title="Light"></i>
+  <i class="theme-switch fa-solid fa-moon               fa-lg" data-mode="dark"  title="Dark"></i>
+  <i class="theme-switch fa-solid fa-circle-half-stroke fa-lg" data-mode="auto"  title="System Settings"></i>
+</button></div>
+        
+          <div class="navbar-item">
+<div class="version-switcher__container dropdown pst-js-only">
+  <button id="pst-version-switcher-button-3"
+    type="button"
+    class="version-switcher__button btn btn-sm dropdown-toggle"
+    data-bs-toggle="dropdown"
+    aria-haspopup="listbox"
+    aria-controls="pst-version-switcher-list-3"
+    aria-label="Version switcher list"
+  >
+    Choose version  <!-- this text may get changed later by javascript -->
+    <span class="caret"></span>
+  </button>
+  <div id="pst-version-switcher-list-3"
+    class="version-switcher__menu dropdown-menu list-group-flush py-0"
+    role="listbox" aria-labelledby="pst-version-switcher-button-3">
+    <!-- dropdown will be populated by javascript on page load -->
+  </div>
+</div></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links"
+    aria-label="External Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://discord.gg/rKfvxTuATa" title="Discord (office hours)" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-discord fa-fw fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Discord (office hours)</span></a>
+        </li>
+        <li class="nav-item">
+            
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://fosstodon.org/@mne" title="Mastodon" class="nav-link pst-navbar-icon" rel="me" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-mastodon fa-fw fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Mastodon</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://mne.discourse.group/" title="Q&A Forum" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-discourse fa-fw fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Q&A Forum</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/mne-tools/mne-python" title="Code Repository" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-brands fa-github fa-fw fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Code Repository</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/sponsors/mne-tools" title="Sponsor us on GitHub" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-regular fa-heart fa-fw fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Sponsor us on GitHub</span></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://opencollective.com/mne-python" title="Donate via OpenCollective" class="nav-link pst-navbar-icon" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><i class="fa-custom fa-opencollective fa-fw fa-lg" aria-hidden="true"></i>
+            <span class="sr-only">Donate via OpenCollective</span></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item">
+<nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../auto_tutorials/index.html">Tutorials</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../auto_tutorials/intro/index.html">Introductory tutorials</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/intro/10_overview.html">Overview of MEG/EEG analysis with MNE-Python</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/intro/15_inplace.html">Modifying data in-place</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/intro/20_events_from_raw.html">Parsing events from raw data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/intro/30_info.html">The Info data structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/intro/40_sensor_locations.html">Working with sensor locations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/intro/50_configure_mne.html">Configuring MNE-Python</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/intro/70_report.html">Getting started with mne.Report</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../auto_tutorials/io/index.html">Reading data for different recording systems</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/io/10_reading_meg_data.html">Importing data from MEG devices</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/io/20_reading_eeg_data.html">Importing data from EEG devices</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/io/30_reading_fnirs_data.html">Importing data from fNIRS devices</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/io/60_ctf_bst_auditory.html">Working with CTF data: the Brainstorm auditory dataset</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/io/70_reading_eyetracking_data.html">Importing Data from Eyetracking devices</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../auto_tutorials/raw/index.html">Working with continuous data</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/raw/10_raw_overview.html">The Raw data structure: continuous data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/raw/20_event_arrays.html">Working with events</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/raw/30_annotate_raw.html">Annotating continuous data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/raw/40_visualize_raw.html">Built-in plotting methods for Raw objects</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../auto_tutorials/preprocessing/index.html">Preprocessing</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/preprocessing/10_preprocessing_overview.html">Overview of artifact detection</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/preprocessing/15_handling_bad_channels.html">Handling bad channels</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/preprocessing/20_rejecting_bad_data.html">Rejecting bad data spans and breaks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/preprocessing/25_background_filtering.html">Background information on filtering</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/preprocessing/30_filtering_resampling.html">Filtering and resampling data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/preprocessing/35_artifact_correction_regression.html">Repairing artifacts with regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/preprocessing/40_artifact_correction_ica.html">Repairing artifacts with ICA</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/preprocessing/45_projectors_background.html">Background on projectors and projections</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/preprocessing/50_artifact_correction_ssp.html">Repairing artifacts with SSP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/preprocessing/55_setting_eeg_reference.html">Setting the EEG reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/preprocessing/59_head_positions.html">Extracting and visualizing subject head movement</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/preprocessing/60_maxwell_filtering_sss.html">Signal-space separation (SSS) and Maxwell filtering</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/preprocessing/70_fnirs_processing.html">Preprocessing functional near-infrared spectroscopy (fNIRS) data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/preprocessing/80_opm_processing.html">Preprocessing optically pumped magnetometer (OPM) MEG data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/preprocessing/90_eyetracking_data.html">Working with eye tracker data in MNE-Python</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../auto_tutorials/epochs/index.html">Segmenting continuous data into epochs</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/epochs/10_epochs_overview.html">The Epochs data structure: discontinuous data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/epochs/15_baseline_regression.html">Regression-based baseline correction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/epochs/20_visualize_epochs.html">Visualizing epoched data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/epochs/30_epochs_metadata.html">Working with Epoch metadata</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/epochs/40_autogenerate_metadata.html">Auto-generating Epochs metadata</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/epochs/50_epochs_to_data_frame.html">Exporting Epochs to Pandas DataFrames</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/epochs/60_make_fixed_length_epochs.html">Divide continuous data into equally-spaced epochs</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../auto_tutorials/evoked/index.html">Estimating evoked responses</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/evoked/10_evoked_overview.html">The Evoked data structure: evoked/averaged data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/evoked/20_visualize_evoked.html">Visualizing Evoked data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/evoked/30_eeg_erp.html">EEG analysis - Event-Related Potentials (ERPs)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/evoked/40_whitened.html">Plotting whitened data</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../auto_tutorials/time-freq/index.html">Time-frequency analysis</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/time-freq/10_spectrum_class.html">The Spectrum and EpochsSpectrum classes: frequency-domain data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/time-freq/20_sensors_time_frequency.html">Frequency and time-frequency sensor analysis</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/time-freq/50_ssvep.html">Frequency-tagging: Basic analysis of an SSVEP/vSSR dataset</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../auto_tutorials/forward/index.html">Forward models and source spaces</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/forward/10_background_freesurfer.html">FreeSurfer MRI reconstruction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/forward/20_source_alignment.html">Source alignment and coordinate frames</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/forward/25_automated_coreg.html">Using an automated approach to coregistration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/forward/30_forward.html">Head model and forward computation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/forward/35_eeg_no_mri.html">EEG forward operator with a template MRI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/forward/50_background_freesurfer_mne.html">How MNE uses FreeSurfer’s outputs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/forward/80_fix_bem_in_blender.html">Fixing BEM and head surfaces</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/forward/90_compute_covariance.html">Computing a covariance matrix</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../auto_tutorials/inverse/index.html">Source localization and inverses</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/inverse/10_stc_class.html">The SourceEstimate data structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/inverse/20_dipole_fit.html">Source localization with equivalent current dipole (ECD) fit</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/inverse/30_mne_dspm_loreta.html">Source localization with MNE, dSPM, sLORETA, and eLORETA</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/inverse/35_dipole_orientations.html">The role of dipole orientations in distributed source localization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/inverse/40_mne_fixed_free.html">Computing various MNE solutions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/inverse/50_beamformer_lcmv.html">Source reconstruction using an LCMV beamformer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/inverse/60_visualize_stc.html">Visualize source time courses (stcs)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/inverse/70_eeg_mri_coords.html">EEG source localization given electrode locations on an MRI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/inverse/80_brainstorm_phantom_elekta.html">Brainstorm Elekta phantom dataset tutorial</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/inverse/85_brainstorm_phantom_ctf.html">Brainstorm CTF phantom dataset tutorial</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/inverse/90_phantom_4DBTi.html">4D Neuroimaging/BTi phantom dataset tutorial</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/inverse/95_phantom_KIT.html">KIT phantom dataset tutorial</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../auto_tutorials/stats-sensor-space/index.html">Statistical analysis of sensor data</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/stats-sensor-space/10_background_stats.html">Statistical inference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/stats-sensor-space/20_erp_stats.html">Visualising statistical significance thresholds on EEG data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/stats-sensor-space/40_cluster_1samp_time_freq.html">Non-parametric 1 sample cluster statistic on single trial power</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/stats-sensor-space/50_cluster_between_time_freq.html">Non-parametric between conditions cluster statistic on single trial power</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/stats-sensor-space/70_cluster_rmANOVA_time_freq.html">Mass-univariate twoway repeated measures ANOVA on single trial power</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/stats-sensor-space/75_cluster_ftest_spatiotemporal.html">Spatiotemporal permutation F-test on full sensor data</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../auto_tutorials/stats-source-space/index.html">Statistical analysis of source estimates</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/stats-source-space/20_cluster_1samp_spatiotemporal.html">Permutation t-test on source data with spatio-temporal clustering</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/stats-source-space/30_cluster_ftest_spatiotemporal.html">2 samples permutation test on source data with spatio-temporal clustering</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/stats-source-space/60_cluster_rmANOVA_spatiotemporal.html">Repeated measures ANOVA on source data with spatio-temporal clustering</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../auto_tutorials/machine-learning/index.html">Machine learning models of neural activity</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/machine-learning/30_strf.html">Spectro-temporal receptive field (STRF) estimation on continuous data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/machine-learning/50_decoding.html">Decoding (MVPA)</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../auto_tutorials/clinical/index.html">Clinical applications</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/clinical/20_seeg.html">Working with sEEG data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/clinical/30_ecog.html">Working with ECoG data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/clinical/60_sleep.html">Sleep stage classification from polysomnography (PSG) data</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../auto_tutorials/simulation/index.html">Simulation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/simulation/10_array_objs.html">Creating MNE-Python data structures from scratch</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/simulation/70_point_spread.html">Corrupt known signal with point spread</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/simulation/80_dics.html">DICS for power mapping</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../auto_tutorials/visualization/index.html">Visualization tutorials</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/visualization/10_publication_figure.html">Make figures more publication ready</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_tutorials/visualization/20_ui_events.html">Using the event system to link figures</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="../index.html">Examples</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l2 has-children"><a class="reference internal" href="../io/index.html">Input/Output</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../io/elekta_epochs.html">Getting averaging info from .fif files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../io/read_impedances.html">Getting impedances from raw files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../io/read_neo_format.html">How to use data in neural ensemble (NEO) format</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../io/read_noise_covariance_matrix.html">Reading/Writing a noise covariance matrix</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../io/read_xdf.html">Reading XDF EEG data</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../simulation/index.html">Data Simulation</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../simulation/plot_stc_metrics.html">Compare simulated and estimated source activity</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../simulation/simulate_evoked_data.html">Generate simulated evoked data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../simulation/simulate_raw_data.html">Generate simulated raw data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../simulation/simulated_raw_data_using_subject_anatomy.html">Simulate raw data using subject anatomy</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../simulation/source_simulator.html">Generate simulated source data</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 current active has-children"><a class="reference internal" href="index.html">Preprocessing</a><details open="open"><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="contralateral_referencing.html">Using contralateral referencing for EEG</a></li>
+<li class="toctree-l3"><a class="reference internal" href="css.html">Cortical Signal Suppression (CSS) for removal of cortical signals</a></li>
+<li class="toctree-l3"><a class="reference internal" href="define_target_events.html">Define target events based on time lag, plot evoked response</a></li>
+<li class="toctree-l3"><a class="reference internal" href="eeg_bridging.html">Identify EEG Electrodes Bridged by too much Gel</a></li>
+<li class="toctree-l3"><a class="reference internal" href="eeg_csd.html">Transform EEG data using current source density (CSD)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="eog_artifact_histogram.html">Show EOG artifact timing</a></li>
+<li class="toctree-l3 current active"><a class="current reference internal" href="#">Reduce EOG artifacts through regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="epochs_metadata.html">Automated epochs metadata generation with variable time windows</a></li>
+<li class="toctree-l3"><a class="reference internal" href="esg_rm_heart_artefact_pcaobs.html">Principal Component Analysis - Optimal Basis Sets (PCA-OBS) removing cardiac artefact</a></li>
+<li class="toctree-l3"><a class="reference internal" href="find_ref_artifacts.html">Find MEG reference channel artifacts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="fnirs_artifact_removal.html">Visualise NIRS artifact correction methods</a></li>
+<li class="toctree-l3"><a class="reference internal" href="ica_comparison.html">Compare the different ICA algorithms in MNE</a></li>
+<li class="toctree-l3"><a class="reference internal" href="interpolate_bad_channels.html">Interpolate bad channels for MEG/EEG channels</a></li>
+<li class="toctree-l3"><a class="reference internal" href="interpolate_to.html">Interpolate EEG data to any montage</a></li>
+<li class="toctree-l3"><a class="reference internal" href="movement_compensation.html">Maxwell filter data with movement compensation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="movement_detection.html">Annotate movement artifacts and reestimate dev_head_t</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muscle_detection.html">Annotate muscle artifacts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="muscle_ica.html">Removing muscle ICA components</a></li>
+<li class="toctree-l3"><a class="reference internal" href="otp.html">Plot sensor denoising using oversampled temporal projection</a></li>
+<li class="toctree-l3"><a class="reference internal" href="shift_evoked.html">Shifting time-scale in evoked data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="virtual_evoked.html">Remap MEG channel types</a></li>
+<li class="toctree-l3"><a class="reference internal" href="xdawn_denoising.html">XDAWN Denoising</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../visualization/index.html">Visualization</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../visualization/3d_to_2d.html">How to convert 3D electrode positions to a 2D image</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../visualization/brain.html">Plotting with <code class="docutils literal notranslate"><span class="pre">mne.viz.Brain</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../visualization/channel_epochs_image.html">Visualize channel over epochs as an image</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../visualization/eeg_on_scalp.html">Plotting EEG sensors on the scalp</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../visualization/evoked_arrowmap.html">Plotting topographic arrowmaps of evoked data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../visualization/evoked_topomap.html">Plotting topographic maps of evoked data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../visualization/evoked_whitening.html">Whitening evoked data with a noise covariance</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../visualization/eyetracking_plot_heatmap.html">Plotting eye-tracking heatmaps in MNE-Python</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../visualization/meg_sensors.html">Plotting sensor layouts of MEG systems</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../visualization/mne_helmet.html">Plot the MNE brain and helmet</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../visualization/montage_sgskip.html">Plotting sensor layouts of EEG systems</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../visualization/parcellation.html">Plot a cortical parcellation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../visualization/roi_erpimage_by_rt.html">Plot single trial activity, grouped by ROI and sorted by RT</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../visualization/ssp_projs_sensitivity_map.html">Sensitivity map of SSP projections</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../visualization/topo_compare_conditions.html">Compare evoked responses for different conditions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../visualization/topo_customized.html">Plot custom topographies for MEG sensors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../visualization/xhemi.html">Cross-hemisphere comparison</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../time_frequency/index.html">Time-Frequency Examples</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../time_frequency/compute_csd.html">Compute a cross-spectral density (CSD) matrix</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../time_frequency/compute_source_psd_epochs.html">Compute Power Spectral Density of inverse solution from single epochs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../time_frequency/source_label_time_frequency.html">Compute power and phase lock in label of the source space</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../time_frequency/source_power_spectrum.html">Compute source power spectral density (PSD) in a label</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../time_frequency/source_power_spectrum_opm.html">Compute source power spectral density (PSD) of VectorView and OPM data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../time_frequency/source_space_time_frequency.html">Compute induced power in the source space with dSPM</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../time_frequency/temporal_whitening.html">Temporal whitening with AR model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../time_frequency/time_frequency_erds.html">Compute and visualize ERDS maps</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../time_frequency/time_frequency_global_field_power.html">Explore event-related dynamics for specific frequency bands</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../time_frequency/time_frequency_simulated.html">Time-frequency on simulated data (Multitaper vs. Morlet vs. Stockwell vs. Hilbert)</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../stats/index.html">Statistics Examples</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../stats/cluster_stats_evoked.html">Permutation F-test on sensor data with 1D cluster level</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../stats/fdr_stats_evoked.html">FDR correction on T-test on sensor data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../stats/linear_regression_raw.html">Regression on continuous data (rER[P/F])</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../stats/sensor_permutation_test.html">Permutation T-test on sensor data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../stats/sensor_regression.html">Analysing continuous features with binning and regression in sensor space</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../decoding/index.html">Machine Learning (Decoding, Encoding, and MVPA)</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../decoding/decoding_csp_eeg.html">Motor imagery decoding from EEG data using the Common Spatial Pattern (CSP)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../decoding/decoding_csp_timefreq.html">Decoding in time-frequency space using Common Spatial Patterns (CSP)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../decoding/decoding_rsa_sgskip.html">Representational Similarity Analysis</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../decoding/decoding_spatio_temporal_source.html">Decoding source space data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../decoding/decoding_spoc_CMC.html">Continuous Target Decoding with SPoC</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../decoding/decoding_time_generalization_conditions.html">Decoding sensor space data with generalization across time and conditions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../decoding/decoding_unsupervised_spatial_filter.html">Analysis of evoked response using ICA and PCA reduction techniques</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../decoding/decoding_xdawn_eeg.html">XDAWN Decoding From EEG data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../decoding/ems_filtering.html">Compute effect-matched-spatial filtering (EMS)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../decoding/linear_model_patterns.html">Linear classifier on sensor data with plot patterns and filters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../decoding/receptive_field_mtrf.html">Receptive Field Estimation and Prediction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../decoding/ssd_spatial_filters.html">Compute spatial filters with Spatio-Spectral Decomposition (SSD)</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2"><a class="reference internal" href="../connectivity/index.html">Connectivity Analysis Examples</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../forward/index.html">Forward modeling</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../forward/forward_sensitivity_maps.html">Display sensitivity maps for EEG and MEG sensors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../forward/left_cerebellum_volume_source.html">Generate a left cerebellum volume source space</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../forward/source_space_morphing.html">Use source space morphing</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../inverse/index.html">Inverse problem and source analysis</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/compute_mne_inverse_epochs_in_label.html">Compute MNE-dSPM inverse solution on single epochs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/compute_mne_inverse_raw_in_label.html">Compute sLORETA inverse solution on raw data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/compute_mne_inverse_volume.html">Compute MNE-dSPM inverse solution on evoked data in volume source space</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/custom_inverse_solver.html">Source localization with a custom inverse solver</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/dics_epochs.html">Compute source level time-frequency timecourses using a DICS beamformer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/dics_source_power.html">Compute source power using DICS beamformer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/evoked_ers_source_power.html">Compute evoked ERS source power using DICS, LCMV beamformer, and dSPM</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/gamma_map_inverse.html">Compute a sparse inverse solution using the Gamma-MAP empirical Bayesian method</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/label_activation_from_stc.html">Extracting time course from source_estimate object</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/label_from_stc.html">Generate a functional label from source estimates</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/label_source_activations.html">Extracting the time series of activations in a label</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/mixed_norm_inverse.html">Compute sparse inverse solution with mixed norm: MxNE and irMxNE</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/mixed_source_space_inverse.html">Compute MNE inverse solution on evoked data with a mixed source space</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/mne_cov_power.html">Compute source power estimate by projecting the covariance with MNE</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/morph_surface_stc.html">Morph surface source estimate</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/morph_volume_stc.html">Morph volumetric source estimate</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/multi_dipole_model.html">Computing source timecourses with an XFit-like multi-dipole model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/multidict_reweighted_tfmxne.html">Compute iterative reweighted TF-MxNE with multiscale time-frequency dictionary</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/psf_ctf_label_leakage.html">Visualize source leakage among labels using a circular graph</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/psf_ctf_vertices.html">Plot point-spread functions (PSFs) and cross-talk functions (CTFs)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/psf_ctf_vertices_lcmv.html">Compute cross-talk functions for LCMV beamformers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/psf_volume.html">Plot point-spread functions (PSFs) for a volume</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/rap_music.html">Compute Rap-Music on evoked data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/read_inverse.html">Reading an inverse operator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/read_stc.html">Reading an STC file</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/resolution_metrics.html">Compute spatial resolution metrics in source space</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/resolution_metrics_eegmeg.html">Compute spatial resolution metrics to compare MEG with EEG+MEG</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/snr_estimate.html">Estimate data SNR using an inverse</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/source_space_snr.html">Computing source space SNR</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/time_frequency_mixed_norm_inverse.html">Compute MxNE with time-frequency sparse prior</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/trap_music.html">Compute Trap-Music on evoked data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/vector_mne_solution.html">Plotting the full vector-valued MNE solution</a></li>
+</ul>
+</details></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../datasets/index.html">Examples on open datasets</a><details><summary><span class="toctree-toggle" role="presentation"><i class="fa-solid fa-chevron-down"></i></span></summary><ul>
+<li class="toctree-l3"><a class="reference internal" href="../datasets/brainstorm_data.html">Brainstorm raw (median nerve) dataset</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../datasets/hf_sef_data.html">HF-SEF dataset</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../datasets/kernel_phantom.html">Kernel OPM phantom data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../datasets/limo_data.html">Single trial linear regression analysis with the LIMO dataset</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../datasets/opm_data.html">Optically pumped magnetometer (OPM) data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../datasets/spm_faces_dataset.html">From raw data to dSPM on SPM Faces dataset</a></li>
+</ul>
+</details></li>
+</ul>
+</details></li>
+<li class="toctree-l1"><a class="reference internal" href="../../documentation/glossary.html">Glossary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../documentation/implementation.html">Implementation details</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../documentation/design_philosophy.html">Design philosophy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../documentation/datasets.html">Example datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generated/commands.html">Command-line tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../help/migrating.html">Migrating from other analysis software</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../documentation/cookbook.html">The typical M/EEG workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../documentation/cite.html">How to cite MNE-Python</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../documentation/cited.html">Papers citing MNE-Python</a></li>
+</ul>
+</div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+      <div class="sidebar-primary-item">
+<div id="ethical-ad-placement"
+      class="flat"
+      data-ea-publisher="readthedocs"
+      data-ea-type="readthedocs-sidebar"
+      data-ea-manual="true">
+</div></div>
+  </div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main" role="main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article d-print-none"></div>
+              
+              
+<div>
+  
+  <div class="sphx-glr-download-link-note admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference internal" href="#sphx-glr-download-auto-examples-preprocessing-eog-regression-py"><span class="std std-ref">Go to the end</span></a>
+to download the full example code.</p>
+</div>
+<section class="sphx-glr-example-title" id="reduce-eog-artifacts-through-regression">
+<span id="sphx-glr-auto-examples-preprocessing-eog-regression-py"></span><h1>Reduce EOG artifacts through regression<a class="headerlink" href="#reduce-eog-artifacts-through-regression" title="Link to this heading">#</a></h1>
+<p>Reduce artifacts by regressing the EOG channels onto the rest of the channels
+and then subtracting the EOG signal.</p>
+<p>This is a quick example to show the most basic application of the technique.
+See the <a class="reference internal" href="../../auto_tutorials/preprocessing/35_artifact_correction_regression.html#tut-artifact-regression"><span class="std std-ref">tutorial</span></a> for a more thorough
+explanation that demonstrates more advanced approaches.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Author: Marijn van Vliet &lt;w.m.vanvliet@gmail.com&gt;</span>
+<span class="c1">#</span>
+<span class="c1"># License: BSD-3-Clause</span>
+<span class="c1"># Copyright the MNE-Python contributors.</span>
+</pre></div>
+</div>
+<section id="import-packages-and-load-data">
+<h2>Import packages and load data<a class="headerlink" href="#import-packages-and-load-data" title="Link to this heading">#</a></h2>
+<p>We begin as always by importing the necessary Python modules and loading some
+data, in this case the <a class="reference internal" href="../../documentation/datasets.html#sample-dataset"><span class="std std-ref">MNE sample dataset</span></a>.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">matplotlib</span><span class="w"> </span><span class="kn">import</span> <span class="n">pyplot</span> <span class="k">as</span> <span class="n">plt</span>
+
+<span class="kn">import</span><span class="w"> </span><span class="nn">mne</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">mne.datasets</span><span class="w"> </span><span class="kn">import</span> <span class="n">sample</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">mne.preprocessing</span><span class="w"> </span><span class="kn">import</span> <a href="../../generated/mne.preprocessing.EOGRegression.html#mne.preprocessing.EOGRegression" title="mne.preprocessing.EOGRegression" class="sphx-glr-backref-module-mne-preprocessing sphx-glr-backref-type-py-class"><span class="n">EOGRegression</span></a>
+
+<span class="nb">print</span><span class="p">(</span><span class="vm">__doc__</span><span class="p">)</span>
+
+<a href="https://docs.python.org/3/library/pathlib.html#pathlib.PosixPath" title="pathlib.PosixPath" class="sphx-glr-backref-module-pathlib sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">data_path</span></a> <span class="o">=</span> <a href="../../generated/mne.datasets.sample.data_path.html#mne.datasets.sample.data_path" title="mne.datasets.sample.data_path" class="sphx-glr-backref-module-mne-datasets-sample sphx-glr-backref-type-py-function"><span class="n">sample</span><span class="o">.</span><span class="n">data_path</span></a><span class="p">()</span>
+<a href="https://docs.python.org/3/library/pathlib.html#pathlib.PosixPath" title="pathlib.PosixPath" class="sphx-glr-backref-module-pathlib sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw_fname</span></a> <span class="o">=</span> <a href="https://docs.python.org/3/library/pathlib.html#pathlib.PosixPath" title="pathlib.PosixPath" class="sphx-glr-backref-module-pathlib sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">data_path</span></a> <span class="o">/</span> <span class="s2">&quot;MEG&quot;</span> <span class="o">/</span> <span class="s2">&quot;sample&quot;</span> <span class="o">/</span> <span class="s2">&quot;sample_audvis_filt-0-40_raw.fif&quot;</span>
+
+<span class="c1"># Read raw data</span>
+<a href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw</span></a> <span class="o">=</span> <a href="../../generated/mne.io.read_raw_fif.html#mne.io.read_raw_fif" title="mne.io.read_raw_fif" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read_raw_fif</span></a><span class="p">(</span><a href="https://docs.python.org/3/library/pathlib.html#pathlib.PosixPath" title="pathlib.PosixPath" class="sphx-glr-backref-module-pathlib sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw_fname</span></a><span class="p">,</span> <span class="n">preload</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">events</span></a> <span class="o">=</span> <a href="../../generated/mne.find_events.html#mne.find_events" title="mne.find_events" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">find_events</span></a><span class="p">(</span><a href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw</span></a><span class="p">,</span> <span class="s2">&quot;STI 014&quot;</span><span class="p">)</span>
+
+<span class="c1"># Highpass filter to eliminate slow drifts</span>
+<a href="../../generated/mne.io.Raw.html#mne.io.Raw.filter" title="mne.io.Raw.filter" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-method"><span class="n">raw</span><span class="o">.</span><span class="n">filter</span></a><span class="p">(</span><span class="mf">0.3</span><span class="p">,</span> <span class="kc">None</span><span class="p">,</span> <span class="n">picks</span><span class="o">=</span><span class="s2">&quot;all&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Opening raw data file /home/circleci/mne_data/MNE-sample-data/MEG/sample/sample_audvis_filt-0-40_raw.fif...
+    Read a total of 4 projection items:
+        PCA-v1 (1 x 102)  idle
+        PCA-v2 (1 x 102)  idle
+        PCA-v3 (1 x 102)  idle
+        Average EEG reference (1 x 60)  idle
+    Range : 6450 ... 48149 =     42.956 ...   320.665 secs
+Ready.
+Reading 0 ... 41699  =      0.000 ...   277.709 secs...
+Finding events on: STI 014
+319 events found on stim channel STI 014
+Event IDs: [ 1  2  3  4  5 32]
+Filtering raw data in 1 contiguous segment
+Setting up high-pass filter at 0.3 Hz
+
+FIR filter parameters
+---------------------
+Designing a one-pass, zero-phase, non-causal highpass filter:
+- Windowed time-domain design (firwin) method
+- Hamming window with 0.0194 passband ripple and 53 dB stopband attenuation
+- Lower passband edge: 0.30
+- Lower transition bandwidth: 0.30 Hz (-6 dB cutoff frequency: 0.15 Hz)
+- Filter length: 1653 samples (11.009 s)
+</pre></div>
+</div>
+<div class="output_subarea output_html rendered_html output_result">
+<script type="text/javascript">
+    // must be `var` (not `const`) because this can get embedded multiple times on a page
+var toggleVisibility = (className) => {
+
+    const elements = document.querySelectorAll(`.${className}`);
+
+    elements.forEach(element => {
+        if (element.classList.contains("mne-repr-section-header")) {
+            return  // Don't collapse the section header row
+        }
+        element.classList.toggle("mne-repr-collapsed");
+    });
+
+    // trigger caret to rotate
+    var sel = `.mne-repr-section-header.${className} > th.mne-repr-section-toggle > button`;
+    const button = document.querySelector(sel);
+    button.classList.toggle("collapsed");
+
+    // adjust tooltip
+    sel = `tr.mne-repr-section-header.${className}`;
+    const secHeadRow = document.querySelector(sel);
+    secHeadRow.classList.toggle("collapsed");
+    secHeadRow.title = secHeadRow.title === "Hide section" ? "Show section" : "Hide section";
+}
+</script>
+
+<style type="text/css">
+    /*
+Styles in this section apply both to the sphinx-built website docs and to notebooks
+rendered in an IDE or in Jupyter. In our web docs, styles here are complemented by
+doc/_static/styles.css and other CSS files (e.g. from the sphinx theme, sphinx-gallery,
+or bootstrap). In IDEs/Jupyter, those style files are unavailable, so only the rules in
+this file apply (plus whatever default styling the IDE applies).
+*/
+.mne-repr-table {
+    display: inline;  /* prevent using full container width */
+}
+.mne-repr-table tr.mne-repr-section-header > th {
+    padding-top: 1rem;
+    text-align: left;
+    vertical-align: middle;
+}
+.mne-repr-section-toggle > button {
+    all: unset;
+    display: block;
+    height: 1rem;
+    width: 1rem;
+}
+.mne-repr-section-toggle > button > svg {
+    height: 60%;
+}
+
+/* transition (rotation) effects on the collapser button */
+.mne-repr-section-toggle > button.collapsed > svg {
+    transition: 0.1s ease-out;
+    transform: rotate(-90deg);
+}
+.mne-repr-section-toggle > button:not(.collapsed) > svg {
+    transition: 0.1s ease-out;
+    transform: rotate(0deg);
+}
+
+/* hide collapsed table rows */
+.mne-repr-collapsed {
+    display: none;
+}
+
+
+@layer {
+    /*
+    Selectors in a `@layer` will always be lower-precedence than selectors outside the
+    layer. So even though e.g. `div.output_html` is present in the sphinx-rendered
+    website docs, the styles here won't take effect there as long as some other rule
+    somewhere in the page's CSS targets the same element.
+
+    In IDEs or Jupyter notebooks, though, the CSS files from the sphinx theme,
+    sphinx-gallery, and bootstrap are unavailable, so these styles will apply.
+
+    Notes:
+
+    - the selector `.accordion-body` is for MNE Reports
+    - the selector `.output_html` is for VSCode's notebook interface
+    - the selector `.jp-RenderedHTML` is for Jupyter notebook
+    - variables starting with `--theme-` are VSCode-specific.
+    - variables starting with `--jp-` are Jupyter styles, *some of which* are also
+      available in VSCode. Here we try the `--theme-` variable first, then fall back to
+      the `--jp-` ones.
+    */
+    .mne-repr-table {
+        --mne-toggle-color: var(--theme-foreground, var(--jp-ui-font-color1));
+        --mne-button-bg-color: var(--theme-button-background, var(--jp-info-color0, var(--jp-content-link-color)));
+        --mne-button-fg-color: var(--theme-button-foreground, var(--jp-ui-inverse-font-color0, var(--jp-editor-background)));
+        --mne-button-hover-bg-color: var(--theme-button-hover-background, var(--jp-info-color1));
+        --mne-button-radius: var(--jp-border-radius, 0.25rem);
+    }
+    /* chevron position/alignment; in VSCode it looks ok without adjusting */
+    .accordion-body .mne-repr-section-toggle > button,
+    .jp-RenderedHTML .mne-repr-section-toggle > button {
+        padding: 0 0 45% 25% !important;
+    }
+    /* chevron color; MNE Report doesn't have light/dark mode */
+    div.output_html .mne-repr-section-toggle > button > svg > path,
+    .jp-RenderedHTML .mne-repr-section-toggle > button > svg > path {
+        fill: var(--mne-toggle-color);
+    }
+    .accordion-body .mne-ch-names-btn,
+    div.output_html .mne-ch-names-btn,
+    .jp-RenderedHTML .mne-ch-names-btn {
+        -webkit-border-radius: var(--mne-button-radius);
+        -moz-border-radius: var(--mne-button-radius);
+        border-radius: var(--mne-button-radius);
+        border: none;
+        background-image: none;
+        background-color: var(--mne-button-bg-color);
+        color: var(--mne-button-fg-color);
+        font-size: inherit;
+        min-width: 1.5rem;
+        padding: 0.25rem;
+        text-align: center;
+        text-decoration: none;
+    }
+    .accordion-body .mne-ch-names-btn:hover,
+    div.output_html .mne.ch-names-btn:hover,
+    .jp-RenderedHTML .mne-ch-names-btn:hover {
+        background-color: var(--mne-button-hover-bg-color);
+        text-decoration: underline;
+    }
+    .accordion-body .mne-ch-names-btn:focus-visible,
+    div.output_html .mne-ch-names-btn:focus-visible,
+    .jp-RenderedHTML .mne-ch-names-btn:focus-visible {
+        outline: 0.1875rem solid var(--mne-button-bg-color) !important;
+        outline-offset: 0.1875rem !important;
+    }
+}
+</style>
+
+
+
+<table class="table mne-repr-table">
+
+
+
+
+
+
+
+
+<tr class="mne-repr-section-header general-9e7b64fb-a276-480f-b17e-9e9a84946346"
+     title="Hide section"
+    onclick="toggleVisibility('general-9e7b64fb-a276-480f-b17e-9e9a84946346')">
+    <th class="mne-repr-section-toggle">
+        <button >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--!Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M233.4 406.6c12.5 12.5 32.8 12.5 45.3 0l192-192c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L256 338.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l192 192z"/></svg>
+        </button>
+    </th>
+    <th colspan="2">
+        <strong>General</strong>
+    </th>
+</tr>
+
+
+<tr class="repr-element general-9e7b64fb-a276-480f-b17e-9e9a84946346 ">
+    <td class="mne-repr-section-toggle"></td>
+    <td>Filename(s)</td>
+    <td>
+
+        sample_audvis_filt-0-40_raw.fif
+
+
+    </td>
+</tr>
+
+<tr class="repr-element general-9e7b64fb-a276-480f-b17e-9e9a84946346 ">
+    <td class="mne-repr-section-toggle"></td>
+    <td>MNE object type</td>
+    <td>Raw</td>
+</tr>
+<tr class="repr-element general-9e7b64fb-a276-480f-b17e-9e9a84946346 ">
+    <td class="mne-repr-section-toggle"></td>
+    <td>Measurement date</td>
+
+    <td>2002-12-03 at 19:01:10 UTC</td>
+
+</tr>
+<tr class="repr-element general-9e7b64fb-a276-480f-b17e-9e9a84946346 ">
+    <td class="mne-repr-section-toggle"></td>
+    <td>Participant</td>
+
+    <td>Unknown</td>
+
+</tr>
+<tr class="repr-element general-9e7b64fb-a276-480f-b17e-9e9a84946346 ">
+    <td class="mne-repr-section-toggle"></td>
+    <td>Experimenter</td>
+
+    <td>Unknown</td>
+
+</tr>
+
+
+
+
+
+
+
+
+<tr class="mne-repr-section-header acquisition-86c1a252-44bd-4265-a0e0-7cbaa1518f6e"
+     title="Hide section"
+    onclick="toggleVisibility('acquisition-86c1a252-44bd-4265-a0e0-7cbaa1518f6e')">
+    <th class="mne-repr-section-toggle">
+        <button >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--!Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M233.4 406.6c12.5 12.5 32.8 12.5 45.3 0l192-192c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L256 338.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l192 192z"/></svg>
+        </button>
+    </th>
+    <th colspan="2">
+        <strong>Acquisition</strong>
+    </th>
+</tr>
+
+
+<tr class="repr-element acquisition-86c1a252-44bd-4265-a0e0-7cbaa1518f6e ">
+    <td class="mne-repr-section-toggle"></td>
+    <td>Duration</td>
+    <td>00:04:38 (HH:MM:SS)</td>
+</tr>
+
+
+
+
+
+
+
+
+<tr class="repr-element acquisition-86c1a252-44bd-4265-a0e0-7cbaa1518f6e ">
+    <td class="mne-repr-section-toggle"></td>
+    <td>Sampling frequency</td>
+    <td>150.15 Hz</td>
+</tr>
+
+
+<tr class="repr-element acquisition-86c1a252-44bd-4265-a0e0-7cbaa1518f6e ">
+    <td class="mne-repr-section-toggle"></td>
+    <td>Time points</td>
+    <td>41,700</td>
+</tr>
+
+
+
+
+
+
+
+
+
+
+<tr class="mne-repr-section-header channels-0e5be445-d412-40d7-a5c2-85d5832cd672"
+     title="Hide section"
+    onclick="toggleVisibility('channels-0e5be445-d412-40d7-a5c2-85d5832cd672')">
+    <th class="mne-repr-section-toggle">
+        <button >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--!Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M233.4 406.6c12.5 12.5 32.8 12.5 45.3 0l192-192c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L256 338.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l192 192z"/></svg>
+        </button>
+    </th>
+    <th colspan="2">
+        <strong>Channels</strong>
+    </th>
+</tr>
+
+
+
+<tr class="repr-element channels-0e5be445-d412-40d7-a5c2-85d5832cd672 ">
+    <td class="mne-repr-section-toggle"></td>
+    <td>Magnetometers</td>
+    <td>
+        <button class="mne-ch-names-btn sd-sphinx-override sd-btn sd-btn-info sd-text-wrap sd-shadow-sm" onclick="alert('Good Magnetometers:\n\nMEG&nbsp;0111, MEG&nbsp;0121, MEG&nbsp;0131, MEG&nbsp;0141, MEG&nbsp;0211, MEG&nbsp;0221, MEG&nbsp;0231, MEG&nbsp;0241, MEG&nbsp;0311, MEG&nbsp;0321, MEG&nbsp;0331, MEG&nbsp;0341, MEG&nbsp;0411, MEG&nbsp;0421, MEG&nbsp;0431, MEG&nbsp;0441, MEG&nbsp;0511, MEG&nbsp;0521, MEG&nbsp;0531, MEG&nbsp;0541, MEG&nbsp;0611, MEG&nbsp;0621, MEG&nbsp;0631, MEG&nbsp;0641, MEG&nbsp;0711, MEG&nbsp;0721, MEG&nbsp;0731, MEG&nbsp;0741, MEG&nbsp;0811, MEG&nbsp;0821, MEG&nbsp;0911, MEG&nbsp;0921, MEG&nbsp;0931, MEG&nbsp;0941, MEG&nbsp;1011, MEG&nbsp;1021, MEG&nbsp;1031, MEG&nbsp;1041, MEG&nbsp;1111, MEG&nbsp;1121, MEG&nbsp;1131, MEG&nbsp;1141, MEG&nbsp;1211, MEG&nbsp;1221, MEG&nbsp;1231, MEG&nbsp;1241, MEG&nbsp;1311, MEG&nbsp;1321, MEG&nbsp;1331, MEG&nbsp;1341, MEG&nbsp;1411, MEG&nbsp;1421, MEG&nbsp;1431, MEG&nbsp;1441, MEG&nbsp;1511, MEG&nbsp;1521, MEG&nbsp;1531, MEG&nbsp;1541, MEG&nbsp;1611, MEG&nbsp;1621, MEG&nbsp;1631, MEG&nbsp;1641, MEG&nbsp;1711, MEG&nbsp;1721, MEG&nbsp;1731, MEG&nbsp;1741, MEG&nbsp;1811, MEG&nbsp;1821, MEG&nbsp;1831, MEG&nbsp;1841, MEG&nbsp;1911, MEG&nbsp;1921, MEG&nbsp;1931, MEG&nbsp;1941, MEG&nbsp;2011, MEG&nbsp;2021, MEG&nbsp;2031, MEG&nbsp;2041, MEG&nbsp;2111, MEG&nbsp;2121, MEG&nbsp;2131, MEG&nbsp;2141, MEG&nbsp;2211, MEG&nbsp;2221, MEG&nbsp;2231, MEG&nbsp;2241, MEG&nbsp;2311, MEG&nbsp;2321, MEG&nbsp;2331, MEG&nbsp;2341, MEG&nbsp;2411, MEG&nbsp;2421, MEG&nbsp;2431, MEG&nbsp;2441, MEG&nbsp;2511, MEG&nbsp;2521, MEG&nbsp;2531, MEG&nbsp;2541, MEG&nbsp;2611, MEG&nbsp;2621, MEG&nbsp;2631, MEG&nbsp;2641')" title="(Click to open in popup)&#13;&#13;MEG&nbsp;0111, MEG&nbsp;0121, MEG&nbsp;0131, MEG&nbsp;0141, MEG&nbsp;0211, MEG&nbsp;0221, MEG&nbsp;0231, MEG&nbsp;0241, MEG&nbsp;0311, MEG&nbsp;0321, MEG&nbsp;0331, MEG&nbsp;0341, MEG&nbsp;0411, MEG&nbsp;0421, MEG&nbsp;0431, MEG&nbsp;0441, MEG&nbsp;0511, MEG&nbsp;0521, MEG&nbsp;0531, MEG&nbsp;0541, MEG&nbsp;0611, MEG&nbsp;0621, MEG&nbsp;0631, MEG&nbsp;0641, MEG&nbsp;0711, MEG&nbsp;0721, MEG&nbsp;0731, MEG&nbsp;0741, MEG&nbsp;0811, MEG&nbsp;0821, MEG&nbsp;0911, MEG&nbsp;0921, MEG&nbsp;0931, MEG&nbsp;0941, MEG&nbsp;1011, MEG&nbsp;1021, MEG&nbsp;1031, MEG&nbsp;1041, MEG&nbsp;1111, MEG&nbsp;1121, MEG&nbsp;1131, MEG&nbsp;1141, MEG&nbsp;1211, MEG&nbsp;1221, MEG&nbsp;1231, MEG&nbsp;1241, MEG&nbsp;1311, MEG&nbsp;1321, MEG&nbsp;1331, MEG&nbsp;1341, MEG&nbsp;1411, MEG&nbsp;1421, MEG&nbsp;1431, MEG&nbsp;1441, MEG&nbsp;1511, MEG&nbsp;1521, MEG&nbsp;1531, MEG&nbsp;1541, MEG&nbsp;1611, MEG&nbsp;1621, MEG&nbsp;1631, MEG&nbsp;1641, MEG&nbsp;1711, MEG&nbsp;1721, MEG&nbsp;1731, MEG&nbsp;1741, MEG&nbsp;1811, MEG&nbsp;1821, MEG&nbsp;1831, MEG&nbsp;1841, MEG&nbsp;1911, MEG&nbsp;1921, MEG&nbsp;1931, MEG&nbsp;1941, MEG&nbsp;2011, MEG&nbsp;2021, MEG&nbsp;2031, MEG&nbsp;2041, MEG&nbsp;2111, MEG&nbsp;2121, MEG&nbsp;2131, MEG&nbsp;2141, MEG&nbsp;2211, MEG&nbsp;2221, MEG&nbsp;2231, MEG&nbsp;2241, MEG&nbsp;2311, MEG&nbsp;2321, MEG&nbsp;2331, MEG&nbsp;2341, MEG&nbsp;2411, MEG&nbsp;2421, MEG&nbsp;2431, MEG&nbsp;2441, MEG&nbsp;2511, MEG&nbsp;2521, MEG&nbsp;2531, MEG&nbsp;2541, MEG&nbsp;2611, MEG&nbsp;2621, MEG&nbsp;2631, MEG&nbsp;2641">
+            102
+        </button>
+
+
+    </td>
+</tr>
+
+
+<tr class="repr-element channels-0e5be445-d412-40d7-a5c2-85d5832cd672 ">
+    <td class="mne-repr-section-toggle"></td>
+    <td>Gradiometers</td>
+    <td>
+        <button class="mne-ch-names-btn sd-sphinx-override sd-btn sd-btn-info sd-text-wrap sd-shadow-sm" onclick="alert('Good Gradiometers:\n\nMEG&nbsp;0113, MEG&nbsp;0112, MEG&nbsp;0122, MEG&nbsp;0123, MEG&nbsp;0132, MEG&nbsp;0133, MEG&nbsp;0143, MEG&nbsp;0142, MEG&nbsp;0213, MEG&nbsp;0212, MEG&nbsp;0222, MEG&nbsp;0223, MEG&nbsp;0232, MEG&nbsp;0233, MEG&nbsp;0243, MEG&nbsp;0242, MEG&nbsp;0313, MEG&nbsp;0312, MEG&nbsp;0322, MEG&nbsp;0323, MEG&nbsp;0333, MEG&nbsp;0332, MEG&nbsp;0343, MEG&nbsp;0342, MEG&nbsp;0413, MEG&nbsp;0412, MEG&nbsp;0422, MEG&nbsp;0423, MEG&nbsp;0432, MEG&nbsp;0433, MEG&nbsp;0443, MEG&nbsp;0442, MEG&nbsp;0513, MEG&nbsp;0512, MEG&nbsp;0523, MEG&nbsp;0522, MEG&nbsp;0532, MEG&nbsp;0533, MEG&nbsp;0542, MEG&nbsp;0543, MEG&nbsp;0613, MEG&nbsp;0612, MEG&nbsp;0622, MEG&nbsp;0623, MEG&nbsp;0633, MEG&nbsp;0632, MEG&nbsp;0642, MEG&nbsp;0643, MEG&nbsp;0713, MEG&nbsp;0712, MEG&nbsp;0723, MEG&nbsp;0722, MEG&nbsp;0733, MEG&nbsp;0732, MEG&nbsp;0743, MEG&nbsp;0742, MEG&nbsp;0813, MEG&nbsp;0812, MEG&nbsp;0822, MEG&nbsp;0823, MEG&nbsp;0913, MEG&nbsp;0912, MEG&nbsp;0923, MEG&nbsp;0922, MEG&nbsp;0932, MEG&nbsp;0933, MEG&nbsp;0942, MEG&nbsp;0943, MEG&nbsp;1013, MEG&nbsp;1012, MEG&nbsp;1023, MEG&nbsp;1022, MEG&nbsp;1032, MEG&nbsp;1033, MEG&nbsp;1043, MEG&nbsp;1042, MEG&nbsp;1112, MEG&nbsp;1113, MEG&nbsp;1123, MEG&nbsp;1122, MEG&nbsp;1133, MEG&nbsp;1132, MEG&nbsp;1142, MEG&nbsp;1143, MEG&nbsp;1213, MEG&nbsp;1212, MEG&nbsp;1223, MEG&nbsp;1222, MEG&nbsp;1232, MEG&nbsp;1233, MEG&nbsp;1243, MEG&nbsp;1242, MEG&nbsp;1312, MEG&nbsp;1313, MEG&nbsp;1323, MEG&nbsp;1322, MEG&nbsp;1333, MEG&nbsp;1332, MEG&nbsp;1342, MEG&nbsp;1343, MEG&nbsp;1412, MEG&nbsp;1413, MEG&nbsp;1423, MEG&nbsp;1422, MEG&nbsp;1433, MEG&nbsp;1432, MEG&nbsp;1442, MEG&nbsp;1443, MEG&nbsp;1512, MEG&nbsp;1513, MEG&nbsp;1522, MEG&nbsp;1523, MEG&nbsp;1533, MEG&nbsp;1532, MEG&nbsp;1543, MEG&nbsp;1542, MEG&nbsp;1613, MEG&nbsp;1612, MEG&nbsp;1622, MEG&nbsp;1623, MEG&nbsp;1632, MEG&nbsp;1633, MEG&nbsp;1643, MEG&nbsp;1642, MEG&nbsp;1713, MEG&nbsp;1712, MEG&nbsp;1722, MEG&nbsp;1723, MEG&nbsp;1732, MEG&nbsp;1733, MEG&nbsp;1743, MEG&nbsp;1742, MEG&nbsp;1813, MEG&nbsp;1812, MEG&nbsp;1822, MEG&nbsp;1823, MEG&nbsp;1832, MEG&nbsp;1833, MEG&nbsp;1843, MEG&nbsp;1842, MEG&nbsp;1912, MEG&nbsp;1913, MEG&nbsp;1923, MEG&nbsp;1922, MEG&nbsp;1932, MEG&nbsp;1933, MEG&nbsp;1943, MEG&nbsp;1942, MEG&nbsp;2013, MEG&nbsp;2012, MEG&nbsp;2023, MEG&nbsp;2022, MEG&nbsp;2032, MEG&nbsp;2033, MEG&nbsp;2042, MEG&nbsp;2043, MEG&nbsp;2113, MEG&nbsp;2112, MEG&nbsp;2122, MEG&nbsp;2123, MEG&nbsp;2133, MEG&nbsp;2132, MEG&nbsp;2143, MEG&nbsp;2142, MEG&nbsp;2212, MEG&nbsp;2213, MEG&nbsp;2223, MEG&nbsp;2222, MEG&nbsp;2233, MEG&nbsp;2232, MEG&nbsp;2242, MEG&nbsp;2243, MEG&nbsp;2312, MEG&nbsp;2313, MEG&nbsp;2323, MEG&nbsp;2322, MEG&nbsp;2332, MEG&nbsp;2333, MEG&nbsp;2343, MEG&nbsp;2342, MEG&nbsp;2412, MEG&nbsp;2413, MEG&nbsp;2423, MEG&nbsp;2422, MEG&nbsp;2433, MEG&nbsp;2432, MEG&nbsp;2442, MEG&nbsp;2512, MEG&nbsp;2513, MEG&nbsp;2522, MEG&nbsp;2523, MEG&nbsp;2533, MEG&nbsp;2532, MEG&nbsp;2543, MEG&nbsp;2542, MEG&nbsp;2612, MEG&nbsp;2613, MEG&nbsp;2623, MEG&nbsp;2622, MEG&nbsp;2633, MEG&nbsp;2632, MEG&nbsp;2642, MEG&nbsp;2643')" title="(Click to open in popup)&#13;&#13;MEG&nbsp;0113, MEG&nbsp;0112, MEG&nbsp;0122, MEG&nbsp;0123, MEG&nbsp;0132, MEG&nbsp;0133, MEG&nbsp;0143, MEG&nbsp;0142, MEG&nbsp;0213, MEG&nbsp;0212, MEG&nbsp;0222, MEG&nbsp;0223, MEG&nbsp;0232, MEG&nbsp;0233, MEG&nbsp;0243, MEG&nbsp;0242, MEG&nbsp;0313, MEG&nbsp;0312, MEG&nbsp;0322, MEG&nbsp;0323, MEG&nbsp;0333, MEG&nbsp;0332, MEG&nbsp;0343, MEG&nbsp;0342, MEG&nbsp;0413, MEG&nbsp;0412, MEG&nbsp;0422, MEG&nbsp;0423, MEG&nbsp;0432, MEG&nbsp;0433, MEG&nbsp;0443, MEG&nbsp;0442, MEG&nbsp;0513, MEG&nbsp;0512, MEG&nbsp;0523, MEG&nbsp;0522, MEG&nbsp;0532, MEG&nbsp;0533, MEG&nbsp;0542, MEG&nbsp;0543, MEG&nbsp;0613, MEG&nbsp;0612, MEG&nbsp;0622, MEG&nbsp;0623, MEG&nbsp;0633, MEG&nbsp;0632, MEG&nbsp;0642, MEG&nbsp;0643, MEG&nbsp;0713, MEG&nbsp;0712, MEG&nbsp;0723, MEG&nbsp;0722, MEG&nbsp;0733, MEG&nbsp;0732, MEG&nbsp;0743, MEG&nbsp;0742, MEG&nbsp;0813, MEG&nbsp;0812, MEG&nbsp;0822, MEG&nbsp;0823, MEG&nbsp;0913, MEG&nbsp;0912, MEG&nbsp;0923, MEG&nbsp;0922, MEG&nbsp;0932, MEG&nbsp;0933, MEG&nbsp;0942, MEG&nbsp;0943, MEG&nbsp;1013, MEG&nbsp;1012, MEG&nbsp;1023, MEG&nbsp;1022, MEG&nbsp;1032, MEG&nbsp;1033, MEG&nbsp;1043, MEG&nbsp;1042, MEG&nbsp;1112, MEG&nbsp;1113, MEG&nbsp;1123, MEG&nbsp;1122, MEG&nbsp;1133, MEG&nbsp;1132, MEG&nbsp;1142, MEG&nbsp;1143, MEG&nbsp;1213, MEG&nbsp;1212, MEG&nbsp;1223, MEG&nbsp;1222, MEG&nbsp;1232, MEG&nbsp;1233, MEG&nbsp;1243, MEG&nbsp;1242, MEG&nbsp;1312, MEG&nbsp;1313, MEG&nbsp;1323, MEG&nbsp;1322, MEG&nbsp;1333, MEG&nbsp;1332, MEG&nbsp;1342, MEG&nbsp;1343, MEG&nbsp;1412, MEG&nbsp;1413, MEG&nbsp;1423, MEG&nbsp;1422, MEG&nbsp;1433, MEG&nbsp;1432, MEG&nbsp;1442, MEG&nbsp;1443, MEG&nbsp;1512, MEG&nbsp;1513, MEG&nbsp;1522, MEG&nbsp;1523, MEG&nbsp;1533, MEG&nbsp;1532, MEG&nbsp;1543, MEG&nbsp;1542, MEG&nbsp;1613, MEG&nbsp;1612, MEG&nbsp;1622, MEG&nbsp;1623, MEG&nbsp;1632, MEG&nbsp;1633, MEG&nbsp;1643, MEG&nbsp;1642, MEG&nbsp;1713, MEG&nbsp;1712, MEG&nbsp;1722, MEG&nbsp;1723, MEG&nbsp;1732, MEG&nbsp;1733, MEG&nbsp;1743, MEG&nbsp;1742, MEG&nbsp;1813, MEG&nbsp;1812, MEG&nbsp;1822, MEG&nbsp;1823, MEG&nbsp;1832, MEG&nbsp;1833, MEG&nbsp;1843, MEG&nbsp;1842, MEG&nbsp;1912, MEG&nbsp;1913, MEG&nbsp;1923, MEG&nbsp;1922, MEG&nbsp;1932, MEG&nbsp;1933, MEG&nbsp;1943, MEG&nbsp;1942, MEG&nbsp;2013, MEG&nbsp;2012, MEG&nbsp;2023, MEG&nbsp;2022, MEG&nbsp;2032, MEG&nbsp;2033, MEG&nbsp;2042, MEG&nbsp;2043, MEG&nbsp;2113, MEG&nbsp;2112, MEG&nbsp;2122, MEG&nbsp;2123, MEG&nbsp;2133, MEG&nbsp;2132, MEG&nbsp;2143, MEG&nbsp;2142, MEG&nbsp;2212, MEG&nbsp;2213, MEG&nbsp;2223, MEG&nbsp;2222, MEG&nbsp;2233, MEG&nbsp;2232, MEG&nbsp;2242, MEG&nbsp;2243, MEG&nbsp;2312, MEG&nbsp;2313, MEG&nbsp;2323, MEG&nbsp;2322, MEG&nbsp;2332, MEG&nbsp;2333, MEG&nbsp;2343, MEG&nbsp;2342, MEG&nbsp;2412, MEG&nbsp;2413, MEG&nbsp;2423, MEG&nbsp;2422, MEG&nbsp;2433, MEG&nbsp;2432, MEG&nbsp;2442, MEG&nbsp;2512, MEG&nbsp;2513, MEG&nbsp;2522, MEG&nbsp;2523, MEG&nbsp;2533, MEG&nbsp;2532, MEG&nbsp;2543, MEG&nbsp;2542, MEG&nbsp;2612, MEG&nbsp;2613, MEG&nbsp;2623, MEG&nbsp;2622, MEG&nbsp;2633, MEG&nbsp;2632, MEG&nbsp;2642, MEG&nbsp;2643">
+            203
+        </button>
+
+
+
+        and <button class="mne-ch-names-btn sd-sphinx-override sd-btn sd-btn-info sd-text-wrap sd-shadow-sm" onclick="alert('Bad Gradiometers:\n\nMEG&nbsp;2443')" title="(Click to open in popup)&#13;&#13;MEG&nbsp;2443">
+            1 bad
+        </button>
+
+    </td>
+</tr>
+
+
+<tr class="repr-element channels-0e5be445-d412-40d7-a5c2-85d5832cd672 ">
+    <td class="mne-repr-section-toggle"></td>
+    <td>EEG</td>
+    <td>
+        <button class="mne-ch-names-btn sd-sphinx-override sd-btn sd-btn-info sd-text-wrap sd-shadow-sm" onclick="alert('Good EEG:\n\nEEG&nbsp;001, EEG&nbsp;002, EEG&nbsp;003, EEG&nbsp;004, EEG&nbsp;005, EEG&nbsp;006, EEG&nbsp;007, EEG&nbsp;008, EEG&nbsp;009, EEG&nbsp;010, EEG&nbsp;011, EEG&nbsp;012, EEG&nbsp;013, EEG&nbsp;014, EEG&nbsp;015, EEG&nbsp;016, EEG&nbsp;017, EEG&nbsp;018, EEG&nbsp;019, EEG&nbsp;020, EEG&nbsp;021, EEG&nbsp;022, EEG&nbsp;023, EEG&nbsp;024, EEG&nbsp;025, EEG&nbsp;026, EEG&nbsp;027, EEG&nbsp;028, EEG&nbsp;029, EEG&nbsp;030, EEG&nbsp;031, EEG&nbsp;032, EEG&nbsp;033, EEG&nbsp;034, EEG&nbsp;035, EEG&nbsp;036, EEG&nbsp;037, EEG&nbsp;038, EEG&nbsp;039, EEG&nbsp;040, EEG&nbsp;041, EEG&nbsp;042, EEG&nbsp;043, EEG&nbsp;044, EEG&nbsp;045, EEG&nbsp;046, EEG&nbsp;047, EEG&nbsp;048, EEG&nbsp;049, EEG&nbsp;050, EEG&nbsp;051, EEG&nbsp;052, EEG&nbsp;054, EEG&nbsp;055, EEG&nbsp;056, EEG&nbsp;057, EEG&nbsp;058, EEG&nbsp;059, EEG&nbsp;060')" title="(Click to open in popup)&#13;&#13;EEG&nbsp;001, EEG&nbsp;002, EEG&nbsp;003, EEG&nbsp;004, EEG&nbsp;005, EEG&nbsp;006, EEG&nbsp;007, EEG&nbsp;008, EEG&nbsp;009, EEG&nbsp;010, EEG&nbsp;011, EEG&nbsp;012, EEG&nbsp;013, EEG&nbsp;014, EEG&nbsp;015, EEG&nbsp;016, EEG&nbsp;017, EEG&nbsp;018, EEG&nbsp;019, EEG&nbsp;020, EEG&nbsp;021, EEG&nbsp;022, EEG&nbsp;023, EEG&nbsp;024, EEG&nbsp;025, EEG&nbsp;026, EEG&nbsp;027, EEG&nbsp;028, EEG&nbsp;029, EEG&nbsp;030, EEG&nbsp;031, EEG&nbsp;032, EEG&nbsp;033, EEG&nbsp;034, EEG&nbsp;035, EEG&nbsp;036, EEG&nbsp;037, EEG&nbsp;038, EEG&nbsp;039, EEG&nbsp;040, EEG&nbsp;041, EEG&nbsp;042, EEG&nbsp;043, EEG&nbsp;044, EEG&nbsp;045, EEG&nbsp;046, EEG&nbsp;047, EEG&nbsp;048, EEG&nbsp;049, EEG&nbsp;050, EEG&nbsp;051, EEG&nbsp;052, EEG&nbsp;054, EEG&nbsp;055, EEG&nbsp;056, EEG&nbsp;057, EEG&nbsp;058, EEG&nbsp;059, EEG&nbsp;060">
+            59
+        </button>
+
+
+
+        and <button class="mne-ch-names-btn sd-sphinx-override sd-btn sd-btn-info sd-text-wrap sd-shadow-sm" onclick="alert('Bad EEG:\n\nEEG&nbsp;053')" title="(Click to open in popup)&#13;&#13;EEG&nbsp;053">
+            1 bad
+        </button>
+
+    </td>
+</tr>
+
+
+<tr class="repr-element channels-0e5be445-d412-40d7-a5c2-85d5832cd672 ">
+    <td class="mne-repr-section-toggle"></td>
+    <td>EOG</td>
+    <td>
+        <button class="mne-ch-names-btn sd-sphinx-override sd-btn sd-btn-info sd-text-wrap sd-shadow-sm" onclick="alert('Good EOG:\n\nEOG&nbsp;061')" title="(Click to open in popup)&#13;&#13;EOG&nbsp;061">
+            1
+        </button>
+
+
+    </td>
+</tr>
+
+
+<tr class="repr-element channels-0e5be445-d412-40d7-a5c2-85d5832cd672 ">
+    <td class="mne-repr-section-toggle"></td>
+    <td>Stimulus</td>
+    <td>
+        <button class="mne-ch-names-btn sd-sphinx-override sd-btn sd-btn-info sd-text-wrap sd-shadow-sm" onclick="alert('Good Stimulus:\n\nSTI&nbsp;001, STI&nbsp;002, STI&nbsp;003, STI&nbsp;004, STI&nbsp;005, STI&nbsp;006, STI&nbsp;014, STI&nbsp;015, STI&nbsp;016')" title="(Click to open in popup)&#13;&#13;STI&nbsp;001, STI&nbsp;002, STI&nbsp;003, STI&nbsp;004, STI&nbsp;005, STI&nbsp;006, STI&nbsp;014, STI&nbsp;015, STI&nbsp;016">
+            9
+        </button>
+
+
+    </td>
+</tr>
+
+
+<tr class="repr-element channels-0e5be445-d412-40d7-a5c2-85d5832cd672 ">
+    <td class="mne-repr-section-toggle"></td>
+    <td>Head & sensor digitization</td>
+
+    <td>146 points</td>
+
+</tr>
+
+
+
+
+
+
+
+
+<tr class="mne-repr-section-header filters-68ebf893-4ebc-4567-aef5-2bc893b8229b"
+     title="Hide section"
+    onclick="toggleVisibility('filters-68ebf893-4ebc-4567-aef5-2bc893b8229b')">
+    <th class="mne-repr-section-toggle">
+        <button >
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><!--!Font Awesome Free 6.6.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free Copyright 2024 Fonticons, Inc.--><path d="M233.4 406.6c12.5 12.5 32.8 12.5 45.3 0l192-192c12.5-12.5 12.5-32.8 0-45.3s-32.8-12.5-45.3 0L256 338.7 86.6 169.4c-12.5-12.5-32.8-12.5-45.3 0s-12.5 32.8 0 45.3l192 192z"/></svg>
+        </button>
+    </th>
+    <th colspan="2">
+        <strong>Filters</strong>
+    </th>
+</tr>
+
+
+<tr class="repr-element filters-68ebf893-4ebc-4567-aef5-2bc893b8229b ">
+    <td class="mne-repr-section-toggle"></td>
+    <td>Highpass</td>
+    <td>0.30 Hz</td>
+</tr>
+
+
+<tr class="repr-element filters-68ebf893-4ebc-4567-aef5-2bc893b8229b ">
+    <td class="mne-repr-section-toggle"></td>
+    <td>Lowpass</td>
+    <td>40.00 Hz</td>
+</tr>
+
+
+<tr class="repr-element filters-68ebf893-4ebc-4567-aef5-2bc893b8229b ">
+    <td class="mne-repr-section-toggle"></td>
+    <td>Projections</td>
+    <td>
+
+        PCA-v1 (off)
+        <br />
+
+        PCA-v2 (off)
+        <br />
+
+        PCA-v3 (off)
+        <br />
+
+        Average EEG reference (off)
+
+
+    </td>
+</tr>
+
+</table>
+</div>
+<br />
+<br /></section>
+<section id="perform-regression-and-remove-eog">
+<h2>Perform regression and remove EOG<a class="headerlink" href="#perform-regression-and-remove-eog" title="Link to this heading">#</a></h2>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Fit the regression model</span>
+<a href="../../generated/mne.preprocessing.EOGRegression.html#mne.preprocessing.EOGRegression" title="mne.preprocessing.EOGRegression" class="sphx-glr-backref-module-mne-preprocessing sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">weights</span></a> <span class="o">=</span> <a href="../../generated/mne.preprocessing.EOGRegression.html#mne.preprocessing.EOGRegression" title="mne.preprocessing.EOGRegression" class="sphx-glr-backref-module-mne-preprocessing sphx-glr-backref-type-py-class"><span class="n">EOGRegression</span></a><span class="p">()</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><a href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw</span></a><span class="p">)</span>
+<a href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw_clean</span></a> <span class="o">=</span> <a href="../../generated/mne.preprocessing.EOGRegression.html#mne.preprocessing.EOGRegression.apply" title="mne.preprocessing.EOGRegression.apply" class="sphx-glr-backref-module-mne-preprocessing sphx-glr-backref-type-py-method"><span class="n">weights</span><span class="o">.</span><span class="n">apply</span></a><span class="p">(</span><a href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw</span></a><span class="p">,</span> <span class="n">copy</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># Show the filter weights in a topomap</span>
+<a href="../../generated/mne.preprocessing.EOGRegression.html#mne.preprocessing.EOGRegression.plot" title="mne.preprocessing.EOGRegression.plot" class="sphx-glr-backref-module-mne-preprocessing sphx-glr-backref-type-py-method"><span class="n">weights</span><span class="o">.</span><span class="n">plot</span></a><span class="p">()</span>
+</pre></div>
+</div>
+<img src="../../_images/sphx_glr_eog_regression_001.png" srcset="../../_images/sphx_glr_eog_regression_001.png" alt=", grad/EOG 061, mag/EOG 061, eeg/EOG 061" class = "sphx-glr-single-img"/><div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Created an SSP operator (subspace dimension = 4)
+4 projection items activated
+SSP projectors applied...
+</pre></div>
+</div>
+</section>
+<section id="before-after-comparison">
+<h2>Before/after comparison<a class="headerlink" href="#before-after-comparison" title="Link to this heading">#</a></h2>
+<p>Let’s compare the signal before and after cleaning with EOG regression. This
+is best visualized by extracting epochs and plotting the evoked potential.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmin</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmax</span></a> <span class="o">=</span> <span class="o">-</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.5</span>
+<a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">event_id</span></a> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;visual/left&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span> <span class="s2">&quot;visual/right&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">}</span>
+<a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="mne.EvokedArray" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">evoked_before</span></a> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class"><span class="n">mne</span><span class="o">.</span><span class="n">Epochs</span></a><span class="p">(</span>
+    <a href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw</span></a><span class="p">,</span> <a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">events</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">event_id</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmin</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmax</span></a><span class="p">,</span> <span class="n">baseline</span><span class="o">=</span><span class="p">(</span><a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmin</span></a><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<span class="p">)</span><span class="o">.</span><span class="n">average</span><span class="p">()</span>
+<a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="mne.EvokedArray" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">evoked_after</span></a> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class"><span class="n">mne</span><span class="o">.</span><span class="n">Epochs</span></a><span class="p">(</span>
+    <a href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw_clean</span></a><span class="p">,</span> <a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">events</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">event_id</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmin</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmax</span></a><span class="p">,</span> <span class="n">baseline</span><span class="o">=</span><span class="p">(</span><a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmin</span></a><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+<span class="p">)</span><span class="o">.</span><span class="n">average</span><span class="p">()</span>
+
+<span class="c1"># Create epochs after EOG correction</span>
+<a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs_after</span></a> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class"><span class="n">mne</span><span class="o">.</span><span class="n">Epochs</span></a><span class="p">(</span><a href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw_clean</span></a><span class="p">,</span> <a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">events</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">event_id</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmin</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmax</span></a><span class="p">,</span> <span class="n">baseline</span><span class="o">=</span><span class="p">(</span><a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmin</span></a><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+<a href="../../generated/mne.EvokedArray.html#mne.EvokedArray" title="mne.EvokedArray" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">evoked_after</span></a> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs.average" title="mne.Epochs.average" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">epochs_after</span><span class="o">.</span><span class="n">average</span></a><span class="p">()</span>
+
+<a href="https://matplotlib.org/stable/api/_as_gen/matplotlib.figure.Figure.html#matplotlib.figure.Figure" title="matplotlib.figure.Figure" class="sphx-glr-backref-module-matplotlib-figure sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">fig</span></a><span class="p">,</span> <a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">ax</span></a> <span class="o">=</span> <a href="https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html#matplotlib.pyplot.subplots" title="matplotlib.pyplot.subplots" class="sphx-glr-backref-module-matplotlib-pyplot sphx-glr-backref-type-py-function"><span class="n">plt</span><span class="o">.</span><span class="n">subplots</span></a><span class="p">(</span>
+    <span class="n">nrows</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">ncols</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="mi">7</span><span class="p">),</span> <span class="n">sharex</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">sharey</span><span class="o">=</span><span class="s2">&quot;row&quot;</span><span class="p">,</span> <span class="n">layout</span><span class="o">=</span><span class="s2">&quot;constrained&quot;</span>
+<span class="p">)</span>
+<a href="../../generated/mne.EvokedArray.html#mne.EvokedArray.plot" title="mne.EvokedArray.plot" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">evoked_before</span><span class="o">.</span><span class="n">plot</span></a><span class="p">(</span><span class="n">axes</span><span class="o">=</span><a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">ax</span></a><span class="p">[:,</span> <span class="mi">0</span><span class="p">],</span> <span class="n">spatial_colors</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a href="../../generated/mne.EvokedArray.html#mne.EvokedArray.plot" title="mne.EvokedArray.plot" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">evoked_after</span><span class="o">.</span><span class="n">plot</span></a><span class="p">(</span><span class="n">axes</span><span class="o">=</span><a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">ax</span></a><span class="p">[:,</span> <span class="mi">1</span><span class="p">],</span> <span class="n">spatial_colors</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<a href="https://matplotlib.org/stable/api/_as_gen/matplotlib.figure.Figure.suptitle.html#matplotlib.figure.Figure.suptitle" title="matplotlib.figure.Figure.suptitle" class="sphx-glr-backref-module-matplotlib-figure sphx-glr-backref-type-py-method"><span class="n">fig</span><span class="o">.</span><span class="n">suptitle</span></a><span class="p">(</span><span class="s2">&quot;Before --&gt; After&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<img src="../../_images/sphx_glr_eog_regression_002.png" srcset="../../_images/sphx_glr_eog_regression_002.png" alt="Before --> After, EEG (59 channels), EEG (59 channels), Gradiometers (203 channels), Gradiometers (203 channels), Magnetometers (102 channels), Magnetometers (102 channels)" class = "sphx-glr-single-img"/><div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Not setting metadata
+143 matching events found
+Applying baseline correction (mode: mean)
+Created an SSP operator (subspace dimension = 4)
+4 projection items activated
+Not setting metadata
+143 matching events found
+Applying baseline correction (mode: mean)
+Created an SSP operator (subspace dimension = 4)
+4 projection items activated
+Not setting metadata
+143 matching events found
+Applying baseline correction (mode: mean)
+Created an SSP operator (subspace dimension = 4)
+4 projection items activated
+</pre></div>
+</div>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 12.237 seconds)</p>
+<div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-examples-preprocessing-eog-regression-py">
+<div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
+<p><a class="reference download internal" download="" href="../../_downloads/d5c172fa0cbfc8ddfc46c655dde4cf4e/eog_regression.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">eog_regression.ipynb</span></code></a></p>
+</div>
+<div class="sphx-glr-download sphx-glr-download-python docutils container">
+<p><a class="reference download internal" download="" href="../../_downloads/4d690ac72cfd1a5fd8e2974d706aa030/eog_regression.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">eog_regression.py</span></code></a></p>
+</div>
+<div class="sphx-glr-download sphx-glr-download-zip docutils container">
+<p><a class="reference download internal" download="" href="../../_downloads/44dff2a6563cbb26d0eb5118a36af2b1/eog_regression.zip"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">zipped:</span> <span class="pre">eog_regression.zip</span></code></a></p>
+</div>
+</div>
+<p class="sphx-glr-signature"><a class="reference external" href="https://sphinx-gallery.github.io">Gallery generated by Sphinx-Gallery</a></p>
+</section>
+</section>
+
+
+  
+</div>
+
+              
+              
+              
+              
+                <footer class="prev-next-footer d-print-none">
+                  
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="eog_artifact_histogram.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Show EOG artifact timing</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="epochs_metadata.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Automated epochs metadata generation with variable time windows</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <dialog id="pst-secondary-sidebar-modal"></dialog>
+                <div id="pst-secondary-sidebar" class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+
+  <div class="sidebar-secondary-item">
+<div
+    id="pst-page-navigation-heading-2"
+    class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc" aria-labelledby="pst-page-navigation-heading-2">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#import-packages-and-load-data">Import packages and load data</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#perform-regression-and-remove-eog">Perform regression and remove EOG</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#before-after-comparison">Before/after comparison</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+    
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script defer src="../../_static/scripts/bootstrap.js?digest=8878045cc6db502f8baf"></script>
+<script defer src="../../_static/scripts/pydata-sphinx-theme.js?digest=8878045cc6db502f8baf"></script>
+
+    <script src="https://mne.tools/versionwarning.js"></script>
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item"><p class="text-center small">&copy; Copyright 2012–2025, MNE Developers. Last updated <time datetime="2025-10-15T16:43:33.054636+00:00" class="localized">2025-10-15 16:43 UTC</time>
+<script type="text/javascript">$(function () { $("time.localized").each(function () { var el = $(this); el.text(new Date(el.attr("datetime")).toLocaleString([], {dateStyle: "medium", timeStyle: "long"})); }); } )</script></p></div>
+      
+    </div>
+  
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item">
+<p class="theme-version">
+  <!-- # L10n: Setting the PST URL as an argument as this does not need to be localized -->
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.16.1.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>
