@@ -8,7 +8,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Frequently Asked Questions (FAQ) &#8212; MNE 1.13.0.dev197+ge1da4c068 documentation</title>
+    <title>Frequently Asked Questions (FAQ) &#8212; MNE 1.13.0.dev199+gadc85849e documentation</title>
   
   
   
@@ -47,7 +47,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=90905a2f556bf617f1a9" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=90905a2f556bf617f1a9" />
 
-    <script src="../_static/documentation_options.js?v=165f60aa"></script>
+    <script src="../_static/documentation_options.js?v=64eb83ff"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -161,8 +161,8 @@
       
     
     
-    <img src="../_static/mne_logo_small.svg" class="logo__image only-light" alt="MNE 1.13.0.dev197+ge1da4c068 documentation - Home"/>
-    <img src="../_static/mne_logo_small.svg" class="logo__image only-dark pst-js-only" alt="MNE 1.13.0.dev197+ge1da4c068 documentation - Home"/>
+    <img src="../_static/mne_logo_small.svg" class="logo__image only-light" alt="MNE 1.13.0.dev199+gadc85849e documentation - Home"/>
+    <img src="../_static/mne_logo_small.svg" class="logo__image only-dark pst-js-only" alt="MNE 1.13.0.dev199+gadc85849e documentation - Home"/>
   
   
 </a></div>
@@ -734,22 +734,39 @@ support multithreading:</p>
 <li><p><a class="reference external" href="http://www.openblas.net/">OpenBLAS</a></p></li>
 <li><p><a class="reference external" href="https://www.intel.com/content/www/us/en/developer/tools/oneapi/onemkl.html">Intel Math Kernel Library (MKL)</a>,
 which uses <a class="reference external" href="https://www.openmp.org/">OpenMP</a></p></li>
+<li><p><a class="reference external" href="https://developer.apple.com/accelerate/">Accelerate</a>, used by the NumPy and
+SciPy wheels on PyPI for macOS on Apple silicon</p></li>
 </ul>
 <p>To control how many cores are used for linear-algebra-heavy functions like
-<a class="reference internal" href="../generated/mne.preprocessing.maxwell_filter.html#mne.preprocessing.maxwell_filter" title="mne.preprocessing.maxwell_filter"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.preprocessing.maxwell_filter()</span></code></a>, you can set the <code class="docutils literal notranslate"><span class="pre">OMP_NUM_THREADS</span></code>
-or <code class="docutils literal notranslate"><span class="pre">OPENBLAS_NUM_THREADS</span></code> environment variable to the desired number of cores
-for MKL or OpenBLAS, respectively.</p>
+<a class="reference internal" href="../generated/mne.preprocessing.maxwell_filter.html#mne.preprocessing.maxwell_filter" title="mne.preprocessing.maxwell_filter"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.preprocessing.maxwell_filter()</span></code></a>, you can set an environment variable
+to the desired number of cores. <strong>Which variable works depends on the threading
+layer your BLAS was built against, not just on which BLAS it is.</strong>
+<a class="reference internal" href="../generated/mne.sys_info.html#mne.sys_info" title="mne.sys_info"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.sys_info()</span></code></a> reports both, for example
+<code class="docutils literal notranslate"><span class="pre">OpenBLAS</span> <span class="pre">0.3.33</span> <span class="pre">with</span> <span class="pre">10</span> <span class="pre">threads</span> <span class="pre">(openmp</span> <span class="pre">threading</span> <span class="pre">layer)</span></code>.</p>
+<ul class="simple">
+<li><p>OpenBLAS with the <code class="docutils literal notranslate"><span class="pre">pthreads</span></code> threading layer, typically shipped by the
+NumPy and SciPy wheels on PyPI: use <code class="docutils literal notranslate"><span class="pre">OPENBLAS_NUM_THREADS</span></code>.</p></li>
+<li><p>OpenBLAS with the <code class="docutils literal notranslate"><span class="pre">openmp</span></code> threading layer, typically shipped by
+<code class="docutils literal notranslate"><span class="pre">conda-forge</span></code> and by the <a class="reference internal" href="../install/installers.html#installers"><span class="std std-ref">standalone installers</span></a>: use
+<code class="docutils literal notranslate"><span class="pre">OMP_NUM_THREADS</span></code>. On these builds <code class="docutils literal notranslate"><span class="pre">OPENBLAS_NUM_THREADS</span></code> is silently
+ignored, because OpenBLAS delegates threading to OpenMP.</p></li>
+<li><p>MKL: use <code class="docutils literal notranslate"><span class="pre">MKL_NUM_THREADS</span></code>, or <code class="docutils literal notranslate"><span class="pre">OMP_NUM_THREADS</span></code> for any OpenMP-based
+threading layer.</p></li>
+<li><p>Accelerate: there is no effective setting, and none is needed. Accelerate
+manages its own threads and ignores all of the variables above;
+<code class="docutils literal notranslate"><span class="pre">VECLIB_MAXIMUM_THREADS</span></code> is advisory at best. Its performance is also
+essentially flat with respect to thread settings, so there is nothing to tune.</p></li>
+</ul>
 <p>Using more threads is not always faster. In particular, decomposition-heavy
 operations such as <a class="reference internal" href="../generated/mne.preprocessing.maxwell_filter.html#mne.preprocessing.maxwell_filter" title="mne.preprocessing.maxwell_filter"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.preprocessing.maxwell_filter()</span></code></a> and
-<a class="reference internal" href="../generated/mne.compute_covariance.html#mne.compute_covariance" title="mne.compute_covariance"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.compute_covariance()</span></code></a> with <code class="docutils literal notranslate"><span class="pre">method=&quot;shrunk&quot;</span></code> can be slower when
-OpenBLAS uses all logical CPU cores on Linux. If one of these operations is
-unexpectedly slow, use <a class="reference internal" href="../generated/mne.sys_info.html#mne.sys_info" title="mne.sys_info"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.sys_info()</span></code></a> to check the BLAS library and its
-current thread count. Compare a few settings, for example 1, 2, 4, and the
-number of physical CPU cores, using a representative part of your analysis.
-The best setting depends on the operation, CPU, and BLAS library.</p>
+<a class="reference internal" href="../generated/mne.compute_covariance.html#mne.compute_covariance" title="mne.compute_covariance"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.compute_covariance()</span></code></a> with <code class="docutils literal notranslate"><span class="pre">method=&quot;shrunk&quot;</span></code> can be much slower when
+OpenBLAS or MKL uses all logical CPU cores. If one of these operations is
+unexpectedly slow, compare a few settings, for example 1, 2, 3, 4, and the
+number of physical CPU cores, using a representative part of your analysis. The
+best setting depends on the operation, CPU, and BLAS library.</p>
 <p>Set the environment variable before importing MNE-Python, NumPy, or SciPy. For
 example, start the analysis from the shell with:</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span><span class="nv">OPENBLAS_NUM_THREADS</span><span class="o">=</span><span class="m">4</span><span class="w"> </span>python<span class="w"> </span>analysis.py
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span><span class="nv">OMP_NUM_THREADS</span><span class="o">=</span><span class="m">4</span><span class="w"> </span>python<span class="w"> </span>analysis.py
 </pre></div>
 </div>
 <p>Changes made after the linear algebra library has been loaded might have no
@@ -1061,7 +1078,7 @@ complete all <code class="docutils literal notranslate"><span class="pre">recon_
   
     <div class="footer-items__start">
       
-        <div class="footer-item"><p class="text-center small">&copy; Copyright 2012–2026, MNE Developers. Last updated <time datetime="2026-07-28T07:07:57.054745+00:00" class="localized">2026-07-28 07:07 UTC</time>.
+        <div class="footer-item"><p class="text-center small">&copy; Copyright 2012–2026, MNE Developers. Last updated <time datetime="2026-07-29T06:26:25.057934+00:00" class="localized">2026-07-29 06:26 UTC</time>.
 <script type="text/javascript">
 function formatTimestamp() {
     document.querySelectorAll("time.localized").forEach(el => {
