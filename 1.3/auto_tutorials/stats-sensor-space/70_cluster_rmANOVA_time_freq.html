@@ -1,0 +1,1465 @@
+
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-theme="auto">
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>Mass-univariate twoway repeated measures ANOVA on single trial power &#8212; MNE 1.3.1 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "auto";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=12da95d707ffb74b382d" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=12da95d707ffb74b382d" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=12da95d707ffb74b382d" rel="stylesheet" />
+
+  
+  <link href="../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=12da95d707ffb74b382d" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/plot_directive.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-binder.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-dataframe.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-rendered-html.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/style.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=12da95d707ffb74b382d" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=12da95d707ffb74b382d" />
+
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/clipboard.min.js"></script>
+    <script src="../../_static/copybutton.js"></script>
+    <script src="../../_static/design-tabs.js"></script>
+    <script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-5TBCPCRB6X"></script>
+    <script>
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){ dataLayer.push(arguments); }
+                gtag('js', new Date());
+                gtag('config', 'G-5TBCPCRB6X');
+            </script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'auto_tutorials/stats-sensor-space/70_cluster_rmANOVA_time_freq';</script>
+    <script>
+        DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://mne.tools/dev/_static/versions.json';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '1.3';
+        </script>
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Spatiotemporal permutation F-test on full sensor data" href="75_cluster_ftest_spatiotemporal.html" />
+    <link rel="prev" title="Non-parametric between conditions cluster statistic on single trial power" href="50_cluster_between_time_freq.html" />
+    <link rel="canonical" href="https://mne.tools/stable/index.html" />
+    
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="auto">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+<div class="bd-header__inner bd-page-width">
+  <label class="sidebar-toggle primary-toggle" for="__primary">
+    <span class="fa-solid fa-bars"></span>
+  </label>
+  
+  <div class="navbar-header-items__start">
+    
+      <div class="navbar-item">
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../_static/mne_logo_small.svg" class="logo__image only-light" alt="Logo image"/>
+    <script>document.write(`<img src="../../_static/mne_logo_small.svg" class="logo__image only-dark" alt="Logo image"/>`);</script>
+  
+  
+</a></div>
+    
+  </div>
+  
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item"><nav class="navbar-nav">
+  <p class="sidebar-header-items__title"
+     role="heading"
+     aria-level="1"
+     aria-label="Site Navigation">
+    Site Navigation
+  </p>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../install/index.html">
+                        Install
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="../../overview/index.html">
+                        Documentation
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../python_reference.html">
+                        API Reference
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../overview/get_help.html">
+                        Get help
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../overview/development.html">
+                        Development
+                      </a>
+                    </li>
+                
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+        </div>
+      
+      
+        <div class="navbar-item">
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script></div>
+      
+        <div class="navbar-item">
+<script>
+document.write(`
+  <div class="version-switcher__container dropdown">
+    <button type="button" class="version-switcher__button btn btn-sm navbar-btn dropdown-toggle" data-bs-toggle="dropdown">
+      1.3  <!-- this text may get changed later by javascript -->
+      <span class="caret"></span>
+    </button>
+    <div class="version-switcher__menu dropdown-menu list-group-flush py-0">
+    <!-- dropdown will be populated by javascript on page load -->
+    </div>
+  </div>
+`);
+</script></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links navbar-nav"
+    aria-label="External Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/mne-tools/mne-python" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-square-github"></i></span>
+            <label class="sr-only">GitHub</label></a>
+        </li>
+        <li class="nav-item">
+            
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://fosstodon.org/@mne" title="Mastodon" class="nav-link" rel="me" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-mastodon"></i></span>
+            <label class="sr-only">Mastodon</label></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://twitter.com/mne_python" title="Twitter" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-square-twitter"></i></span>
+            <label class="sr-only">Twitter</label></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://mne.discourse.group/" title="Discourse" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-discourse"></i></span>
+            <label class="sr-only">Discourse</label></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://discord.gg/rKfvxTuATa" title="Discord" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-discord"></i></span>
+            <label class="sr-only">Discord</label></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+    </div>
+  
+
+  
+    <label class="sidebar-toggle secondary-toggle" for="__secondary">
+      <span class="fa-solid fa-outdent"></span>
+    </label>
+  
+</div>
+
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          <div class="navbar-item"><nav class="navbar-nav">
+  <p class="sidebar-header-items__title"
+     role="heading"
+     aria-level="1"
+     aria-label="Site Navigation">
+    Site Navigation
+  </p>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../install/index.html">
+                        Install
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="../../overview/index.html">
+                        Documentation
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../python_reference.html">
+                        API Reference
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../overview/get_help.html">
+                        Get help
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../overview/development.html">
+                        Development
+                      </a>
+                    </li>
+                
+  </ul>
+</nav></div>
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script></div>
+        
+          <div class="navbar-item">
+<script>
+document.write(`
+  <div class="version-switcher__container dropdown">
+    <button type="button" class="version-switcher__button btn btn-sm navbar-btn dropdown-toggle" data-bs-toggle="dropdown">
+      1.3  <!-- this text may get changed later by javascript -->
+      <span class="caret"></span>
+    </button>
+    <div class="version-switcher__menu dropdown-menu list-group-flush py-0">
+    <!-- dropdown will be populated by javascript on page load -->
+    </div>
+  </div>
+`);
+</script></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links navbar-nav"
+    aria-label="External Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/mne-tools/mne-python" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-square-github"></i></span>
+            <label class="sr-only">GitHub</label></a>
+        </li>
+        <li class="nav-item">
+            
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://fosstodon.org/@mne" title="Mastodon" class="nav-link" rel="me" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-mastodon"></i></span>
+            <label class="sr-only">Mastodon</label></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://twitter.com/mne_python" title="Twitter" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-square-twitter"></i></span>
+            <label class="sr-only">Twitter</label></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://mne.discourse.group/" title="Discourse" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-discourse"></i></span>
+            <label class="sr-only">Discourse</label></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://discord.gg/rKfvxTuATa" title="Discord" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-discord"></i></span>
+            <label class="sr-only">Discord</label></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item"><nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="../index.html">Tutorials</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
+<li class="toctree-l2 has-children"><a class="reference internal" href="../intro/index.html">Introductory tutorials</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../intro/10_overview.html">Overview of MEG/EEG analysis with MNE-Python</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../intro/15_inplace.html">Modifying data in-place</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../intro/20_events_from_raw.html">Parsing events from raw data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../intro/30_info.html">The Info data structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../intro/40_sensor_locations.html">Working with sensor locations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../intro/50_configure_mne.html">Configuring MNE-Python</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../intro/70_report.html">Getting started with mne.Report</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../io/index.html">Reading data for different recording systems</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-3"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../io/10_reading_meg_data.html">Importing data from MEG devices</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../io/20_reading_eeg_data.html">Importing data from EEG devices</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../io/30_reading_fnirs_data.html">Importing data from fNIRS devices</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../io/60_ctf_bst_auditory.html">Working with CTF data: the Brainstorm auditory dataset</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../raw/index.html">Working with continuous data</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-4"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../raw/10_raw_overview.html">The Raw data structure: continuous data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../raw/20_event_arrays.html">Working with events</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../raw/30_annotate_raw.html">Annotating continuous data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../raw/40_visualize_raw.html">Built-in plotting methods for Raw objects</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../preprocessing/index.html">Preprocessing</a><input class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-5"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../preprocessing/10_preprocessing_overview.html">Overview of artifact detection</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../preprocessing/15_handling_bad_channels.html">Handling bad channels</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../preprocessing/20_rejecting_bad_data.html">Rejecting bad data spans and breaks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../preprocessing/25_background_filtering.html">Background information on filtering</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../preprocessing/30_filtering_resampling.html">Filtering and resampling data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../preprocessing/35_artifact_correction_regression.html">Repairing artifacts with regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../preprocessing/40_artifact_correction_ica.html">Repairing artifacts with ICA</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../preprocessing/45_projectors_background.html">Background on projectors and projections</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../preprocessing/50_artifact_correction_ssp.html">Repairing artifacts with SSP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../preprocessing/55_setting_eeg_reference.html">Setting the EEG reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../preprocessing/59_head_positions.html">Extracting and visualizing subject head movement</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../preprocessing/60_maxwell_filtering_sss.html">Signal-space separation (SSS) and Maxwell filtering</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../preprocessing/70_fnirs_processing.html">Preprocessing functional near-infrared spectroscopy (fNIRS) data</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../epochs/index.html">Segmenting continuous data into epochs</a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-6"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../epochs/10_epochs_overview.html">The Epochs data structure: discontinuous data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../epochs/15_baseline_regression.html">Regression-based baseline correction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../epochs/20_visualize_epochs.html">Visualizing epoched data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../epochs/30_epochs_metadata.html">Working with Epoch metadata</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../epochs/40_autogenerate_metadata.html">Auto-generating Epochs metadata</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../epochs/50_epochs_to_data_frame.html">Exporting Epochs to Pandas DataFrames</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../epochs/60_make_fixed_length_epochs.html">Divide continuous data into equally-spaced epochs</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../evoked/index.html">Estimating evoked responses</a><input class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-7"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../evoked/10_evoked_overview.html">The Evoked data structure: evoked/averaged data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../evoked/20_visualize_evoked.html">Visualizing Evoked data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../evoked/30_eeg_erp.html">EEG analysis - Event-Related Potentials (ERPs)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../evoked/40_whitened.html">Plotting whitened data</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../time-freq/index.html">Time-frequency analysis</a><input class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-8"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../time-freq/10_spectrum_class.html">The Spectrum and EpochsSpectrum classes: frequency-domain data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../time-freq/20_sensors_time_frequency.html">Frequency and time-frequency sensor analysis</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../time-freq/50_ssvep.html">Frequency-tagging: Basic analysis of an SSVEP/vSSR dataset</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../forward/index.html">Forward models and source spaces</a><input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-9"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../forward/10_background_freesurfer.html">FreeSurfer MRI reconstruction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../forward/20_source_alignment.html">Source alignment and coordinate frames</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../forward/25_automated_coreg.html">Using an automated approach to coregistration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../forward/30_forward.html">Head model and forward computation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../forward/35_eeg_no_mri.html">EEG forward operator with a template MRI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../forward/50_background_freesurfer_mne.html">How MNE uses FreeSurfer’s outputs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../forward/80_fix_bem_in_blender.html">Fixing BEM and head surfaces</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../forward/90_compute_covariance.html">Computing a covariance matrix</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../inverse/index.html">Source localization and inverses</a><input class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-10"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/10_stc_class.html">The SourceEstimate data structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/20_dipole_fit.html">Source localization with equivalent current dipole (ECD) fit</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/30_mne_dspm_loreta.html">Source localization with MNE, dSPM, sLORETA, and eLORETA</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/35_dipole_orientations.html">The role of dipole orientations in distributed source localization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/40_mne_fixed_free.html">Computing various MNE solutions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/50_beamformer_lcmv.html">Source reconstruction using an LCMV beamformer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/60_visualize_stc.html">Visualize source time courses (stcs)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/70_eeg_mri_coords.html">EEG source localization given electrode locations on an MRI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/80_brainstorm_phantom_elekta.html">Brainstorm Elekta phantom dataset tutorial</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/85_brainstorm_phantom_ctf.html">Brainstorm CTF phantom dataset tutorial</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/90_phantom_4DBTi.html">4D Neuroimaging/BTi phantom dataset tutorial</a></li>
+</ul>
+</li>
+<li class="toctree-l2 current active has-children"><a class="reference internal" href="index.html">Statistical analysis of sensor data</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-11"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="10_background_stats.html">Statistical inference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="20_erp_stats.html">Visualising statistical significance thresholds on EEG data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="40_cluster_1samp_time_freq.html">Non-parametric 1 sample cluster statistic on single trial power</a></li>
+<li class="toctree-l3"><a class="reference internal" href="50_cluster_between_time_freq.html">Non-parametric between conditions cluster statistic on single trial power</a></li>
+<li class="toctree-l3 current active"><a class="current reference internal" href="#">Mass-univariate twoway repeated measures ANOVA on single trial power</a></li>
+<li class="toctree-l3"><a class="reference internal" href="75_cluster_ftest_spatiotemporal.html">Spatiotemporal permutation F-test on full sensor data</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../stats-source-space/index.html">Statistical analysis of source estimates</a><input class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-12"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../stats-source-space/20_cluster_1samp_spatiotemporal.html">Permutation t-test on source data with spatio-temporal clustering</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../stats-source-space/30_cluster_ftest_spatiotemporal.html">2 samples permutation test on source data with spatio-temporal clustering</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../stats-source-space/60_cluster_rmANOVA_spatiotemporal.html">Repeated measures ANOVA on source data with spatio-temporal clustering</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../machine-learning/index.html">Machine learning models of neural activity</a><input class="toctree-checkbox" id="toctree-checkbox-13" name="toctree-checkbox-13" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-13"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../machine-learning/30_strf.html">Spectro-temporal receptive field (STRF) estimation on continuous data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../machine-learning/50_decoding.html">Decoding (MVPA)</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../clinical/index.html">Clinical applications</a><input class="toctree-checkbox" id="toctree-checkbox-14" name="toctree-checkbox-14" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-14"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../clinical/10_ieeg_localize.html">Locating intracranial electrode contacts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../clinical/20_seeg.html">Working with sEEG data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../clinical/30_ecog.html">Working with ECoG data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../clinical/60_sleep.html">Sleep stage classification from polysomnography (PSG) data</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../simulation/index.html">Simulation</a><input class="toctree-checkbox" id="toctree-checkbox-15" name="toctree-checkbox-15" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-15"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../simulation/10_array_objs.html">Creating MNE-Python data structures from scratch</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../simulation/70_point_spread.html">Corrupt known signal with point spread</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../simulation/80_dics.html">DICS for power mapping</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../auto_examples/index.html">Examples</a><input class="toctree-checkbox" id="toctree-checkbox-16" name="toctree-checkbox-16" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-16"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../auto_examples/io/index.html">Input/Output</a><input class="toctree-checkbox" id="toctree-checkbox-17" name="toctree-checkbox-17" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-17"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/io/elekta_epochs.html">Getting averaging info from .fif files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/io/read_neo_format.html">How to use data in neural ensemble (NEO) format</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/io/read_noise_covariance_matrix.html">Reading/Writing a noise covariance matrix</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/io/read_xdf.html">Reading XDF EEG data</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../auto_examples/simulation/index.html">Data Simulation</a><input class="toctree-checkbox" id="toctree-checkbox-18" name="toctree-checkbox-18" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-18"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/simulation/plot_stc_metrics.html">Compare simulated and estimated source activity</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/simulation/simulate_evoked_data.html">Generate simulated evoked data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/simulation/simulate_raw_data.html">Generate simulated raw data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/simulation/simulated_raw_data_using_subject_anatomy.html">Simulate raw data using subject anatomy</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/simulation/source_simulator.html">Generate simulated source data</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../auto_examples/preprocessing/index.html">Preprocessing</a><input class="toctree-checkbox" id="toctree-checkbox-19" name="toctree-checkbox-19" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-19"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/css.html">Cortical Signal Suppression (CSS) for removal of cortical signals</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/define_target_events.html">Define target events based on time lag, plot evoked response</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/eeg_bridging.html">Identify EEG Electrodes Bridged by too much Gel</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/eeg_csd.html">Transform EEG data using current source density (CSD)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/eog_artifact_histogram.html">Show EOG artifact timing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/eog_regression.html">Reduce EOG artifacts through regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/find_ref_artifacts.html">Find MEG reference channel artifacts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/fnirs_artifact_removal.html">Visualise NIRS artifact correction methods</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/ica_comparison.html">Compare the different ICA algorithms in MNE</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/interpolate_bad_channels.html">Interpolate bad channels for MEG/EEG channels</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/movement_compensation.html">Maxwell filter data with movement compensation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/movement_detection.html">Annotate movement artifacts and reestimate dev_head_t</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/muscle_detection.html">Annotate muscle artifacts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/muscle_ica.html">Removing muscle ICA components</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/otp.html">Plot sensor denoising using oversampled temporal projection</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/shift_evoked.html">Shifting time-scale in evoked data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/virtual_evoked.html">Remap MEG channel types</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/xdawn_denoising.html">XDAWN Denoising</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../auto_examples/visualization/index.html">Visualization</a><input class="toctree-checkbox" id="toctree-checkbox-20" name="toctree-checkbox-20" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-20"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/visualization/3d_to_2d.html">How to convert 3D electrode positions to a 2D image</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/visualization/brain.html">Plotting with <code class="docutils literal notranslate"><span class="pre">mne.viz.Brain</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/visualization/channel_epochs_image.html">Visualize channel over epochs as an image</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/visualization/eeg_on_scalp.html">Plotting EEG sensors on the scalp</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/visualization/evoked_arrowmap.html">Plotting topographic arrowmaps of evoked data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/visualization/evoked_topomap.html">Plotting topographic maps of evoked data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/visualization/evoked_whitening.html">Whitening evoked data with a noise covariance</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/visualization/meg_sensors.html">Plotting sensor layouts of MEG systems</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/visualization/mne_helmet.html">Plot the MNE brain and helmet</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/visualization/montage_sgskip.html">Plotting sensor layouts of EEG systems</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/visualization/parcellation.html">Plot a cortical parcellation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/visualization/publication_figure.html">Make figures more publication ready</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/visualization/roi_erpimage_by_rt.html">Plot single trial activity, grouped by ROI and sorted by RT</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/visualization/sensor_noise_level.html">Show noise levels from empty room data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/visualization/ssp_projs_sensitivity_map.html">Sensitivity map of SSP projections</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/visualization/topo_compare_conditions.html">Compare evoked responses for different conditions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/visualization/topo_customized.html">Plot custom topographies for MEG sensors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/visualization/xhemi.html">Cross-hemisphere comparison</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../auto_examples/time_frequency/index.html">Time-Frequency Examples</a><input class="toctree-checkbox" id="toctree-checkbox-21" name="toctree-checkbox-21" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-21"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/time_frequency/compute_csd.html">Compute a cross-spectral density (CSD) matrix</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/time_frequency/compute_source_psd_epochs.html">Compute Power Spectral Density of inverse solution from single epochs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/time_frequency/source_label_time_frequency.html">Compute power and phase lock in label of the source space</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/time_frequency/source_power_spectrum.html">Compute source power spectral density (PSD) in a label</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/time_frequency/source_power_spectrum_opm.html">Compute source power spectral density (PSD) of VectorView and OPM data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/time_frequency/source_space_time_frequency.html">Compute induced power in the source space with dSPM</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/time_frequency/temporal_whitening.html">Temporal whitening with AR model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/time_frequency/time_frequency_erds.html">Compute and visualize ERDS maps</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/time_frequency/time_frequency_global_field_power.html">Explore event-related dynamics for specific frequency bands</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/time_frequency/time_frequency_simulated.html">Time-frequency on simulated data (Multitaper vs. Morlet vs. Stockwell vs. Hilbert)</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../auto_examples/stats/index.html">Statistics Examples</a><input class="toctree-checkbox" id="toctree-checkbox-22" name="toctree-checkbox-22" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-22"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/stats/cluster_stats_evoked.html">Permutation F-test on sensor data with 1D cluster level</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/stats/fdr_stats_evoked.html">FDR correction on T-test on sensor data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/stats/linear_regression_raw.html">Regression on continuous data (rER[P/F])</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/stats/sensor_permutation_test.html">Permutation T-test on sensor data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/stats/sensor_regression.html">Analysing continuous features with binning and regression in sensor space</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../auto_examples/decoding/index.html">Machine Learning (Decoding, Encoding, and MVPA)</a><input class="toctree-checkbox" id="toctree-checkbox-23" name="toctree-checkbox-23" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-23"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/decoding/decoding_csp_eeg.html">Motor imagery decoding from EEG data using the Common Spatial Pattern (CSP)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/decoding/decoding_csp_timefreq.html">Decoding in time-frequency space using Common Spatial Patterns (CSP)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/decoding/decoding_rsa_sgskip.html">Representational Similarity Analysis</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/decoding/decoding_spatio_temporal_source.html">Decoding source space data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/decoding/decoding_spoc_CMC.html">Continuous Target Decoding with SPoC</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/decoding/decoding_time_generalization_conditions.html">Decoding sensor space data with generalization across time and conditions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/decoding/decoding_unsupervised_spatial_filter.html">Analysis of evoked response using ICA and PCA reduction techniques</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/decoding/decoding_xdawn_eeg.html">XDAWN Decoding From EEG data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/decoding/ems_filtering.html">Compute effect-matched-spatial filtering (EMS)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/decoding/linear_model_patterns.html">Linear classifier on sensor data with plot patterns and filters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/decoding/receptive_field_mtrf.html">Receptive Field Estimation and Prediction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/decoding/ssd_spatial_filters.html">Compute Spectro-Spatial Decomposition (SSD) spatial filters</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../auto_examples/connectivity/index.html">Connectivity Analysis Examples</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../auto_examples/forward/index.html">Forward modeling</a><input class="toctree-checkbox" id="toctree-checkbox-24" name="toctree-checkbox-24" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-24"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/forward/forward_sensitivity_maps.html">Display sensitivity maps for EEG and MEG sensors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/forward/left_cerebellum_volume_source.html">Generate a left cerebellum volume source space</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/forward/source_space_morphing.html">Use source space morphing</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../auto_examples/inverse/index.html">Inverse problem and source analysis</a><input class="toctree-checkbox" id="toctree-checkbox-25" name="toctree-checkbox-25" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-25"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/compute_mne_inverse_epochs_in_label.html">Compute MNE-dSPM inverse solution on single epochs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/compute_mne_inverse_raw_in_label.html">Compute sLORETA inverse solution on raw data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/compute_mne_inverse_volume.html">Compute MNE-dSPM inverse solution on evoked data in volume source space</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/custom_inverse_solver.html">Source localization with a custom inverse solver</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/dics_epochs.html">Compute source level time-frequency timecourses using a DICS beamformer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/dics_source_power.html">Compute source power using DICS beamformer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/evoked_ers_source_power.html">Compute evoked ERS source power using DICS, LCMV beamformer, and dSPM</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/gamma_map_inverse.html">Compute a sparse inverse solution using the Gamma-MAP empirical Bayesian method</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/label_activation_from_stc.html">Extracting time course from source_estimate object</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/label_from_stc.html">Generate a functional label from source estimates</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/label_source_activations.html">Extracting the time series of activations in a label</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/mixed_norm_inverse.html">Compute sparse inverse solution with mixed norm: MxNE and irMxNE</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/mixed_source_space_inverse.html">Compute MNE inverse solution on evoked data with a mixed source space</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/mne_cov_power.html">Compute source power estimate by projecting the covariance with MNE</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/morph_surface_stc.html">Morph surface source estimate</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/morph_volume_stc.html">Morph volumetric source estimate</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/multi_dipole_model.html">Computing source timecourses with an XFit-like multi-dipole model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/multidict_reweighted_tfmxne.html">Compute iterative reweighted TF-MxNE with multiscale time-frequency dictionary</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/psf_ctf_label_leakage.html">Visualize source leakage among labels using a circular graph</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/psf_ctf_vertices.html">Plot point-spread functions (PSFs) and cross-talk functions (CTFs)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/psf_ctf_vertices_lcmv.html">Compute cross-talk functions for LCMV beamformers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/psf_volume.html">Plot point-spread functions (PSFs) for a volume</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/rap_music.html">Compute Rap-Music on evoked data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/read_inverse.html">Reading an inverse operator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/read_stc.html">Reading an STC file</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/resolution_metrics.html">Compute spatial resolution metrics in source space</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/resolution_metrics_eegmeg.html">Compute spatial resolution metrics to compare MEG with EEG+MEG</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/snr_estimate.html">Estimate data SNR using an inverse</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/source_space_snr.html">Computing source space SNR</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/time_frequency_mixed_norm_inverse.html">Compute MxNE with time-frequency sparse prior</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/vector_mne_solution.html">Plotting the full vector-valued MNE solution</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../auto_examples/datasets/index.html">Examples on open datasets</a><input class="toctree-checkbox" id="toctree-checkbox-26" name="toctree-checkbox-26" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-26"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/datasets/brainstorm_data.html">Brainstorm raw (median nerve) dataset</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/datasets/hf_sef_data.html">HF-SEF dataset</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/datasets/limo_data.html">Single trial linear regression analysis with the LIMO dataset</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/datasets/opm_data.html">Optically pumped magnetometer (OPM) data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/datasets/spm_faces_dataset_sgskip.html">From raw data to dSPM on SPM Faces dataset</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../glossary.html">Glossary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../overview/implementation.html">Implementation details</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../overview/design_philosophy.html">Design philosophy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../overview/datasets_index.html">Example datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generated/commands.html">Command-line tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../overview/migrating.html">Migrating from other analysis software</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../overview/cookbook.html">The typical M/EEG workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../overview/cite.html">How to cite MNE-Python</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cited.html">Papers citing MNE-Python</a></li>
+</ul>
+</div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article">
+<div class="header-article-items header-article__inner">
+  
+    <div class="header-article-items__start">
+      
+        <div class="header-article-item">
+
+
+
+
+
+<nav aria-label="Breadcrumbs">
+  <ul class="bd-breadcrumbs" role="navigation" aria-label="Breadcrumb">
+    
+    <li class="breadcrumb-item breadcrumb-home">
+      <a href="../../index.html" class="nav-link" aria-label="Home">
+        <i class="fa-solid fa-home"></i>
+      </a>
+    </li>
+    
+    <li class="breadcrumb-item"><a href="../../overview/index.html" class="nav-link">Documentation overview</a></li>
+    
+    
+    <li class="breadcrumb-item"><i class="fa-solid fa-ellipsis"></i></li>
+    
+    
+    <li class="breadcrumb-item"><a href="index.html" class="nav-link">Statistical analysis of sensor data</a></li>
+    
+    <li class="breadcrumb-item active" aria-current="page">Mass-univariate twoway repeated measures ANOVA on single trial power</li>
+  </ul>
+</nav>
+</div>
+      
+    </div>
+  
+  
+</div>
+</div>
+              
+              
+<div>
+  
+  <div class="sphx-glr-download-link-note admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference internal" href="#sphx-glr-download-auto-tutorials-stats-sensor-space-70-cluster-rmanova-time-freq-py"><span class="std std-ref">Go to the end</span></a>
+to download the full example code</p>
+</div>
+<section class="sphx-glr-example-title" id="mass-univariate-twoway-repeated-measures-anova-on-single-trial-power">
+<span id="tut-timefreq-twoway-anova"></span><span id="sphx-glr-auto-tutorials-stats-sensor-space-70-cluster-rmanova-time-freq-py"></span><h1>Mass-univariate twoway repeated measures ANOVA on single trial power<a class="headerlink" href="#mass-univariate-twoway-repeated-measures-anova-on-single-trial-power" title="Permalink to this heading">#</a></h1>
+<p>This script shows how to conduct a mass-univariate repeated measures
+ANOVA. As the model to be fitted assumes two fully crossed factors,
+we will study the interplay between perceptual modality
+(auditory VS visual) and the location of stimulus presentation
+(left VS right). Here we use single trials as replications
+(subjects) while iterating over time slices plus frequency bands
+for to fit our mass-univariate model. For the sake of simplicity we
+will confine this analysis to one single channel of which we know
+that it exposes a strong induced response. We will then visualize
+each effect by creating a corresponding mass-univariate effect
+image. We conclude with accounting for multiple comparisons by
+performing a permutation clustering test using the ANOVA as
+clustering function. The results final will be compared to multiple
+comparisons using False Discovery Rate correction.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Authors: Denis Engemann &lt;denis.engemann@gmail.com&gt;</span>
+<span class="c1">#          Eric Larson &lt;larson.eric.d@gmail.com&gt;</span>
+<span class="c1">#          Alexandre Gramfort &lt;alexandre.gramfort@inria.fr&gt;</span>
+<span class="c1">#          Alex Rockhill &lt;aprockhill@mailbox.org&gt;</span>
+<span class="c1">#</span>
+<span class="c1"># License: BSD-3-Clause</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">numpy</span> <span class="k">as</span> <span class="nn">np</span>
+<span class="kn">import</span> <span class="nn">matplotlib.pyplot</span> <span class="k">as</span> <span class="nn">plt</span>
+
+<span class="kn">import</span> <span class="nn">mne</span>
+<span class="kn">from</span> <span class="nn">mne.time_frequency</span> <span class="kn">import</span> <a href="../../generated/mne.time_frequency.tfr_morlet.html#mne.time_frequency.tfr_morlet" title="mne.time_frequency.tfr_morlet" class="sphx-glr-backref-module-mne-time_frequency sphx-glr-backref-type-py-function"><span class="n">tfr_morlet</span></a>
+<span class="kn">from</span> <span class="nn">mne.stats</span> <span class="kn">import</span> <a href="../../generated/mne.stats.f_threshold_mway_rm.html#mne.stats.f_threshold_mway_rm" title="mne.stats.f_threshold_mway_rm" class="sphx-glr-backref-module-mne-stats sphx-glr-backref-type-py-function"><span class="n">f_threshold_mway_rm</span></a><span class="p">,</span> <a href="../../generated/mne.stats.f_mway_rm.html#mne.stats.f_mway_rm" title="mne.stats.f_mway_rm" class="sphx-glr-backref-module-mne-stats sphx-glr-backref-type-py-function"><span class="n">f_mway_rm</span></a><span class="p">,</span> <a href="../../generated/mne.stats.fdr_correction.html#mne.stats.fdr_correction" title="mne.stats.fdr_correction" class="sphx-glr-backref-module-mne-stats sphx-glr-backref-type-py-function"><span class="n">fdr_correction</span></a>
+<span class="kn">from</span> <span class="nn">mne.datasets</span> <span class="kn">import</span> <span class="n">sample</span>
+
+<span class="nb">print</span><span class="p">(</span><span class="vm">__doc__</span><span class="p">)</span>
+</pre></div>
+</div>
+<section id="set-parameters">
+<h2>Set parameters<a class="headerlink" href="#set-parameters" title="Permalink to this heading">#</a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="https://docs.python.org/3/library/pathlib.html#pathlib.PosixPath" title="pathlib.PosixPath" class="sphx-glr-backref-module-pathlib sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">data_path</span></a> <span class="o">=</span> <a href="../../generated/mne.datasets.sample.data_path.html#mne.datasets.sample.data_path" title="mne.datasets.sample.data_path" class="sphx-glr-backref-module-mne-datasets-sample sphx-glr-backref-type-py-function"><span class="n">sample</span><span class="o">.</span><span class="n">data_path</span></a><span class="p">()</span>
+<a href="https://docs.python.org/3/library/pathlib.html#pathlib.PosixPath" title="pathlib.PosixPath" class="sphx-glr-backref-module-pathlib sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">meg_path</span></a> <span class="o">=</span> <a href="https://docs.python.org/3/library/pathlib.html#pathlib.PosixPath" title="pathlib.PosixPath" class="sphx-glr-backref-module-pathlib sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">data_path</span></a> <span class="o">/</span> <span class="s1">&#39;MEG&#39;</span> <span class="o">/</span> <span class="s1">&#39;sample&#39;</span>
+<a href="https://docs.python.org/3/library/pathlib.html#pathlib.PosixPath" title="pathlib.PosixPath" class="sphx-glr-backref-module-pathlib sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw_fname</span></a> <span class="o">=</span> <a href="https://docs.python.org/3/library/pathlib.html#pathlib.PosixPath" title="pathlib.PosixPath" class="sphx-glr-backref-module-pathlib sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">meg_path</span></a> <span class="o">/</span> <span class="s1">&#39;sample_audvis_raw.fif&#39;</span>
+<a href="https://docs.python.org/3/library/pathlib.html#pathlib.PosixPath" title="pathlib.PosixPath" class="sphx-glr-backref-module-pathlib sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">event_fname</span></a> <span class="o">=</span> <a href="https://docs.python.org/3/library/pathlib.html#pathlib.PosixPath" title="pathlib.PosixPath" class="sphx-glr-backref-module-pathlib sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">meg_path</span></a> <span class="o">/</span> <span class="s1">&#39;sample_audvis_raw-eve.fif&#39;</span>
+<a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmin</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmax</span></a> <span class="o">=</span> <span class="o">-</span><span class="mf">0.2</span><span class="p">,</span> <span class="mf">0.5</span>
+
+<span class="c1"># Setup for reading the raw data</span>
+<a href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw</span></a> <span class="o">=</span> <a href="../../generated/mne.io.read_raw_fif.html#mne.io.read_raw_fif" title="mne.io.read_raw_fif" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read_raw_fif</span></a><span class="p">(</span><a href="https://docs.python.org/3/library/pathlib.html#pathlib.PosixPath" title="pathlib.PosixPath" class="sphx-glr-backref-module-pathlib sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw_fname</span></a><span class="p">)</span>
+<a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">events</span></a> <span class="o">=</span> <a href="../../generated/mne.read_events.html#mne.read_events" title="mne.read_events" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">read_events</span></a><span class="p">(</span><a href="https://docs.python.org/3/library/pathlib.html#pathlib.PosixPath" title="pathlib.PosixPath" class="sphx-glr-backref-module-pathlib sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">event_fname</span></a><span class="p">)</span>
+
+<a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">include</span></a> <span class="o">=</span> <span class="p">[]</span>
+<a href="../../generated/mne.Info.html#mne.Info" title="mne.Info" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw</span><span class="o">.</span><span class="n">info</span></a><span class="p">[</span><span class="s1">&#39;bads&#39;</span><span class="p">]</span> <span class="o">+=</span> <span class="p">[</span><span class="s1">&#39;MEG 2443&#39;</span><span class="p">]</span>  <span class="c1"># bads</span>
+
+<span class="c1"># picks MEG gradiometers</span>
+<a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">picks</span></a> <span class="o">=</span> <a href="../../generated/mne.pick_types.html#mne.pick_types" title="mne.pick_types" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">pick_types</span></a><span class="p">(</span><a href="../../generated/mne.Info.html#mne.Info" title="mne.Info" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw</span><span class="o">.</span><span class="n">info</span></a><span class="p">,</span> <span class="n">meg</span><span class="o">=</span><span class="s1">&#39;grad&#39;</span><span class="p">,</span> <span class="n">eeg</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">eog</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                       <span class="n">stim</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">include</span></a><span class="o">=</span><a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">include</span></a><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="s1">&#39;bads&#39;</span><span class="p">)</span>
+
+<a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">ch_name</span></a> <span class="o">=</span> <span class="s1">&#39;MEG 1332&#39;</span>
+
+<span class="c1"># Load conditions</span>
+<a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">reject</span></a> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">grad</span><span class="o">=</span><span class="mf">4000e-13</span><span class="p">,</span> <span class="n">eog</span><span class="o">=</span><span class="mf">150e-6</span><span class="p">)</span>
+<a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">event_id</span></a> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">aud_l</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span> <span class="n">aud_r</span><span class="o">=</span><span class="mi">2</span><span class="p">,</span> <span class="n">vis_l</span><span class="o">=</span><span class="mi">3</span><span class="p">,</span> <span class="n">vis_r</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+<a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class"><span class="n">mne</span><span class="o">.</span><span class="n">Epochs</span></a><span class="p">(</span><a href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw</span></a><span class="p">,</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">events</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">event_id</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmin</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tmax</span></a><span class="p">,</span>
+                    <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">picks</span></a><span class="o">=</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">picks</span></a><span class="p">,</span> <span class="n">baseline</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <span class="n">preload</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+                    <a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">reject</span></a><span class="o">=</span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">reject</span></a><span class="p">)</span>
+<a href="../../generated/mne.Epochs.html#mne.Epochs.pick_channels" title="mne.Epochs.pick_channels" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">epochs</span><span class="o">.</span><span class="n">pick_channels</span></a><span class="p">([</span><a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">ch_name</span></a><span class="p">])</span>  <span class="c1"># restrict example to one channel</span>
+</pre></div>
+</div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Opening raw data file /home/circleci/mne_data/MNE-sample-data/MEG/sample/sample_audvis_raw.fif...
+    Read a total of 3 projection items:
+        PCA-v1 (1 x 102)  idle
+        PCA-v2 (1 x 102)  idle
+        PCA-v3 (1 x 102)  idle
+    Range : 25800 ... 192599 =     42.956 ...   320.670 secs
+Ready.
+Not setting metadata
+289 matching events found
+Setting baseline interval to [-0.19979521315838786, 0.0] sec
+Applying baseline correction (mode: mean)
+3 projection items activated
+Loading data for 289 events and 421 original time points ...
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+    Rejecting  epoch based on EOG : [&#39;EOG 061&#39;]
+53 bad epochs dropped
+Removing projector &lt;Projection | PCA-v1, active : True, n_channels : 102&gt;
+Removing projector &lt;Projection | PCA-v2, active : True, n_channels : 102&gt;
+Removing projector &lt;Projection | PCA-v3, active : True, n_channels : 102&gt;
+</pre></div>
+</div>
+<div class="output_subarea output_html rendered_html output_result">
+<table class="table table-hover table-striped table-sm table-responsive small">
+    <tr>
+        <th>Number of events</th>
+        <td>236</td>
+    </tr>
+    <tr>
+        <th>Events</th>
+
+        <td>aud_l: 56<br/>aud_r: 60<br/>vis_l: 64<br/>vis_r: 56</td>
+
+    </tr>
+    <tr>
+        <th>Time range</th>
+        <td>-0.200 – 0.499 sec</td>
+    </tr>
+    <tr>
+        <th>Baseline</th>
+        <td>-0.200 – 0.000 sec</td>
+    </tr>
+</table>
+</div>
+<br />
+<br /><p>We have to make sure all conditions have the same counts, as the ANOVA
+expects a fully balanced data matrix and does not forgive imbalances that
+generously (risk of type-I error).</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="../../generated/mne.Epochs.html#mne.Epochs.equalize_event_counts" title="mne.Epochs.equalize_event_counts" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">epochs</span><span class="o">.</span><span class="n">equalize_event_counts</span></a><span class="p">(</span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">event_id</span></a><span class="p">)</span>
+
+<span class="c1"># Factor to down-sample the temporal dimension of the TFR computed by</span>
+<span class="c1"># tfr_morlet.</span>
+<a href="https://docs.python.org/3/library/functions.html#int" title="builtins.int" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">decim</span></a> <span class="o">=</span> <span class="mi">2</span>
+<a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">freqs</span></a> <span class="o">=</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.arange.html#numpy.arange" title="numpy.arange" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-function"><span class="n">np</span><span class="o">.</span><span class="n">arange</span></a><span class="p">(</span><span class="mi">7</span><span class="p">,</span> <span class="mi">30</span><span class="p">,</span> <span class="mi">3</span><span class="p">)</span>  <span class="c1"># define frequencies of interest</span>
+<a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">n_cycles</span></a> <span class="o">=</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">freqs</span></a> <span class="o">/</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">freqs</span></a><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+<a href="https://docs.python.org/3/library/functions.html#bool" title="builtins.bool" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">zero_mean</span></a> <span class="o">=</span> <span class="kc">False</span>  <span class="c1"># don&#39;t correct morlet wavelet to be of mean zero</span>
+<span class="c1"># To have a true wavelet zero_mean should be True but here for illustration</span>
+<span class="c1"># purposes it helps to spot the evoked response.</span>
+</pre></div>
+</div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Dropped 12 epochs: 50, 92, 128, 147, 152, 154, 155, 186, 196, 198, 206, 207
+</pre></div>
+</div>
+</section>
+<section id="create-tfr-representations-for-all-conditions">
+<h2>Create TFR representations for all conditions<a class="headerlink" href="#create-tfr-representations-for-all-conditions" title="Permalink to this heading">#</a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs_power</span></a> <span class="o">=</span> <span class="nb">list</span><span class="p">()</span>
+<span class="k">for</span> <a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">condition</span></a> <span class="ow">in</span> <span class="p">[</span><a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a><span class="p">[</span><span class="n">k</span><span class="p">]</span> <span class="k">for</span> <span class="n">k</span> <span class="ow">in</span> <a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">event_id</span></a><span class="p">]:</span>
+    <a href="../../generated/mne.time_frequency.EpochsTFR.html#mne.time_frequency.EpochsTFR" title="mne.time_frequency.EpochsTFR" class="sphx-glr-backref-module-mne-time_frequency sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">this_tfr</span></a> <span class="o">=</span> <a href="../../generated/mne.time_frequency.tfr_morlet.html#mne.time_frequency.tfr_morlet" title="mne.time_frequency.tfr_morlet" class="sphx-glr-backref-module-mne-time_frequency sphx-glr-backref-type-py-function"><span class="n">tfr_morlet</span></a><span class="p">(</span><a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">condition</span></a><span class="p">,</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">freqs</span></a><span class="p">,</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">n_cycles</span></a><span class="o">=</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">n_cycles</span></a><span class="p">,</span>
+                          <a href="https://docs.python.org/3/library/functions.html#int" title="builtins.int" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">decim</span></a><span class="o">=</span><a href="https://docs.python.org/3/library/functions.html#int" title="builtins.int" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">decim</span></a><span class="p">,</span> <span class="n">average</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <a href="https://docs.python.org/3/library/functions.html#bool" title="builtins.bool" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">zero_mean</span></a><span class="o">=</span><a href="https://docs.python.org/3/library/functions.html#bool" title="builtins.bool" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">zero_mean</span></a><span class="p">,</span>
+                          <span class="n">return_itc</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+    <a href="../../generated/mne.time_frequency.EpochsTFR.html#mne.time_frequency.EpochsTFR.apply_baseline" title="mne.time_frequency.EpochsTFR.apply_baseline" class="sphx-glr-backref-module-mne-time_frequency sphx-glr-backref-type-py-method"><span class="n">this_tfr</span><span class="o">.</span><span class="n">apply_baseline</span></a><span class="p">(</span><span class="n">mode</span><span class="o">=</span><span class="s1">&#39;ratio&#39;</span><span class="p">,</span> <span class="n">baseline</span><span class="o">=</span><span class="p">(</span><span class="kc">None</span><span class="p">,</span> <span class="mi">0</span><span class="p">))</span>
+    <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">this_power</span></a> <span class="o">=</span> <a href="../../generated/mne.time_frequency.EpochsTFR.html#mne.time_frequency.EpochsTFR" title="mne.time_frequency.EpochsTFR" class="sphx-glr-backref-module-mne-time_frequency sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">this_tfr</span></a><span class="o">.</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">data</span></a><span class="p">[:,</span> <span class="mi">0</span><span class="p">,</span> <span class="p">:,</span> <span class="p">:]</span>  <span class="c1"># we only have one channel.</span>
+    <a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs_power</span></a><span class="o">.</span><span class="n">append</span><span class="p">(</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">this_power</span></a><span class="p">)</span>
+</pre></div>
+</div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>[Parallel(n_jobs=1)]: Using backend SequentialBackend with 1 concurrent workers.
+[Parallel(n_jobs=1)]: Done   1 out of   1 | elapsed:    0.0s remaining:    0.0s
+[Parallel(n_jobs=1)]: Done   1 out of   1 | elapsed:    0.0s finished
+Not setting metadata
+Applying baseline correction (mode: ratio)
+[Parallel(n_jobs=1)]: Using backend SequentialBackend with 1 concurrent workers.
+[Parallel(n_jobs=1)]: Done   1 out of   1 | elapsed:    0.0s remaining:    0.0s
+[Parallel(n_jobs=1)]: Done   1 out of   1 | elapsed:    0.0s finished
+Not setting metadata
+Applying baseline correction (mode: ratio)
+[Parallel(n_jobs=1)]: Using backend SequentialBackend with 1 concurrent workers.
+[Parallel(n_jobs=1)]: Done   1 out of   1 | elapsed:    0.0s remaining:    0.0s
+[Parallel(n_jobs=1)]: Done   1 out of   1 | elapsed:    0.0s finished
+Not setting metadata
+Applying baseline correction (mode: ratio)
+[Parallel(n_jobs=1)]: Using backend SequentialBackend with 1 concurrent workers.
+[Parallel(n_jobs=1)]: Done   1 out of   1 | elapsed:    0.0s remaining:    0.0s
+[Parallel(n_jobs=1)]: Done   1 out of   1 | elapsed:    0.0s finished
+Not setting metadata
+Applying baseline correction (mode: ratio)
+</pre></div>
+</div>
+</section>
+<section id="setup-repeated-measures-anova">
+<h2>Setup repeated measures ANOVA<a class="headerlink" href="#setup-repeated-measures-anova" title="Permalink to this heading">#</a></h2>
+<p>We will tell the ANOVA how to interpret the data matrix in terms of factors.
+This is done via the factor levels argument which is a list of the number
+factor levels for each factor.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="https://docs.python.org/3/library/functions.html#int" title="builtins.int" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">n_conditions</span></a> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span><span class="o">.</span><span class="n">event_id</span></a><span class="p">)</span>
+<a href="https://docs.python.org/3/library/functions.html#int" title="builtins.int" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">n_replications</span></a> <span class="o">=</span> <a href="https://docs.python.org/3/library/stdtypes.html#tuple" title="builtins.tuple" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span><span class="o">.</span><span class="n">events</span><span class="o">.</span><span class="n">shape</span></a><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="o">//</span> <a href="https://docs.python.org/3/library/functions.html#int" title="builtins.int" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">n_conditions</span></a>
+
+<a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">factor_levels</span></a> <span class="o">=</span> <span class="p">[</span><span class="mi">2</span><span class="p">,</span> <span class="mi">2</span><span class="p">]</span>  <span class="c1"># number of levels in each factor</span>
+<a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">effects</span></a> <span class="o">=</span> <span class="s1">&#39;A*B&#39;</span>  <span class="c1"># this is the default signature for computing all effects</span>
+<span class="c1"># Other possible options are &#39;A&#39; or &#39;B&#39; for the corresponding main effects</span>
+<span class="c1"># or &#39;A:B&#39; for the interaction effect only (this notation is borrowed from the</span>
+<span class="c1"># R formula language)</span>
+<a href="https://docs.python.org/3/library/functions.html#int" title="builtins.int" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">n_freqs</span></a> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">freqs</span></a><span class="p">)</span>
+<a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">times</span></a> <span class="o">=</span> <span class="mf">1e3</span> <span class="o">*</span> <a href="../../generated/mne.Epochs.html#mne.Epochs.times" title="mne.Epochs.times" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-property"><span class="n">epochs</span><span class="o">.</span><span class="n">times</span></a><span class="p">[::</span><a href="https://docs.python.org/3/library/functions.html#int" title="builtins.int" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">decim</span></a><span class="p">]</span>
+<a href="https://docs.python.org/3/library/functions.html#int" title="builtins.int" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">n_times</span></a> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">times</span></a><span class="p">)</span>
+</pre></div>
+</div>
+<p>Now we’ll assemble the data matrix and swap axes so the trial replications
+are the first dimension and the conditions are the second dimension.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">data</span></a> <span class="o">=</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.swapaxes.html#numpy.swapaxes" title="numpy.swapaxes" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-function"><span class="n">np</span><span class="o">.</span><span class="n">swapaxes</span></a><span class="p">(</span><a href="https://numpy.org/devdocs/reference/generated/numpy.asarray.html#numpy.asarray" title="numpy.asarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-function"><span class="n">np</span><span class="o">.</span><span class="n">asarray</span></a><span class="p">(</span><a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs_power</span></a><span class="p">),</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">)</span>
+
+<span class="c1"># so we have replications × conditions × observations</span>
+<span class="c1"># where the time-frequency observations are freqs × times:</span>
+<span class="nb">print</span><span class="p">(</span><a href="https://docs.python.org/3/library/stdtypes.html#tuple" title="builtins.tuple" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">data</span><span class="o">.</span><span class="n">shape</span></a><span class="p">)</span>
+</pre></div>
+</div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>(56, 4, 8, 211)
+</pre></div>
+</div>
+<p>While the iteration scheme used above for assembling the data matrix
+makes sure the first two dimensions are organized as expected (with A =
+modality and B = location):</p>
+<table class="table" id="id1">
+<caption><span class="caption-text">Sample data layout</span><a class="headerlink" href="#id1" title="Permalink to this table">#</a></caption>
+<thead>
+<tr class="row-odd"><th class="head"><p>trial</p></th>
+<th class="head"><p>A1B1</p></th>
+<th class="head"><p>A1B2</p></th>
+<th class="head"><p>A2B1</p></th>
+<th class="head"><p>B2B2</p></th>
+</tr>
+</thead>
+<tbody>
+<tr class="row-even"><td><p>1</p></td>
+<td><p>1.34</p></td>
+<td><p>2.53</p></td>
+<td><p>0.97</p></td>
+<td><p>1.74</p></td>
+</tr>
+<tr class="row-odd"><td><p>…</p></td>
+<td><p>…</p></td>
+<td><p>…</p></td>
+<td><p>…</p></td>
+<td><p>…</p></td>
+</tr>
+<tr class="row-even"><td><p>56</p></td>
+<td><p>2.45</p></td>
+<td><p>7.90</p></td>
+<td><p>3.09</p></td>
+<td><p>4.76</p></td>
+</tr>
+</tbody>
+</table>
+<p>Now we’re ready to run our repeated measures ANOVA.</p>
+<p>Note. As we treat trials as subjects, the test only accounts for
+time locked responses despite the ‘induced’ approach.
+For analysis for induced power at the group level averaged TRFs
+are required.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">fvals</span></a><span class="p">,</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">pvals</span></a> <span class="o">=</span> <a href="../../generated/mne.stats.f_mway_rm.html#mne.stats.f_mway_rm" title="mne.stats.f_mway_rm" class="sphx-glr-backref-module-mne-stats sphx-glr-backref-type-py-function"><span class="n">f_mway_rm</span></a><span class="p">(</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">data</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">factor_levels</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">effects</span></a><span class="o">=</span><a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">effects</span></a><span class="p">)</span>
+
+<a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">effect_labels</span></a> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;modality&#39;</span><span class="p">,</span> <span class="s1">&#39;location&#39;</span><span class="p">,</span> <span class="s1">&#39;modality by location&#39;</span><span class="p">]</span>
+
+<a href="https://matplotlib.org/stable/api/figure_api.html#matplotlib.figure.Figure" title="matplotlib.figure.Figure" class="sphx-glr-backref-module-matplotlib-figure sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">fig</span></a><span class="p">,</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">axes</span></a> <span class="o">=</span> <a href="https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html#matplotlib.pyplot.subplots" title="matplotlib.pyplot.subplots" class="sphx-glr-backref-module-matplotlib-pyplot sphx-glr-backref-type-py-function"><span class="n">plt</span><span class="o">.</span><span class="n">subplots</span></a><span class="p">(</span><span class="mi">3</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">6</span><span class="p">))</span>
+
+<span class="c1"># let&#39;s visualize our effects by computing f-images</span>
+<span class="k">for</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">effect</span></a><span class="p">,</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">sig</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">effect_label</span></a><span class="p">,</span> <a href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html#matplotlib.axes.Axes" title="matplotlib.axes.Axes" class="sphx-glr-backref-module-matplotlib-axes sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">ax</span></a> <span class="ow">in</span> <span class="nb">zip</span><span class="p">(</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">fvals</span></a><span class="p">,</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">pvals</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">effect_labels</span></a><span class="p">,</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">axes</span></a><span class="p">):</span>
+    <span class="c1"># show naive F-values in gray</span>
+    <a href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.imshow.html#matplotlib.axes.Axes.imshow" title="matplotlib.axes.Axes.imshow" class="sphx-glr-backref-module-matplotlib-axes sphx-glr-backref-type-py-method"><span class="n">ax</span><span class="o">.</span><span class="n">imshow</span></a><span class="p">(</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">effect</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">cmap</span></a><span class="o">=</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="n">aspect</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="n">origin</span><span class="o">=</span><span class="s1">&#39;lower&#39;</span><span class="p">,</span>
+              <span class="n">extent</span><span class="o">=</span><span class="p">[</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">times</span></a><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">times</span></a><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">freqs</span></a><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">freqs</span></a><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]])</span>
+    <span class="c1"># create mask for significant time-frequency locations</span>
+    <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">effect</span></a><span class="p">[</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">sig</span></a> <span class="o">&gt;=</span> <span class="mf">0.05</span><span class="p">]</span> <span class="o">=</span> <a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">np</span><span class="o">.</span><span class="n">nan</span></a>
+    <a href="https://matplotlib.org/stable/api/image_api.html#matplotlib.image.AxesImage" title="matplotlib.image.AxesImage" class="sphx-glr-backref-module-matplotlib-image sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">c</span></a> <span class="o">=</span> <a href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.imshow.html#matplotlib.axes.Axes.imshow" title="matplotlib.axes.Axes.imshow" class="sphx-glr-backref-module-matplotlib-axes sphx-glr-backref-type-py-method"><span class="n">ax</span><span class="o">.</span><span class="n">imshow</span></a><span class="p">(</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">effect</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">cmap</span></a><span class="o">=</span><span class="s1">&#39;autumn&#39;</span><span class="p">,</span> <span class="n">aspect</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="n">origin</span><span class="o">=</span><span class="s1">&#39;lower&#39;</span><span class="p">,</span>
+                  <span class="n">extent</span><span class="o">=</span><span class="p">[</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">times</span></a><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">times</span></a><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">freqs</span></a><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">freqs</span></a><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]])</span>
+    <a href="https://matplotlib.org/stable/api/figure_api.html#matplotlib.figure.Figure.colorbar" title="matplotlib.figure.Figure.colorbar" class="sphx-glr-backref-module-matplotlib-figure sphx-glr-backref-type-py-method"><span class="n">fig</span><span class="o">.</span><span class="n">colorbar</span></a><span class="p">(</span><a href="https://matplotlib.org/stable/api/image_api.html#matplotlib.image.AxesImage" title="matplotlib.image.AxesImage" class="sphx-glr-backref-module-matplotlib-image sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">c</span></a><span class="p">,</span> <a href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html#matplotlib.axes.Axes" title="matplotlib.axes.Axes" class="sphx-glr-backref-module-matplotlib-axes sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">ax</span></a><span class="o">=</span><a href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html#matplotlib.axes.Axes" title="matplotlib.axes.Axes" class="sphx-glr-backref-module-matplotlib-axes sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">ax</span></a><span class="p">)</span>
+    <a href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.set_xlabel.html#matplotlib.axes.Axes.set_xlabel" title="matplotlib.axes.Axes.set_xlabel" class="sphx-glr-backref-module-matplotlib-axes sphx-glr-backref-type-py-method"><span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span></a><span class="p">(</span><span class="s1">&#39;Time (ms)&#39;</span><span class="p">)</span>
+    <a href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.set_ylabel.html#matplotlib.axes.Axes.set_ylabel" title="matplotlib.axes.Axes.set_ylabel" class="sphx-glr-backref-module-matplotlib-axes sphx-glr-backref-type-py-method"><span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span></a><span class="p">(</span><span class="s1">&#39;Frequency (Hz)&#39;</span><span class="p">)</span>
+    <a href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.set_title.html#matplotlib.axes.Axes.set_title" title="matplotlib.axes.Axes.set_title" class="sphx-glr-backref-module-matplotlib-axes sphx-glr-backref-type-py-method"><span class="n">ax</span><span class="o">.</span><span class="n">set_title</span></a><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Time-locked response for &quot;</span><span class="si">{</span><a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">effect_label</span></a><span class="si">}</span><span class="s1">&quot; (</span><span class="si">{</span><a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">ch_name</span></a><span class="si">}</span><span class="s1">)&#39;</span><span class="p">)</span>
+
+<a href="https://matplotlib.org/stable/api/figure_api.html#matplotlib.figure.Figure.tight_layout" title="matplotlib.figure.Figure.tight_layout" class="sphx-glr-backref-module-matplotlib-figure sphx-glr-backref-type-py-method"><span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span></a><span class="p">()</span>
+</pre></div>
+</div>
+<img src="../../_images/sphx_glr_70_cluster_rmANOVA_time_freq_001.png" srcset="../../_images/sphx_glr_70_cluster_rmANOVA_time_freq_001.png" alt="Time-locked response for "modality" (MEG 1332), Time-locked response for "location" (MEG 1332), Time-locked response for "modality by location" (MEG 1332)" class = "sphx-glr-single-img"/></section>
+<section id="account-for-multiple-comparisons-using-fdr-versus-permutation-clustering-test">
+<h2>Account for multiple comparisons using FDR versus permutation clustering test<a class="headerlink" href="#account-for-multiple-comparisons-using-fdr-versus-permutation-clustering-test" title="Permalink to this heading">#</a></h2>
+<p>First we need to slightly modify the ANOVA function to be suitable for
+the clustering procedure. Also want to set some defaults.
+Let’s first override effects to confine the analysis to the interaction</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">effects</span></a> <span class="o">=</span> <span class="s1">&#39;A:B&#39;</span>
+</pre></div>
+</div>
+<p>A stat_fun must deal with a variable number of input arguments.
+Inside the clustering function each condition will be passed as flattened
+array, necessitated by the clustering procedure. The ANOVA however expects an
+input array of dimensions: subjects × conditions × observations (optional).
+The following function catches the list input and swaps the first and
+the second dimension and finally calls the ANOVA function.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">stat_fun</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">):</span>
+    <span class="k">return</span> <a href="../../generated/mne.stats.f_mway_rm.html#mne.stats.f_mway_rm" title="mne.stats.f_mway_rm" class="sphx-glr-backref-module-mne-stats sphx-glr-backref-type-py-function"><span class="n">f_mway_rm</span></a><span class="p">(</span><a href="https://numpy.org/devdocs/reference/generated/numpy.swapaxes.html#numpy.swapaxes" title="numpy.swapaxes" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-function"><span class="n">np</span><span class="o">.</span><span class="n">swapaxes</span></a><span class="p">(</span><span class="n">args</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">0</span><span class="p">),</span> <a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">factor_levels</span></a><span class="o">=</span><a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">factor_levels</span></a><span class="p">,</span>
+                     <a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">effects</span></a><span class="o">=</span><a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">effects</span></a><span class="p">,</span> <span class="n">return_pvals</span><span class="o">=</span><span class="kc">False</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+
+
+<span class="c1"># The ANOVA returns a tuple f-values and p-values, we will pick the former.</span>
+<a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">pthresh</span></a> <span class="o">=</span> <span class="mf">0.001</span>  <span class="c1"># set threshold rather high to save some time</span>
+<a href="https://numpy.org/devdocs/reference/arrays.scalars.html#numpy.float64" title="numpy.float64" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-attribute"><span class="n">f_thresh</span></a> <span class="o">=</span> <a href="../../generated/mne.stats.f_threshold_mway_rm.html#mne.stats.f_threshold_mway_rm" title="mne.stats.f_threshold_mway_rm" class="sphx-glr-backref-module-mne-stats sphx-glr-backref-type-py-function"><span class="n">f_threshold_mway_rm</span></a><span class="p">(</span><a href="https://docs.python.org/3/library/functions.html#int" title="builtins.int" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">n_replications</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">factor_levels</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">effects</span></a><span class="p">,</span>
+                               <a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">pthresh</span></a><span class="p">)</span>
+<a href="https://docs.python.org/3/library/functions.html#int" title="builtins.int" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tail</span></a> <span class="o">=</span> <span class="mi">1</span>  <span class="c1"># f-test, so tail &gt; 0</span>
+<a href="https://docs.python.org/3/library/functions.html#int" title="builtins.int" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">n_permutations</span></a> <span class="o">=</span> <span class="mi">256</span>  <span class="c1"># Save some time (the test won&#39;t be too sensitive ...)</span>
+<a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">F_obs</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">clusters</span></a><span class="p">,</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">cluster_p_values</span></a><span class="p">,</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">h0</span></a> <span class="o">=</span> <a href="../../generated/mne.stats.permutation_cluster_test.html#mne.stats.permutation_cluster_test" title="mne.stats.permutation_cluster_test" class="sphx-glr-backref-module-mne-stats sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">stats</span><span class="o">.</span><span class="n">permutation_cluster_test</span></a><span class="p">(</span>
+    <a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs_power</span></a><span class="p">,</span> <span class="n">stat_fun</span><span class="o">=</span><span class="n">stat_fun</span><span class="p">,</span> <span class="n">threshold</span><span class="o">=</span><a href="https://numpy.org/devdocs/reference/arrays.scalars.html#numpy.float64" title="numpy.float64" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-attribute"><span class="n">f_thresh</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/functions.html#int" title="builtins.int" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tail</span></a><span class="o">=</span><a href="https://docs.python.org/3/library/functions.html#int" title="builtins.int" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">tail</span></a><span class="p">,</span>
+    <span class="n">n_jobs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span> <a href="https://docs.python.org/3/library/functions.html#int" title="builtins.int" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">n_permutations</span></a><span class="o">=</span><a href="https://docs.python.org/3/library/functions.html#int" title="builtins.int" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">n_permutations</span></a><span class="p">,</span> <span class="n">buffer_size</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="n">out_type</span><span class="o">=</span><span class="s1">&#39;mask&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>stat_fun(H1): min=0.000001 max=14.419588
+Running initial clustering …
+Found 1 cluster
+
+  0%|          | Permuting : 0/255 [00:00&lt;?,       ?it/s]
+  0%|          | Permuting : 1/255 [00:00&lt;00:08,   29.11it/s]
+  1%|1         | Permuting : 3/255 [00:00&lt;00:05,   44.29it/s]
+  2%|1         | Permuting : 5/255 [00:00&lt;00:05,   49.45it/s]
+  3%|2         | Permuting : 7/255 [00:00&lt;00:04,   52.03it/s]
+  3%|3         | Permuting : 8/255 [00:00&lt;00:05,   47.08it/s]
+  4%|3         | Permuting : 10/255 [00:00&lt;00:04,   49.35it/s]
+  5%|4         | Permuting : 12/255 [00:00&lt;00:04,   50.95it/s]
+  5%|5         | Permuting : 14/255 [00:00&lt;00:04,   52.15it/s]
+  6%|5         | Permuting : 15/255 [00:00&lt;00:04,   49.10it/s]
+  7%|6         | Permuting : 17/255 [00:00&lt;00:04,   50.34it/s]
+  7%|7         | Permuting : 19/255 [00:00&lt;00:04,   51.34it/s]
+  8%|8         | Permuting : 21/255 [00:00&lt;00:04,   52.17it/s]
+  9%|9         | Permuting : 23/255 [00:00&lt;00:04,   52.87it/s]
+  9%|9         | Permuting : 24/255 [00:00&lt;00:04,   50.60it/s]
+ 10%|#         | Permuting : 26/255 [00:00&lt;00:04,   51.39it/s]
+ 11%|#         | Permuting : 28/255 [00:00&lt;00:04,   52.08it/s]
+ 12%|#1        | Permuting : 30/255 [00:00&lt;00:04,   52.68it/s]
+ 13%|#2        | Permuting : 32/255 [00:00&lt;00:04,   53.22it/s]
+ 13%|#3        | Permuting : 34/255 [00:00&lt;00:04,   53.69it/s]
+ 14%|#3        | Permuting : 35/255 [00:00&lt;00:04,   51.81it/s]
+ 15%|#4        | Permuting : 37/255 [00:00&lt;00:04,   52.36it/s]
+ 15%|#5        | Permuting : 39/255 [00:00&lt;00:04,   52.85it/s]
+ 16%|#6        | Permuting : 41/255 [00:00&lt;00:04,   53.30it/s]
+ 17%|#6        | Permuting : 43/255 [00:00&lt;00:03,   53.70it/s]
+ 18%|#7        | Permuting : 45/255 [00:00&lt;00:03,   54.07it/s]
+ 18%|#8        | Permuting : 47/255 [00:00&lt;00:03,   54.40it/s]
+ 19%|#9        | Permuting : 49/255 [00:00&lt;00:03,   54.71it/s]
+ 20%|##        | Permuting : 51/255 [00:00&lt;00:03,   54.99it/s]
+ 20%|##        | Permuting : 52/255 [00:00&lt;00:03,   53.35it/s]
+ 21%|##1       | Permuting : 54/255 [00:01&lt;00:03,   53.71it/s]
+ 22%|##1       | Permuting : 56/255 [00:01&lt;00:03,   54.04it/s]
+ 23%|##2       | Permuting : 58/255 [00:01&lt;00:03,   54.35it/s]
+ 24%|##3       | Permuting : 60/255 [00:01&lt;00:03,   54.63it/s]
+ 24%|##4       | Permuting : 62/255 [00:01&lt;00:03,   54.90it/s]
+ 25%|##5       | Permuting : 64/255 [00:01&lt;00:03,   55.15it/s]
+ 26%|##5       | Permuting : 66/255 [00:01&lt;00:03,   55.39it/s]
+ 27%|##6       | Permuting : 68/255 [00:01&lt;00:03,   55.55it/s]
+ 27%|##7       | Permuting : 69/255 [00:01&lt;00:03,   54.04it/s]
+ 28%|##7       | Permuting : 71/255 [00:01&lt;00:03,   54.34it/s]
+ 29%|##8       | Permuting : 73/255 [00:01&lt;00:03,   54.60it/s]
+ 29%|##9       | Permuting : 75/255 [00:01&lt;00:03,   54.86it/s]
+ 30%|###       | Permuting : 77/255 [00:01&lt;00:03,   55.11it/s]
+ 31%|###       | Permuting : 79/255 [00:01&lt;00:03,   55.34it/s]
+ 32%|###1      | Permuting : 81/255 [00:01&lt;00:03,   55.54it/s]
+ 33%|###2      | Permuting : 83/255 [00:01&lt;00:03,   55.74it/s]
+ 33%|###3      | Permuting : 85/255 [00:01&lt;00:03,   55.88it/s]
+ 34%|###3      | Permuting : 86/255 [00:01&lt;00:03,   54.45it/s]
+ 35%|###4      | Permuting : 88/255 [00:01&lt;00:03,   54.70it/s]
+ 35%|###5      | Permuting : 90/255 [00:01&lt;00:03,   54.94it/s]
+ 36%|###6      | Permuting : 92/255 [00:01&lt;00:02,   55.17it/s]
+ 37%|###6      | Permuting : 94/255 [00:01&lt;00:02,   55.38it/s]
+ 38%|###7      | Permuting : 96/255 [00:01&lt;00:02,   55.59it/s]
+ 38%|###8      | Permuting : 98/255 [00:01&lt;00:02,   55.78it/s]
+ 39%|###9      | Permuting : 100/255 [00:01&lt;00:02,   55.96it/s]
+ 40%|####      | Permuting : 102/255 [00:01&lt;00:02,   56.13it/s]
+ 41%|####      | Permuting : 104/255 [00:01&lt;00:02,   56.29it/s]
+ 42%|####1     | Permuting : 106/255 [00:01&lt;00:02,   56.44it/s]
+ 42%|####2     | Permuting : 108/255 [00:01&lt;00:02,   56.58it/s]
+ 43%|####2     | Permuting : 109/255 [00:01&lt;00:02,   55.16it/s]
+ 44%|####3     | Permuting : 111/255 [00:02&lt;00:02,   55.36it/s]
+ 44%|####4     | Permuting : 113/255 [00:02&lt;00:02,   55.56it/s]
+ 45%|####5     | Permuting : 115/255 [00:02&lt;00:02,   55.74it/s]
+ 46%|####5     | Permuting : 117/255 [00:02&lt;00:02,   55.91it/s]
+ 47%|####6     | Permuting : 119/255 [00:02&lt;00:02,   56.08it/s]
+ 47%|####7     | Permuting : 120/255 [00:02&lt;00:02,   54.71it/s]
+ 48%|####7     | Permuting : 122/255 [00:02&lt;00:02,   54.94it/s]
+ 49%|####8     | Permuting : 124/255 [00:02&lt;00:02,   55.16it/s]
+ 49%|####9     | Permuting : 126/255 [00:02&lt;00:02,   55.36it/s]
+ 50%|#####     | Permuting : 128/255 [00:02&lt;00:02,   55.54it/s]
+ 51%|#####     | Permuting : 130/255 [00:02&lt;00:02,   55.72it/s]
+ 52%|#####1    | Permuting : 132/255 [00:02&lt;00:02,   55.88it/s]
+ 53%|#####2    | Permuting : 134/255 [00:02&lt;00:02,   56.04it/s]
+ 53%|#####3    | Permuting : 136/255 [00:02&lt;00:02,   56.20it/s]
+ 54%|#####3    | Permuting : 137/255 [00:02&lt;00:02,   54.84it/s]
+ 55%|#####4    | Permuting : 139/255 [00:02&lt;00:02,   55.06it/s]
+ 55%|#####5    | Permuting : 141/255 [00:02&lt;00:02,   55.26it/s]
+ 56%|#####5    | Permuting : 142/255 [00:02&lt;00:02,   53.94it/s]
+ 56%|#####6    | Permuting : 144/255 [00:02&lt;00:02,   54.20it/s]
+ 57%|#####7    | Permuting : 146/255 [00:02&lt;00:02,   54.46it/s]
+ 58%|#####8    | Permuting : 148/255 [00:02&lt;00:01,   54.69it/s]
+ 59%|#####8    | Permuting : 150/255 [00:02&lt;00:01,   54.91it/s]
+ 60%|#####9    | Permuting : 152/255 [00:02&lt;00:01,   55.12it/s]
+ 60%|######    | Permuting : 154/255 [00:02&lt;00:01,   55.33it/s]
+ 61%|######    | Permuting : 155/255 [00:02&lt;00:01,   54.03it/s]
+ 62%|######1   | Permuting : 157/255 [00:02&lt;00:01,   54.29it/s]
+ 62%|######2   | Permuting : 159/255 [00:02&lt;00:01,   54.53it/s]
+ 63%|######3   | Permuting : 161/255 [00:02&lt;00:01,   54.76it/s]
+ 64%|######3   | Permuting : 163/255 [00:02&lt;00:01,   54.99it/s]
+ 65%|######4   | Permuting : 165/255 [00:03&lt;00:01,   55.20it/s]
+ 65%|######5   | Permuting : 167/255 [00:03&lt;00:01,   55.41it/s]
+ 66%|######6   | Permuting : 169/255 [00:03&lt;00:01,   55.60it/s]
+ 67%|######7   | Permuting : 171/255 [00:03&lt;00:01,   55.78it/s]
+ 68%|######7   | Permuting : 173/255 [00:03&lt;00:01,   55.96it/s]
+ 68%|######8   | Permuting : 174/255 [00:03&lt;00:01,   54.63it/s]
+ 69%|######9   | Permuting : 176/255 [00:03&lt;00:01,   54.86it/s]
+ 70%|######9   | Permuting : 178/255 [00:03&lt;00:01,   55.08it/s]
+ 71%|#######   | Permuting : 180/255 [00:03&lt;00:01,   55.28it/s]
+ 71%|#######1  | Permuting : 182/255 [00:03&lt;00:01,   55.48it/s]
+ 72%|#######2  | Permuting : 184/255 [00:03&lt;00:01,   55.66it/s]
+ 73%|#######2  | Permuting : 186/255 [00:03&lt;00:01,   55.84it/s]
+ 74%|#######3  | Permuting : 188/255 [00:03&lt;00:01,   56.01it/s]
+ 74%|#######4  | Permuting : 189/255 [00:03&lt;00:01,   54.68it/s]
+ 75%|#######4  | Permuting : 191/255 [00:03&lt;00:01,   54.90it/s]
+ 76%|#######5  | Permuting : 193/255 [00:03&lt;00:01,   55.12it/s]
+ 76%|#######6  | Permuting : 195/255 [00:03&lt;00:01,   55.32it/s]
+ 77%|#######7  | Permuting : 197/255 [00:03&lt;00:01,   55.51it/s]
+ 78%|#######8  | Permuting : 199/255 [00:03&lt;00:01,   55.69it/s]
+ 79%|#######8  | Permuting : 201/255 [00:03&lt;00:00,   55.86it/s]
+ 80%|#######9  | Permuting : 203/255 [00:03&lt;00:00,   56.03it/s]
+ 80%|########  | Permuting : 205/255 [00:03&lt;00:00,   56.18it/s]
+ 81%|########  | Permuting : 206/255 [00:03&lt;00:00,   54.85it/s]
+ 82%|########1 | Permuting : 208/255 [00:03&lt;00:00,   55.07it/s]
+ 82%|########2 | Permuting : 210/255 [00:03&lt;00:00,   55.27it/s]
+ 83%|########3 | Permuting : 212/255 [00:03&lt;00:00,   55.47it/s]
+ 84%|########3 | Permuting : 214/255 [00:03&lt;00:00,   55.66it/s]
+ 85%|########4 | Permuting : 216/255 [00:03&lt;00:00,   55.83it/s]
+ 85%|########5 | Permuting : 218/255 [00:03&lt;00:00,   55.99it/s]
+ 86%|########6 | Permuting : 220/255 [00:03&lt;00:00,   56.15it/s]
+ 87%|########7 | Permuting : 222/255 [00:04&lt;00:00,   56.30it/s]
+ 88%|########7 | Permuting : 224/255 [00:04&lt;00:00,   56.44it/s]
+ 89%|########8 | Permuting : 226/255 [00:04&lt;00:00,   56.58it/s]
+ 89%|########9 | Permuting : 228/255 [00:04&lt;00:00,   56.71it/s]
+ 90%|######### | Permuting : 230/255 [00:04&lt;00:00,   56.80it/s]
+ 91%|######### | Permuting : 232/255 [00:04&lt;00:00,   56.92it/s]
+ 91%|#########1| Permuting : 233/255 [00:04&lt;00:00,   55.54it/s]
+ 92%|#########2| Permuting : 235/255 [00:04&lt;00:00,   55.72it/s]
+ 93%|#########2| Permuting : 237/255 [00:04&lt;00:00,   55.88it/s]
+ 94%|#########3| Permuting : 239/255 [00:04&lt;00:00,   56.03it/s]
+ 95%|#########4| Permuting : 241/255 [00:04&lt;00:00,   56.18it/s]
+ 95%|#########5| Permuting : 243/255 [00:04&lt;00:00,   56.32it/s]
+ 96%|#########6| Permuting : 245/255 [00:04&lt;00:00,   56.46it/s]
+ 96%|#########6| Permuting : 246/255 [00:04&lt;00:00,   55.10it/s]
+ 97%|#########7| Permuting : 248/255 [00:04&lt;00:00,   55.30it/s]
+ 98%|#########8| Permuting : 250/255 [00:04&lt;00:00,   55.49it/s]
+ 99%|#########8| Permuting : 252/255 [00:04&lt;00:00,   55.67it/s]
+100%|#########9| Permuting : 254/255 [00:04&lt;00:00,   55.85it/s]
+100%|##########| Permuting : 255/255 [00:04&lt;00:00,   55.27it/s]
+</pre></div>
+</div>
+<p>Create new stats image with only significant clusters:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">good_clusters</span></a> <span class="o">=</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.where.html#numpy.where" title="numpy.where" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-function"><span class="n">np</span><span class="o">.</span><span class="n">where</span></a><span class="p">(</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">cluster_p_values</span></a> <span class="o">&lt;</span> <span class="mf">.05</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+<a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">F_obs_plot</span></a> <span class="o">=</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">F_obs</span></a><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">F_obs_plot</span></a><span class="p">[</span><span class="o">~</span><a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">clusters</span></a><span class="p">[</span><a href="https://numpy.org/devdocs/reference/generated/numpy.squeeze.html#numpy.squeeze" title="numpy.squeeze" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-function"><span class="n">np</span><span class="o">.</span><span class="n">squeeze</span></a><span class="p">(</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">good_clusters</span></a><span class="p">)]]</span> <span class="o">=</span> <a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">np</span><span class="o">.</span><span class="n">nan</span></a>
+
+<a href="https://matplotlib.org/stable/api/figure_api.html#matplotlib.figure.Figure" title="matplotlib.figure.Figure" class="sphx-glr-backref-module-matplotlib-figure sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">fig</span></a><span class="p">,</span> <a href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html#matplotlib.axes.Axes" title="matplotlib.axes.Axes" class="sphx-glr-backref-module-matplotlib-axes sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">ax</span></a> <span class="o">=</span> <a href="https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html#matplotlib.pyplot.subplots" title="matplotlib.pyplot.subplots" class="sphx-glr-backref-module-matplotlib-pyplot sphx-glr-backref-type-py-function"><span class="n">plt</span><span class="o">.</span><span class="n">subplots</span></a><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<span class="k">for</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">f_image</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">cmap</span></a> <span class="ow">in</span> <span class="nb">zip</span><span class="p">([</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">F_obs</span></a><span class="p">,</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">F_obs_plot</span></a><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="s1">&#39;autumn&#39;</span><span class="p">]):</span>
+    <a href="https://matplotlib.org/stable/api/image_api.html#matplotlib.image.AxesImage" title="matplotlib.image.AxesImage" class="sphx-glr-backref-module-matplotlib-image sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">c</span></a> <span class="o">=</span> <a href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.imshow.html#matplotlib.axes.Axes.imshow" title="matplotlib.axes.Axes.imshow" class="sphx-glr-backref-module-matplotlib-axes sphx-glr-backref-type-py-method"><span class="n">ax</span><span class="o">.</span><span class="n">imshow</span></a><span class="p">(</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">f_image</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">cmap</span></a><span class="o">=</span><a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">cmap</span></a><span class="p">,</span> <span class="n">aspect</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="n">origin</span><span class="o">=</span><span class="s1">&#39;lower&#39;</span><span class="p">,</span>
+                  <span class="n">extent</span><span class="o">=</span><span class="p">[</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">times</span></a><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">times</span></a><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">freqs</span></a><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">freqs</span></a><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]])</span>
+
+<a href="https://matplotlib.org/stable/api/figure_api.html#matplotlib.figure.Figure.colorbar" title="matplotlib.figure.Figure.colorbar" class="sphx-glr-backref-module-matplotlib-figure sphx-glr-backref-type-py-method"><span class="n">fig</span><span class="o">.</span><span class="n">colorbar</span></a><span class="p">(</span><a href="https://matplotlib.org/stable/api/image_api.html#matplotlib.image.AxesImage" title="matplotlib.image.AxesImage" class="sphx-glr-backref-module-matplotlib-image sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">c</span></a><span class="p">,</span> <a href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html#matplotlib.axes.Axes" title="matplotlib.axes.Axes" class="sphx-glr-backref-module-matplotlib-axes sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">ax</span></a><span class="o">=</span><a href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html#matplotlib.axes.Axes" title="matplotlib.axes.Axes" class="sphx-glr-backref-module-matplotlib-axes sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">ax</span></a><span class="p">)</span>
+<a href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.set_xlabel.html#matplotlib.axes.Axes.set_xlabel" title="matplotlib.axes.Axes.set_xlabel" class="sphx-glr-backref-module-matplotlib-axes sphx-glr-backref-type-py-method"><span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span></a><span class="p">(</span><span class="s1">&#39;Time (ms)&#39;</span><span class="p">)</span>
+<a href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.set_ylabel.html#matplotlib.axes.Axes.set_ylabel" title="matplotlib.axes.Axes.set_ylabel" class="sphx-glr-backref-module-matplotlib-axes sphx-glr-backref-type-py-method"><span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span></a><span class="p">(</span><span class="s1">&#39;Frequency (Hz)&#39;</span><span class="p">)</span>
+<a href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.set_title.html#matplotlib.axes.Axes.set_title" title="matplotlib.axes.Axes.set_title" class="sphx-glr-backref-module-matplotlib-axes sphx-glr-backref-type-py-method"><span class="n">ax</span><span class="o">.</span><span class="n">set_title</span></a><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Time-locked response for &quot;modality by location&quot; (</span><span class="si">{</span><a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">ch_name</span></a><span class="si">}</span><span class="s1">)</span><span class="se">\n</span><span class="s1">&#39;</span>
+             <span class="s1">&#39;cluster-level corrected (p &lt;= 0.05)&#39;</span><span class="p">)</span>
+<a href="https://matplotlib.org/stable/api/figure_api.html#matplotlib.figure.Figure.tight_layout" title="matplotlib.figure.Figure.tight_layout" class="sphx-glr-backref-module-matplotlib-figure sphx-glr-backref-type-py-method"><span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span></a><span class="p">()</span>
+</pre></div>
+</div>
+<img src="../../_images/sphx_glr_70_cluster_rmANOVA_time_freq_002.png" srcset="../../_images/sphx_glr_70_cluster_rmANOVA_time_freq_002.png" alt="Time-locked response for "modality by location" (MEG 1332) cluster-level corrected (p <= 0.05)" class = "sphx-glr-single-img"/><p>Now using FDR:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">mask</span></a><span class="p">,</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">_</span></a> <span class="o">=</span> <a href="../../generated/mne.stats.fdr_correction.html#mne.stats.fdr_correction" title="mne.stats.fdr_correction" class="sphx-glr-backref-module-mne-stats sphx-glr-backref-type-py-function"><span class="n">fdr_correction</span></a><span class="p">(</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">pvals</span></a><span class="p">[</span><span class="mi">2</span><span class="p">])</span>
+<a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">F_obs_plot2</span></a> <span class="o">=</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">F_obs</span></a><span class="o">.</span><span class="n">copy</span><span class="p">()</span>
+<a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">F_obs_plot2</span></a><span class="p">[</span><span class="o">~</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">mask</span></a><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><a href="https://docs.python.org/3/library/stdtypes.html#tuple" title="builtins.tuple" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">F_obs_plot</span><span class="o">.</span><span class="n">shape</span></a><span class="p">)]</span> <span class="o">=</span> <a href="https://docs.python.org/3/library/functions.html#float" title="builtins.float" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">np</span><span class="o">.</span><span class="n">nan</span></a>
+
+<a href="https://matplotlib.org/stable/api/figure_api.html#matplotlib.figure.Figure" title="matplotlib.figure.Figure" class="sphx-glr-backref-module-matplotlib-figure sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">fig</span></a><span class="p">,</span> <a href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html#matplotlib.axes.Axes" title="matplotlib.axes.Axes" class="sphx-glr-backref-module-matplotlib-axes sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">ax</span></a> <span class="o">=</span> <a href="https://matplotlib.org/stable/api/_as_gen/matplotlib.pyplot.subplots.html#matplotlib.pyplot.subplots" title="matplotlib.pyplot.subplots" class="sphx-glr-backref-module-matplotlib-pyplot sphx-glr-backref-type-py-function"><span class="n">plt</span><span class="o">.</span><span class="n">subplots</span></a><span class="p">(</span><span class="n">figsize</span><span class="o">=</span><span class="p">(</span><span class="mi">6</span><span class="p">,</span> <span class="mi">4</span><span class="p">))</span>
+<span class="k">for</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">f_image</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">cmap</span></a> <span class="ow">in</span> <span class="nb">zip</span><span class="p">([</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">F_obs</span></a><span class="p">,</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">F_obs_plot2</span></a><span class="p">],</span> <span class="p">[</span><span class="s1">&#39;gray&#39;</span><span class="p">,</span> <span class="s1">&#39;autumn&#39;</span><span class="p">]):</span>
+    <a href="https://matplotlib.org/stable/api/image_api.html#matplotlib.image.AxesImage" title="matplotlib.image.AxesImage" class="sphx-glr-backref-module-matplotlib-image sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">c</span></a> <span class="o">=</span> <a href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.imshow.html#matplotlib.axes.Axes.imshow" title="matplotlib.axes.Axes.imshow" class="sphx-glr-backref-module-matplotlib-axes sphx-glr-backref-type-py-method"><span class="n">ax</span><span class="o">.</span><span class="n">imshow</span></a><span class="p">(</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">f_image</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">cmap</span></a><span class="o">=</span><a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">cmap</span></a><span class="p">,</span> <span class="n">aspect</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="n">origin</span><span class="o">=</span><span class="s1">&#39;lower&#39;</span><span class="p">,</span>
+                  <span class="n">extent</span><span class="o">=</span><span class="p">[</span><a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">times</span></a><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">times</span></a><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">],</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">freqs</span></a><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <a href="https://numpy.org/devdocs/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">freqs</span></a><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]])</span>
+
+<a href="https://matplotlib.org/stable/api/figure_api.html#matplotlib.figure.Figure.colorbar" title="matplotlib.figure.Figure.colorbar" class="sphx-glr-backref-module-matplotlib-figure sphx-glr-backref-type-py-method"><span class="n">fig</span><span class="o">.</span><span class="n">colorbar</span></a><span class="p">(</span><a href="https://matplotlib.org/stable/api/image_api.html#matplotlib.image.AxesImage" title="matplotlib.image.AxesImage" class="sphx-glr-backref-module-matplotlib-image sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">c</span></a><span class="p">,</span> <a href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html#matplotlib.axes.Axes" title="matplotlib.axes.Axes" class="sphx-glr-backref-module-matplotlib-axes sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">ax</span></a><span class="o">=</span><a href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.html#matplotlib.axes.Axes" title="matplotlib.axes.Axes" class="sphx-glr-backref-module-matplotlib-axes sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">ax</span></a><span class="p">)</span>
+<a href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.set_xlabel.html#matplotlib.axes.Axes.set_xlabel" title="matplotlib.axes.Axes.set_xlabel" class="sphx-glr-backref-module-matplotlib-axes sphx-glr-backref-type-py-method"><span class="n">ax</span><span class="o">.</span><span class="n">set_xlabel</span></a><span class="p">(</span><span class="s1">&#39;Time (ms)&#39;</span><span class="p">)</span>
+<a href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.set_ylabel.html#matplotlib.axes.Axes.set_ylabel" title="matplotlib.axes.Axes.set_ylabel" class="sphx-glr-backref-module-matplotlib-axes sphx-glr-backref-type-py-method"><span class="n">ax</span><span class="o">.</span><span class="n">set_ylabel</span></a><span class="p">(</span><span class="s1">&#39;Frequency (Hz)&#39;</span><span class="p">)</span>
+<a href="https://matplotlib.org/stable/api/_as_gen/matplotlib.axes.Axes.set_title.html#matplotlib.axes.Axes.set_title" title="matplotlib.axes.Axes.set_title" class="sphx-glr-backref-module-matplotlib-axes sphx-glr-backref-type-py-method"><span class="n">ax</span><span class="o">.</span><span class="n">set_title</span></a><span class="p">(</span><span class="sa">f</span><span class="s1">&#39;Time-locked response for &quot;modality by location&quot; (</span><span class="si">{</span><a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">ch_name</span></a><span class="si">}</span><span class="s1">)</span><span class="se">\n</span><span class="s1">&#39;</span>
+             <span class="s1">&#39;FDR corrected (p &lt;= 0.05)&#39;</span><span class="p">)</span>
+<a href="https://matplotlib.org/stable/api/figure_api.html#matplotlib.figure.Figure.tight_layout" title="matplotlib.figure.Figure.tight_layout" class="sphx-glr-backref-module-matplotlib-figure sphx-glr-backref-type-py-method"><span class="n">fig</span><span class="o">.</span><span class="n">tight_layout</span></a><span class="p">()</span>
+</pre></div>
+</div>
+<img src="../../_images/sphx_glr_70_cluster_rmANOVA_time_freq_003.png" srcset="../../_images/sphx_glr_70_cluster_rmANOVA_time_freq_003.png" alt="Time-locked response for "modality by location" (MEG 1332) FDR corrected (p <= 0.05)" class = "sphx-glr-single-img"/><p>Both cluster-level and FDR correction help get rid of potential
+false-positives that we saw in the naive f-images. The cluster permutation
+correction is biased toward time-frequencies with contiguous areas of high
+or low power, which is likely appropriate given the highly correlated nature
+of this data. This is the most likely explanation for why one cluster was
+preserved by the cluster permutation correction, but no time-frequencies
+were significant using the FDR correction.</p>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  18.060 seconds)</p>
+<p><strong>Estimated memory usage:</strong>  163 MB</p>
+<div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-tutorials-stats-sensor-space-70-cluster-rmanova-time-freq-py">
+<div class="sphx-glr-download sphx-glr-download-python docutils container">
+<p><a class="reference download internal" download="" href="../../_downloads/80c70b8870b2ce9f4028c59e2dcc891e/70_cluster_rmANOVA_time_freq.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">70_cluster_rmANOVA_time_freq.py</span></code></a></p>
+</div>
+<div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
+<p><a class="reference download internal" download="" href="../../_downloads/d1864d89c114f67598c0cf3755cce1cb/70_cluster_rmANOVA_time_freq.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">70_cluster_rmANOVA_time_freq.ipynb</span></code></a></p>
+</div>
+</div>
+<p class="sphx-glr-signature"><a class="reference external" href="https://sphinx-gallery.github.io">Gallery generated by Sphinx-Gallery</a></p>
+</section>
+</section>
+
+
+  
+</div>
+
+              
+              
+                <footer class="bd-footer-article">
+                  <!-- Previous / next buttons -->
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="50_cluster_between_time_freq.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Non-parametric between conditions cluster statistic on single trial power</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="75_cluster_ftest_spatiotemporal.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Spatiotemporal permutation F-test on full sensor data</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div>
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#set-parameters">Set parameters</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#create-tfr-representations-for-all-conditions">Create TFR representations for all conditions</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#setup-repeated-measures-anova">Setup repeated measures ANOVA</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#account-for-multiple-comparisons-using-fdr-versus-permutation-clustering-test">Account for multiple comparisons using FDR versus permutation clustering test</a></li>
+</ul>
+  </nav></div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            <div class="bd-footer-content__inner"></div>
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+    <script src="https://mne.tools/versionwarning.js"></script>
+    
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../_static/scripts/bootstrap.js?digest=12da95d707ffb74b382d"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=12da95d707ffb74b382d"></script>
+
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item"><p class="text-center text-muted small">&copy; Copyright 2012–2023, MNE Developers. Last updated <time datetime="2023-04-24T18:37:13.838156+00:00" class="localized">2023-04-24 18:37 UTC</time>
+<script type="text/javascript">$(function () { $("time.localized").each(function () { var el = $(this); el.text(new Date(el.attr("datetime")).toLocaleString([], {dateStyle: "medium", timeStyle: "long"})); }); } )</script></p></div>
+      
+    </div>
+  
+  
+</div>
+
+  </footer>
+  </body>
+</html>

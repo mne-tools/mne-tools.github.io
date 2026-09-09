@@ -1,0 +1,1478 @@
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-theme="auto">
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <title>Extracting and visualizing subject head movement &#8212; MNE 1.6.1 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "auto";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+
+  
+  <link href="../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=e353d410970836974a52" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=a746c00c" />
+    <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=eafc0fe6" />
+    <link rel="stylesheet" type="text/css" href="../../_static/plot_directive.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css?v=76b2166b" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery.css?v=61a4c737" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-binder.css?v=f4aeca0c" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-dataframe.css?v=2082cf3c" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-rendered-html.css?v=1277b6f3" />
+    <link rel="stylesheet" type="text/css" href="../../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css?v=0a3b3ea7" />
+    <link rel="stylesheet" type="text/css" href="../../_static/style.css?v=4af67c33" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
+
+    <script src="../../_static/documentation_options.js?v=ab756d2f"></script>
+    <script src="../../_static/doctools.js?v=888ff710"></script>
+    <script src="../../_static/sphinx_highlight.js?v=dc90522c"></script>
+    <script src="../../_static/clipboard.min.js?v=a7894cd8"></script>
+    <script src="../../_static/copybutton.js?v=fd10adb8"></script>
+    <script src="../../_static/design-tabs.js?v=36754332"></script>
+    <script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-5TBCPCRB6X"></script>
+    <script>
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){ dataLayer.push(arguments); }
+                gtag('js', new Date());
+                gtag('config', 'G-5TBCPCRB6X');
+            </script>
+    <script>
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){ dataLayer.push(arguments); }
+                gtag('js', new Date());
+                gtag('config', 'G-5TBCPCRB6X');
+            </script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'auto_tutorials/preprocessing/59_head_positions';</script>
+    <script>
+        DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://mne.tools/dev/_static/versions.json';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '1.6';
+        </script>
+    <link rel="icon" href="../../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Signal-space separation (SSS) and Maxwell filtering" href="60_maxwell_filtering_sss.html" />
+    <link rel="prev" title="Setting the EEG reference" href="55_setting_eeg_reference.html" />
+    <link rel="canonical" href="https://mne.tools/stable/index.html" />
+    
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="auto">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+<div class="bd-header__inner bd-page-width">
+  <label class="sidebar-toggle primary-toggle" for="__primary">
+    <span class="fa-solid fa-bars"></span>
+  </label>
+  
+  <div class="navbar-header-items__start">
+    
+      <div class="navbar-item">
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../_static/mne_logo_small.svg" class="logo__image only-light" alt="Logo image"/>
+    <script>document.write(`<img src="../../_static/mne_logo_small.svg" class="logo__image only-dark" alt="Logo image"/>`);</script>
+  
+  
+</a></div>
+    
+  </div>
+  
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item"><nav class="navbar-nav">
+  <p class="sidebar-header-items__title"
+     role="heading"
+     aria-level="1"
+     aria-label="Site Navigation">
+    Site Navigation
+  </p>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../install/index.html">
+                        Install
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="../../documentation/index.html">
+                        Documentation
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../api/python_reference.html">
+                        API Reference
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../help/index.html">
+                        Get help
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../development/index.html">
+                        Development
+                      </a>
+                    </li>
+                
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+        </div>
+      
+      
+        <div class="navbar-item">
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script></div>
+      
+        <div class="navbar-item">
+<script>
+document.write(`
+  <div class="version-switcher__container dropdown">
+    <button type="button" class="version-switcher__button btn btn-sm navbar-btn dropdown-toggle" data-bs-toggle="dropdown">
+      1.6  <!-- this text may get changed later by javascript -->
+      <span class="caret"></span>
+    </button>
+    <div class="version-switcher__menu dropdown-menu list-group-flush py-0">
+    <!-- dropdown will be populated by javascript on page load -->
+    </div>
+  </div>
+`);
+</script></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links navbar-nav"
+    aria-label="External Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/mne-tools/mne-python" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-square-github"></i></span>
+            <label class="sr-only">GitHub</label></a>
+        </li>
+        <li class="nav-item">
+            
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://fosstodon.org/@mne" title="Mastodon" class="nav-link" rel="me" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-mastodon"></i></span>
+            <label class="sr-only">Mastodon</label></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://twitter.com/mne_python" title="Twitter" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-square-twitter"></i></span>
+            <label class="sr-only">Twitter</label></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://mne.discourse.group/" title="Forum" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-discourse"></i></span>
+            <label class="sr-only">Forum</label></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://discord.gg/rKfvxTuATa" title="Discord" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-discord"></i></span>
+            <label class="sr-only">Discord</label></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+    </div>
+  
+
+  
+    <label class="sidebar-toggle secondary-toggle" for="__secondary">
+      <span class="fa-solid fa-outdent"></span>
+    </label>
+  
+</div>
+
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          <div class="navbar-item"><nav class="navbar-nav">
+  <p class="sidebar-header-items__title"
+     role="heading"
+     aria-level="1"
+     aria-label="Site Navigation">
+    Site Navigation
+  </p>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../install/index.html">
+                        Install
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="../../documentation/index.html">
+                        Documentation
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../api/python_reference.html">
+                        API Reference
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../help/index.html">
+                        Get help
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../development/index.html">
+                        Development
+                      </a>
+                    </li>
+                
+  </ul>
+</nav></div>
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script></div>
+        
+          <div class="navbar-item">
+<script>
+document.write(`
+  <div class="version-switcher__container dropdown">
+    <button type="button" class="version-switcher__button btn btn-sm navbar-btn dropdown-toggle" data-bs-toggle="dropdown">
+      1.6  <!-- this text may get changed later by javascript -->
+      <span class="caret"></span>
+    </button>
+    <div class="version-switcher__menu dropdown-menu list-group-flush py-0">
+    <!-- dropdown will be populated by javascript on page load -->
+    </div>
+  </div>
+`);
+</script></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links navbar-nav"
+    aria-label="External Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/mne-tools/mne-python" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-square-github"></i></span>
+            <label class="sr-only">GitHub</label></a>
+        </li>
+        <li class="nav-item">
+            
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://fosstodon.org/@mne" title="Mastodon" class="nav-link" rel="me" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-mastodon"></i></span>
+            <label class="sr-only">Mastodon</label></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://twitter.com/mne_python" title="Twitter" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-square-twitter"></i></span>
+            <label class="sr-only">Twitter</label></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://mne.discourse.group/" title="Forum" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-discourse"></i></span>
+            <label class="sr-only">Forum</label></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://discord.gg/rKfvxTuATa" title="Discord" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-discord"></i></span>
+            <label class="sr-only">Discord</label></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item"><nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="../index.html">Tutorials</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
+<li class="toctree-l2 has-children"><a class="reference internal" href="../intro/index.html">Introductory tutorials</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../intro/10_overview.html">Overview of MEG/EEG analysis with MNE-Python</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../intro/15_inplace.html">Modifying data in-place</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../intro/20_events_from_raw.html">Parsing events from raw data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../intro/30_info.html">The Info data structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../intro/40_sensor_locations.html">Working with sensor locations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../intro/50_configure_mne.html">Configuring MNE-Python</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../intro/70_report.html">Getting started with mne.Report</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../io/index.html">Reading data for different recording systems</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-3"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../io/10_reading_meg_data.html">Importing data from MEG devices</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../io/20_reading_eeg_data.html">Importing data from EEG devices</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../io/30_reading_fnirs_data.html">Importing data from fNIRS devices</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../io/60_ctf_bst_auditory.html">Working with CTF data: the Brainstorm auditory dataset</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../io/70_reading_eyetracking_data.html">Importing Data from Eyetracking devices</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../raw/index.html">Working with continuous data</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-4"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../raw/10_raw_overview.html">The Raw data structure: continuous data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../raw/20_event_arrays.html">Working with events</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../raw/30_annotate_raw.html">Annotating continuous data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../raw/40_visualize_raw.html">Built-in plotting methods for Raw objects</a></li>
+</ul>
+</li>
+<li class="toctree-l2 current active has-children"><a class="reference internal" href="index.html">Preprocessing</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-5"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
+<li class="toctree-l3"><a class="reference internal" href="10_preprocessing_overview.html">Overview of artifact detection</a></li>
+<li class="toctree-l3"><a class="reference internal" href="15_handling_bad_channels.html">Handling bad channels</a></li>
+<li class="toctree-l3"><a class="reference internal" href="20_rejecting_bad_data.html">Rejecting bad data spans and breaks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="25_background_filtering.html">Background information on filtering</a></li>
+<li class="toctree-l3"><a class="reference internal" href="30_filtering_resampling.html">Filtering and resampling data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="35_artifact_correction_regression.html">Repairing artifacts with regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="40_artifact_correction_ica.html">Repairing artifacts with ICA</a></li>
+<li class="toctree-l3"><a class="reference internal" href="45_projectors_background.html">Background on projectors and projections</a></li>
+<li class="toctree-l3"><a class="reference internal" href="50_artifact_correction_ssp.html">Repairing artifacts with SSP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="55_setting_eeg_reference.html">Setting the EEG reference</a></li>
+<li class="toctree-l3 current active"><a class="current reference internal" href="#">Extracting and visualizing subject head movement</a></li>
+<li class="toctree-l3"><a class="reference internal" href="60_maxwell_filtering_sss.html">Signal-space separation (SSS) and Maxwell filtering</a></li>
+<li class="toctree-l3"><a class="reference internal" href="70_fnirs_processing.html">Preprocessing functional near-infrared spectroscopy (fNIRS) data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="80_opm_processing.html">Preprocessing optically pumped magnetometer (OPM) MEG data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="90_eyetracking_data.html">Working with eye tracker data in MNE-Python</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../epochs/index.html">Segmenting continuous data into epochs</a><input class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-6"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../epochs/10_epochs_overview.html">The Epochs data structure: discontinuous data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../epochs/15_baseline_regression.html">Regression-based baseline correction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../epochs/20_visualize_epochs.html">Visualizing epoched data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../epochs/30_epochs_metadata.html">Working with Epoch metadata</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../epochs/40_autogenerate_metadata.html">Auto-generating Epochs metadata</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../epochs/50_epochs_to_data_frame.html">Exporting Epochs to Pandas DataFrames</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../epochs/60_make_fixed_length_epochs.html">Divide continuous data into equally-spaced epochs</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../evoked/index.html">Estimating evoked responses</a><input class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-7"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../evoked/10_evoked_overview.html">The Evoked data structure: evoked/averaged data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../evoked/20_visualize_evoked.html">Visualizing Evoked data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../evoked/30_eeg_erp.html">EEG analysis - Event-Related Potentials (ERPs)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../evoked/40_whitened.html">Plotting whitened data</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../time-freq/index.html">Time-frequency analysis</a><input class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-8"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../time-freq/10_spectrum_class.html">The Spectrum and EpochsSpectrum classes: frequency-domain data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../time-freq/20_sensors_time_frequency.html">Frequency and time-frequency sensor analysis</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../time-freq/50_ssvep.html">Frequency-tagging: Basic analysis of an SSVEP/vSSR dataset</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../forward/index.html">Forward models and source spaces</a><input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-9"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../forward/10_background_freesurfer.html">FreeSurfer MRI reconstruction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../forward/20_source_alignment.html">Source alignment and coordinate frames</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../forward/25_automated_coreg.html">Using an automated approach to coregistration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../forward/30_forward.html">Head model and forward computation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../forward/35_eeg_no_mri.html">EEG forward operator with a template MRI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../forward/50_background_freesurfer_mne.html">How MNE uses FreeSurfer’s outputs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../forward/80_fix_bem_in_blender.html">Fixing BEM and head surfaces</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../forward/90_compute_covariance.html">Computing a covariance matrix</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../inverse/index.html">Source localization and inverses</a><input class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-10"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/10_stc_class.html">The SourceEstimate data structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/20_dipole_fit.html">Source localization with equivalent current dipole (ECD) fit</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/30_mne_dspm_loreta.html">Source localization with MNE, dSPM, sLORETA, and eLORETA</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/35_dipole_orientations.html">The role of dipole orientations in distributed source localization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/40_mne_fixed_free.html">Computing various MNE solutions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/50_beamformer_lcmv.html">Source reconstruction using an LCMV beamformer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/60_visualize_stc.html">Visualize source time courses (stcs)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/70_eeg_mri_coords.html">EEG source localization given electrode locations on an MRI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/80_brainstorm_phantom_elekta.html">Brainstorm Elekta phantom dataset tutorial</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/85_brainstorm_phantom_ctf.html">Brainstorm CTF phantom dataset tutorial</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/90_phantom_4DBTi.html">4D Neuroimaging/BTi phantom dataset tutorial</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/95_phantom_KIT.html">KIT phantom dataset tutorial</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../stats-sensor-space/index.html">Statistical analysis of sensor data</a><input class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-11"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../stats-sensor-space/10_background_stats.html">Statistical inference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../stats-sensor-space/20_erp_stats.html">Visualising statistical significance thresholds on EEG data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../stats-sensor-space/40_cluster_1samp_time_freq.html">Non-parametric 1 sample cluster statistic on single trial power</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../stats-sensor-space/50_cluster_between_time_freq.html">Non-parametric between conditions cluster statistic on single trial power</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../stats-sensor-space/70_cluster_rmANOVA_time_freq.html">Mass-univariate twoway repeated measures ANOVA on single trial power</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../stats-sensor-space/75_cluster_ftest_spatiotemporal.html">Spatiotemporal permutation F-test on full sensor data</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../stats-source-space/index.html">Statistical analysis of source estimates</a><input class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-12"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../stats-source-space/20_cluster_1samp_spatiotemporal.html">Permutation t-test on source data with spatio-temporal clustering</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../stats-source-space/30_cluster_ftest_spatiotemporal.html">2 samples permutation test on source data with spatio-temporal clustering</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../stats-source-space/60_cluster_rmANOVA_spatiotemporal.html">Repeated measures ANOVA on source data with spatio-temporal clustering</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../machine-learning/index.html">Machine learning models of neural activity</a><input class="toctree-checkbox" id="toctree-checkbox-13" name="toctree-checkbox-13" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-13"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../machine-learning/30_strf.html">Spectro-temporal receptive field (STRF) estimation on continuous data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../machine-learning/50_decoding.html">Decoding (MVPA)</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../clinical/index.html">Clinical applications</a><input class="toctree-checkbox" id="toctree-checkbox-14" name="toctree-checkbox-14" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-14"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../clinical/20_seeg.html">Working with sEEG data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../clinical/30_ecog.html">Working with ECoG data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../clinical/60_sleep.html">Sleep stage classification from polysomnography (PSG) data</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../simulation/index.html">Simulation</a><input class="toctree-checkbox" id="toctree-checkbox-15" name="toctree-checkbox-15" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-15"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../simulation/10_array_objs.html">Creating MNE-Python data structures from scratch</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../simulation/70_point_spread.html">Corrupt known signal with point spread</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../simulation/80_dics.html">DICS for power mapping</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../visualization/index.html">Visualization tutorials</a><input class="toctree-checkbox" id="toctree-checkbox-16" name="toctree-checkbox-16" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-16"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../visualization/10_publication_figure.html">Make figures more publication ready</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../visualization/20_ui_events.html">Using the event system to link figures</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../auto_examples/index.html">Examples</a><input class="toctree-checkbox" id="toctree-checkbox-17" name="toctree-checkbox-17" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-17"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../auto_examples/io/index.html">Input/Output</a><input class="toctree-checkbox" id="toctree-checkbox-18" name="toctree-checkbox-18" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-18"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/io/elekta_epochs.html">Getting averaging info from .fif files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/io/read_neo_format.html">How to use data in neural ensemble (NEO) format</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/io/read_noise_covariance_matrix.html">Reading/Writing a noise covariance matrix</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/io/read_xdf.html">Reading XDF EEG data</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../auto_examples/simulation/index.html">Data Simulation</a><input class="toctree-checkbox" id="toctree-checkbox-19" name="toctree-checkbox-19" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-19"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/simulation/plot_stc_metrics.html">Compare simulated and estimated source activity</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/simulation/simulate_evoked_data.html">Generate simulated evoked data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/simulation/simulate_raw_data.html">Generate simulated raw data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/simulation/simulated_raw_data_using_subject_anatomy.html">Simulate raw data using subject anatomy</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/simulation/source_simulator.html">Generate simulated source data</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../auto_examples/preprocessing/index.html">Preprocessing</a><input class="toctree-checkbox" id="toctree-checkbox-20" name="toctree-checkbox-20" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-20"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/contralateral_referencing.html">Using contralateral referencing for EEG</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/css.html">Cortical Signal Suppression (CSS) for removal of cortical signals</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/define_target_events.html">Define target events based on time lag, plot evoked response</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/eeg_bridging.html">Identify EEG Electrodes Bridged by too much Gel</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/eeg_csd.html">Transform EEG data using current source density (CSD)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/eog_artifact_histogram.html">Show EOG artifact timing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/eog_regression.html">Reduce EOG artifacts through regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/find_ref_artifacts.html">Find MEG reference channel artifacts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/fnirs_artifact_removal.html">Visualise NIRS artifact correction methods</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/ica_comparison.html">Compare the different ICA algorithms in MNE</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/interpolate_bad_channels.html">Interpolate bad channels for MEG/EEG channels</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/movement_compensation.html">Maxwell filter data with movement compensation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/movement_detection.html">Annotate movement artifacts and reestimate dev_head_t</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/muscle_detection.html">Annotate muscle artifacts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/muscle_ica.html">Removing muscle ICA components</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/otp.html">Plot sensor denoising using oversampled temporal projection</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/shift_evoked.html">Shifting time-scale in evoked data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/virtual_evoked.html">Remap MEG channel types</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/xdawn_denoising.html">XDAWN Denoising</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../auto_examples/visualization/index.html">Visualization</a><input class="toctree-checkbox" id="toctree-checkbox-21" name="toctree-checkbox-21" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-21"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/visualization/3d_to_2d.html">How to convert 3D electrode positions to a 2D image</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/visualization/brain.html">Plotting with <code class="docutils literal notranslate"><span class="pre">mne.viz.Brain</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/visualization/channel_epochs_image.html">Visualize channel over epochs as an image</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/visualization/eeg_on_scalp.html">Plotting EEG sensors on the scalp</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/visualization/evoked_arrowmap.html">Plotting topographic arrowmaps of evoked data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/visualization/evoked_topomap.html">Plotting topographic maps of evoked data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/visualization/evoked_whitening.html">Whitening evoked data with a noise covariance</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/visualization/eyetracking_plot_heatmap.html">Plotting eye-tracking heatmaps in MNE-Python</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/visualization/meg_sensors.html">Plotting sensor layouts of MEG systems</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/visualization/mne_helmet.html">Plot the MNE brain and helmet</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/visualization/montage_sgskip.html">Plotting sensor layouts of EEG systems</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/visualization/parcellation.html">Plot a cortical parcellation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/visualization/roi_erpimage_by_rt.html">Plot single trial activity, grouped by ROI and sorted by RT</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/visualization/ssp_projs_sensitivity_map.html">Sensitivity map of SSP projections</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/visualization/topo_compare_conditions.html">Compare evoked responses for different conditions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/visualization/topo_customized.html">Plot custom topographies for MEG sensors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/visualization/xhemi.html">Cross-hemisphere comparison</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../auto_examples/time_frequency/index.html">Time-Frequency Examples</a><input class="toctree-checkbox" id="toctree-checkbox-22" name="toctree-checkbox-22" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-22"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/time_frequency/compute_csd.html">Compute a cross-spectral density (CSD) matrix</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/time_frequency/compute_source_psd_epochs.html">Compute Power Spectral Density of inverse solution from single epochs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/time_frequency/source_label_time_frequency.html">Compute power and phase lock in label of the source space</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/time_frequency/source_power_spectrum.html">Compute source power spectral density (PSD) in a label</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/time_frequency/source_power_spectrum_opm.html">Compute source power spectral density (PSD) of VectorView and OPM data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/time_frequency/source_space_time_frequency.html">Compute induced power in the source space with dSPM</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/time_frequency/temporal_whitening.html">Temporal whitening with AR model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/time_frequency/time_frequency_erds.html">Compute and visualize ERDS maps</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/time_frequency/time_frequency_global_field_power.html">Explore event-related dynamics for specific frequency bands</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/time_frequency/time_frequency_simulated.html">Time-frequency on simulated data (Multitaper vs. Morlet vs. Stockwell vs. Hilbert)</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../auto_examples/stats/index.html">Statistics Examples</a><input class="toctree-checkbox" id="toctree-checkbox-23" name="toctree-checkbox-23" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-23"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/stats/cluster_stats_evoked.html">Permutation F-test on sensor data with 1D cluster level</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/stats/fdr_stats_evoked.html">FDR correction on T-test on sensor data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/stats/linear_regression_raw.html">Regression on continuous data (rER[P/F])</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/stats/sensor_permutation_test.html">Permutation T-test on sensor data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/stats/sensor_regression.html">Analysing continuous features with binning and regression in sensor space</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../auto_examples/decoding/index.html">Machine Learning (Decoding, Encoding, and MVPA)</a><input class="toctree-checkbox" id="toctree-checkbox-24" name="toctree-checkbox-24" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-24"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/decoding/decoding_csp_eeg.html">Motor imagery decoding from EEG data using the Common Spatial Pattern (CSP)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/decoding/decoding_csp_timefreq.html">Decoding in time-frequency space using Common Spatial Patterns (CSP)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/decoding/decoding_rsa_sgskip.html">Representational Similarity Analysis</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/decoding/decoding_spatio_temporal_source.html">Decoding source space data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/decoding/decoding_spoc_CMC.html">Continuous Target Decoding with SPoC</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/decoding/decoding_time_generalization_conditions.html">Decoding sensor space data with generalization across time and conditions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/decoding/decoding_unsupervised_spatial_filter.html">Analysis of evoked response using ICA and PCA reduction techniques</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/decoding/decoding_xdawn_eeg.html">XDAWN Decoding From EEG data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/decoding/ems_filtering.html">Compute effect-matched-spatial filtering (EMS)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/decoding/linear_model_patterns.html">Linear classifier on sensor data with plot patterns and filters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/decoding/receptive_field_mtrf.html">Receptive Field Estimation and Prediction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/decoding/ssd_spatial_filters.html">Compute Spectro-Spatial Decomposition (SSD) spatial filters</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../auto_examples/connectivity/index.html">Connectivity Analysis Examples</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../auto_examples/forward/index.html">Forward modeling</a><input class="toctree-checkbox" id="toctree-checkbox-25" name="toctree-checkbox-25" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-25"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/forward/forward_sensitivity_maps.html">Display sensitivity maps for EEG and MEG sensors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/forward/left_cerebellum_volume_source.html">Generate a left cerebellum volume source space</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/forward/source_space_morphing.html">Use source space morphing</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../auto_examples/inverse/index.html">Inverse problem and source analysis</a><input class="toctree-checkbox" id="toctree-checkbox-26" name="toctree-checkbox-26" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-26"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/compute_mne_inverse_epochs_in_label.html">Compute MNE-dSPM inverse solution on single epochs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/compute_mne_inverse_raw_in_label.html">Compute sLORETA inverse solution on raw data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/compute_mne_inverse_volume.html">Compute MNE-dSPM inverse solution on evoked data in volume source space</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/custom_inverse_solver.html">Source localization with a custom inverse solver</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/dics_epochs.html">Compute source level time-frequency timecourses using a DICS beamformer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/dics_source_power.html">Compute source power using DICS beamformer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/evoked_ers_source_power.html">Compute evoked ERS source power using DICS, LCMV beamformer, and dSPM</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/gamma_map_inverse.html">Compute a sparse inverse solution using the Gamma-MAP empirical Bayesian method</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/label_activation_from_stc.html">Extracting time course from source_estimate object</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/label_from_stc.html">Generate a functional label from source estimates</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/label_source_activations.html">Extracting the time series of activations in a label</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/mixed_norm_inverse.html">Compute sparse inverse solution with mixed norm: MxNE and irMxNE</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/mixed_source_space_inverse.html">Compute MNE inverse solution on evoked data with a mixed source space</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/mne_cov_power.html">Compute source power estimate by projecting the covariance with MNE</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/morph_surface_stc.html">Morph surface source estimate</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/morph_volume_stc.html">Morph volumetric source estimate</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/multi_dipole_model.html">Computing source timecourses with an XFit-like multi-dipole model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/multidict_reweighted_tfmxne.html">Compute iterative reweighted TF-MxNE with multiscale time-frequency dictionary</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/psf_ctf_label_leakage.html">Visualize source leakage among labels using a circular graph</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/psf_ctf_vertices.html">Plot point-spread functions (PSFs) and cross-talk functions (CTFs)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/psf_ctf_vertices_lcmv.html">Compute cross-talk functions for LCMV beamformers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/psf_volume.html">Plot point-spread functions (PSFs) for a volume</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/rap_music.html">Compute Rap-Music on evoked data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/read_inverse.html">Reading an inverse operator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/read_stc.html">Reading an STC file</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/resolution_metrics.html">Compute spatial resolution metrics in source space</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/resolution_metrics_eegmeg.html">Compute spatial resolution metrics to compare MEG with EEG+MEG</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/snr_estimate.html">Estimate data SNR using an inverse</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/source_space_snr.html">Computing source space SNR</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/time_frequency_mixed_norm_inverse.html">Compute MxNE with time-frequency sparse prior</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/trap_music.html">Compute Trap-Music on evoked data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/vector_mne_solution.html">Plotting the full vector-valued MNE solution</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../auto_examples/datasets/index.html">Examples on open datasets</a><input class="toctree-checkbox" id="toctree-checkbox-27" name="toctree-checkbox-27" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-27"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/datasets/brainstorm_data.html">Brainstorm raw (median nerve) dataset</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/datasets/hf_sef_data.html">HF-SEF dataset</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/datasets/kernel_phantom.html">Kernel OPM phantom data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/datasets/limo_data.html">Single trial linear regression analysis with the LIMO dataset</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/datasets/opm_data.html">Optically pumped magnetometer (OPM) data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/datasets/spm_faces_dataset_sgskip.html">From raw data to dSPM on SPM Faces dataset</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../documentation/glossary.html">Glossary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../documentation/implementation.html">Implementation details</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../documentation/design_philosophy.html">Design philosophy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../documentation/datasets.html">Example datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generated/commands.html">Command-line tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../help/migrating.html">Migrating from other analysis software</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../documentation/cookbook.html">The typical M/EEG workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../documentation/cite.html">How to cite MNE-Python</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../documentation/cited.html">Papers citing MNE-Python</a></li>
+</ul>
+</div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article"></div>
+              
+              
+<div>
+  
+  <div class="sphx-glr-download-link-note admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference internal" href="#sphx-glr-download-auto-tutorials-preprocessing-59-head-positions-py"><span class="std std-ref">Go to the end</span></a>
+to download the full example code</p>
+</div>
+<section class="sphx-glr-example-title" id="extracting-and-visualizing-subject-head-movement">
+<span id="tut-head-pos"></span><span id="sphx-glr-auto-tutorials-preprocessing-59-head-positions-py"></span><h1>Extracting and visualizing subject head movement<a class="headerlink" href="#extracting-and-visualizing-subject-head-movement" title="Link to this heading">#</a></h1>
+<p>Continuous head movement can be encoded during MEG recordings by use of
+HPI coils that continuously emit sinusoidal signals. These signals can then be
+extracted from the recording and used to estimate head position as a function
+of time. Here we show an example of how to do this, and how to visualize
+the result.</p>
+<section id="hpi-frequencies">
+<h2>HPI frequencies<a class="headerlink" href="#hpi-frequencies" title="Link to this heading">#</a></h2>
+<p>First let’s load a short bit of raw data where the subject intentionally moved
+their head during the recording. Its power spectral density shows five peaks
+(most clearly visible in the gradiometers) corresponding to the HPI coil
+frequencies, plus other peaks related to power line interference (60 Hz and
+harmonics).</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Authors: Eric Larson &lt;larson.eric.d@gmail.com&gt;</span>
+<span class="c1">#          Richard Höchenberger &lt;richard.hoechenberger@gmail.com&gt;</span>
+<span class="c1">#          Daniel McCloy &lt;dan@mccloy.info&gt;</span>
+<span class="c1">#</span>
+<span class="c1"># License: BSD-3-Clause</span>
+<span class="c1"># Copyright the MNE-Python contributors.</span>
+</pre></div>
+</div>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">os</span> <span class="kn">import</span> <span class="n">path</span> <span class="k">as</span> <span class="n">op</span>
+
+<span class="kn">import</span> <span class="nn">mne</span>
+
+<a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">data_path</span></a> <span class="o">=</span> <a href="https://docs.python.org/3/library/os.path.html#os.path.join" title="os.path.join" class="sphx-glr-backref-module-os-path sphx-glr-backref-type-py-function"><span class="n">op</span><span class="o">.</span><span class="n">join</span></a><span class="p">(</span><span class="n">mne</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">testing</span><span class="o">.</span><a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">data_path</span></a><span class="p">(</span><span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span> <span class="s2">&quot;SSS&quot;</span><span class="p">)</span>
+<a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">fname_raw</span></a> <span class="o">=</span> <a href="https://docs.python.org/3/library/os.path.html#os.path.join" title="os.path.join" class="sphx-glr-backref-module-os-path sphx-glr-backref-type-py-function"><span class="n">op</span><span class="o">.</span><span class="n">join</span></a><span class="p">(</span><a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">data_path</span></a><span class="p">,</span> <span class="s2">&quot;test_move_anon_raw.fif&quot;</span><span class="p">)</span>
+<a href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw</span></a> <span class="o">=</span> <a href="../../generated/mne.io.read_raw_fif.html#mne.io.read_raw_fif" title="mne.io.read_raw_fif" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read_raw_fif</span></a><span class="p">(</span><a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">fname_raw</span></a><span class="p">,</span> <span class="n">allow_maxshield</span><span class="o">=</span><span class="s2">&quot;yes&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">load_data</span><span class="p">()</span>
+<a href="../../generated/mne.io.Raw.html#mne.io.Raw.compute_psd" title="mne.io.Raw.compute_psd" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-method"><span class="n">raw</span><span class="o">.</span><span class="n">compute_psd</span></a><span class="p">()</span><span class="o">.</span><span class="n">plot</span><span class="p">(</span><span class="n">picks</span><span class="o">=</span><span class="s2">&quot;data&quot;</span><span class="p">,</span> <span class="n">exclude</span><span class="o">=</span><span class="s2">&quot;bads&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<img src="../../_images/sphx_glr_59_head_positions_001.png" srcset="../../_images/sphx_glr_59_head_positions_001.png" alt="EEG, Gradiometers, Magnetometers" class = "sphx-glr-single-img"/><div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Opening raw data file /home/circleci/mne_data/MNE-testing-data/SSS/test_move_anon_raw.fif...
+    Read a total of 12 projection items:
+        mag.fif : PCA-v1 (1 x 306)  idle
+        mag.fif : PCA-v2 (1 x 306)  idle
+        mag.fif : PCA-v3 (1 x 306)  idle
+        mag.fif : PCA-v4 (1 x 306)  idle
+        mag.fif : PCA-v5 (1 x 306)  idle
+        mag.fif : PCA-v6 (1 x 306)  idle
+        mag.fif : PCA-v7 (1 x 306)  idle
+        grad.fif : PCA-v1 (1 x 306)  idle
+        grad.fif : PCA-v2 (1 x 306)  idle
+        grad.fif : PCA-v3 (1 x 306)  idle
+        grad.fif : PCA-v4 (1 x 306)  idle
+        Average EEG reference (1 x 60)  idle
+    Range : 10800 ... 31199 =      9.000 ...    25.999 secs
+Ready.
+Reading 0 ... 20399  =      0.000 ...    16.999 secs...
+Effective window size : 1.707 (s)
+</pre></div>
+</div>
+<p>We can use <a class="reference internal" href="../../generated/mne.chpi.get_chpi_info.html#mne.chpi.get_chpi_info" title="mne.chpi.get_chpi_info"><code class="xref py py-obj docutils literal notranslate"><span class="pre">mne.chpi.get_chpi_info</span></code></a> to retrieve the coil frequencies,
+the index of the channel indicating when which coil was switched on, and the
+respective “event codes” associated with each coil’s activity.</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">chpi_freqs</span></a><span class="p">,</span> <a href="https://numpy.org/doc/stable/reference/arrays.scalars.html#numpy.int64" title="numpy.int64" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-attribute"><span class="n">ch_idx</span></a><span class="p">,</span> <a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">chpi_codes</span></a> <span class="o">=</span> <a href="../../generated/mne.chpi.get_chpi_info.html#mne.chpi.get_chpi_info" title="mne.chpi.get_chpi_info" class="sphx-glr-backref-module-mne-chpi sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">chpi</span><span class="o">.</span><span class="n">get_chpi_info</span></a><span class="p">(</span><span class="n">info</span><span class="o">=</span><a href="../../generated/mne.Info.html#mne.Info" title="mne.Info" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw</span><span class="o">.</span><span class="n">info</span></a><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;cHPI coil frequencies extracted from raw: </span><span class="si">{</span><a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">chpi_freqs</span></a><span class="si">}</span><span class="s2"> Hz&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Using 5 HPI coils: 83 143 203 263 323 Hz
+cHPI coil frequencies extracted from raw: [ 83. 143. 203. 263. 323.] Hz
+</pre></div>
+</div>
+</section>
+<section id="estimating-continuous-head-position">
+<h2>Estimating continuous head position<a class="headerlink" href="#estimating-continuous-head-position" title="Link to this heading">#</a></h2>
+<p>First, let’s extract the HPI coil amplitudes as a function of time:</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">chpi_amplitudes</span></a> <span class="o">=</span> <a href="../../generated/mne.chpi.compute_chpi_amplitudes.html#mne.chpi.compute_chpi_amplitudes" title="mne.chpi.compute_chpi_amplitudes" class="sphx-glr-backref-module-mne-chpi sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">chpi</span><span class="o">.</span><span class="n">compute_chpi_amplitudes</span></a><span class="p">(</span><a href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw</span></a><span class="p">)</span>
+</pre></div>
+</div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Using 5 HPI coils: 83 143 203 263 323 Hz
+Line interference frequencies: 60 120 180 240 300 360 Hz
+Using time window: 83.3 ms
+Fitting 5 HPI coil locations at up to 1696 time points (17.0 s duration)
+
+  0%|          | cHPI amplitudes : 0/1696 [00:00&lt;?,       ?it/s]
+  0%|          | cHPI amplitudes : 1/1696 [00:03&lt;1:25:54,    3.04s/it]
+  1%|          | cHPI amplitudes : 15/1696 [00:03&lt;05:26,    5.15it/s]
+  2%|▏         | cHPI amplitudes : 30/1696 [00:03&lt;02:38,   10.52it/s]
+  3%|▎         | cHPI amplitudes : 46/1696 [00:03&lt;01:40,   16.48it/s]
+  4%|▎         | cHPI amplitudes : 63/1696 [00:03&lt;01:10,   23.07it/s]
+  4%|▍         | cHPI amplitudes : 75/1696 [00:03&lt;00:58,   27.86it/s]
+  5%|▍         | cHPI amplitudes : 83/1696 [00:03&lt;00:51,   31.10it/s]
+  6%|▌         | cHPI amplitudes : 102/1696 [00:03&lt;00:40,   39.42it/s]
+  7%|▋         | cHPI amplitudes : 122/1696 [00:03&lt;00:32,   48.51it/s]
+  8%|▊         | cHPI amplitudes : 135/1696 [00:03&lt;00:28,   54.50it/s]
+  9%|▉         | cHPI amplitudes : 150/1696 [00:03&lt;00:25,   61.72it/s]
+ 10%|▉         | cHPI amplitudes : 165/1696 [00:03&lt;00:22,   69.17it/s]
+ 10%|█         | cHPI amplitudes : 172/1696 [00:03&lt;00:21,   72.45it/s]
+ 11%|█         | cHPI amplitudes : 190/1696 [00:03&lt;00:18,   82.22it/s]
+ 12%|█▏        | cHPI amplitudes : 205/1696 [00:03&lt;00:16,   90.50it/s]
+ 13%|█▎        | cHPI amplitudes : 223/1696 [00:03&lt;00:14,  100.91it/s]
+ 14%|█▍        | cHPI amplitudes : 241/1696 [00:03&lt;00:13,  111.65it/s]
+ 15%|█▌        | cHPI amplitudes : 258/1696 [00:03&lt;00:11,  121.84it/s]
+ 16%|█▌        | cHPI amplitudes : 271/1696 [00:03&lt;00:10,  129.66it/s]
+ 17%|█▋        | cHPI amplitudes : 284/1696 [00:03&lt;00:10,  137.72it/s]
+ 18%|█▊        | cHPI amplitudes : 298/1696 [00:03&lt;00:09,  146.77it/s]
+ 19%|█▊        | cHPI amplitudes : 314/1696 [00:03&lt;00:08,  157.52it/s]
+ 19%|█▉        | cHPI amplitudes : 327/1696 [00:03&lt;00:08,  166.13it/s]
+ 20%|██        | cHPI amplitudes : 341/1696 [00:03&lt;00:07,  175.72it/s]
+ 21%|██        | cHPI amplitudes : 351/1696 [00:03&lt;00:07,  182.10it/s]
+ 22%|██▏       | cHPI amplitudes : 365/1696 [00:03&lt;00:06,  192.16it/s]
+ 22%|██▏       | cHPI amplitudes : 379/1696 [00:03&lt;00:06,  202.53it/s]
+ 23%|██▎       | cHPI amplitudes : 392/1696 [00:03&lt;00:06,  212.18it/s]
+ 24%|██▍       | cHPI amplitudes : 405/1696 [00:03&lt;00:05,  221.78it/s]
+ 25%|██▍       | cHPI amplitudes : 416/1696 [00:03&lt;00:05,  229.20it/s]
+ 25%|██▌       | cHPI amplitudes : 426/1696 [00:03&lt;00:05,  235.83it/s]
+ 26%|██▌       | cHPI amplitudes : 438/1696 [00:03&lt;00:05,  245.01it/s]
+ 27%|██▋       | cHPI amplitudes : 451/1696 [00:03&lt;00:04,  255.25it/s]
+ 27%|██▋       | cHPI amplitudes : 464/1696 [00:03&lt;00:04,  265.83it/s]
+ 28%|██▊       | cHPI amplitudes : 477/1696 [00:03&lt;00:04,  276.58it/s]
+ 29%|██▉       | cHPI amplitudes : 490/1696 [00:03&lt;00:04,  287.36it/s]
+ 30%|██▉       | cHPI amplitudes : 503/1696 [00:03&lt;00:04,  298.05it/s]
+ 30%|███       | cHPI amplitudes : 516/1696 [00:03&lt;00:03,  308.82it/s]
+ 31%|███▏      | cHPI amplitudes : 530/1696 [00:03&lt;00:03,  320.96it/s]
+ 32%|███▏      | cHPI amplitudes : 544/1696 [00:03&lt;00:03,  333.14it/s]
+ 33%|███▎      | cHPI amplitudes : 557/1696 [00:03&lt;00:03,  344.35it/s]
+ 34%|███▎      | cHPI amplitudes : 570/1696 [00:03&lt;00:03,  355.43it/s]
+ 34%|███▍      | cHPI amplitudes : 583/1696 [00:03&lt;00:03,  366.20it/s]
+ 35%|███▌      | cHPI amplitudes : 596/1696 [00:03&lt;00:02,  377.04it/s]
+ 36%|███▌      | cHPI amplitudes : 609/1696 [00:03&lt;00:02,  387.97it/s]
+ 37%|███▋      | cHPI amplitudes : 622/1696 [00:03&lt;00:02,  398.68it/s]
+ 37%|███▋      | cHPI amplitudes : 635/1696 [00:03&lt;00:02,  409.71it/s]
+ 38%|███▊      | cHPI amplitudes : 648/1696 [00:03&lt;00:02,  420.71it/s]
+ 39%|███▉      | cHPI amplitudes : 661/1696 [00:03&lt;00:02,  431.30it/s]
+ 40%|███▉      | cHPI amplitudes : 673/1696 [00:03&lt;00:02,  440.32it/s]
+ 40%|████      | cHPI amplitudes : 686/1696 [00:03&lt;00:02,  451.06it/s]
+ 41%|████      | cHPI amplitudes : 698/1696 [00:03&lt;00:02,  460.00it/s]
+ 42%|████▏     | cHPI amplitudes : 710/1696 [00:03&lt;00:02,  468.77it/s]
+ 43%|████▎     | cHPI amplitudes : 722/1696 [00:03&lt;00:02,  475.52it/s]
+ 43%|████▎     | cHPI amplitudes : 734/1696 [00:03&lt;00:01,  483.60it/s]
+ 44%|████▍     | cHPI amplitudes : 747/1696 [00:03&lt;00:01,  493.19it/s]
+ 45%|████▍     | cHPI amplitudes : 760/1696 [00:03&lt;00:01,  503.18it/s]
+ 46%|████▌     | cHPI amplitudes : 773/1696 [00:03&lt;00:01,  512.39it/s]
+ 46%|████▋     | cHPI amplitudes : 786/1696 [00:04&lt;00:01,  521.26it/s]
+ 47%|████▋     | cHPI amplitudes : 798/1696 [00:04&lt;00:01,  527.96it/s]
+ 48%|████▊     | cHPI amplitudes : 807/1696 [00:04&lt;00:01,  528.61it/s]
+ 48%|████▊     | cHPI amplitudes : 819/1696 [00:04&lt;00:01,  536.27it/s]
+ 49%|████▉     | cHPI amplitudes : 831/1696 [00:04&lt;00:01,  543.34it/s]
+ 50%|████▉     | cHPI amplitudes : 843/1696 [00:04&lt;00:01,  549.95it/s]
+ 50%|█████     | cHPI amplitudes : 855/1696 [00:04&lt;00:01,  556.76it/s]
+ 51%|█████     | cHPI amplitudes : 865/1696 [00:04&lt;00:01,  557.71it/s]
+ 52%|█████▏    | cHPI amplitudes : 877/1696 [00:04&lt;00:01,  564.85it/s]
+ 52%|█████▏    | cHPI amplitudes : 890/1696 [00:04&lt;00:01,  572.84it/s]
+ 53%|█████▎    | cHPI amplitudes : 902/1696 [00:04&lt;00:01,  577.87it/s]
+ 54%|█████▍    | cHPI amplitudes : 914/1696 [00:04&lt;00:01,  583.91it/s]
+ 55%|█████▍    | cHPI amplitudes : 926/1696 [00:04&lt;00:01,  589.37it/s]
+ 55%|█████▌    | cHPI amplitudes : 937/1696 [00:04&lt;00:01,  593.05it/s]
+ 56%|█████▌    | cHPI amplitudes : 949/1696 [00:04&lt;00:01,  598.51it/s]
+ 57%|█████▋    | cHPI amplitudes : 961/1696 [00:04&lt;00:01,  604.04it/s]
+ 57%|█████▋    | cHPI amplitudes : 973/1696 [00:04&lt;00:01,  609.28it/s]
+ 58%|█████▊    | cHPI amplitudes : 985/1696 [00:04&lt;00:01,  613.77it/s]
+ 59%|█████▉    | cHPI amplitudes : 997/1696 [00:04&lt;00:01,  618.84it/s]
+ 60%|█████▉    | cHPI amplitudes : 1010/1696 [00:04&lt;00:01,  624.95it/s]
+ 60%|██████    | cHPI amplitudes : 1022/1696 [00:04&lt;00:01,  629.66it/s]
+ 61%|██████    | cHPI amplitudes : 1034/1696 [00:04&lt;00:01,  634.25it/s]
+ 62%|██████▏   | cHPI amplitudes : 1046/1696 [00:04&lt;00:01,  639.02it/s]
+ 62%|██████▏   | cHPI amplitudes : 1058/1696 [00:04&lt;00:00,  643.55it/s]
+ 63%|██████▎   | cHPI amplitudes : 1070/1696 [00:04&lt;00:00,  647.82it/s]
+ 64%|██████▍   | cHPI amplitudes : 1082/1696 [00:04&lt;00:00,  651.99it/s]
+ 65%|██████▍   | cHPI amplitudes : 1094/1696 [00:04&lt;00:00,  654.96it/s]
+ 65%|██████▌   | cHPI amplitudes : 1107/1696 [00:04&lt;00:00,  659.60it/s]
+ 66%|██████▌   | cHPI amplitudes : 1119/1696 [00:04&lt;00:00,  663.24it/s]
+ 67%|██████▋   | cHPI amplitudes : 1137/1696 [00:04&lt;00:00,  682.61it/s]
+ 68%|██████▊   | cHPI amplitudes : 1157/1696 [00:04&lt;00:00,  706.85it/s]
+ 69%|██████▉   | cHPI amplitudes : 1177/1696 [00:04&lt;00:00,  731.02it/s]
+ 70%|███████   | cHPI amplitudes : 1190/1696 [00:04&lt;00:00,  732.55it/s]
+ 71%|███████   | cHPI amplitudes : 1208/1696 [00:04&lt;00:00,  749.69it/s]
+ 72%|███████▏  | cHPI amplitudes : 1227/1696 [00:04&lt;00:00,  769.25it/s]
+ 73%|███████▎  | cHPI amplitudes : 1246/1696 [00:04&lt;00:00,  787.75it/s]
+ 75%|███████▍  | cHPI amplitudes : 1265/1696 [00:04&lt;00:00,  805.12it/s]
+ 76%|███████▌  | cHPI amplitudes : 1284/1696 [00:04&lt;00:00,  822.46it/s]
+ 76%|███████▋  | cHPI amplitudes : 1294/1696 [00:04&lt;00:00,  812.41it/s]
+ 77%|███████▋  | cHPI amplitudes : 1310/1696 [00:04&lt;00:00,  819.40it/s]
+ 78%|███████▊  | cHPI amplitudes : 1329/1696 [00:04&lt;00:00,  835.19it/s]
+ 79%|███████▉  | cHPI amplitudes : 1348/1696 [00:04&lt;00:00,  850.98it/s]
+ 81%|████████  | cHPI amplitudes : 1367/1696 [00:04&lt;00:00,  865.17it/s]
+ 82%|████████▏ | cHPI amplitudes : 1386/1696 [00:04&lt;00:00,  879.96it/s]
+ 82%|████████▏ | cHPI amplitudes : 1396/1696 [00:04&lt;00:00,  860.53it/s]
+ 83%|████████▎ | cHPI amplitudes : 1411/1696 [00:04&lt;00:00,  862.57it/s]
+ 84%|████████▍ | cHPI amplitudes : 1430/1696 [00:04&lt;00:00,  875.80it/s]
+ 85%|████████▌ | cHPI amplitudes : 1448/1696 [00:04&lt;00:00,  887.36it/s]
+ 86%|████████▋ | cHPI amplitudes : 1467/1696 [00:04&lt;00:00,  899.79it/s]
+ 88%|████████▊ | cHPI amplitudes : 1486/1696 [00:04&lt;00:00,  912.72it/s]
+ 88%|████████▊ | cHPI amplitudes : 1493/1696 [00:04&lt;00:00,  888.75it/s]
+ 89%|████████▉ | cHPI amplitudes : 1506/1696 [00:04&lt;00:00,  884.70it/s]
+ 90%|████████▉ | cHPI amplitudes : 1525/1696 [00:04&lt;00:00,  898.27it/s]
+ 91%|█████████ | cHPI amplitudes : 1544/1696 [00:04&lt;00:00,  910.83it/s]
+ 92%|█████████▏| cHPI amplitudes : 1563/1696 [00:04&lt;00:00,  922.49it/s]
+ 93%|█████████▎| cHPI amplitudes : 1582/1696 [00:04&lt;00:00,  933.92it/s]
+ 94%|█████████▍| cHPI amplitudes : 1593/1696 [00:04&lt;00:00,  920.96it/s]
+ 95%|█████████▍| cHPI amplitudes : 1608/1696 [00:04&lt;00:00,  920.17it/s]
+ 96%|█████████▌| cHPI amplitudes : 1627/1696 [00:04&lt;00:00,  931.18it/s]
+ 97%|█████████▋| cHPI amplitudes : 1646/1696 [00:04&lt;00:00,  941.61it/s]
+ 98%|█████████▊| cHPI amplitudes : 1665/1696 [00:04&lt;00:00,  951.49it/s]
+ 99%|█████████▉| cHPI amplitudes : 1684/1696 [00:05&lt;00:00,  961.21it/s]
+100%|█████████▉| cHPI amplitudes : 1691/1696 [00:05&lt;00:00,  933.94it/s]
+100%|██████████| cHPI amplitudes : 1696/1696 [00:05&lt;00:00,  336.53it/s]
+</pre></div>
+</div>
+<p>Second, let’s compute time-varying HPI coil locations from these:</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">chpi_locs</span></a> <span class="o">=</span> <a href="../../generated/mne.chpi.compute_chpi_locs.html#mne.chpi.compute_chpi_locs" title="mne.chpi.compute_chpi_locs" class="sphx-glr-backref-module-mne-chpi sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">chpi</span><span class="o">.</span><span class="n">compute_chpi_locs</span></a><span class="p">(</span><a href="../../generated/mne.Info.html#mne.Info" title="mne.Info" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw</span><span class="o">.</span><span class="n">info</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">chpi_amplitudes</span></a><span class="p">)</span>
+</pre></div>
+</div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Computing 4385 HPI location guesses (1 cm grid in a 10.7 cm sphere)
+HPIFIT: 5 coils digitized in order 5 1 4 3 2
+HPI consistency of isotrak and hpifit is OK.
+
+  0%|          | cHPI locations  : 0/1696 [00:00&lt;?,       ?it/s]
+  0%|          | cHPI locations  : 1/1696 [00:00&lt;25:55,    1.09it/s]
+  2%|▏         | cHPI locations  : 42/1696 [00:00&lt;00:35,   47.25it/s]
+  5%|▍         | cHPI locations  : 80/1696 [00:00&lt;00:17,   90.57it/s]
+  6%|▌         | cHPI locations  : 100/1696 [00:00&lt;00:14,  112.85it/s]
+  6%|▌         | cHPI locations  : 101/1696 [00:01&lt;00:15,  101.28it/s]
+  9%|▊         | cHPI locations  : 147/1696 [00:01&lt;00:10,  152.69it/s]
+ 12%|█▏        | cHPI locations  : 199/1696 [00:01&lt;00:07,  211.99it/s]
+ 12%|█▏        | cHPI locations  : 201/1696 [00:01&lt;00:07,  196.49it/s]
+ 15%|█▍        | cHPI locations  : 253/1696 [00:01&lt;00:05,  254.63it/s]
+ 18%|█▊        | cHPI locations  : 301/1696 [00:01&lt;00:04,  284.68it/s]
+ 21%|██        | cHPI locations  : 351/1696 [00:01&lt;00:03,  337.85it/s]
+ 24%|██▎       | cHPI locations  : 401/1696 [00:01&lt;00:03,  361.75it/s]
+ 25%|██▌       | cHPI locations  : 432/1696 [00:01&lt;00:03,  390.70it/s]
+ 28%|██▊       | cHPI locations  : 470/1696 [00:01&lt;00:02,  428.40it/s]
+ 30%|██▉       | cHPI locations  : 501/1696 [00:01&lt;00:02,  416.40it/s]
+ 32%|███▏      | cHPI locations  : 537/1696 [00:01&lt;00:02,  450.05it/s]
+ 33%|███▎      | cHPI locations  : 559/1696 [00:01&lt;00:02,  423.68it/s]
+ 33%|███▎      | cHPI locations  : 568/1696 [00:01&lt;00:02,  385.58it/s]
+ 34%|███▍      | cHPI locations  : 573/1696 [00:01&lt;00:03,  352.53it/s]
+ 34%|███▍      | cHPI locations  : 577/1696 [00:01&lt;00:03,  327.18it/s]
+ 34%|███▍      | cHPI locations  : 581/1696 [00:02&lt;00:03,  300.74it/s]
+ 35%|███▍      | cHPI locations  : 587/1696 [00:02&lt;00:03,  277.32it/s]
+ 35%|███▌      | cHPI locations  : 600/1696 [00:02&lt;00:04,  263.07it/s]
+ 37%|███▋      | cHPI locations  : 631/1696 [00:02&lt;00:03,  285.46it/s]
+ 39%|███▉      | cHPI locations  : 666/1696 [00:02&lt;00:03,  311.93it/s]
+ 41%|████▏     | cHPI locations  : 700/1696 [00:02&lt;00:03,  310.05it/s]
+ 43%|████▎     | cHPI locations  : 737/1696 [00:02&lt;00:02,  337.52it/s]
+ 45%|████▌     | cHPI locations  : 767/1696 [00:02&lt;00:02,  359.33it/s]
+ 47%|████▋     | cHPI locations  : 789/1696 [00:02&lt;00:02,  343.22it/s]
+ 47%|████▋     | cHPI locations  : 794/1696 [00:02&lt;00:02,  313.36it/s]
+ 47%|████▋     | cHPI locations  : 800/1696 [00:02&lt;00:03,  291.62it/s]
+ 47%|████▋     | cHPI locations  : 805/1696 [00:02&lt;00:03,  267.86it/s]
+ 48%|████▊     | cHPI locations  : 810/1696 [00:03&lt;00:03,  246.94it/s]
+ 48%|████▊     | cHPI locations  : 815/1696 [00:03&lt;00:03,  228.57it/s]
+ 48%|████▊     | cHPI locations  : 819/1696 [00:03&lt;00:04,  213.56it/s]
+ 49%|████▊     | cHPI locations  : 823/1696 [00:03&lt;00:04,  201.19it/s]
+ 49%|████▉     | cHPI locations  : 827/1696 [00:03&lt;00:04,  187.57it/s]
+ 49%|████▉     | cHPI locations  : 833/1696 [00:03&lt;00:04,  178.53it/s]
+ 50%|█████     | cHPI locations  : 848/1696 [00:03&lt;00:04,  174.87it/s]
+ 52%|█████▏    | cHPI locations  : 881/1696 [00:03&lt;00:04,  193.74it/s]
+ 54%|█████▍    | cHPI locations  : 913/1696 [00:03&lt;00:03,  212.50it/s]
+ 56%|█████▌    | cHPI locations  : 948/1696 [00:03&lt;00:03,  221.52it/s]
+ 59%|█████▉    | cHPI locations  : 999/1696 [00:03&lt;00:02,  253.21it/s]
+ 61%|██████▏   | cHPI locations  : 1040/1696 [00:03&lt;00:02,  263.77it/s]
+ 62%|██████▏   | cHPI locations  : 1051/1696 [00:04&lt;00:02,  251.25it/s]
+ 63%|██████▎   | cHPI locations  : 1062/1696 [00:04&lt;00:02,  241.66it/s]
+ 63%|██████▎   | cHPI locations  : 1072/1696 [00:04&lt;00:02,  233.56it/s]
+ 64%|██████▍   | cHPI locations  : 1086/1696 [00:04&lt;00:02,  228.04it/s]
+ 67%|██████▋   | cHPI locations  : 1129/1696 [00:04&lt;00:02,  253.32it/s]
+ 69%|██████▉   | cHPI locations  : 1174/1696 [00:04&lt;00:01,  280.71it/s]
+ 70%|██████▉   | cHPI locations  : 1186/1696 [00:04&lt;00:01,  272.04it/s]
+ 73%|███████▎  | cHPI locations  : 1234/1696 [00:04&lt;00:01,  302.17it/s]
+ 75%|███████▌  | cHPI locations  : 1280/1696 [00:04&lt;00:01,  331.65it/s]
+ 76%|███████▌  | cHPI locations  : 1286/1696 [00:04&lt;00:01,  313.52it/s]
+ 76%|███████▋  | cHPI locations  : 1296/1696 [00:04&lt;00:01,  295.10it/s]
+ 77%|███████▋  | cHPI locations  : 1301/1696 [00:04&lt;00:01,  279.44it/s]
+ 77%|███████▋  | cHPI locations  : 1306/1696 [00:04&lt;00:01,  266.54it/s]
+ 77%|███████▋  | cHPI locations  : 1311/1696 [00:05&lt;00:01,  254.86it/s]
+ 78%|███████▊  | cHPI locations  : 1315/1696 [00:05&lt;00:01,  243.35it/s]
+ 78%|███████▊  | cHPI locations  : 1319/1696 [00:05&lt;00:01,  232.32it/s]
+ 78%|███████▊  | cHPI locations  : 1325/1696 [00:05&lt;00:01,  222.79it/s]
+ 78%|███████▊  | cHPI locations  : 1331/1696 [00:05&lt;00:01,  215.62it/s]
+ 79%|███████▉  | cHPI locations  : 1341/1696 [00:05&lt;00:01,  209.56it/s]
+ 82%|████████▏ | cHPI locations  : 1385/1696 [00:05&lt;00:01,  236.72it/s]
+ 85%|████████▍ | cHPI locations  : 1434/1696 [00:05&lt;00:00,  268.19it/s]
+ 85%|████████▍ | cHPI locations  : 1441/1696 [00:05&lt;00:00,  258.09it/s]
+ 88%|████████▊ | cHPI locations  : 1492/1696 [00:05&lt;00:00,  291.83it/s]
+ 91%|█████████ | cHPI locations  : 1541/1696 [00:05&lt;00:00,  306.70it/s]
+ 92%|█████████▏| cHPI locations  : 1565/1696 [00:05&lt;00:00,  303.06it/s]
+ 93%|█████████▎| cHPI locations  : 1573/1696 [00:05&lt;00:00,  290.43it/s]
+ 93%|█████████▎| cHPI locations  : 1580/1696 [00:05&lt;00:00,  279.00it/s]
+ 94%|█████████▎| cHPI locations  : 1586/1696 [00:06&lt;00:00,  267.04it/s]
+ 94%|█████████▍| cHPI locations  : 1590/1696 [00:06&lt;00:00,  253.60it/s]
+ 94%|█████████▍| cHPI locations  : 1594/1696 [00:06&lt;00:00,  238.03it/s]
+ 94%|█████████▍| cHPI locations  : 1599/1696 [00:06&lt;00:00,  223.07it/s]
+ 95%|█████████▍| cHPI locations  : 1609/1696 [00:06&lt;00:00,  214.42it/s]
+ 97%|█████████▋| cHPI locations  : 1652/1696 [00:06&lt;00:00,  223.17it/s]
+ 99%|█████████▉| cHPI locations  : 1683/1696 [00:06&lt;00:00,  240.45it/s]
+100%|██████████| cHPI locations  : 1696/1696 [00:06&lt;00:00,  256.07it/s]
+</pre></div>
+</div>
+<p>Lastly, compute head positions from the coil locations:</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">head_pos</span></a> <span class="o">=</span> <a href="../../generated/mne.chpi.compute_head_pos.html#mne.chpi.compute_head_pos" title="mne.chpi.compute_head_pos" class="sphx-glr-backref-module-mne-chpi sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">chpi</span><span class="o">.</span><span class="n">compute_head_pos</span></a><span class="p">(</span><a href="../../generated/mne.Info.html#mne.Info" title="mne.Info" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw</span><span class="o">.</span><span class="n">info</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">chpi_locs</span></a><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>t=9.000:     5/5 good HPI fits, movements [mm/s] =      0.1 /      0.2 /      0.5 /      0.2 /      0.3
+t=10.000:    5/5 good HPI fits, movements [mm/s] =      0.1 /      0.2 /      0.0 /      0.2 /      0.1
+t=11.000:    5/5 good HPI fits, movements [mm/s] =      0.0 /      0.1 /      0.1 /      0.0 /      0.1
+t=12.000:    5/5 good HPI fits, movements [mm/s] =      0.0 /      0.0 /      0.0 /      0.0 /      0.0
+t=13.000:    5/5 good HPI fits, movements [mm/s] =      0.0 /      0.1 /      0.0 /      0.0 /      0.0
+t=14.000:    5/5 good HPI fits, movements [mm/s] =      0.0 /      0.1 /      0.1 /      0.1 /      0.1
+t=14.580:    5/5 good HPI fits, movements [mm/s] =      5.0 /      4.8 /      6.1 /      5.5 /      4.9
+t=14.670:    5/5 good HPI fits, movements [mm/s] =     33.4 /     34.6 /     39.9 /     37.8 /     30.2
+t=14.720:    5/5 good HPI fits, movements [mm/s] =     48.8 /     47.1 /     60.5 /     59.5 /     44.5
+t=14.760:    5/5 good HPI fits, movements [mm/s] =     65.6 /     62.8 /     72.6 /     70.8 /     56.3
+t=14.800:    5/5 good HPI fits, movements [mm/s] =     66.7 /     59.4 /     83.1 /     78.2 /     60.9
+t=14.860:    5/5 good HPI fits, movements [mm/s] =     54.9 /     52.3 /     57.8 /     62.1 /     47.2
+t=14.990:    5/5 good HPI fits, movements [mm/s] =     23.0 /     22.6 /     24.0 /     27.0 /     19.9
+t=15.990:    5/5 good HPI fits, movements [mm/s] =      0.7 /      0.9 /      0.8 /      0.9 /      0.9
+t=16.880:    5/5 good HPI fits, movements [mm/s] =      2.5 /      3.4 /      2.9 /      3.8 /      3.3
+t=16.930:    5/5 good HPI fits, movements [mm/s] =     51.7 /     55.4 /     58.5 /     67.0 /     59.2
+t=16.990:    5/5 good HPI fits, movements [mm/s] =     56.8 /     53.8 /     62.0 /     65.1 /     57.7
+t=17.040:    5/5 good HPI fits, movements [mm/s] =     53.9 /     50.1 /     60.0 /     61.6 /     49.4
+t=17.090:    5/5 good HPI fits, movements [mm/s] =     57.7 /     50.2 /     66.4 /     65.2 /     51.6
+t=17.140:    5/5 good HPI fits, movements [mm/s] =     60.4 /     54.4 /     73.0 /     67.2 /     57.6
+t=17.180:    5/5 good HPI fits, movements [mm/s] =     63.7 /     58.0 /     74.3 /     71.8 /     61.7
+t=17.220:    5/5 good HPI fits, movements [mm/s] =     60.9 /     61.0 /     75.3 /     71.5 /     63.3
+t=17.260:    5/5 good HPI fits, movements [mm/s] =     67.8 /     65.5 /     73.2 /     68.7 /     69.1
+t=17.320:    5/5 good HPI fits, movements [mm/s] =     49.6 /     51.0 /     55.0 /     55.1 /     52.6
+t=17.470:    5/5 good HPI fits, movements [mm/s] =     18.5 /     21.1 /     19.3 /     20.5 /     17.4
+t=18.470:    5/5 good HPI fits, movements [mm/s] =      1.9 /      2.7 /      2.0 /      2.4 /      1.9
+t=19.390:    5/5 good HPI fits, movements [mm/s] =      2.5 /      2.7 /      1.9 /      2.9 /      2.5
+t=19.500:    5/5 good HPI fits, movements [mm/s] =     23.0 /     25.0 /     19.4 /     28.8 /     27.6
+t=19.610:    5/5 good HPI fits, movements [mm/s] =     21.3 /     25.7 /     21.8 /     31.7 /     31.4
+t=19.710:    5/5 good HPI fits, movements [mm/s] =     21.6 /     20.6 /     23.0 /     29.8 /     27.7
+t=19.850:    5/5 good HPI fits, movements [mm/s] =     16.5 /     14.7 /     18.7 /     21.8 /     20.1
+t=20.850:    5/5 good HPI fits, movements [mm/s] =      2.3 /      1.9 /      2.0 /      2.5 /      2.2
+t=21.850:    5/5 good HPI fits, movements [mm/s] =      0.6 /      1.7 /      1.7 /      2.0 /      1.9
+t=21.950:    5/5 good HPI fits, movements [mm/s] =     25.8 /     27.1 /     24.1 /     32.1 /     26.4
+t=22.000:    5/5 good HPI fits, movements [mm/s] =     66.1 /     59.2 /     46.5 /     64.7 /     51.9
+t=22.050:    5/5 good HPI fits, movements [mm/s] =     60.0 /     62.4 /     51.0 /     69.3 /     57.9
+t=22.100:    5/5 good HPI fits, movements [mm/s] =     61.0 /     65.8 /     58.5 /     74.9 /     64.8
+t=22.140:    5/5 good HPI fits, movements [mm/s] =     74.7 /     73.5 /     62.3 /     79.8 /     68.1
+t=22.180:    5/5 good HPI fits, movements [mm/s] =     63.6 /     59.2 /     53.0 /     67.5 /     53.8
+t=22.240:    5/5 good HPI fits, movements [mm/s] =     38.5 /     39.4 /     36.9 /     48.0 /     42.0
+t=22.300:    5/5 good HPI fits, movements [mm/s] =     41.9 /     40.0 /     33.4 /     47.4 /     39.0
+t=22.400:    5/5 good HPI fits, movements [mm/s] =     31.9 /     28.6 /     22.1 /     30.7 /     25.2
+t=23.400:    5/5 good HPI fits, movements [mm/s] =      1.8 /      1.8 /      1.1 /      1.6 /      1.2
+t=24.400:    5/5 good HPI fits, movements [mm/s] =      1.3 /      0.8 /      0.7 /      0.8 /      0.7
+t=24.640:    5/5 good HPI fits, movements [mm/s] =     12.6 /     11.5 /     11.5 /     13.1 /     10.9
+t=24.720:    5/5 good HPI fits, movements [mm/s] =     30.2 /     33.2 /     31.7 /     38.9 /     35.2
+t=24.790:    5/5 good HPI fits, movements [mm/s] =     31.2 /     35.9 /     33.0 /     43.1 /     41.0
+t=24.850:    5/5 good HPI fits, movements [mm/s] =     37.5 /     40.8 /     35.6 /     44.9 /     42.1
+t=24.890:    5/5 good HPI fits, movements [mm/s] =     50.5 /     51.9 /     49.9 /     59.7 /     53.3
+t=24.930:    5/5 good HPI fits, movements [mm/s] =     55.8 /     55.0 /     59.2 /     68.7 /     61.7
+t=24.980:    5/5 good HPI fits, movements [mm/s] =     47.3 /     47.2 /     50.9 /     58.5 /     53.7
+t=25.080:    5/5 good HPI fits, movements [mm/s] =     23.7 /     19.3 /     23.1 /     28.1 /     26.3
+t=25.510:    5/5 good HPI fits, movements [mm/s] =      2.4 /      6.6 /      7.3 /      6.5 /      7.8
+</pre></div>
+</div>
+<p>Note that these can then be written to disk or read from disk with
+<a class="reference internal" href="../../generated/mne.chpi.write_head_pos.html#mne.chpi.write_head_pos" title="mne.chpi.write_head_pos"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.chpi.write_head_pos()</span></code></a> and <a class="reference internal" href="../../generated/mne.chpi.read_head_pos.html#mne.chpi.read_head_pos" title="mne.chpi.read_head_pos"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.chpi.read_head_pos()</span></code></a>,
+respectively.</p>
+</section>
+<section id="visualizing-continuous-head-position">
+<h2>Visualizing continuous head position<a class="headerlink" href="#visualizing-continuous-head-position" title="Link to this heading">#</a></h2>
+<p>We can plot as traces, which is especially useful for long recordings:</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><a href="../../generated/mne.viz.plot_head_positions.html#mne.viz.plot_head_positions" title="mne.viz.plot_head_positions" class="sphx-glr-backref-module-mne-viz sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">viz</span><span class="o">.</span><span class="n">plot_head_positions</span></a><span class="p">(</span><a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">head_pos</span></a><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;traces&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<img src="../../_images/sphx_glr_59_head_positions_002.png" srcset="../../_images/sphx_glr_59_head_positions_002.png" alt="Position (mm), Rotation (quat)" class = "sphx-glr-single-img"/><p>Or we can visualize them as a continuous field (with the vectors pointing
+in the head-upward direction):</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><a href="../../generated/mne.viz.plot_head_positions.html#mne.viz.plot_head_positions" title="mne.viz.plot_head_positions" class="sphx-glr-backref-module-mne-viz sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">viz</span><span class="o">.</span><span class="n">plot_head_positions</span></a><span class="p">(</span><a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">head_pos</span></a><span class="p">,</span> <span class="n">mode</span><span class="o">=</span><span class="s2">&quot;field&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<img src="../../_images/sphx_glr_59_head_positions_003.png" srcset="../../_images/sphx_glr_59_head_positions_003.png" alt="59 head positions" class = "sphx-glr-single-img"/><p>These head positions can then be used with
+<a class="reference internal" href="../../generated/mne.preprocessing.maxwell_filter.html#mne.preprocessing.maxwell_filter" title="mne.preprocessing.maxwell_filter"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.preprocessing.maxwell_filter()</span></code></a> to compensate for movement,
+or with <a class="reference internal" href="../../generated/mne.preprocessing.annotate_movement.html#mne.preprocessing.annotate_movement" title="mne.preprocessing.annotate_movement"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.preprocessing.annotate_movement()</span></code></a> to mark segments as
+bad that deviate too much from the average head position.</p>
+</section>
+<section id="computing-snr-of-the-hpi-signal">
+<h2>Computing SNR of the HPI signal<a class="headerlink" href="#computing-snr-of-the-hpi-signal" title="Link to this heading">#</a></h2>
+<p>It is also possible to compute the SNR of the continuous HPI measurements.
+This can be a useful proxy for head position along the vertical dimension,
+i.e., it can indicate the distance between the HPI coils and the MEG sensors.
+Using <a class="reference internal" href="../../generated/mne.chpi.compute_chpi_snr.html#mne.chpi.compute_chpi_snr" title="mne.chpi.compute_chpi_snr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">compute_chpi_snr</span></code></a>, the HPI power and SNR are computed
+separately for each MEG sensor type and each HPI coil (frequency), along with
+the residual power for each sensor type. The results can then be visualized
+with <a class="reference internal" href="../../generated/mne.viz.plot_chpi_snr.html#mne.viz.plot_chpi_snr" title="mne.viz.plot_chpi_snr"><code class="xref py py-obj docutils literal notranslate"><span class="pre">plot_chpi_snr</span></code></a>. Here we’ll just show a few seconds, for speed:</p>
+<div class="highlight-Python notranslate"><div class="highlight"><pre><span></span><a href="../../generated/mne.io.Raw.html#mne.io.Raw.crop" title="mne.io.Raw.crop" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-method"><span class="n">raw</span><span class="o">.</span><span class="n">crop</span></a><span class="p">(</span><span class="n">tmin</span><span class="o">=</span><span class="mi">5</span><span class="p">,</span> <span class="n">tmax</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+<a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">snr_dict</span></a> <span class="o">=</span> <a href="../../generated/mne.chpi.compute_chpi_snr.html#mne.chpi.compute_chpi_snr" title="mne.chpi.compute_chpi_snr" class="sphx-glr-backref-module-mne-chpi sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">chpi</span><span class="o">.</span><span class="n">compute_chpi_snr</span></a><span class="p">(</span><a href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">raw</span></a><span class="p">)</span>
+<a href="https://matplotlib.org/stable/api/figure_api.html#matplotlib.figure.Figure" title="matplotlib.figure.Figure" class="sphx-glr-backref-module-matplotlib-figure sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">fig</span></a> <span class="o">=</span> <a href="../../generated/mne.viz.plot_chpi_snr.html#mne.viz.plot_chpi_snr" title="mne.viz.plot_chpi_snr" class="sphx-glr-backref-module-mne-viz sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">viz</span><span class="o">.</span><span class="n">plot_chpi_snr</span></a><span class="p">(</span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">snr_dict</span></a><span class="p">)</span>
+</pre></div>
+</div>
+<img src="../../_images/sphx_glr_59_head_positions_004.png" srcset="../../_images/sphx_glr_59_head_positions_004.png" alt="SNR, magnetometers, cHPI power, magnetometers, Residual variance, magnetometers, SNR, gradiometers, cHPI power, gradiometers, Residual variance, gradiometers" class = "sphx-glr-single-img"/><div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Using 5 HPI coils: 83 143 203 263 323 Hz
+Line interference frequencies: 60 120 180 240 300 360 Hz
+Using time window: 83.3 ms
+Fitting 5 HPI coil locations at up to 496 time points (5.0 s duration)
+
+  0%|          | cHPI SNRs : 0/496 [00:00&lt;?,       ?it/s]
+  0%|          | cHPI SNRs : 1/496 [00:06&lt;50:33,    6.13s/it]
+  1%|          | cHPI SNRs : 4/496 [00:06&lt;12:07,    1.48s/it]
+  1%|▏         | cHPI SNRs : 7/496 [00:06&lt;06:43,    1.21it/s]
+  2%|▏         | cHPI SNRs : 10/496 [00:06&lt;04:33,    1.77it/s]
+  3%|▎         | cHPI SNRs : 13/496 [00:06&lt;03:24,    2.36it/s]
+  4%|▎         | cHPI SNRs : 18/496 [00:06&lt;02:21,    3.39it/s]
+  4%|▍         | cHPI SNRs : 21/496 [00:06&lt;01:58,    4.02it/s]
+  5%|▍         | cHPI SNRs : 24/496 [00:06&lt;01:40,    4.69it/s]
+  5%|▌         | cHPI SNRs : 27/496 [00:06&lt;01:27,    5.39it/s]
+  6%|▌         | cHPI SNRs : 30/496 [00:06&lt;01:16,    6.11it/s]
+  7%|▋         | cHPI SNRs : 33/496 [00:06&lt;01:07,    6.87it/s]
+  7%|▋         | cHPI SNRs : 36/496 [00:06&lt;01:00,    7.66it/s]
+  8%|▊         | cHPI SNRs : 39/496 [00:06&lt;00:53,    8.48it/s]
+  8%|▊         | cHPI SNRs : 42/496 [00:06&lt;00:48,    9.33it/s]
+  9%|▉         | cHPI SNRs : 45/496 [00:06&lt;00:44,   10.22it/s]
+ 10%|▉         | cHPI SNRs : 48/496 [00:06&lt;00:40,   11.15it/s]
+ 10%|█         | cHPI SNRs : 52/496 [00:06&lt;00:35,   12.46it/s]
+ 11%|█         | cHPI SNRs : 55/496 [00:06&lt;00:32,   13.46it/s]
+ 12%|█▏        | cHPI SNRs : 58/496 [00:06&lt;00:30,   14.49it/s]
+ 12%|█▏        | cHPI SNRs : 61/496 [00:06&lt;00:27,   15.57it/s]
+ 13%|█▎        | cHPI SNRs : 64/496 [00:06&lt;00:25,   16.67it/s]
+ 14%|█▎        | cHPI SNRs : 68/496 [00:06&lt;00:23,   18.24it/s]
+ 14%|█▍        | cHPI SNRs : 71/496 [00:06&lt;00:21,   19.41it/s]
+ 15%|█▍        | cHPI SNRs : 74/496 [00:06&lt;00:20,   20.65it/s]
+ 16%|█▌        | cHPI SNRs : 77/496 [00:06&lt;00:19,   21.93it/s]
+ 16%|█▌        | cHPI SNRs : 80/496 [00:06&lt;00:17,   23.24it/s]
+ 17%|█▋        | cHPI SNRs : 84/496 [00:06&lt;00:16,   25.15it/s]
+ 18%|█▊        | cHPI SNRs : 87/496 [00:06&lt;00:15,   26.58it/s]
+ 18%|█▊        | cHPI SNRs : 90/496 [00:06&lt;00:14,   28.01it/s]
+ 19%|█▉        | cHPI SNRs : 93/496 [00:06&lt;00:13,   29.49it/s]
+ 19%|█▉        | cHPI SNRs : 96/496 [00:06&lt;00:12,   31.01it/s]
+ 20%|█▉        | cHPI SNRs : 99/496 [00:06&lt;00:12,   32.56it/s]
+ 21%|██        | cHPI SNRs : 103/496 [00:06&lt;00:11,   34.83it/s]
+ 21%|██▏       | cHPI SNRs : 106/496 [00:06&lt;00:10,   36.49it/s]
+ 22%|██▏       | cHPI SNRs : 109/496 [00:06&lt;00:10,   38.17it/s]
+ 23%|██▎       | cHPI SNRs : 112/496 [00:06&lt;00:09,   39.89it/s]
+ 23%|██▎       | cHPI SNRs : 115/496 [00:06&lt;00:09,   41.65it/s]
+ 24%|██▍       | cHPI SNRs : 119/496 [00:06&lt;00:08,   44.23it/s]
+ 25%|██▍       | cHPI SNRs : 122/496 [00:06&lt;00:08,   46.05it/s]
+ 25%|██▌       | cHPI SNRs : 125/496 [00:06&lt;00:07,   47.92it/s]
+ 26%|██▌       | cHPI SNRs : 128/496 [00:06&lt;00:07,   49.81it/s]
+ 26%|██▋       | cHPI SNRs : 131/496 [00:06&lt;00:07,   51.71it/s]
+ 27%|██▋       | cHPI SNRs : 135/496 [00:06&lt;00:06,   54.70it/s]
+ 28%|██▊       | cHPI SNRs : 139/496 [00:06&lt;00:06,   57.43it/s]
+ 29%|██▊       | cHPI SNRs : 142/496 [00:06&lt;00:05,   59.32it/s]
+ 29%|██▉       | cHPI SNRs : 145/496 [00:06&lt;00:05,   61.22it/s]
+ 30%|██▉       | cHPI SNRs : 148/496 [00:06&lt;00:05,   63.19it/s]
+ 30%|███       | cHPI SNRs : 151/496 [00:07&lt;00:05,   65.32it/s]
+ 31%|███       | cHPI SNRs : 154/496 [00:07&lt;00:05,   67.55it/s]
+ 32%|███▏      | cHPI SNRs : 157/496 [00:07&lt;00:04,   69.47it/s]
+ 32%|███▏      | cHPI SNRs : 160/496 [00:07&lt;00:04,   71.42it/s]
+ 33%|███▎      | cHPI SNRs : 163/496 [00:07&lt;00:04,   73.42it/s]
+ 33%|███▎      | cHPI SNRs : 166/496 [00:07&lt;00:04,   75.43it/s]
+ 34%|███▍      | cHPI SNRs : 170/496 [00:07&lt;00:04,   78.72it/s]
+ 35%|███▍      | cHPI SNRs : 173/496 [00:07&lt;00:04,   80.70it/s]
+ 35%|███▌      | cHPI SNRs : 176/496 [00:07&lt;00:03,   82.66it/s]
+ 36%|███▌      | cHPI SNRs : 179/496 [00:07&lt;00:03,   84.64it/s]
+ 37%|███▋      | cHPI SNRs : 182/496 [00:07&lt;00:03,   86.62it/s]
+ 38%|███▊      | cHPI SNRs : 186/496 [00:07&lt;00:03,   90.03it/s]
+ 38%|███▊      | cHPI SNRs : 189/496 [00:07&lt;00:03,   92.01it/s]
+ 39%|███▊      | cHPI SNRs : 192/496 [00:07&lt;00:03,   93.88it/s]
+ 40%|███▉      | cHPI SNRs : 196/496 [00:07&lt;00:03,   97.29it/s]
+ 40%|████      | cHPI SNRs : 200/496 [00:07&lt;00:02,  100.32it/s]
+ 41%|████      | cHPI SNRs : 203/496 [00:07&lt;00:02,  102.10it/s]
+ 42%|████▏     | cHPI SNRs : 206/496 [00:07&lt;00:02,  103.74it/s]
+ 42%|████▏     | cHPI SNRs : 210/496 [00:07&lt;00:02,  106.94it/s]
+ 43%|████▎     | cHPI SNRs : 214/496 [00:07&lt;00:02,  110.86it/s]
+ 44%|████▍     | cHPI SNRs : 219/496 [00:07&lt;00:02,  115.86it/s]
+ 45%|████▍     | cHPI SNRs : 223/496 [00:07&lt;00:02,  118.88it/s]
+ 46%|████▌     | cHPI SNRs : 227/496 [00:07&lt;00:02,  121.67it/s]
+ 46%|████▋     | cHPI SNRs : 230/496 [00:07&lt;00:02,  122.77it/s]
+ 47%|████▋     | cHPI SNRs : 233/496 [00:07&lt;00:02,  124.36it/s]
+ 48%|████▊     | cHPI SNRs : 236/496 [00:07&lt;00:02,  125.48it/s]
+ 48%|████▊     | cHPI SNRs : 239/496 [00:07&lt;00:02,  126.80it/s]
+ 49%|████▉     | cHPI SNRs : 242/496 [00:07&lt;00:01,  127.74it/s]
+ 49%|████▉     | cHPI SNRs : 245/496 [00:07&lt;00:01,  128.97it/s]
+ 50%|█████     | cHPI SNRs : 248/496 [00:07&lt;00:01,  130.21it/s]
+ 51%|█████     | cHPI SNRs : 251/496 [00:07&lt;00:01,  131.62it/s]
+ 51%|█████     | cHPI SNRs : 254/496 [00:07&lt;00:01,  132.74it/s]
+ 52%|█████▏    | cHPI SNRs : 257/496 [00:07&lt;00:01,  133.61it/s]
+ 52%|█████▏    | cHPI SNRs : 260/496 [00:07&lt;00:01,  134.63it/s]
+ 53%|█████▎    | cHPI SNRs : 263/496 [00:07&lt;00:01,  135.49it/s]
+ 54%|█████▎    | cHPI SNRs : 266/496 [00:07&lt;00:01,  136.99it/s]
+ 54%|█████▍    | cHPI SNRs : 269/496 [00:07&lt;00:01,  138.29it/s]
+ 55%|█████▍    | cHPI SNRs : 272/496 [00:07&lt;00:01,  138.82it/s]
+ 55%|█████▌    | cHPI SNRs : 275/496 [00:07&lt;00:01,  139.52it/s]
+ 56%|█████▌    | cHPI SNRs : 278/496 [00:07&lt;00:01,  140.08it/s]
+ 57%|█████▋    | cHPI SNRs : 281/496 [00:07&lt;00:01,  140.65it/s]
+ 57%|█████▋    | cHPI SNRs : 284/496 [00:07&lt;00:01,  141.03it/s]
+ 58%|█████▊    | cHPI SNRs : 287/496 [00:07&lt;00:01,  141.81it/s]
+ 58%|█████▊    | cHPI SNRs : 290/496 [00:07&lt;00:01,  142.28it/s]
+ 59%|█████▉    | cHPI SNRs : 294/496 [00:07&lt;00:01,  144.04it/s]
+ 60%|██████    | cHPI SNRs : 298/496 [00:07&lt;00:01,  146.82it/s]
+ 61%|██████    | cHPI SNRs : 302/496 [00:07&lt;00:01,  149.75it/s]
+ 62%|██████▏   | cHPI SNRs : 306/496 [00:07&lt;00:01,  153.24it/s]
+ 62%|██████▎   | cHPI SNRs : 310/496 [00:07&lt;00:01,  155.34it/s]
+ 63%|██████▎   | cHPI SNRs : 314/496 [00:07&lt;00:01,  158.37it/s]
+ 64%|██████▍   | cHPI SNRs : 318/496 [00:07&lt;00:01,  161.07it/s]
+ 65%|██████▍   | cHPI SNRs : 321/496 [00:07&lt;00:01,  161.97it/s]
+ 66%|██████▌   | cHPI SNRs : 325/496 [00:08&lt;00:01,  165.16it/s]
+ 66%|██████▋   | cHPI SNRs : 329/496 [00:08&lt;00:01,  166.50it/s]
+ 67%|██████▋   | cHPI SNRs : 333/496 [00:08&lt;00:00,  169.22it/s]
+ 68%|██████▊   | cHPI SNRs : 337/496 [00:08&lt;00:00,  172.17it/s]
+ 69%|██████▉   | cHPI SNRs : 341/496 [00:08&lt;00:00,  174.53it/s]
+ 70%|██████▉   | cHPI SNRs : 345/496 [00:08&lt;00:00,  176.93it/s]
+ 70%|███████   | cHPI SNRs : 349/496 [00:08&lt;00:00,  178.87it/s]
+ 71%|███████   | cHPI SNRs : 353/496 [00:08&lt;00:00,  181.45it/s]
+ 72%|███████▏  | cHPI SNRs : 357/496 [00:08&lt;00:00,  183.64it/s]
+ 73%|███████▎  | cHPI SNRs : 361/496 [00:08&lt;00:00,  186.19it/s]
+ 74%|███████▎  | cHPI SNRs : 365/496 [00:08&lt;00:00,  188.23it/s]
+ 74%|███████▍  | cHPI SNRs : 369/496 [00:08&lt;00:00,  190.44it/s]
+ 75%|███████▌  | cHPI SNRs : 373/496 [00:08&lt;00:00,  191.77it/s]
+ 76%|███████▌  | cHPI SNRs : 378/496 [00:08&lt;00:00,  194.91it/s]
+ 77%|███████▋  | cHPI SNRs : 382/496 [00:08&lt;00:00,  195.60it/s]
+ 78%|███████▊  | cHPI SNRs : 385/496 [00:08&lt;00:00,  193.19it/s]
+ 78%|███████▊  | cHPI SNRs : 389/496 [00:08&lt;00:00,  194.58it/s]
+ 79%|███████▉  | cHPI SNRs : 394/496 [00:08&lt;00:00,  197.63it/s]
+ 80%|████████  | cHPI SNRs : 398/496 [00:08&lt;00:00,  199.65it/s]
+ 81%|████████  | cHPI SNRs : 402/496 [00:08&lt;00:00,  201.72it/s]
+ 82%|████████▏ | cHPI SNRs : 406/496 [00:08&lt;00:00,  203.61it/s]
+ 83%|████████▎ | cHPI SNRs : 410/496 [00:08&lt;00:00,  205.08it/s]
+ 83%|████████▎ | cHPI SNRs : 414/496 [00:08&lt;00:00,  206.58it/s]
+ 84%|████████▍ | cHPI SNRs : 418/496 [00:08&lt;00:00,  207.96it/s]
+ 85%|████████▌ | cHPI SNRs : 422/496 [00:08&lt;00:00,  208.84it/s]
+ 86%|████████▌ | cHPI SNRs : 426/496 [00:08&lt;00:00,  209.62it/s]
+ 87%|████████▋ | cHPI SNRs : 430/496 [00:08&lt;00:00,  210.26it/s]
+ 88%|████████▊ | cHPI SNRs : 434/496 [00:08&lt;00:00,  211.73it/s]
+ 89%|████████▊ | cHPI SNRs : 439/496 [00:08&lt;00:00,  213.95it/s]
+ 90%|████████▉ | cHPI SNRs : 444/496 [00:08&lt;00:00,  216.10it/s]
+ 90%|█████████ | cHPI SNRs : 448/496 [00:08&lt;00:00,  214.51it/s]
+ 91%|█████████ | cHPI SNRs : 452/496 [00:08&lt;00:00,  215.18it/s]
+ 92%|█████████▏| cHPI SNRs : 456/496 [00:08&lt;00:00,  213.30it/s]
+ 93%|█████████▎| cHPI SNRs : 459/496 [00:08&lt;00:00,  211.50it/s]
+ 94%|█████████▎| cHPI SNRs : 464/496 [00:08&lt;00:00,  214.20it/s]
+ 94%|█████████▍| cHPI SNRs : 467/496 [00:08&lt;00:00,  210.96it/s]
+ 95%|█████████▍| cHPI SNRs : 470/496 [00:08&lt;00:00,  208.26it/s]
+ 95%|█████████▌| cHPI SNRs : 473/496 [00:08&lt;00:00,  205.46it/s]
+ 96%|█████████▌| cHPI SNRs : 477/496 [00:08&lt;00:00,  204.55it/s]
+ 97%|█████████▋| cHPI SNRs : 481/496 [00:08&lt;00:00,  205.95it/s]
+ 98%|█████████▊| cHPI SNRs : 485/496 [00:08&lt;00:00,  206.86it/s]
+ 99%|█████████▉| cHPI SNRs : 490/496 [00:08&lt;00:00,  209.37it/s]
+100%|█████████▉| cHPI SNRs : 494/496 [00:08&lt;00:00,  210.53it/s]
+100%|██████████| cHPI SNRs : 496/496 [00:08&lt;00:00,   56.54it/s]
+</pre></div>
+</div>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> (0 minutes 46.271 seconds)</p>
+<p><strong>Estimated memory usage:</strong>  15 MB</p>
+<div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-tutorials-preprocessing-59-head-positions-py">
+<div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
+<p><a class="reference download internal" download="" href="../../_downloads/9bd293f49554a21d68d4f2a842cc6cc2/59_head_positions.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">59_head_positions.ipynb</span></code></a></p>
+</div>
+<div class="sphx-glr-download sphx-glr-download-python docutils container">
+<p><a class="reference download internal" download="" href="../../_downloads/4d0dcc2a86878ce85a64142c4b4be583/59_head_positions.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">59_head_positions.py</span></code></a></p>
+</div>
+</div>
+<p class="sphx-glr-signature"><a class="reference external" href="https://sphinx-gallery.github.io">Gallery generated by Sphinx-Gallery</a></p>
+</section>
+</section>
+
+
+  
+</div>
+
+              
+              
+                <footer class="bd-footer-article">
+                  
+<div class="footer-article-items footer-article__inner">
+  
+    <div class="footer-article-item"><!-- Previous / next buttons -->
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="55_setting_eeg_reference.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Setting the EEG reference</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="60_maxwell_filtering_sss.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Signal-space separation (SSS) and Maxwell filtering</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div></div>
+  
+</div>
+
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#hpi-frequencies">HPI frequencies</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#estimating-continuous-head-position">Estimating continuous head position</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#visualizing-continuous-head-position">Visualizing continuous head position</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#computing-snr-of-the-hpi-signal">Computing SNR of the HPI signal</a></li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+  
+  <div class="tocsection editthispage">
+    <a href="https://github.com/mne-tools/mne-python/edit/main/doc/auto_tutorials/preprocessing/59_head_positions.rst">
+      <i class="fa-solid fa-pencil"></i>
+      
+      
+        
+          Edit on GitHub
+        
+      
+    </a>
+  </div>
+</div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+    
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../_static/scripts/bootstrap.js?digest=e353d410970836974a52"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
+
+    <script src="https://mne.tools/versionwarning.js"></script>
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item"><p class="text-center text-muted small">&copy; Copyright 2012–2024, MNE Developers. Last updated <time datetime="2024-01-17T15:53:28.456158+00:00" class="localized">2024-01-17 15:53 UTC</time>
+<script type="text/javascript">$(function () { $("time.localized").each(function () { var el = $(this); el.text(new Date(el.attr("datetime")).toLocaleString([], {dateStyle: "medium", timeStyle: "long"})); }); } )</script></p></div>
+      
+    </div>
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item"><p class="theme-version">
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.13.3.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>

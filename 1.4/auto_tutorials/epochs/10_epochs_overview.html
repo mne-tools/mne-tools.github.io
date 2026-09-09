@@ -1,0 +1,1500 @@
+
+
+<!DOCTYPE html>
+
+
+<html lang="en" data-theme="auto">
+
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+
+    <title>The Epochs data structure: discontinuous data &#8212; MNE 1.4.0 documentation</title>
+  
+  
+  
+  <script data-cfasync="false">
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "auto";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../_static/styles/theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../_static/styles/bootstrap.css?digest=e353d410970836974a52" rel="stylesheet" />
+<link href="../../_static/styles/pydata-sphinx-theme.css?digest=e353d410970836974a52" rel="stylesheet" />
+
+  
+  <link href="../../_static/vendor/fontawesome/6.1.2/css/all.min.css?digest=e353d410970836974a52" rel="stylesheet" />
+  <link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2" />
+<link rel="preload" as="font" type="font/woff2" crossorigin href="../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2" />
+
+    <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/plot_directive.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/copybutton.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-binder.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-dataframe.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/sg_gallery-rendered-html.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/design-style.1e8bd061cd6da7fc9cf755528e8ffc24.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../_static/style.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../_static/scripts/bootstrap.js?digest=e353d410970836974a52" />
+<link rel="preload" as="script" href="../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52" />
+
+    <script data-url_root="../../" id="documentation_options" src="../../_static/documentation_options.js"></script>
+    <script src="../../_static/jquery.js"></script>
+    <script src="../../_static/underscore.js"></script>
+    <script src="../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../_static/doctools.js"></script>
+    <script src="../../_static/sphinx_highlight.js"></script>
+    <script src="../../_static/clipboard.min.js"></script>
+    <script src="../../_static/copybutton.js"></script>
+    <script src="../../_static/design-tabs.js"></script>
+    <script async="async" src="https://www.googletagmanager.com/gtag/js?id=G-5TBCPCRB6X"></script>
+    <script>
+                window.dataLayer = window.dataLayer || [];
+                function gtag(){ dataLayer.push(arguments); }
+                gtag('js', new Date());
+                gtag('config', 'G-5TBCPCRB6X');
+            </script>
+    <script>DOCUMENTATION_OPTIONS.pagename = 'auto_tutorials/epochs/10_epochs_overview';</script>
+    <script>
+        DOCUMENTATION_OPTIONS.theme_switcher_json_url = 'https://mne.tools/dev/_static/versions.json';
+        DOCUMENTATION_OPTIONS.theme_switcher_version_match = '1.4';
+        </script>
+    <link rel="shortcut icon" href="../../_static/favicon.ico"/>
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" />
+    <link rel="next" title="Regression-based baseline correction" href="15_baseline_regression.html" />
+    <link rel="prev" title="Segmenting continuous data into epochs" href="index.html" />
+    <link rel="canonical" href="https://mne.tools/stable/index.html" />
+    
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <meta name="docsearch:language" content="en"/>
+
+  </head>
+  
+  
+  <body data-bs-spy="scroll" data-bs-target=".bd-toc-nav" data-offset="180" data-bs-root-margin="0px 0px -60%" data-default-mode="auto">
+
+  
+  
+  <a class="skip-link" href="#main-content">Skip to main content</a>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__primary"
+          id="__primary"/>
+  <label class="overlay overlay-primary" for="__primary"></label>
+  
+  <input type="checkbox"
+          class="sidebar-toggle"
+          name="__secondary"
+          id="__secondary"/>
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+<form class="bd-search d-flex align-items-center"
+      action="../../search.html"
+      method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search"
+         class="form-control"
+         name="q"
+         id="search-input"
+         placeholder="Search the docs ..."
+         aria-label="Search the docs ..."
+         autocomplete="off"
+         autocorrect="off"
+         autocapitalize="off"
+         spellcheck="false"/>
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form></div>
+  </div>
+  
+    <nav class="bd-header navbar navbar-expand-lg bd-navbar">
+<div class="bd-header__inner bd-page-width">
+  <label class="sidebar-toggle primary-toggle" for="__primary">
+    <span class="fa-solid fa-bars"></span>
+  </label>
+  
+  <div class="navbar-header-items__start">
+    
+      <div class="navbar-item">
+  
+
+<a class="navbar-brand logo" href="../../index.html">
+  
+  
+  
+  
+    
+    
+      
+    
+    
+    <img src="../../_static/mne_logo_small.svg" class="logo__image only-light" alt="Logo image"/>
+    <script>document.write(`<img src="../../_static/mne_logo_small.svg" class="logo__image only-dark" alt="Logo image"/>`);</script>
+  
+  
+</a></div>
+    
+  </div>
+  
+  
+  <div class="col-lg-9 navbar-header-items">
+    
+    <div class="me-auto navbar-header-items__center">
+      
+        <div class="navbar-item"><nav class="navbar-nav">
+  <p class="sidebar-header-items__title"
+     role="heading"
+     aria-level="1"
+     aria-label="Site Navigation">
+    Site Navigation
+  </p>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../install/index.html">
+                        Install
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="../../overview/index.html">
+                        Documentation
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../python_reference.html">
+                        API Reference
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../overview/get_help.html">
+                        Get help
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../overview/development.html">
+                        Development
+                      </a>
+                    </li>
+                
+  </ul>
+</nav></div>
+      
+    </div>
+    
+    
+    <div class="navbar-header-items__end">
+      
+        <div class="navbar-item navbar-persistent--container">
+          
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+        </div>
+      
+      
+        <div class="navbar-item">
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script></div>
+      
+        <div class="navbar-item">
+<script>
+document.write(`
+  <div class="version-switcher__container dropdown">
+    <button type="button" class="version-switcher__button btn btn-sm navbar-btn dropdown-toggle" data-bs-toggle="dropdown">
+      1.4  <!-- this text may get changed later by javascript -->
+      <span class="caret"></span>
+    </button>
+    <div class="version-switcher__menu dropdown-menu list-group-flush py-0">
+    <!-- dropdown will be populated by javascript on page load -->
+    </div>
+  </div>
+`);
+</script></div>
+      
+        <div class="navbar-item"><ul class="navbar-icon-links navbar-nav"
+    aria-label="External Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/mne-tools/mne-python" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-square-github"></i></span>
+            <label class="sr-only">GitHub</label></a>
+        </li>
+        <li class="nav-item">
+            
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://fosstodon.org/@mne" title="Mastodon" class="nav-link" rel="me" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-mastodon"></i></span>
+            <label class="sr-only">Mastodon</label></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://twitter.com/mne_python" title="Twitter" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-square-twitter"></i></span>
+            <label class="sr-only">Twitter</label></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://mne.discourse.group/" title="Forum" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-discourse"></i></span>
+            <label class="sr-only">Forum</label></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://discord.gg/rKfvxTuATa" title="Discord" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-discord"></i></span>
+            <label class="sr-only">Discord</label></a>
+        </li>
+</ul></div>
+      
+    </div>
+    
+  </div>
+  
+  
+    <div class="navbar-persistent--mobile">
+<script>
+document.write(`
+  <button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" aria-label="Search" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <i class="fa-solid fa-magnifying-glass"></i>
+  </button>
+`);
+</script>
+    </div>
+  
+
+  
+    <label class="sidebar-toggle secondary-toggle" for="__secondary">
+      <span class="fa-solid fa-outdent"></span>
+    </label>
+  
+</div>
+
+    </nav>
+  
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar">
+        
+
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+        
+          <div class="navbar-item"><nav class="navbar-nav">
+  <p class="sidebar-header-items__title"
+     role="heading"
+     aria-level="1"
+     aria-label="Site Navigation">
+    Site Navigation
+  </p>
+  <ul class="bd-navbar-elements navbar-nav">
+    
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../install/index.html">
+                        Install
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item current active">
+                      <a class="nav-link nav-internal" href="../../overview/index.html">
+                        Documentation
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../python_reference.html">
+                        API Reference
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../overview/get_help.html">
+                        Get help
+                      </a>
+                    </li>
+                
+
+                    <li class="nav-item">
+                      <a class="nav-link nav-internal" href="../../overview/development.html">
+                        Development
+                      </a>
+                    </li>
+                
+  </ul>
+</nav></div>
+        
+      </div>
+    
+    
+    
+      <div class="sidebar-header-items__end">
+        
+          <div class="navbar-item">
+<script>
+document.write(`
+  <button class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" aria-label="light/dark" data-bs-placement="bottom" data-bs-toggle="tooltip">
+    <span class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></span>
+    <span class="theme-switch" data-mode="dark"><i class="fa-solid fa-moon"></i></span>
+    <span class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></span>
+  </button>
+`);
+</script></div>
+        
+          <div class="navbar-item">
+<script>
+document.write(`
+  <div class="version-switcher__container dropdown">
+    <button type="button" class="version-switcher__button btn btn-sm navbar-btn dropdown-toggle" data-bs-toggle="dropdown">
+      1.4  <!-- this text may get changed later by javascript -->
+      <span class="caret"></span>
+    </button>
+    <div class="version-switcher__menu dropdown-menu list-group-flush py-0">
+    <!-- dropdown will be populated by javascript on page load -->
+    </div>
+  </div>
+`);
+</script></div>
+        
+          <div class="navbar-item"><ul class="navbar-icon-links navbar-nav"
+    aria-label="External Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://github.com/mne-tools/mne-python" title="GitHub" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-square-github"></i></span>
+            <label class="sr-only">GitHub</label></a>
+        </li>
+        <li class="nav-item">
+            
+          
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://fosstodon.org/@mne" title="Mastodon" class="nav-link" rel="me" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-mastodon"></i></span>
+            <label class="sr-only">Mastodon</label></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://twitter.com/mne_python" title="Twitter" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-square-twitter"></i></span>
+            <label class="sr-only">Twitter</label></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://mne.discourse.group/" title="Forum" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-discourse"></i></span>
+            <label class="sr-only">Forum</label></a>
+        </li>
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://discord.gg/rKfvxTuATa" title="Discord" class="nav-link" rel="noopener" target="_blank" data-bs-toggle="tooltip" data-bs-placement="bottom"><span><i class="fa-brands fa-discord"></i></span>
+            <label class="sr-only">Discord</label></a>
+        </li>
+</ul></div>
+        
+      </div>
+    
+  </div>
+  
+    <div class="sidebar-primary-items__start sidebar-primary__section">
+        <div class="sidebar-primary-item"><nav class="bd-docs-nav bd-links"
+     aria-label="Section Navigation">
+  <p class="bd-links__title" role="heading" aria-level="1">Section Navigation</p>
+  <div class="bd-toc-item navbar-nav"><ul class="current nav bd-sidenav">
+<li class="toctree-l1 current active has-children"><a class="reference internal" href="../index.html">Tutorials</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-1" name="toctree-checkbox-1" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-1"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
+<li class="toctree-l2 has-children"><a class="reference internal" href="../intro/index.html">Introductory tutorials</a><input class="toctree-checkbox" id="toctree-checkbox-2" name="toctree-checkbox-2" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-2"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../intro/10_overview.html">Overview of MEG/EEG analysis with MNE-Python</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../intro/15_inplace.html">Modifying data in-place</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../intro/20_events_from_raw.html">Parsing events from raw data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../intro/30_info.html">The Info data structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../intro/40_sensor_locations.html">Working with sensor locations</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../intro/50_configure_mne.html">Configuring MNE-Python</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../intro/70_report.html">Getting started with mne.Report</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../io/index.html">Reading data for different recording systems</a><input class="toctree-checkbox" id="toctree-checkbox-3" name="toctree-checkbox-3" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-3"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../io/10_reading_meg_data.html">Importing data from MEG devices</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../io/20_reading_eeg_data.html">Importing data from EEG devices</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../io/30_reading_fnirs_data.html">Importing data from fNIRS devices</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../io/60_ctf_bst_auditory.html">Working with CTF data: the Brainstorm auditory dataset</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../io/70_reading_eyetracking_data.html">Importing Data from Eyetracking devices</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../raw/index.html">Working with continuous data</a><input class="toctree-checkbox" id="toctree-checkbox-4" name="toctree-checkbox-4" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-4"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../raw/10_raw_overview.html">The Raw data structure: continuous data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../raw/20_event_arrays.html">Working with events</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../raw/30_annotate_raw.html">Annotating continuous data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../raw/40_visualize_raw.html">Built-in plotting methods for Raw objects</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../preprocessing/index.html">Preprocessing</a><input class="toctree-checkbox" id="toctree-checkbox-5" name="toctree-checkbox-5" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-5"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../preprocessing/10_preprocessing_overview.html">Overview of artifact detection</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../preprocessing/15_handling_bad_channels.html">Handling bad channels</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../preprocessing/20_rejecting_bad_data.html">Rejecting bad data spans and breaks</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../preprocessing/25_background_filtering.html">Background information on filtering</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../preprocessing/30_filtering_resampling.html">Filtering and resampling data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../preprocessing/35_artifact_correction_regression.html">Repairing artifacts with regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../preprocessing/40_artifact_correction_ica.html">Repairing artifacts with ICA</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../preprocessing/45_projectors_background.html">Background on projectors and projections</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../preprocessing/50_artifact_correction_ssp.html">Repairing artifacts with SSP</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../preprocessing/55_setting_eeg_reference.html">Setting the EEG reference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../preprocessing/59_head_positions.html">Extracting and visualizing subject head movement</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../preprocessing/60_maxwell_filtering_sss.html">Signal-space separation (SSS) and Maxwell filtering</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../preprocessing/70_fnirs_processing.html">Preprocessing functional near-infrared spectroscopy (fNIRS) data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../preprocessing/80_opm_processing.html">Preprocessing optically pumped magnetometer (OPM) MEG data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../preprocessing/90_eyetracking_data.html">Working with eye tracker data in MNE-Python</a></li>
+</ul>
+</li>
+<li class="toctree-l2 current active has-children"><a class="reference internal" href="index.html">Segmenting continuous data into epochs</a><input checked="" class="toctree-checkbox" id="toctree-checkbox-6" name="toctree-checkbox-6" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-6"><i class="fa-solid fa-chevron-down"></i></label><ul class="current">
+<li class="toctree-l3 current active"><a class="current reference internal" href="#">The Epochs data structure: discontinuous data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="15_baseline_regression.html">Regression-based baseline correction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="20_visualize_epochs.html">Visualizing epoched data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="30_epochs_metadata.html">Working with Epoch metadata</a></li>
+<li class="toctree-l3"><a class="reference internal" href="40_autogenerate_metadata.html">Auto-generating Epochs metadata</a></li>
+<li class="toctree-l3"><a class="reference internal" href="50_epochs_to_data_frame.html">Exporting Epochs to Pandas DataFrames</a></li>
+<li class="toctree-l3"><a class="reference internal" href="60_make_fixed_length_epochs.html">Divide continuous data into equally-spaced epochs</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../evoked/index.html">Estimating evoked responses</a><input class="toctree-checkbox" id="toctree-checkbox-7" name="toctree-checkbox-7" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-7"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../evoked/10_evoked_overview.html">The Evoked data structure: evoked/averaged data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../evoked/20_visualize_evoked.html">Visualizing Evoked data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../evoked/30_eeg_erp.html">EEG analysis - Event-Related Potentials (ERPs)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../evoked/40_whitened.html">Plotting whitened data</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../time-freq/index.html">Time-frequency analysis</a><input class="toctree-checkbox" id="toctree-checkbox-8" name="toctree-checkbox-8" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-8"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../time-freq/10_spectrum_class.html">The Spectrum and EpochsSpectrum classes: frequency-domain data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../time-freq/20_sensors_time_frequency.html">Frequency and time-frequency sensor analysis</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../time-freq/50_ssvep.html">Frequency-tagging: Basic analysis of an SSVEP/vSSR dataset</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../forward/index.html">Forward models and source spaces</a><input class="toctree-checkbox" id="toctree-checkbox-9" name="toctree-checkbox-9" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-9"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../forward/10_background_freesurfer.html">FreeSurfer MRI reconstruction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../forward/20_source_alignment.html">Source alignment and coordinate frames</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../forward/25_automated_coreg.html">Using an automated approach to coregistration</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../forward/30_forward.html">Head model and forward computation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../forward/35_eeg_no_mri.html">EEG forward operator with a template MRI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../forward/50_background_freesurfer_mne.html">How MNE uses FreeSurfer’s outputs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../forward/80_fix_bem_in_blender.html">Fixing BEM and head surfaces</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../forward/90_compute_covariance.html">Computing a covariance matrix</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../inverse/index.html">Source localization and inverses</a><input class="toctree-checkbox" id="toctree-checkbox-10" name="toctree-checkbox-10" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-10"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/10_stc_class.html">The SourceEstimate data structure</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/20_dipole_fit.html">Source localization with equivalent current dipole (ECD) fit</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/30_mne_dspm_loreta.html">Source localization with MNE, dSPM, sLORETA, and eLORETA</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/35_dipole_orientations.html">The role of dipole orientations in distributed source localization</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/40_mne_fixed_free.html">Computing various MNE solutions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/50_beamformer_lcmv.html">Source reconstruction using an LCMV beamformer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/60_visualize_stc.html">Visualize source time courses (stcs)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/70_eeg_mri_coords.html">EEG source localization given electrode locations on an MRI</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/80_brainstorm_phantom_elekta.html">Brainstorm Elekta phantom dataset tutorial</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/85_brainstorm_phantom_ctf.html">Brainstorm CTF phantom dataset tutorial</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../inverse/90_phantom_4DBTi.html">4D Neuroimaging/BTi phantom dataset tutorial</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../stats-sensor-space/index.html">Statistical analysis of sensor data</a><input class="toctree-checkbox" id="toctree-checkbox-11" name="toctree-checkbox-11" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-11"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../stats-sensor-space/10_background_stats.html">Statistical inference</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../stats-sensor-space/20_erp_stats.html">Visualising statistical significance thresholds on EEG data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../stats-sensor-space/40_cluster_1samp_time_freq.html">Non-parametric 1 sample cluster statistic on single trial power</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../stats-sensor-space/50_cluster_between_time_freq.html">Non-parametric between conditions cluster statistic on single trial power</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../stats-sensor-space/70_cluster_rmANOVA_time_freq.html">Mass-univariate twoway repeated measures ANOVA on single trial power</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../stats-sensor-space/75_cluster_ftest_spatiotemporal.html">Spatiotemporal permutation F-test on full sensor data</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../stats-source-space/index.html">Statistical analysis of source estimates</a><input class="toctree-checkbox" id="toctree-checkbox-12" name="toctree-checkbox-12" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-12"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../stats-source-space/20_cluster_1samp_spatiotemporal.html">Permutation t-test on source data with spatio-temporal clustering</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../stats-source-space/30_cluster_ftest_spatiotemporal.html">2 samples permutation test on source data with spatio-temporal clustering</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../stats-source-space/60_cluster_rmANOVA_spatiotemporal.html">Repeated measures ANOVA on source data with spatio-temporal clustering</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../machine-learning/index.html">Machine learning models of neural activity</a><input class="toctree-checkbox" id="toctree-checkbox-13" name="toctree-checkbox-13" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-13"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../machine-learning/30_strf.html">Spectro-temporal receptive field (STRF) estimation on continuous data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../machine-learning/50_decoding.html">Decoding (MVPA)</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../clinical/index.html">Clinical applications</a><input class="toctree-checkbox" id="toctree-checkbox-14" name="toctree-checkbox-14" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-14"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../clinical/20_seeg.html">Working with sEEG data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../clinical/30_ecog.html">Working with ECoG data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../clinical/60_sleep.html">Sleep stage classification from polysomnography (PSG) data</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../simulation/index.html">Simulation</a><input class="toctree-checkbox" id="toctree-checkbox-15" name="toctree-checkbox-15" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-15"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../simulation/10_array_objs.html">Creating MNE-Python data structures from scratch</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../simulation/70_point_spread.html">Corrupt known signal with point spread</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../simulation/80_dics.html">DICS for power mapping</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1 has-children"><a class="reference internal" href="../../auto_examples/index.html">Examples</a><input class="toctree-checkbox" id="toctree-checkbox-16" name="toctree-checkbox-16" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-16"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../auto_examples/io/index.html">Input/Output</a><input class="toctree-checkbox" id="toctree-checkbox-17" name="toctree-checkbox-17" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-17"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/io/elekta_epochs.html">Getting averaging info from .fif files</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/io/read_neo_format.html">How to use data in neural ensemble (NEO) format</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/io/read_noise_covariance_matrix.html">Reading/Writing a noise covariance matrix</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/io/read_xdf.html">Reading XDF EEG data</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../auto_examples/simulation/index.html">Data Simulation</a><input class="toctree-checkbox" id="toctree-checkbox-18" name="toctree-checkbox-18" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-18"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/simulation/plot_stc_metrics.html">Compare simulated and estimated source activity</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/simulation/simulate_evoked_data.html">Generate simulated evoked data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/simulation/simulate_raw_data.html">Generate simulated raw data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/simulation/simulated_raw_data_using_subject_anatomy.html">Simulate raw data using subject anatomy</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/simulation/source_simulator.html">Generate simulated source data</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../auto_examples/preprocessing/index.html">Preprocessing</a><input class="toctree-checkbox" id="toctree-checkbox-19" name="toctree-checkbox-19" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-19"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/contralateral_referencing.html">Using contralateral referencing for EEG</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/css.html">Cortical Signal Suppression (CSS) for removal of cortical signals</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/define_target_events.html">Define target events based on time lag, plot evoked response</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/eeg_bridging.html">Identify EEG Electrodes Bridged by too much Gel</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/eeg_csd.html">Transform EEG data using current source density (CSD)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/eog_artifact_histogram.html">Show EOG artifact timing</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/eog_regression.html">Reduce EOG artifacts through regression</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/find_ref_artifacts.html">Find MEG reference channel artifacts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/fnirs_artifact_removal.html">Visualise NIRS artifact correction methods</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/ica_comparison.html">Compare the different ICA algorithms in MNE</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/interpolate_bad_channels.html">Interpolate bad channels for MEG/EEG channels</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/movement_compensation.html">Maxwell filter data with movement compensation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/movement_detection.html">Annotate movement artifacts and reestimate dev_head_t</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/muscle_detection.html">Annotate muscle artifacts</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/muscle_ica.html">Removing muscle ICA components</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/otp.html">Plot sensor denoising using oversampled temporal projection</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/shift_evoked.html">Shifting time-scale in evoked data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/virtual_evoked.html">Remap MEG channel types</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/preprocessing/xdawn_denoising.html">XDAWN Denoising</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../auto_examples/visualization/index.html">Visualization</a><input class="toctree-checkbox" id="toctree-checkbox-20" name="toctree-checkbox-20" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-20"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/visualization/3d_to_2d.html">How to convert 3D electrode positions to a 2D image</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/visualization/brain.html">Plotting with <code class="docutils literal notranslate"><span class="pre">mne.viz.Brain</span></code></a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/visualization/channel_epochs_image.html">Visualize channel over epochs as an image</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/visualization/eeg_on_scalp.html">Plotting EEG sensors on the scalp</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/visualization/evoked_arrowmap.html">Plotting topographic arrowmaps of evoked data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/visualization/evoked_topomap.html">Plotting topographic maps of evoked data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/visualization/evoked_whitening.html">Whitening evoked data with a noise covariance</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/visualization/meg_sensors.html">Plotting sensor layouts of MEG systems</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/visualization/mne_helmet.html">Plot the MNE brain and helmet</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/visualization/montage_sgskip.html">Plotting sensor layouts of EEG systems</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/visualization/parcellation.html">Plot a cortical parcellation</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/visualization/publication_figure.html">Make figures more publication ready</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/visualization/roi_erpimage_by_rt.html">Plot single trial activity, grouped by ROI and sorted by RT</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/visualization/sensor_noise_level.html">Show noise levels from empty room data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/visualization/ssp_projs_sensitivity_map.html">Sensitivity map of SSP projections</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/visualization/topo_compare_conditions.html">Compare evoked responses for different conditions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/visualization/topo_customized.html">Plot custom topographies for MEG sensors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/visualization/xhemi.html">Cross-hemisphere comparison</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../auto_examples/time_frequency/index.html">Time-Frequency Examples</a><input class="toctree-checkbox" id="toctree-checkbox-21" name="toctree-checkbox-21" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-21"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/time_frequency/compute_csd.html">Compute a cross-spectral density (CSD) matrix</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/time_frequency/compute_source_psd_epochs.html">Compute Power Spectral Density of inverse solution from single epochs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/time_frequency/source_label_time_frequency.html">Compute power and phase lock in label of the source space</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/time_frequency/source_power_spectrum.html">Compute source power spectral density (PSD) in a label</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/time_frequency/source_power_spectrum_opm.html">Compute source power spectral density (PSD) of VectorView and OPM data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/time_frequency/source_space_time_frequency.html">Compute induced power in the source space with dSPM</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/time_frequency/temporal_whitening.html">Temporal whitening with AR model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/time_frequency/time_frequency_erds.html">Compute and visualize ERDS maps</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/time_frequency/time_frequency_global_field_power.html">Explore event-related dynamics for specific frequency bands</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/time_frequency/time_frequency_simulated.html">Time-frequency on simulated data (Multitaper vs. Morlet vs. Stockwell vs. Hilbert)</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../auto_examples/stats/index.html">Statistics Examples</a><input class="toctree-checkbox" id="toctree-checkbox-22" name="toctree-checkbox-22" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-22"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/stats/cluster_stats_evoked.html">Permutation F-test on sensor data with 1D cluster level</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/stats/fdr_stats_evoked.html">FDR correction on T-test on sensor data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/stats/linear_regression_raw.html">Regression on continuous data (rER[P/F])</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/stats/sensor_permutation_test.html">Permutation T-test on sensor data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/stats/sensor_regression.html">Analysing continuous features with binning and regression in sensor space</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../auto_examples/decoding/index.html">Machine Learning (Decoding, Encoding, and MVPA)</a><input class="toctree-checkbox" id="toctree-checkbox-23" name="toctree-checkbox-23" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-23"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/decoding/decoding_csp_eeg.html">Motor imagery decoding from EEG data using the Common Spatial Pattern (CSP)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/decoding/decoding_csp_timefreq.html">Decoding in time-frequency space using Common Spatial Patterns (CSP)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/decoding/decoding_rsa_sgskip.html">Representational Similarity Analysis</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/decoding/decoding_spatio_temporal_source.html">Decoding source space data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/decoding/decoding_spoc_CMC.html">Continuous Target Decoding with SPoC</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/decoding/decoding_time_generalization_conditions.html">Decoding sensor space data with generalization across time and conditions</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/decoding/decoding_unsupervised_spatial_filter.html">Analysis of evoked response using ICA and PCA reduction techniques</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/decoding/decoding_xdawn_eeg.html">XDAWN Decoding From EEG data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/decoding/ems_filtering.html">Compute effect-matched-spatial filtering (EMS)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/decoding/linear_model_patterns.html">Linear classifier on sensor data with plot patterns and filters</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/decoding/receptive_field_mtrf.html">Receptive Field Estimation and Prediction</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/decoding/ssd_spatial_filters.html">Compute Spectro-Spatial Decomposition (SSD) spatial filters</a></li>
+</ul>
+</li>
+<li class="toctree-l2"><a class="reference internal" href="../../auto_examples/connectivity/index.html">Connectivity Analysis Examples</a></li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../auto_examples/forward/index.html">Forward modeling</a><input class="toctree-checkbox" id="toctree-checkbox-24" name="toctree-checkbox-24" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-24"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/forward/forward_sensitivity_maps.html">Display sensitivity maps for EEG and MEG sensors</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/forward/left_cerebellum_volume_source.html">Generate a left cerebellum volume source space</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/forward/source_space_morphing.html">Use source space morphing</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../auto_examples/inverse/index.html">Inverse problem and source analysis</a><input class="toctree-checkbox" id="toctree-checkbox-25" name="toctree-checkbox-25" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-25"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/compute_mne_inverse_epochs_in_label.html">Compute MNE-dSPM inverse solution on single epochs</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/compute_mne_inverse_raw_in_label.html">Compute sLORETA inverse solution on raw data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/compute_mne_inverse_volume.html">Compute MNE-dSPM inverse solution on evoked data in volume source space</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/custom_inverse_solver.html">Source localization with a custom inverse solver</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/dics_epochs.html">Compute source level time-frequency timecourses using a DICS beamformer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/dics_source_power.html">Compute source power using DICS beamformer</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/evoked_ers_source_power.html">Compute evoked ERS source power using DICS, LCMV beamformer, and dSPM</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/gamma_map_inverse.html">Compute a sparse inverse solution using the Gamma-MAP empirical Bayesian method</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/label_activation_from_stc.html">Extracting time course from source_estimate object</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/label_from_stc.html">Generate a functional label from source estimates</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/label_source_activations.html">Extracting the time series of activations in a label</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/mixed_norm_inverse.html">Compute sparse inverse solution with mixed norm: MxNE and irMxNE</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/mixed_source_space_inverse.html">Compute MNE inverse solution on evoked data with a mixed source space</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/mne_cov_power.html">Compute source power estimate by projecting the covariance with MNE</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/morph_surface_stc.html">Morph surface source estimate</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/morph_volume_stc.html">Morph volumetric source estimate</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/multi_dipole_model.html">Computing source timecourses with an XFit-like multi-dipole model</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/multidict_reweighted_tfmxne.html">Compute iterative reweighted TF-MxNE with multiscale time-frequency dictionary</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/psf_ctf_label_leakage.html">Visualize source leakage among labels using a circular graph</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/psf_ctf_vertices.html">Plot point-spread functions (PSFs) and cross-talk functions (CTFs)</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/psf_ctf_vertices_lcmv.html">Compute cross-talk functions for LCMV beamformers</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/psf_volume.html">Plot point-spread functions (PSFs) for a volume</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/rap_music.html">Compute Rap-Music on evoked data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/read_inverse.html">Reading an inverse operator</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/read_stc.html">Reading an STC file</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/resolution_metrics.html">Compute spatial resolution metrics in source space</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/resolution_metrics_eegmeg.html">Compute spatial resolution metrics to compare MEG with EEG+MEG</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/snr_estimate.html">Estimate data SNR using an inverse</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/source_space_snr.html">Computing source space SNR</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/time_frequency_mixed_norm_inverse.html">Compute MxNE with time-frequency sparse prior</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/trap_music.html">Compute Trap-Music on evoked data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/inverse/vector_mne_solution.html">Plotting the full vector-valued MNE solution</a></li>
+</ul>
+</li>
+<li class="toctree-l2 has-children"><a class="reference internal" href="../../auto_examples/datasets/index.html">Examples on open datasets</a><input class="toctree-checkbox" id="toctree-checkbox-26" name="toctree-checkbox-26" type="checkbox"/><label class="toctree-toggle" for="toctree-checkbox-26"><i class="fa-solid fa-chevron-down"></i></label><ul>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/datasets/brainstorm_data.html">Brainstorm raw (median nerve) dataset</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/datasets/hf_sef_data.html">HF-SEF dataset</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/datasets/limo_data.html">Single trial linear regression analysis with the LIMO dataset</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/datasets/opm_data.html">Optically pumped magnetometer (OPM) data</a></li>
+<li class="toctree-l3"><a class="reference internal" href="../../auto_examples/datasets/spm_faces_dataset_sgskip.html">From raw data to dSPM on SPM Faces dataset</a></li>
+</ul>
+</li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="../../glossary.html">Glossary</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../overview/implementation.html">Implementation details</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../overview/design_philosophy.html">Design philosophy</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../overview/datasets_index.html">Example datasets</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../generated/commands.html">Command-line tools</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../overview/migrating.html">Migrating from other analysis software</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../overview/cookbook.html">The typical M/EEG workflow</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../overview/cite.html">How to cite MNE-Python</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../cited.html">Papers citing MNE-Python</a></li>
+</ul>
+</div>
+</nav></div>
+    </div>
+  
+  
+  <div class="sidebar-primary-items__end sidebar-primary__section">
+  </div>
+  
+  <div id="rtd-footer-container"></div>
+
+
+      </div>
+      
+      <main id="main-content" class="bd-main">
+        
+        
+          <div class="bd-content">
+            <div class="bd-article-container">
+              
+              <div class="bd-header-article"></div>
+              
+              
+<div>
+  
+  <div class="sphx-glr-download-link-note admonition note">
+<p class="admonition-title">Note</p>
+<p><a class="reference internal" href="#sphx-glr-download-auto-tutorials-epochs-10-epochs-overview-py"><span class="std std-ref">Go to the end</span></a>
+to download the full example code</p>
+</div>
+<section class="sphx-glr-example-title" id="the-epochs-data-structure-discontinuous-data">
+<span id="tut-epochs-class"></span><span id="sphx-glr-auto-tutorials-epochs-10-epochs-overview-py"></span><h1>The Epochs data structure: discontinuous data<a class="headerlink" href="#the-epochs-data-structure-discontinuous-data" title="Permalink to this heading">#</a></h1>
+<p>This tutorial covers the basics of creating and working with <a class="reference internal" href="../../glossary.html#term-epochs"><span class="xref std std-term">epoched</span></a> data. It introduces the <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal notranslate"><span class="pre">Epochs</span></code></a> data structure in
+detail, including how to load, query, subselect, export, and plot data from an
+<a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal notranslate"><span class="pre">Epochs</span></code></a> object. For more information about visualizing
+<a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal notranslate"><span class="pre">Epochs</span></code></a> objects, see <a class="reference internal" href="20_visualize_epochs.html#tut-visualize-epochs"><span class="std std-ref">Visualizing epoched data</span></a>. For info on
+creating an <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal notranslate"><span class="pre">Epochs</span></code></a> object from (possibly simulated) data in a
+<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.24)"><code class="xref py py-class docutils literal notranslate"><span class="pre">NumPy</span> <span class="pre">array</span></code></a>, see <a class="reference internal" href="../simulation/10_array_objs.html#tut-creating-data-structures"><span class="std std-ref">Creating MNE-Python data structures from scratch</span></a>.</p>
+<p>As usual we’ll start by importing the modules we need:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">mne</span>
+</pre></div>
+</div>
+<p><a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal notranslate"><span class="pre">Epochs</span></code></a> objects are a data structure for representing and
+analyzing equal-duration chunks of the EEG/MEG signal. <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal notranslate"><span class="pre">Epochs</span></code></a>
+are most often used to represent data that is time-locked to repeated
+experimental events (such as stimulus onsets or subject button presses), but
+can also be used for storing sequential or overlapping frames of a continuous
+signal (e.g., for analysis of resting-state activity; see
+<a class="reference internal" href="../raw/20_event_arrays.html#fixed-length-events"><span class="std std-ref">Making equally-spaced Events arrays</span></a>). Inside an <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal notranslate"><span class="pre">Epochs</span></code></a> object, the data
+are stored in an <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.24)"><code class="xref py py-class docutils literal notranslate"><span class="pre">array</span></code></a> of shape <code class="docutils literal notranslate"><span class="pre">(n_epochs,</span>
+<span class="pre">n_channels,</span> <span class="pre">n_times)</span></code>.</p>
+<p><a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal notranslate"><span class="pre">Epochs</span></code></a> objects have many similarities with <a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-class docutils literal notranslate"><span class="pre">Raw</span></code></a>
+objects, including:</p>
+<ul class="simple">
+<li><p>They can be loaded from and saved to disk in <code class="docutils literal notranslate"><span class="pre">.fif</span></code> format, and their
+data can be exported to a <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.24)"><code class="xref py py-class docutils literal notranslate"><span class="pre">NumPy</span> <span class="pre">array</span></code></a> through the
+<a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs.get_data" title="mne.Epochs.get_data"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_data()</span></code></a> method or to a <a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.0.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Pandas</span> <span class="pre">DataFrame</span></code></a> through the <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs.to_data_frame" title="mne.Epochs.to_data_frame"><code class="xref py py-meth docutils literal notranslate"><span class="pre">to_data_frame()</span></code></a> method.</p></li>
+<li><p>Both <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal notranslate"><span class="pre">Epochs</span></code></a> and <a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-class docutils literal notranslate"><span class="pre">Raw</span></code></a> objects support channel
+selection by index or name, including <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs.pick" title="mne.Epochs.pick"><code class="xref py py-meth docutils literal notranslate"><span class="pre">pick()</span></code></a>,
+<a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs.pick_channels" title="mne.Epochs.pick_channels"><code class="xref py py-meth docutils literal notranslate"><span class="pre">pick_channels()</span></code></a> and <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs.pick_types" title="mne.Epochs.pick_types"><code class="xref py py-meth docutils literal notranslate"><span class="pre">pick_types()</span></code></a>
+methods.</p></li>
+<li><p><a class="reference internal" href="../../glossary.html#term-projector"><span class="xref std std-term">SSP projector</span></a> manipulation is possible through
+<a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs.add_proj" title="mne.Epochs.add_proj"><code class="xref py py-meth docutils literal notranslate"><span class="pre">add_proj()</span></code></a>, <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs.del_proj" title="mne.Epochs.del_proj"><code class="xref py py-meth docutils literal notranslate"><span class="pre">del_proj()</span></code></a>, and
+<a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs.plot_projs_topomap" title="mne.Epochs.plot_projs_topomap"><code class="xref py py-meth docutils literal notranslate"><span class="pre">plot_projs_topomap()</span></code></a> methods.</p></li>
+<li><p>Both <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal notranslate"><span class="pre">Epochs</span></code></a> and <a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-class docutils literal notranslate"><span class="pre">Raw</span></code></a> objects have
+<a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs.copy" title="mne.Epochs.copy"><code class="xref py py-meth docutils literal notranslate"><span class="pre">copy()</span></code></a>, <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs.crop" title="mne.Epochs.crop"><code class="xref py py-meth docutils literal notranslate"><span class="pre">crop()</span></code></a>,
+<a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs.time_as_index" title="mne.Epochs.time_as_index"><code class="xref py py-meth docutils literal notranslate"><span class="pre">time_as_index()</span></code></a>, <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs.filter" title="mne.Epochs.filter"><code class="xref py py-meth docutils literal notranslate"><span class="pre">filter()</span></code></a>,
+<a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs.resample" title="mne.Epochs.resample"><code class="xref py py-meth docutils literal notranslate"><span class="pre">resample()</span></code></a>, and <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs.compute_psd" title="mne.Epochs.compute_psd"><code class="xref py py-meth docutils literal notranslate"><span class="pre">compute_psd()</span></code></a> methods.</p></li>
+<li><p>Both <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal notranslate"><span class="pre">Epochs</span></code></a> and <a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-class docutils literal notranslate"><span class="pre">Raw</span></code></a> objects have
+<a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs.times" title="mne.Epochs.times"><code class="xref py py-attr docutils literal notranslate"><span class="pre">times</span></code></a>, <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs.ch_names" title="mne.Epochs.ch_names"><code class="xref py py-attr docutils literal notranslate"><span class="pre">ch_names</span></code></a>,
+<a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs.proj" title="mne.Epochs.proj"><code class="xref py py-attr docutils literal notranslate"><span class="pre">proj</span></code></a>, and <a class="reference internal" href="../../generated/mne.Info.html#mne.Info" title="mne.Info"><code class="xref py py-class docutils literal notranslate"><span class="pre">info</span></code></a> attributes.</p></li>
+<li><p>Both <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal notranslate"><span class="pre">Epochs</span></code></a> and <a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-class docutils literal notranslate"><span class="pre">Raw</span></code></a> objects have built-in
+plotting methods <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs.plot" title="mne.Epochs.plot"><code class="xref py py-meth docutils literal notranslate"><span class="pre">plot()</span></code></a>, and legacy plotting methods
+<a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs.plot_psd" title="mne.Epochs.plot_psd"><code class="xref py py-meth docutils literal notranslate"><span class="pre">plot_psd()</span></code></a> and <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs.plot_psd_topomap" title="mne.Epochs.plot_psd_topomap"><code class="xref py py-meth docutils literal notranslate"><span class="pre">plot_psd_topomap()</span></code></a>
+(in new code, PSD plotting is done via the
+<a class="reference internal" href="../../generated/mne.time_frequency.Spectrum.html#mne.time_frequency.Spectrum" title="mne.time_frequency.Spectrum"><code class="xref py py-class docutils literal notranslate"><span class="pre">Spectrum</span></code></a> class).</p></li>
+</ul>
+<section id="creating-epoched-data-from-a-raw-object">
+<h2>Creating Epoched data from a <code class="docutils literal notranslate"><span class="pre">Raw</span></code> object<a class="headerlink" href="#creating-epoched-data-from-a-raw-object" title="Permalink to this heading">#</a></h2>
+<p>The example dataset we’ve been using thus far doesn’t include pre-epoched
+data, so in this section we’ll load the continuous data and create epochs
+based on the events recorded in the <a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-class docutils literal notranslate"><span class="pre">Raw</span></code></a> object’s STIM
+channels. As we often do in these tutorials, we’ll <a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw.crop" title="mne.io.Raw.crop"><code class="xref py py-meth docutils literal notranslate"><span class="pre">crop()</span></code></a>
+the <a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-class docutils literal notranslate"><span class="pre">Raw</span></code></a> data to save memory:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="https://docs.python.org/3/library/pathlib.html#pathlib.PosixPath" title="pathlib.PosixPath" class="sphx-glr-backref-module-pathlib sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">sample_data_folder</span></a> <span class="o">=</span> <a href="../../generated/mne.datasets.sample.data_path.html#mne.datasets.sample.data_path" title="mne.datasets.sample.data_path" class="sphx-glr-backref-module-mne-datasets-sample sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">datasets</span><span class="o">.</span><span class="n">sample</span><span class="o">.</span><span class="n">data_path</span></a><span class="p">()</span>
+<a href="https://docs.python.org/3/library/pathlib.html#pathlib.PosixPath" title="pathlib.PosixPath" class="sphx-glr-backref-module-pathlib sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">sample_data_raw_file</span></a> <span class="o">=</span> <a href="https://docs.python.org/3/library/pathlib.html#pathlib.PosixPath" title="pathlib.PosixPath" class="sphx-glr-backref-module-pathlib sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">sample_data_folder</span></a> <span class="o">/</span> <span class="s2">&quot;MEG&quot;</span> <span class="o">/</span> <span class="s2">&quot;sample&quot;</span> <span class="o">/</span> <span class="s2">&quot;sample_audvis_raw.fif&quot;</span>
+<span class="n">raw</span> <span class="o">=</span> <a href="../../generated/mne.io.read_raw_fif.html#mne.io.read_raw_fif" title="mne.io.read_raw_fif" class="sphx-glr-backref-module-mne-io sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read_raw_fif</span></a><span class="p">(</span><a href="https://docs.python.org/3/library/pathlib.html#pathlib.PosixPath" title="pathlib.PosixPath" class="sphx-glr-backref-module-pathlib sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">sample_data_raw_file</span></a><span class="p">,</span> <span class="n">verbose</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span><span class="o">.</span><span class="n">crop</span><span class="p">(</span><span class="n">tmax</span><span class="o">=</span><span class="mi">60</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>As we saw in the <a class="reference internal" href="../intro/20_events_from_raw.html#tut-events-vs-annotations"><span class="std std-ref">Parsing events from raw data</span></a> tutorial, we can extract an
+events array from <a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-class docutils literal notranslate"><span class="pre">Raw</span></code></a> objects using <a class="reference internal" href="../../generated/mne.find_events.html#mne.find_events" title="mne.find_events"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.find_events()</span></code></a>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">events</span></a> <span class="o">=</span> <a href="../../generated/mne.find_events.html#mne.find_events" title="mne.find_events" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">find_events</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <span class="n">stim_channel</span><span class="o">=</span><span class="s2">&quot;STI 014&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>86 events found
+Event IDs: [ 1  2  3  4  5 32]
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>We could also have loaded the events from file, using
+<a class="reference internal" href="../../generated/mne.read_events.html#mne.read_events" title="mne.read_events"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.read_events()</span></code></a>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">sample_data_events_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><a href="https://docs.python.org/3/library/pathlib.html#pathlib.PosixPath" title="pathlib.PosixPath" class="sphx-glr-backref-module-pathlib sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">sample_data_folder</span></a><span class="p">,</span>
+                                       <span class="s1">&#39;MEG&#39;</span><span class="p">,</span> <span class="s1">&#39;sample&#39;</span><span class="p">,</span>
+                                       <span class="s1">&#39;sample_audvis_raw-eve.fif&#39;</span><span class="p">)</span>
+<span class="n">events_from_file</span> <span class="o">=</span> <span class="n">mne</span><span class="o">.</span><span class="n">read_events</span><span class="p">(</span><span class="n">sample_data_events_file</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>See <a class="reference internal" href="../raw/20_event_arrays.html#tut-section-events-io"><span class="std std-ref">Reading and writing events from/to a file</span></a> for more details.</p>
+</div>
+<p>The <a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-class docutils literal notranslate"><span class="pre">Raw</span></code></a> object and the events array are the bare minimum
+needed to create an <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal notranslate"><span class="pre">Epochs</span></code></a> object, which we create with the
+<a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal notranslate"><span class="pre">mne.Epochs</span></code></a> class constructor. However, you will almost surely want
+to change some of the other default parameters. Here we’ll change <code class="docutils literal notranslate"><span class="pre">tmin</span></code>
+and <code class="docutils literal notranslate"><span class="pre">tmax</span></code> (the time relative to each event at which to start and end each
+epoch). Note also that the <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal notranslate"><span class="pre">Epochs</span></code></a> constructor accepts
+parameters <code class="docutils literal notranslate"><span class="pre">reject</span></code> and <code class="docutils literal notranslate"><span class="pre">flat</span></code> for rejecting individual epochs based on
+signal amplitude. See the <a class="reference internal" href="../preprocessing/20_rejecting_bad_data.html#tut-reject-epochs-section"><span class="std std-ref">Rejecting Epochs based on channel amplitude</span></a> section for
+examples.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class"><span class="n">mne</span><span class="o">.</span><span class="n">Epochs</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">events</span></a><span class="p">,</span> <span class="n">tmin</span><span class="o">=-</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">tmax</span><span class="o">=</span><span class="mf">0.7</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Not setting metadata
+86 matching events found
+Setting baseline interval to [-0.2996928197375818, 0.0] s
+Applying baseline correction (mode: mean)
+Created an SSP operator (subspace dimension = 3)
+3 projection items activated
+</pre></div>
+</div>
+<p>You’ll see from the output that:</p>
+<ul class="simple">
+<li><p>all 320 events were used to create epochs</p></li>
+<li><p>baseline correction was automatically applied (by default, baseline is
+defined as the time span from <code class="docutils literal notranslate"><span class="pre">tmin</span></code> to <code class="docutils literal notranslate"><span class="pre">0</span></code>, but can be customized with
+the <code class="docutils literal notranslate"><span class="pre">baseline</span></code> parameter)</p></li>
+<li><p>no additional metadata was provided (see <a class="reference internal" href="30_epochs_metadata.html#tut-epochs-metadata"><span class="std std-ref">Working with Epoch metadata</span></a> for
+details)</p></li>
+<li><p>the projection operators present in the <a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-class docutils literal notranslate"><span class="pre">Raw</span></code></a> file were
+copied over to the <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal notranslate"><span class="pre">Epochs</span></code></a> object</p></li>
+</ul>
+<p>If we print the <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal notranslate"><span class="pre">Epochs</span></code></a> object, we’ll also see a note that the
+epochs are not copied into memory by default, and a count of the number of
+epochs created for each integer Event ID.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a><span class="p">)</span>
+</pre></div>
+</div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;Epochs |  86 events (good &amp; bad), -0.299693 – 0.699283 s, baseline -0.299693 – 0 s, ~3.3 MB, data not loaded,
+ &#39;1&#39;: 20
+ &#39;2&#39;: 20
+ &#39;3&#39;: 20
+ &#39;4&#39;: 18
+ &#39;5&#39;: 4
+ &#39;32&#39;: 4&gt;
+</pre></div>
+</div>
+<p>Notice that the Event IDs are in quotes; since we didn’t provide an event
+dictionary, the <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal notranslate"><span class="pre">mne.Epochs</span></code></a> constructor created one automatically and
+used the string representation of the integer Event IDs as the dictionary
+keys. This is more clear when viewing the <code class="docutils literal notranslate"><span class="pre">event_id</span></code> attribute:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span><span class="o">.</span><span class="n">event_id</span></a><span class="p">)</span>
+</pre></div>
+</div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>{&#39;1&#39;: 1, &#39;2&#39;: 2, &#39;3&#39;: 3, &#39;4&#39;: 4, &#39;5&#39;: 5, &#39;32&#39;: 32}
+</pre></div>
+</div>
+<p>This time let’s pass <code class="docutils literal notranslate"><span class="pre">preload=True</span></code> and provide an event dictionary; our
+provided dictionary will get stored as the <code class="docutils literal notranslate"><span class="pre">event_id</span></code> attribute and will
+make referencing events and pooling across event types easier:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">event_dict</span></a> <span class="o">=</span> <span class="p">{</span>
+    <span class="s2">&quot;auditory/left&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="s2">&quot;auditory/right&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+    <span class="s2">&quot;visual/left&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+    <span class="s2">&quot;visual/right&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+    <span class="s2">&quot;face&quot;</span><span class="p">:</span> <span class="mi">5</span><span class="p">,</span>
+    <span class="s2">&quot;buttonpress&quot;</span><span class="p">:</span> <span class="mi">32</span><span class="p">,</span>
+<span class="p">}</span>
+<a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class"><span class="n">mne</span><span class="o">.</span><span class="n">Epochs</span></a><span class="p">(</span><span class="n">raw</span><span class="p">,</span> <a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">events</span></a><span class="p">,</span> <span class="n">tmin</span><span class="o">=-</span><span class="mf">0.3</span><span class="p">,</span> <span class="n">tmax</span><span class="o">=</span><span class="mf">0.7</span><span class="p">,</span> <span class="n">event_id</span><span class="o">=</span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">event_dict</span></a><span class="p">,</span> <span class="n">preload</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span><span class="o">.</span><span class="n">event_id</span></a><span class="p">)</span>
+<span class="k">del</span> <span class="n">raw</span>  <span class="c1"># we&#39;re done with raw, free up some memory</span>
+</pre></div>
+</div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Not setting metadata
+86 matching events found
+Setting baseline interval to [-0.2996928197375818, 0.0] s
+Applying baseline correction (mode: mean)
+Created an SSP operator (subspace dimension = 3)
+3 projection items activated
+Loading data for 86 events and 601 original time points ...
+1 bad epochs dropped
+{&#39;auditory/left&#39;: 1, &#39;auditory/right&#39;: 2, &#39;visual/left&#39;: 3, &#39;visual/right&#39;: 4, &#39;face&#39;: 5, &#39;buttonpress&#39;: 32}
+</pre></div>
+</div>
+<p>Notice that the output now mentions “1 bad epoch dropped”. In the tutorial
+section <a class="reference internal" href="../preprocessing/20_rejecting_bad_data.html#tut-reject-epochs-section"><span class="std std-ref">Rejecting Epochs based on channel amplitude</span></a> we saw how you can specify channel
+amplitude criteria for rejecting epochs, but here we haven’t specified any
+such criteria. In this case, it turns out that the last event was too close
+the end of the (cropped) raw file to accommodate our requested <code class="docutils literal notranslate"><span class="pre">tmax</span></code> of
+0.7 seconds, so the final epoch was dropped because it was too short. Here
+are the <code class="docutils literal notranslate"><span class="pre">drop_log</span></code> entries for the last 4 epochs (empty lists indicate
+epochs that were <em>not</em> dropped):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><a href="https://docs.python.org/3/library/stdtypes.html#tuple" title="builtins.tuple" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span><span class="o">.</span><span class="n">drop_log</span></a><span class="p">[</span><span class="o">-</span><span class="mi">4</span><span class="p">:])</span>
+</pre></div>
+</div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>((), (), (), (&#39;TOO_SHORT&#39;,))
+</pre></div>
+</div>
+<div class="admonition note">
+<p class="admonition-title">Note</p>
+<p>If you forget to provide the event dictionary to the <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal notranslate"><span class="pre">Epochs</span></code></a>
+constructor, you can add it later by assigning to the <code class="docutils literal notranslate"><span class="pre">event_id</span></code>
+attribute:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span><span class="o">.</span><span class="n">event_id</span></a> <span class="o">=</span> <a href="https://docs.python.org/3/library/stdtypes.html#dict" title="builtins.dict" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">event_dict</span></a>
+</pre></div>
+</div>
+</div>
+<section id="basic-visualization-of-epochs-objects">
+<h3>Basic visualization of <code class="docutils literal notranslate"><span class="pre">Epochs</span></code> objects<a class="headerlink" href="#basic-visualization-of-epochs-objects" title="Permalink to this heading">#</a></h3>
+<p>The <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal notranslate"><span class="pre">Epochs</span></code></a> object can be visualized (and browsed interactively)
+using its <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs.plot" title="mne.Epochs.plot"><code class="xref py py-meth docutils literal notranslate"><span class="pre">plot()</span></code></a> method:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="../../generated/mne.Epochs.html#mne.Epochs.plot" title="mne.Epochs.plot" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">epochs</span><span class="o">.</span><span class="n">plot</span></a><span class="p">(</span><span class="n">n_epochs</span><span class="o">=</span><span class="mi">10</span><span class="p">)</span>
+</pre></div>
+</div>
+<img src="../../_images/sphx_glr_10_epochs_overview_001.png" srcset="../../_images/sphx_glr_10_epochs_overview_001.png" alt="Raw plot" class = "sphx-glr-single-img"/><p>Notice that the individual epochs are sequentially numbered along the bottom
+axis and are separated by vertical dashed lines.
+Epoch plots are interactive (similar to <a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw.plot" title="mne.io.Raw.plot"><code class="xref py py-meth docutils literal notranslate"><span class="pre">raw.plot()</span></code></a>) and have many of the same interactive controls as
+<a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-class docutils literal notranslate"><span class="pre">Raw</span></code></a> plots. Horizontal and vertical scrollbars allow browsing
+through epochs or channels (respectively), and pressing <kbd class="kbd docutils literal notranslate">?</kbd> when the
+plot is focused will show a help screen with all the available controls. See
+<a class="reference internal" href="20_visualize_epochs.html#tut-visualize-epochs"><span class="std std-ref">Visualizing epoched data</span></a> for more details (as well as other ways of
+visualizing epoched data).</p>
+</section>
+</section>
+<section id="subselecting-epochs">
+<span id="tut-section-subselect-epochs"></span><h2>Subselecting epochs<a class="headerlink" href="#subselecting-epochs" title="Permalink to this heading">#</a></h2>
+<p>Now that we have our <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal notranslate"><span class="pre">Epochs</span></code></a> object with our descriptive event
+labels added, we can subselect epochs easily using square brackets. For
+example, we can load all the “catch trials” where the stimulus was a face:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a><span class="p">[</span><span class="s2">&quot;face&quot;</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;Epochs |  4 events (all good), -0.299693 – 0.699283 s, baseline -0.299693 – 0 s, ~10.2 MB, data loaded,
+ &#39;face&#39;: 4&gt;
+</pre></div>
+</div>
+<p>We can also pool across conditions easily, thanks to how MNE-Python handles
+the <code class="docutils literal notranslate"><span class="pre">/</span></code> character in epoch labels (using what is sometimes called
+“tag-based indexing”):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># pool across left + right</span>
+<span class="nb">print</span><span class="p">(</span><a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a><span class="p">[</span><span class="s2">&quot;auditory&quot;</span><span class="p">])</span>
+<span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a><span class="p">[</span><span class="s2">&quot;auditory&quot;</span><span class="p">])</span> <span class="o">==</span> <span class="p">(</span>
+    <span class="nb">len</span><span class="p">(</span><a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a><span class="p">[</span><span class="s2">&quot;auditory/left&quot;</span><span class="p">])</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a><span class="p">[</span><span class="s2">&quot;auditory/right&quot;</span><span class="p">])</span>
+<span class="p">)</span>
+<span class="c1"># pool across auditory + visual</span>
+<span class="nb">print</span><span class="p">(</span><a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a><span class="p">[</span><span class="s2">&quot;left&quot;</span><span class="p">])</span>
+<span class="k">assert</span> <span class="nb">len</span><span class="p">(</span><a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a><span class="p">[</span><span class="s2">&quot;left&quot;</span><span class="p">])</span> <span class="o">==</span> <span class="p">(</span>
+    <span class="nb">len</span><span class="p">(</span><a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a><span class="p">[</span><span class="s2">&quot;auditory/left&quot;</span><span class="p">])</span> <span class="o">+</span> <span class="nb">len</span><span class="p">(</span><a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a><span class="p">[</span><span class="s2">&quot;visual/left&quot;</span><span class="p">])</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;Epochs |  40 events (all good), -0.299693 – 0.699283 s, baseline -0.299693 – 0 s, ~72.2 MB, data loaded,
+ &#39;auditory/left&#39;: 20
+ &#39;auditory/right&#39;: 20&gt;
+&lt;Epochs |  39 events (all good), -0.299693 – 0.699283 s, baseline -0.299693 – 0 s, ~70.5 MB, data loaded,
+ &#39;auditory/left&#39;: 20
+ &#39;visual/left&#39;: 19&gt;
+</pre></div>
+</div>
+<p>You can also pool conditions by passing multiple tags as a list. Note that
+MNE-Python will not complain if you ask for tags not present in the object,
+as long as it can find <em>some</em> match: the below example is parsed as
+(inclusive) <code class="docutils literal notranslate"><span class="pre">'right'</span></code> <strong>or</strong> <code class="docutils literal notranslate"><span class="pre">'bottom'</span></code>, and you can see from the output
+that it selects only <code class="docutils literal notranslate"><span class="pre">auditory/right</span></code> and <code class="docutils literal notranslate"><span class="pre">visual/right</span></code>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a><span class="p">[[</span><span class="s2">&quot;right&quot;</span><span class="p">,</span> <span class="s2">&quot;bottom&quot;</span><span class="p">]])</span>
+</pre></div>
+</div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;Epochs |  38 events (all good), -0.299693 – 0.699283 s, baseline -0.299693 – 0 s, ~68.8 MB, data loaded,
+ &#39;auditory/right&#39;: 20
+ &#39;visual/right&#39;: 18&gt;
+</pre></div>
+</div>
+<p>However, if no match is found, an error is returned:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">try</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a><span class="p">[[</span><span class="s2">&quot;top&quot;</span><span class="p">,</span> <span class="s2">&quot;bottom&quot;</span><span class="p">]])</span>
+<span class="k">except</span> <span class="ne">KeyError</span><span class="p">:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Tag-based selection with no matches raises a KeyError!&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Tag-based selection with no matches raises a KeyError!
+</pre></div>
+</div>
+<section id="selecting-epochs-by-index">
+<h3>Selecting epochs by index<a class="headerlink" href="#selecting-epochs-by-index" title="Permalink to this heading">#</a></h3>
+<p><a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal notranslate"><span class="pre">Epochs</span></code></a> objects can also be indexed with integers, <a class="reference external" href="https://docs.python.org/3/glossary.html#term-slice" title="(in Python v3.11)"><span class="xref std std-term">slices</span></a>, or lists of integers. This method of selection ignores event
+labels, so if you want the first 10 epochs of a particular type, you can
+select the type first, then use integers or slices:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a><span class="p">[:</span><span class="mi">10</span><span class="p">])</span>  <span class="c1"># epochs 0-9</span>
+<span class="nb">print</span><span class="p">(</span><a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a><span class="p">[</span><span class="mi">1</span><span class="p">:</span><span class="mi">8</span><span class="p">:</span><span class="mi">2</span><span class="p">])</span>  <span class="c1"># epochs 1, 3, 5, 7</span>
+
+<span class="nb">print</span><span class="p">(</span><a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a><span class="p">[</span><span class="s2">&quot;buttonpress&quot;</span><span class="p">][:</span><span class="mi">4</span><span class="p">])</span>  <span class="c1"># first 4 &quot;buttonpress&quot; epochs</span>
+<span class="nb">print</span><span class="p">(</span><a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a><span class="p">[</span><span class="s2">&quot;buttonpress&quot;</span><span class="p">][[</span><span class="mi">0</span><span class="p">,</span> <span class="mi">1</span><span class="p">,</span> <span class="mi">2</span><span class="p">,</span> <span class="mi">3</span><span class="p">]])</span>  <span class="c1"># same as previous line</span>
+</pre></div>
+</div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;Epochs |  10 events (all good), -0.299693 – 0.699283 s, baseline -0.299693 – 0 s, ~20.5 MB, data loaded,
+ &#39;auditory/left&#39;: 2
+ &#39;auditory/right&#39;: 3
+ &#39;visual/left&#39;: 3
+ &#39;visual/right&#39;: 2&gt;
+&lt;Epochs |  4 events (all good), -0.299693 – 0.699283 s, baseline -0.299693 – 0 s, ~10.2 MB, data loaded,
+ &#39;visual/left&#39;: 2
+ &#39;visual/right&#39;: 2&gt;
+&lt;Epochs |  4 events (all good), -0.299693 – 0.699283 s, baseline -0.299693 – 0 s, ~10.2 MB, data loaded,
+ &#39;buttonpress&#39;: 4&gt;
+&lt;Epochs |  4 events (all good), -0.299693 – 0.699283 s, baseline -0.299693 – 0 s, ~10.2 MB, data loaded,
+ &#39;buttonpress&#39;: 4&gt;
+</pre></div>
+</div>
+</section>
+<section id="selecting-dropping-and-reordering-channels">
+<h3>Selecting, dropping, and reordering channels<a class="headerlink" href="#selecting-dropping-and-reordering-channels" title="Permalink to this heading">#</a></h3>
+<p>You can use the <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs.pick" title="mne.Epochs.pick"><code class="xref py py-meth docutils literal notranslate"><span class="pre">pick()</span></code></a>, <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs.pick_channels" title="mne.Epochs.pick_channels"><code class="xref py py-meth docutils literal notranslate"><span class="pre">pick_channels()</span></code></a>,
+<a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs.pick_types" title="mne.Epochs.pick_types"><code class="xref py py-meth docutils literal notranslate"><span class="pre">pick_types()</span></code></a>, and <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs.drop_channels" title="mne.Epochs.drop_channels"><code class="xref py py-meth docutils literal notranslate"><span class="pre">drop_channels()</span></code></a> methods
+to modify which channels are included in an <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal notranslate"><span class="pre">Epochs</span></code></a> object. You
+can also use <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs.reorder_channels" title="mne.Epochs.reorder_channels"><code class="xref py py-meth docutils literal notranslate"><span class="pre">reorder_channels()</span></code></a> for this purpose; any
+channel names not provided to <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs.reorder_channels" title="mne.Epochs.reorder_channels"><code class="xref py py-meth docutils literal notranslate"><span class="pre">reorder_channels()</span></code></a> will be
+dropped. Note that these <em>channel</em> selection methods modify the object
+in-place (unlike the square-bracket indexing to select <em>epochs</em> seen above)
+so in interactive/exploratory sessions you may want to create a
+<a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs.copy" title="mne.Epochs.copy"><code class="xref py py-meth docutils literal notranslate"><span class="pre">copy()</span></code></a> first.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">epochs_eeg</span> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs.copy" title="mne.Epochs.copy" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">epochs</span><span class="o">.</span><span class="n">copy</span></a><span class="p">()</span><span class="o">.</span><span class="n">pick_types</span><span class="p">(</span><span class="n">meg</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">eeg</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">epochs_eeg</span><span class="o">.</span><span class="n">ch_names</span><span class="p">)</span>
+
+<a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">new_order</span></a> <span class="o">=</span> <span class="p">[</span><span class="s2">&quot;EEG 002&quot;</span><span class="p">,</span> <span class="s2">&quot;STI 014&quot;</span><span class="p">,</span> <span class="s2">&quot;EOG 061&quot;</span><span class="p">,</span> <span class="s2">&quot;MEG 2521&quot;</span><span class="p">]</span>
+<span class="n">epochs_subset</span> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs.copy" title="mne.Epochs.copy" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">epochs</span><span class="o">.</span><span class="n">copy</span></a><span class="p">()</span><span class="o">.</span><span class="n">reorder_channels</span><span class="p">(</span><a href="https://docs.python.org/3/library/stdtypes.html#list" title="builtins.list" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">new_order</span></a><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">epochs_subset</span><span class="o">.</span><span class="n">ch_names</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>NOTE: pick_types() is a legacy function. New code should use inst.pick(...).
+Removing projector &lt;Projection | PCA-v1, active : True, n_channels : 102&gt;
+Removing projector &lt;Projection | PCA-v2, active : True, n_channels : 102&gt;
+Removing projector &lt;Projection | PCA-v3, active : True, n_channels : 102&gt;
+[&#39;EEG 001&#39;, &#39;EEG 002&#39;, &#39;EEG 003&#39;, &#39;EEG 004&#39;, &#39;EEG 005&#39;, &#39;EEG 006&#39;, &#39;EEG 007&#39;, &#39;EEG 008&#39;, &#39;EEG 009&#39;, &#39;EEG 010&#39;, &#39;EEG 011&#39;, &#39;EEG 012&#39;, &#39;EEG 013&#39;, &#39;EEG 014&#39;, &#39;EEG 015&#39;, &#39;EEG 016&#39;, &#39;EEG 017&#39;, &#39;EEG 018&#39;, &#39;EEG 019&#39;, &#39;EEG 020&#39;, &#39;EEG 021&#39;, &#39;EEG 022&#39;, &#39;EEG 023&#39;, &#39;EEG 024&#39;, &#39;EEG 025&#39;, &#39;EEG 026&#39;, &#39;EEG 027&#39;, &#39;EEG 028&#39;, &#39;EEG 029&#39;, &#39;EEG 030&#39;, &#39;EEG 031&#39;, &#39;EEG 032&#39;, &#39;EEG 033&#39;, &#39;EEG 034&#39;, &#39;EEG 035&#39;, &#39;EEG 036&#39;, &#39;EEG 037&#39;, &#39;EEG 038&#39;, &#39;EEG 039&#39;, &#39;EEG 040&#39;, &#39;EEG 041&#39;, &#39;EEG 042&#39;, &#39;EEG 043&#39;, &#39;EEG 044&#39;, &#39;EEG 045&#39;, &#39;EEG 046&#39;, &#39;EEG 047&#39;, &#39;EEG 048&#39;, &#39;EEG 049&#39;, &#39;EEG 050&#39;, &#39;EEG 051&#39;, &#39;EEG 052&#39;, &#39;EEG 054&#39;, &#39;EEG 055&#39;, &#39;EEG 056&#39;, &#39;EEG 057&#39;, &#39;EEG 058&#39;, &#39;EEG 059&#39;, &#39;EEG 060&#39;]
+[&#39;EEG 002&#39;, &#39;STI 014&#39;, &#39;EOG 061&#39;, &#39;MEG 2521&#39;]
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">del</span> <span class="n">epochs_eeg</span><span class="p">,</span> <span class="n">epochs_subset</span>
+</pre></div>
+</div>
+</section>
+<section id="changing-channel-name-and-type">
+<h3>Changing channel name and type<a class="headerlink" href="#changing-channel-name-and-type" title="Permalink to this heading">#</a></h3>
+<p>You can change the name or type of a channel using
+<a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs.rename_channels" title="mne.Epochs.rename_channels"><code class="xref py py-meth docutils literal notranslate"><span class="pre">rename_channels()</span></code></a> or <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs.set_channel_types" title="mne.Epochs.set_channel_types"><code class="xref py py-meth docutils literal notranslate"><span class="pre">set_channel_types()</span></code></a>.
+Both methods take <a class="reference external" href="https://docs.python.org/3/library/stdtypes.html#dict" title="(in Python v3.11)"><code class="xref py py-class docutils literal notranslate"><span class="pre">dictionaries</span></code></a> where the keys are existing
+channel names, and the values are the new name (or type) for that channel.
+Existing channels that are not in the dictionary will be unchanged.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="../../generated/mne.Epochs.html#mne.Epochs.rename_channels" title="mne.Epochs.rename_channels" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">epochs</span><span class="o">.</span><span class="n">rename_channels</span></a><span class="p">({</span><span class="s2">&quot;EOG 061&quot;</span><span class="p">:</span> <span class="s2">&quot;BlinkChannel&quot;</span><span class="p">})</span>
+
+<a href="../../generated/mne.Epochs.html#mne.Epochs.set_channel_types" title="mne.Epochs.set_channel_types" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">epochs</span><span class="o">.</span><span class="n">set_channel_types</span></a><span class="p">({</span><span class="s2">&quot;EEG 060&quot;</span><span class="p">:</span> <span class="s2">&quot;ecg&quot;</span><span class="p">})</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">list</span><span class="p">(</span><span class="nb">zip</span><span class="p">(</span><a href="../../generated/mne.Epochs.html#mne.Epochs.ch_names" title="mne.Epochs.ch_names" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-property"><span class="n">epochs</span><span class="o">.</span><span class="n">ch_names</span></a><span class="p">,</span> <a href="../../generated/mne.Epochs.html#mne.Epochs.get_channel_types" title="mne.Epochs.get_channel_types" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">epochs</span><span class="o">.</span><span class="n">get_channel_types</span></a><span class="p">()))[</span><span class="o">-</span><span class="mi">4</span><span class="p">:])</span>
+</pre></div>
+</div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>[(&#39;EEG 058&#39;, &#39;eeg&#39;), (&#39;EEG 059&#39;, &#39;eeg&#39;), (&#39;EEG 060&#39;, &#39;ecg&#39;), (&#39;BlinkChannel&#39;, &#39;eog&#39;)]
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># let&#39;s set them back to the correct values before moving on</span>
+<a href="../../generated/mne.Epochs.html#mne.Epochs.rename_channels" title="mne.Epochs.rename_channels" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">epochs</span><span class="o">.</span><span class="n">rename_channels</span></a><span class="p">({</span><span class="s2">&quot;BlinkChannel&quot;</span><span class="p">:</span> <span class="s2">&quot;EOG 061&quot;</span><span class="p">})</span>
+<a href="../../generated/mne.Epochs.html#mne.Epochs.set_channel_types" title="mne.Epochs.set_channel_types" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">epochs</span><span class="o">.</span><span class="n">set_channel_types</span></a><span class="p">({</span><span class="s2">&quot;EEG 060&quot;</span><span class="p">:</span> <span class="s2">&quot;eeg&quot;</span><span class="p">})</span>
+</pre></div>
+</div>
+<div class="output_subarea output_html rendered_html output_result">
+<table class="table table-hover table-striped table-sm table-responsive small">
+    <tr>
+        <th>Number of events</th>
+        <td>85</td>
+    </tr>
+    <tr>
+        <th>Events</th>
+
+        <td>auditory/left: 20<br/>auditory/right: 20<br/>buttonpress: 4<br/>face: 4<br/>visual/left: 19<br/>visual/right: 18</td>
+
+    </tr>
+    <tr>
+        <th>Time range</th>
+        <td>-0.300 – 0.699 s</td>
+    </tr>
+    <tr>
+        <th>Baseline</th>
+        <td>-0.300 – 0.000 s</td>
+    </tr>
+</table>
+</div>
+<br />
+<br /></section>
+<section id="selection-in-the-time-domain">
+<h3>Selection in the time domain<a class="headerlink" href="#selection-in-the-time-domain" title="Permalink to this heading">#</a></h3>
+<p>To change the temporal extent of the <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal notranslate"><span class="pre">Epochs</span></code></a>, you can use the
+<a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs.crop" title="mne.Epochs.crop"><code class="xref py py-meth docutils literal notranslate"><span class="pre">crop()</span></code></a> method:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">shorter_epochs</span> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs.copy" title="mne.Epochs.copy" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">epochs</span><span class="o">.</span><span class="n">copy</span></a><span class="p">()</span><span class="o">.</span><span class="n">crop</span><span class="p">(</span><span class="n">tmin</span><span class="o">=-</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">tmax</span><span class="o">=</span><span class="mf">0.1</span><span class="p">,</span> <span class="n">include_tmax</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="k">for</span> <a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">name</span></a><span class="p">,</span> <a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">obj</span></a> <span class="ow">in</span> <span class="nb">dict</span><span class="p">(</span><span class="n">Original</span><span class="o">=</span><a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a><span class="p">,</span> <span class="n">Cropped</span><span class="o">=</span><span class="n">shorter_epochs</span><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> epochs has </span><span class="si">{}</span><span class="s2"> time samples&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">name</span></a><span class="p">,</span> <a href="../../generated/mne.Epochs.html#mne.Epochs.get_data" title="mne.Epochs.get_data" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">obj</span><span class="o">.</span><span class="n">get_data</span></a><span class="p">()</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="o">-</span><span class="mi">1</span><span class="p">]))</span>
+</pre></div>
+</div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Original epochs has 601 time samples
+Cropped epochs has 121 time samples
+</pre></div>
+</div>
+<p>Cropping removed part of the baseline. When printing the
+cropped <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal notranslate"><span class="pre">Epochs</span></code></a>, MNE-Python will inform you about the time
+period that was originally used to perform baseline correction by displaying
+the string “baseline period cropped after baseline correction”:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="n">shorter_epochs</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;Epochs |  85 events (all good), -0.0998976 – 0.0998976 s, baseline -0.299693 – 0 s (baseline period was cropped after baseline correction), ~32.8 MB, data loaded,
+ &#39;auditory/left&#39;: 20
+ &#39;auditory/right&#39;: 20
+ &#39;visual/left&#39;: 19
+ &#39;visual/right&#39;: 18
+ &#39;face&#39;: 4
+ &#39;buttonpress&#39;: 4&gt;
+</pre></div>
+</div>
+<p>However, if you wanted to <em>expand</em> the time domain of an <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal notranslate"><span class="pre">Epochs</span></code></a>
+object, you would need to go back to the <a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-class docutils literal notranslate"><span class="pre">Raw</span></code></a> data and
+recreate the <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal notranslate"><span class="pre">Epochs</span></code></a> with different values for <code class="docutils literal notranslate"><span class="pre">tmin</span></code> and/or
+<code class="docutils literal notranslate"><span class="pre">tmax</span></code>.</p>
+<p>It is also possible to change the “zero point” that defines the time values
+in an <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal notranslate"><span class="pre">Epochs</span></code></a> object, with the <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs.shift_time" title="mne.Epochs.shift_time"><code class="xref py py-meth docutils literal notranslate"><span class="pre">shift_time()</span></code></a>
+method. <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs.shift_time" title="mne.Epochs.shift_time"><code class="xref py py-meth docutils literal notranslate"><span class="pre">shift_time()</span></code></a> allows shifting times relative to the
+current values, or specifying a fixed time to set as the new time value of
+the first sample (deriving the new time values of subsequent samples based on
+the <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal notranslate"><span class="pre">Epochs</span></code></a> object’s sampling frequency).</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># shift times so that first sample of each epoch is at time zero</span>
+<span class="n">later_epochs</span> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs.copy" title="mne.Epochs.copy" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">epochs</span><span class="o">.</span><span class="n">copy</span></a><span class="p">()</span><span class="o">.</span><span class="n">shift_time</span><span class="p">(</span><span class="n">tshift</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span> <span class="n">relative</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">later_epochs</span><span class="o">.</span><span class="n">times</span><span class="p">[:</span><span class="mi">3</span><span class="p">])</span>
+
+<span class="c1"># shift times by a relative amount</span>
+<span class="n">later_epochs</span><span class="o">.</span><span class="n">shift_time</span><span class="p">(</span><span class="n">tshift</span><span class="o">=-</span><span class="mi">7</span><span class="p">,</span> <span class="n">relative</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">later_epochs</span><span class="o">.</span><span class="n">times</span><span class="p">[:</span><span class="mi">3</span><span class="p">])</span>
+</pre></div>
+</div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>[0.         0.00166496 0.00332992]
+[-7.         -6.99833504 -6.99667008]
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">del</span> <span class="n">shorter_epochs</span><span class="p">,</span> <span class="n">later_epochs</span>
+</pre></div>
+</div>
+<p>Note that although time shifting respects the sampling frequency (the spacing
+between samples), it does not enforce the assumption that there is a sample
+occurring at exactly time=0.</p>
+</section>
+<section id="extracting-data-in-other-forms">
+<h3>Extracting data in other forms<a class="headerlink" href="#extracting-data-in-other-forms" title="Permalink to this heading">#</a></h3>
+<p>The <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs.get_data" title="mne.Epochs.get_data"><code class="xref py py-meth docutils literal notranslate"><span class="pre">get_data()</span></code></a> method returns the epoched data as a
+<a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.24)"><code class="xref py py-class docutils literal notranslate"><span class="pre">NumPy</span> <span class="pre">array</span></code></a>, of shape <code class="docutils literal notranslate"><span class="pre">(n_epochs,</span> <span class="pre">n_channels,</span>
+<span class="pre">n_times)</span></code>; an optional <code class="docutils literal notranslate"><span class="pre">picks</span></code> parameter selects a subset of channels by
+index, name, or type:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">eog_data</span></a> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs.get_data" title="mne.Epochs.get_data" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">epochs</span><span class="o">.</span><span class="n">get_data</span></a><span class="p">(</span><span class="n">picks</span><span class="o">=</span><span class="s2">&quot;EOG 061&quot;</span><span class="p">)</span>
+<a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">meg_data</span></a> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs.get_data" title="mne.Epochs.get_data" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">epochs</span><span class="o">.</span><span class="n">get_data</span></a><span class="p">(</span><span class="n">picks</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;mag&quot;</span><span class="p">,</span> <span class="s2">&quot;grad&quot;</span><span class="p">])</span>
+<a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">channel_4_6_8</span></a> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs.get_data" title="mne.Epochs.get_data" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">epochs</span><span class="o">.</span><span class="n">get_data</span></a><span class="p">(</span><span class="n">picks</span><span class="o">=</span><span class="nb">slice</span><span class="p">(</span><span class="mi">4</span><span class="p">,</span> <span class="mi">9</span><span class="p">,</span> <span class="mi">2</span><span class="p">))</span>
+
+<span class="k">for</span> <a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">name</span></a><span class="p">,</span> <a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">arr</span></a> <span class="ow">in</span> <span class="nb">dict</span><span class="p">(</span><span class="n">EOG</span><span class="o">=</span><a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">eog_data</span></a><span class="p">,</span> <span class="n">MEG</span><span class="o">=</span><a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">meg_data</span></a><span class="p">,</span> <span class="n">Slice</span><span class="o">=</span><a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">channel_4_6_8</span></a><span class="p">)</span><span class="o">.</span><span class="n">items</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="si">{}</span><span class="s2"> contains </span><span class="si">{}</span><span class="s2"> channels&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><a href="https://docs.python.org/3/library/stdtypes.html#str" title="builtins.str" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">name</span></a><span class="p">,</span> <a href="https://docs.python.org/3/library/stdtypes.html#tuple" title="builtins.tuple" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">arr</span><span class="o">.</span><span class="n">shape</span></a><span class="p">[</span><span class="mi">1</span><span class="p">]))</span>
+</pre></div>
+</div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>EOG contains 1 channels
+MEG contains 305 channels
+Slice contains 3 channels
+</pre></div>
+</div>
+<p>Note that if your analysis requires repeatedly extracting single epochs from
+an <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal notranslate"><span class="pre">Epochs</span></code></a> object, <code class="docutils literal notranslate"><span class="pre">epochs.get_data(item=2)</span></code> will be much
+faster than <code class="docutils literal notranslate"><span class="pre">epochs[2].get_data()</span></code>, because it avoids the step of
+subsetting the <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal notranslate"><span class="pre">Epochs</span></code></a> object first.</p>
+<p>You can also export <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal notranslate"><span class="pre">Epochs</span></code></a> data to <a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.0.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">Pandas</span> <span class="pre">DataFrames</span></code></a>. Here, the <a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.html#pandas.DataFrame" title="(in pandas v2.0.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">DataFrame</span></code></a> index will be
+constructed by converting the time of each sample into milliseconds and
+rounding it to the nearest integer, and combining it with the event types and
+epoch numbers to form a hierarchical <a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.MultiIndex.html#pandas.MultiIndex" title="(in pandas v2.0.1)"><code class="xref py py-class docutils literal notranslate"><span class="pre">MultiIndex</span></code></a>. Each
+channel will appear in a separate column. Then you can use any of Pandas’
+tools for grouping and aggregating data; for example, here we select any
+epochs numbered 10 or less from the <code class="docutils literal notranslate"><span class="pre">auditory/left</span></code> condition, and extract
+times between 100 and 107 ms on channels <code class="docutils literal notranslate"><span class="pre">EEG</span> <span class="pre">056</span></code> through <code class="docutils literal notranslate"><span class="pre">EEG</span> <span class="pre">058</span></code>
+(note that slice indexing within Pandas’ <a class="reference external" href="https://pandas.pydata.org/pandas-docs/stable/reference/api/pandas.DataFrame.loc.html#pandas.DataFrame.loc" title="(in pandas v2.0.1)"><code class="xref py py-obj docutils literal notranslate"><span class="pre">loc</span></code></a> is
+inclusive of the endpoint):</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">df</span> <span class="o">=</span> <a href="../../generated/mne.Epochs.html#mne.Epochs.to_data_frame" title="mne.Epochs.to_data_frame" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">epochs</span><span class="o">.</span><span class="n">to_data_frame</span></a><span class="p">(</span><a href="https://docs.python.org/3/library/functions.html#int" title="builtins.int" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">index</span></a><span class="o">=</span><span class="p">[</span><span class="s2">&quot;condition&quot;</span><span class="p">,</span> <span class="s2">&quot;epoch&quot;</span><span class="p">,</span> <span class="s2">&quot;time&quot;</span><span class="p">])</span>
+<span class="n">df</span><span class="o">.</span><span class="n">sort_index</span><span class="p">(</span><span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">df</span><span class="o">.</span><span class="n">loc</span><span class="p">[(</span><span class="s2">&quot;auditory/left&quot;</span><span class="p">,</span> <span class="nb">slice</span><span class="p">(</span><span class="mi">0</span><span class="p">,</span> <span class="mi">10</span><span class="p">),</span> <span class="nb">slice</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">107</span><span class="p">)),</span> <span class="s2">&quot;EEG 056&quot;</span><span class="p">:</span><span class="s2">&quot;EEG 058&quot;</span><span class="p">])</span>
+
+<span class="k">del</span> <span class="n">df</span>
+</pre></div>
+</div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Empty DataFrame
+Columns: [EEG 056, EEG 057, EEG 058]
+Index: []
+</pre></div>
+</div>
+<p>See the <a class="reference internal" href="50_epochs_to_data_frame.html#tut-epochs-dataframe"><span class="std std-ref">Exporting Epochs to Pandas DataFrames</span></a> tutorial for many more examples of the
+<a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs.to_data_frame" title="mne.Epochs.to_data_frame"><code class="xref py py-meth docutils literal notranslate"><span class="pre">to_data_frame()</span></code></a> method.</p>
+</section>
+</section>
+<section id="loading-and-saving-epochs-objects-to-disk">
+<h2>Loading and saving <code class="docutils literal notranslate"><span class="pre">Epochs</span></code> objects to disk<a class="headerlink" href="#loading-and-saving-epochs-objects-to-disk" title="Permalink to this heading">#</a></h2>
+<p><a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal notranslate"><span class="pre">Epochs</span></code></a> objects can be loaded and saved in the <code class="docutils literal notranslate"><span class="pre">.fif</span></code> format
+just like <a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-class docutils literal notranslate"><span class="pre">Raw</span></code></a> objects, using the <a class="reference internal" href="../../generated/mne.read_epochs.html#mne.read_epochs" title="mne.read_epochs"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.read_epochs()</span></code></a>
+function and the <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs.save" title="mne.Epochs.save"><code class="xref py py-meth docutils literal notranslate"><span class="pre">save()</span></code></a> method. Functions are also
+available for loading data that was epoched outside of MNE-Python, such as
+<a class="reference internal" href="../../generated/mne.read_epochs_eeglab.html#mne.read_epochs_eeglab" title="mne.read_epochs_eeglab"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.read_epochs_eeglab()</span></code></a> and <a class="reference internal" href="../../generated/mne.read_epochs_kit.html#mne.read_epochs_kit" title="mne.read_epochs_kit"><code class="xref py py-func docutils literal notranslate"><span class="pre">mne.read_epochs_kit()</span></code></a>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><a href="../../generated/mne.Epochs.html#mne.Epochs.save" title="mne.Epochs.save" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-method"><span class="n">epochs</span><span class="o">.</span><span class="n">save</span></a><span class="p">(</span><span class="s2">&quot;saved-audiovisual-epo.fif&quot;</span><span class="p">,</span> <span class="n">overwrite</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">epochs_from_file</span> <span class="o">=</span> <a href="../../generated/mne.read_epochs.html#mne.read_epochs" title="mne.read_epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-function"><span class="n">mne</span><span class="o">.</span><span class="n">read_epochs</span></a><span class="p">(</span><span class="s2">&quot;saved-audiovisual-epo.fif&quot;</span><span class="p">,</span> <span class="n">preload</span><span class="o">=</span><span class="kc">False</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>Reading /home/circleci/project/tutorials/epochs/saved-audiovisual-epo.fif ...
+    Read a total of 3 projection items:
+        PCA-v1 (1 x 102) active
+        PCA-v2 (1 x 102) active
+        PCA-v3 (1 x 102) active
+    Found the data of interest:
+        t =    -299.69 ...     699.28 ms
+        0 CTF compensation matrices available
+Not setting metadata
+85 matching events found
+No baseline correction applied
+Created an SSP operator (subspace dimension = 3)
+3 projection items activated
+</pre></div>
+</div>
+<p>The MNE-Python naming convention for epochs files is that the file basename
+(the part before the <code class="docutils literal notranslate"><span class="pre">.fif</span></code> or <code class="docutils literal notranslate"><span class="pre">.fif.gz</span></code> extension) should end with
+<code class="docutils literal notranslate"><span class="pre">-epo</span></code> or <code class="docutils literal notranslate"><span class="pre">_epo</span></code>, and a warning will be issued if the filename you
+provide does not adhere to that convention.</p>
+<p>As a final note, be aware that the class of the epochs object is different
+when epochs are loaded from disk rather than generated from a
+<a class="reference internal" href="../../generated/mne.io.Raw.html#mne.io.Raw" title="mne.io.Raw"><code class="xref py py-class docutils literal notranslate"><span class="pre">Raw</span></code></a> object:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a><span class="p">))</span>
+<span class="nb">print</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><span class="n">epochs_from_file</span><span class="p">))</span>
+</pre></div>
+</div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;class &#39;mne.epochs.Epochs&#39;&gt;
+&lt;class &#39;mne.epochs.EpochsFIF&#39;&gt;
+</pre></div>
+</div>
+<p>In almost all cases this will not require changing anything about your code.
+However, if you need to do type checking on epochs objects, you can test
+against the base class that these classes are derived from:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span>
+    <span class="nb">all</span><span class="p">(</span>
+        <span class="p">[</span>
+            <span class="nb">isinstance</span><span class="p">(</span><a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a><span class="p">,</span> <a href="../../generated/mne.BaseEpochs.html#mne.BaseEpochs" title="mne.BaseEpochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class"><span class="n">mne</span><span class="o">.</span><span class="n">BaseEpochs</span></a><span class="p">),</span>
+            <span class="nb">isinstance</span><span class="p">(</span><span class="n">epochs_from_file</span><span class="p">,</span> <a href="../../generated/mne.BaseEpochs.html#mne.BaseEpochs" title="mne.BaseEpochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class"><span class="n">mne</span><span class="o">.</span><span class="n">BaseEpochs</span></a><span class="p">),</span>
+        <span class="p">]</span>
+    <span class="p">)</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>True
+</pre></div>
+</div>
+</section>
+<section id="iterating-over-epochs">
+<h2>Iterating over <code class="docutils literal notranslate"><span class="pre">Epochs</span></code><a class="headerlink" href="#iterating-over-epochs" title="Permalink to this heading">#</a></h2>
+<p>Iterating over an <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal notranslate"><span class="pre">Epochs</span></code></a> object will yield <a class="reference external" href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="(in NumPy v1.24)"><code class="xref py py-class docutils literal notranslate"><span class="pre">arrays</span></code></a> rather than single-trial <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal notranslate"><span class="pre">Epochs</span></code></a> objects:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epoch</span></a> <span class="ow">in</span> <a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a><span class="p">[:</span><span class="mi">3</span><span class="p">]:</span>
+    <span class="nb">print</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><a href="https://numpy.org/doc/stable/reference/generated/numpy.ndarray.html#numpy.ndarray" title="numpy.ndarray" class="sphx-glr-backref-module-numpy sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epoch</span></a><span class="p">))</span>
+</pre></div>
+</div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;class &#39;numpy.ndarray&#39;&gt;
+&lt;class &#39;numpy.ndarray&#39;&gt;
+&lt;class &#39;numpy.ndarray&#39;&gt;
+</pre></div>
+</div>
+<p>If you want to iterate over <a class="reference internal" href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs"><code class="xref py py-class docutils literal notranslate"><span class="pre">Epochs</span></code></a> objects, you can use an
+integer index as the iterator:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">for</span> <a href="https://docs.python.org/3/library/functions.html#int" title="builtins.int" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">index</span></a> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">3</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="nb">type</span><span class="p">(</span><a href="../../generated/mne.Epochs.html#mne.Epochs" title="mne.Epochs" class="sphx-glr-backref-module-mne sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">epochs</span></a><span class="p">[</span><a href="https://docs.python.org/3/library/functions.html#int" title="builtins.int" class="sphx-glr-backref-module-builtins sphx-glr-backref-type-py-class sphx-glr-backref-instance"><span class="n">index</span></a><span class="p">]))</span>
+</pre></div>
+</div>
+<div class="sphx-glr-script-out highlight-none notranslate"><div class="highlight"><pre><span></span>&lt;class &#39;mne.epochs.Epochs&#39;&gt;
+&lt;class &#39;mne.epochs.Epochs&#39;&gt;
+&lt;class &#39;mne.epochs.Epochs&#39;&gt;
+</pre></div>
+</div>
+<p class="sphx-glr-timing"><strong>Total running time of the script:</strong> ( 0 minutes  20.096 seconds)</p>
+<p><strong>Estimated memory usage:</strong>  154 MB</p>
+<div class="sphx-glr-footer sphx-glr-footer-example docutils container" id="sphx-glr-download-auto-tutorials-epochs-10-epochs-overview-py">
+<div class="sphx-glr-download sphx-glr-download-python docutils container">
+<p><a class="reference download internal" download="" href="../../_downloads/546d2d8d55ae992b343d2eedb52b2825/10_epochs_overview.py"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Python</span> <span class="pre">source</span> <span class="pre">code:</span> <span class="pre">10_epochs_overview.py</span></code></a></p>
+</div>
+<div class="sphx-glr-download sphx-glr-download-jupyter docutils container">
+<p><a class="reference download internal" download="" href="../../_downloads/9619fd95b952a0c715b83d0e6b37c416/10_epochs_overview.ipynb"><code class="xref download docutils literal notranslate"><span class="pre">Download</span> <span class="pre">Jupyter</span> <span class="pre">notebook:</span> <span class="pre">10_epochs_overview.ipynb</span></code></a></p>
+</div>
+</div>
+<p class="sphx-glr-signature"><a class="reference external" href="https://sphinx-gallery.github.io">Gallery generated by Sphinx-Gallery</a></p>
+</section>
+</section>
+
+
+  
+</div>
+
+              
+              
+                <footer class="bd-footer-article">
+                  
+<div class="footer-article-items footer-article__inner">
+  
+    <div class="footer-article-item"><!-- Previous / next buttons -->
+<div class="prev-next-area">
+    <a class="left-prev"
+       href="index.html"
+       title="previous page">
+      <i class="fa-solid fa-angle-left"></i>
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">previous</p>
+        <p class="prev-next-title">Segmenting continuous data into epochs</p>
+      </div>
+    </a>
+    <a class="right-next"
+       href="15_baseline_regression.html"
+       title="next page">
+      <div class="prev-next-info">
+        <p class="prev-next-subtitle">next</p>
+        <p class="prev-next-title">Regression-based baseline correction</p>
+      </div>
+      <i class="fa-solid fa-angle-right"></i>
+    </a>
+</div></div>
+  
+</div>
+
+                </footer>
+              
+            </div>
+            
+            
+              
+                <div class="bd-sidebar-secondary bd-toc"><div class="sidebar-secondary-items sidebar-secondary__inner">
+
+  <div class="sidebar-secondary-item">
+  <div class="page-toc tocsection onthispage">
+    <i class="fa-solid fa-list"></i> On this page
+  </div>
+  <nav class="bd-toc-nav page-toc">
+    <ul class="visible nav section-nav flex-column">
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#creating-epoched-data-from-a-raw-object">Creating Epoched data from a <code class="docutils literal notranslate"><span class="pre">Raw</span></code> object</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#basic-visualization-of-epochs-objects">Basic visualization of <code class="docutils literal notranslate"><span class="pre">Epochs</span></code> objects</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#subselecting-epochs">Subselecting epochs</a><ul class="nav section-nav flex-column">
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#selecting-epochs-by-index">Selecting epochs by index</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#selecting-dropping-and-reordering-channels">Selecting, dropping, and reordering channels</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#changing-channel-name-and-type">Changing channel name and type</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#selection-in-the-time-domain">Selection in the time domain</a></li>
+<li class="toc-h3 nav-item toc-entry"><a class="reference internal nav-link" href="#extracting-data-in-other-forms">Extracting data in other forms</a></li>
+</ul>
+</li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#loading-and-saving-epochs-objects-to-disk">Loading and saving <code class="docutils literal notranslate"><span class="pre">Epochs</span></code> objects to disk</a></li>
+<li class="toc-h2 nav-item toc-entry"><a class="reference internal nav-link" href="#iterating-over-epochs">Iterating over <code class="docutils literal notranslate"><span class="pre">Epochs</span></code></a></li>
+</ul>
+  </nav></div>
+
+  <div class="sidebar-secondary-item">
+  
+  <div class="tocsection editthispage">
+    <a href="https://github.com/mne-tools/mne-python/edit/main/doc/auto_tutorials/epochs/10_epochs_overview.rst">
+      <i class="fa-solid fa-pencil"></i>
+      
+      
+        
+          Edit on GitHub
+        
+      
+    </a>
+  </div>
+</div>
+
+</div></div>
+              
+            
+          </div>
+          <footer class="bd-footer-content">
+            
+          </footer>
+        
+      </main>
+    </div>
+  </div>
+  
+    
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../_static/scripts/bootstrap.js?digest=e353d410970836974a52"></script>
+<script src="../../_static/scripts/pydata-sphinx-theme.js?digest=e353d410970836974a52"></script>
+
+    <script src="https://mne.tools/versionwarning.js"></script>
+  <footer class="bd-footer">
+<div class="bd-footer__inner bd-page-width">
+  
+    <div class="footer-items__start">
+      
+        <div class="footer-item"><p class="text-center text-muted small">&copy; Copyright 2012–2023, MNE Developers. Last updated <time datetime="2023-05-18T06:19:52.441027+00:00" class="localized">2023-05-18 06:19 UTC</time>
+<script type="text/javascript">$(function () { $("time.localized").each(function () { var el = $(this); el.text(new Date(el.attr("datetime")).toLocaleString([], {dateStyle: "medium", timeStyle: "long"})); }); } )</script></p></div>
+      
+    </div>
+  
+  
+    <div class="footer-items__end">
+      
+        <div class="footer-item"><p class="theme-version">
+  Built with the <a href="https://pydata-sphinx-theme.readthedocs.io/en/stable/index.html">PyData Sphinx Theme</a> 0.13.3.
+</p></div>
+      
+    </div>
+  
+</div>
+
+  </footer>
+  </body>
+</html>
