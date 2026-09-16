@@ -1,26 +1,31 @@
+// compare X.Y strings numerically per part (parseFloat gets 1.9 > 1.13 wrong)
+function compareVersions(a, b) {
+    const pa = a.split(".").map(Number), pb = b.split(".").map(Number);
+    for (let i = 0; i < Math.max(pa.length, pb.length); i++) {
+        const diff = (pa[i] || 0) - (pb[i] || 0);
+        if (diff !== 0) return diff;
+    }
+    return 0;
+}
+
 function showVersionWarning() {
     // adapted 2020-05 from https://scikit-learn.org/versionwarning.js
     if (location.hostname === "mne.tools") {
         const urlParts = location.pathname.split("/");
         const version = urlParts[1];
-        const menu = document.querySelector(".version-switcher__menu");
-        var latestStable = Infinity;
-        if (menu !== null) {
-            const releases = Array.from(menu.children);
-            const stableRelease = releases.filter(
-                ver => ver.getAttribute("data-version") == "stable"
-            )[0]
-            if (typeof stableRelease == "undefined") {
-                setTimeout(showVersionWarning, 250);
-                return;
-            }
-            latestStable = parseFloat(
-                stableRelease.getAttribute("data-version-name").split(" ")[0]
-            );
-        }
-        // see if filePath exists in the stable version of the docs...
+        var latestStable = null;
         var filePath = urlParts.slice(2).join("/");
-        fetch(`https://mne.tools/stable/${filePath}`, { method: "HEAD" })
+        // the switcher manifest marks the stable release as "preferred"
+        fetch("https://mne.tools/versions.json")
+        .then((response) => response.json())
+        .then((entries) => {
+            const preferred = entries.filter(entry => entry.preferred)[0];
+            if (typeof preferred !== "undefined") {
+                latestStable = preferred.version;
+            }
+        })
+        // see if filePath exists in the stable version of the docs...
+        .then(() => fetch(`https://mne.tools/stable/${filePath}`, { method: "HEAD" }))
         // ...if not, redirect will go to the main homepage in stable
         .then((response) => {
             if (!response.ok) {
@@ -29,7 +34,8 @@ function showVersionWarning() {
         })
         // now construct the warning banner
         .then(() => {
-            if (version !== "stable") {
+            // numbered directories of the stable release use the theme's own banner
+            if (version !== "stable" && version !== latestStable) {
                 var outer = document.createElement("div");
                 const middle = document.createElement("div");
                 const inner = document.createElement("div");
@@ -59,9 +65,8 @@ function showVersionWarning() {
 
                 outer.appendChild(middle);
                 middle.appendChild(inner);
-                // for less-than comparison: "dev" → NaN → false (which is what we want)
                 inner.innerText = "This is documentation for ";
-                if (parseFloat(version) < latestStable) {
+                if (latestStable !== null && /^[0-9.]+$/.test(version) && compareVersions(version, latestStable) < 0) {
                     inner.innerText += "an "
                     bold.innerText = `old version (${version})`;
                 } else {
