@@ -7,7 +7,7 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
-    <title>Advanced setup &#8212; MNE 1.14.0.dev167+ga43fb22b9 documentation</title>
+    <title>Advanced setup &#8212; MNE 1.14.0.dev175+g357a25258 documentation</title>
   
   
   
@@ -48,7 +48,7 @@
   <link rel="preload" as="script" href="../_static/scripts/bootstrap.js?digest=75c7c72ae941e8b558d8" />
 <link rel="preload" as="script" href="../_static/scripts/pydata-sphinx-theme.js?digest=75c7c72ae941e8b558d8" />
 
-    <script src="../_static/documentation_options.js?v=54e03f03"></script>
+    <script src="../_static/documentation_options.js?v=db04c7a2"></script>
     <script src="../_static/doctools.js?v=fd6eb6e6"></script>
     <script src="../_static/sphinx_highlight.js?v=6ffebe34"></script>
     <script src="../_static/clipboard.min.js?v=a7894cd8"></script>
@@ -163,8 +163,8 @@
       
     
     
-    <img src="../_static/mne_logo_small.svg" class="logo__image only-light" alt="MNE 1.14.0.dev167+ga43fb22b9 documentation - Home"/>
-    <img src="../_static/mne_logo_small.svg" class="logo__image only-dark pst-js-only" alt="MNE 1.14.0.dev167+ga43fb22b9 documentation - Home"/>
+    <img src="../_static/mne_logo_small.svg" class="logo__image only-light" alt="MNE 1.14.0.dev175+g357a25258 documentation - Home"/>
+    <img src="../_static/mne_logo_small.svg" class="logo__image only-dark pst-js-only" alt="MNE 1.14.0.dev175+g357a25258 documentation - Home"/>
   
   
 </a></div>
@@ -665,11 +665,13 @@ please follow <a class="reference internal" href="manual_install.html#standard-i
 </section>
 <section id="installing-to-a-headless-linux-server">
 <h2>Installing to a headless Linux server<a class="headerlink" href="#installing-to-a-headless-linux-server" title="Link to this heading">#</a></h2>
-<p>First, follow the standard installation instructions. Next, you can choose
-to install the <code class="docutils literal notranslate"><span class="pre">osmesa</span></code> (off-screen MESA) VTK variant, which avoids the need
-to use Xvfb to start a virtual display (and have a sufficiently updated
-MESA to render properly):</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>conda<span class="w"> </span>install<span class="w"> </span>-c<span class="w"> </span>conda-forge<span class="w"> </span><span class="s2">"vtk&gt;=9.2=*osmesa*"</span><span class="w"> </span><span class="s2">"mesalib=21.2.5"</span>
+<p>First, follow the standard installation instructions. VTK 9.4 and newer
+automatically falls back to EGL when no X display is available, so no virtual
+display (Xvfb) or special VTK build is needed as long as an EGL implementation
+is installed. GPU drivers typically provide one; on machines without a GPU,
+MESA provides software rendering via <code class="docutils literal notranslate"><span class="pre">llvmpipe</span></code>, which you can get from your
+system package manager or with:</p>
+<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>conda<span class="w"> </span>install<span class="w"> </span>-c<span class="w"> </span>conda-forge<span class="w"> </span>mesalib
 </pre></div>
 </div>
 </section>
@@ -743,15 +745,7 @@ and they should run faster than the CPU-based multithreading such as
 <section id="off-screen-rendering-with-mesa">
 <h2>Off-screen rendering with MESA<a class="headerlink" href="#off-screen-rendering-with-mesa" title="Link to this heading">#</a></h2>
 <p>On remote Linux systems, it might be possible to use MESA software rendering
-(such as <code class="docutils literal notranslate"><span class="pre">llvmpipe</span></code> or <code class="docutils literal notranslate"><span class="pre">swr</span></code>) for 3D visualization (with some tweaks).
-For example, on CentOS 7.5 you might be able to use an environment variable
-to force MESA to use modern OpenGL by using this before executing
-<code class="docutils literal notranslate"><span class="pre">spyder</span></code> or <code class="docutils literal notranslate"><span class="pre">python</span></code>:</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">MESA_GL_VERSION_OVERRIDE</span><span class="o">=</span><span class="m">3</span>.3
-</pre></div>
-</div>
-<p>Also, it’s possible that different software rending backends might perform
-better than others, such as using the <code class="docutils literal notranslate"><span class="pre">llvmpipe</span></code> backend rather than <code class="docutils literal notranslate"><span class="pre">swr</span></code>.
+(such as <code class="docutils literal notranslate"><span class="pre">llvmpipe</span></code>) for 3D visualization (with some tweaks).
 In newer MESA (21+), rendering can be incorrect when using MSAA, so consider
 setting:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">MNE_3D_OPTION_MULTI_SAMPLES</span><span class="o">=</span><span class="m">1</span>
@@ -769,37 +763,6 @@ a given Python session.</p>
 provide an insufficient implementation of OpenGL, and in those cases it can help to
 force software rendering instead with something like:</p>
 <div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">LIBGL_ALWAYS_SOFTWARE</span><span class="o">=</span><span class="nb">true</span>
-</pre></div>
-</div>
-<p>Another issue that may come up is that the MESA software itself may be out of date
-in certain operating systems, for example CentOS. This may lead to incomplete
-rendering of some 3D plots. A solution is described in this <a class="reference external" href="https://github.com/mne-tools/mne-python/issues/7977#issuecomment-729921035">Github comment</a>.
-It boils down to building a newer version (e.g., 18.3.6)
-locally following a variant of <a class="reference external" href="https://xorg-team.pages.debian.net/xorg/howto/build-mesa.html#_preparing_mesa_sources">these instructions</a>.
-If you have CentOS 7 or newer, you can also try some <a class="reference external" href="https://osf.io/download/sp9qg">prebuilt binaries</a> we made.
-After downloading the files, untar them and add them to the appropriate library paths
-using the following commands:</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>tar<span class="w"> </span>xzvf<span class="w"> </span>mesa_18.3.6_centos_lib.tgz
-<span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">LIBGL_DRIVERS_PATH</span><span class="o">=</span><span class="s2">"</span><span class="si">${</span><span class="nv">PWD</span><span class="si">}</span><span class="s2">/lib"</span>
-<span class="gp">$ </span><span class="nb">export</span><span class="w"> </span><span class="nv">LD_LIBRARY_PATH</span><span class="o">=</span><span class="s2">"</span><span class="si">${</span><span class="nv">PWD</span><span class="si">}</span><span class="s2">/lib"</span>
-</pre></div>
-</div>
-<p>To check that everything went well, type the following:</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>glxinfo<span class="w"> </span><span class="p">|</span><span class="w"> </span>grep<span class="w"> </span><span class="s2">"OpenGL core profile version"</span>
-</pre></div>
-</div>
-<p>which should give:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">OpenGL</span> <span class="n">core</span> <span class="n">profile</span> <span class="n">version</span> <span class="n">string</span><span class="p">:</span> <span class="mf">3.3</span> <span class="p">(</span><span class="n">Core</span> <span class="n">Profile</span><span class="p">)</span> <span class="n">Mesa</span> <span class="mf">18.3.6</span>
-</pre></div>
-</div>
-<p>Another way to check is to type:</p>
-<div class="highlight-console notranslate"><div class="highlight"><pre><span></span><span class="gp">$ </span>mne<span class="w"> </span>sys_info
-</pre></div>
-</div>
-<p>and it should show the right version of MESA:</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">...</span>
-<span class="n">pyvista</span><span class="p">:</span>       <span class="mf">0.27.4</span> <span class="p">{</span><span class="n">pyvistaqt</span><span class="o">=</span><span class="mf">0.2.0</span><span class="p">,</span> <span class="n">OpenGL</span> <span class="mf">3.3</span> <span class="p">(</span><span class="n">Core</span> <span class="n">Profile</span><span class="p">)</span> <span class="n">Mesa</span> <span class="mf">18.3.6</span> <span class="n">via</span> <span class="n">llvmpipe</span> <span class="p">(</span><span class="n">LLVM</span> <span class="mf">3.4</span><span class="p">,</span> <span class="mi">256</span> <span class="n">bits</span><span class="p">)}</span>
-<span class="o">...</span>
 </pre></div>
 </div>
 </section>
@@ -921,7 +884,7 @@ permanent for your logins, you can set it for example in <code class="docutils l
   
     <div class="footer-items__start">
       
-        <div class="footer-item"><p class="text-center small">&copy; Copyright 2012–2026, MNE Developers. Last updated <time datetime="2026-11-11T06:14:48.072557+00:00" class="localized">2026-11-11 06:14 UTC</time>.
+        <div class="footer-item"><p class="text-center small">&copy; Copyright 2012–2026, MNE Developers. Last updated <time datetime="2026-11-12T06:14:54.718311+00:00" class="localized">2026-11-12 06:14 UTC</time>.
 <script type="text/javascript">
 function formatTimestamp() {
     document.querySelectorAll("time.localized").forEach(el => {
